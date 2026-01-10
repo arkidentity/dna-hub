@@ -1,0 +1,138 @@
+@import "tailwindcss";
+
+:root {
+  /* DNA Brand Colors - Light Theme */
+  --background: #FFFBF5;
+  --background-secondary: #F4E7D7;
+  --foreground: #2D3748;
+  --foreground-muted: #5A6577;
+
+  /* Accent Colors */
+  --gold: #D4A853;
+  --gold-dark: #B8923F;
+  --gold-light: #E8C47A;
+  --teal: #2D6A6A;
+  --teal-light: #3D8A8A;
+  --navy: #1A2332;
+
+  /* UI Colors */
+  --card-bg: #FFFFFF;
+  --card-border: #E8DDD0;
+  --input-border: #D4C9BC;
+  --success: #4A9E7F;
+  --error: #C65D5D;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-background-secondary: var(--background-secondary);
+  --color-foreground: var(--foreground);
+  --color-foreground-muted: var(--foreground-muted);
+  --color-gold: var(--gold);
+  --color-gold-dark: var(--gold-dark);
+  --color-gold-light: var(--gold-light);
+  --color-teal: var(--teal);
+  --color-teal-light: var(--teal-light);
+  --color-navy: var(--navy);
+  --color-card-bg: var(--card-bg);
+  --color-card-border: var(--card-border);
+  --color-input-border: var(--input-border);
+  --color-success: var(--success);
+  --color-error: var(--error);
+  --font-sans: "Inter", system-ui, sans-serif;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-sans);
+  line-height: 1.6;
+}
+
+/* Typography */
+h1, h2, h3, h4, h5, h6 {
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--navy);
+}
+
+/* Form Elements */
+input, textarea, select {
+  border-radius: 8px;
+  border: 1px solid var(--input-border);
+  padding: 12px 16px;
+  font-size: 16px;
+  width: 100%;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  border-color: var(--gold);
+  box-shadow: 0 0 0 3px rgba(212, 168, 83, 0.15);
+}
+
+/* Buttons */
+.btn-primary {
+  background: var(--gold);
+  color: white;
+  font-weight: 500;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor: pointer;
+  transition: background 0.2s;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-primary:hover {
+  background: var(--gold-dark);
+}
+
+.btn-secondary {
+  background: transparent;
+  color: var(--gold-dark);
+  font-weight: 500;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: 2px solid var(--gold);
+  cursor: pointer;
+  transition: all 0.2s;
+  min-height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-secondary:hover {
+  background: var(--gold);
+  color: white;
+}
+
+/* Cards */
+.card {
+  background: var(--card-bg);
+  border: 1px solid var(--card-border);
+  border-radius: 12px;
+  padding: 24px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Progress/Phase styling */
+.phase-locked {
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+.phase-current {
+  border-left: 4px solid var(--gold);
+}
+
+.phase-completed {
+  border-left: 4px solid var(--success);
+}
