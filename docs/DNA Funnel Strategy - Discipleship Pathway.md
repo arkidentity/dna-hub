@@ -1,18 +1,17 @@
 # DNA Funnel Strategy & Implementation Guide
 
 ## Overview
-Two-tier funnel that maximizes reach while qualifying serious implementers for premium support.
+Multi-stage funnel that qualifies serious church implementers while providing value at each step. Resources are unlocked progressively as churches demonstrate commitment.
 
 ---
 
-# The Two-Tier Strategy
+# The Funnel Stages
 
-## Tier 1: Email Capture (Low Barrier)
-**Goal:** Build email list, deliver immediate value
+## Stage 1: Email Capture (Landing Page)
+**Goal:** Build email list, deliver initial value, identify interested churches
 
 **What they get:**
-- All 3 DNA resources as PDFs (Manual, Launch Guide, Toolkit)
-- Complete system to implement on their own
+- DNA Discipleship Manual (PDF only)
 - Email nurture sequence
 
 **Requirements:**
@@ -22,20 +21,88 @@ Two-tier funnel that maximizes reach while qualifying serious implementers for p
 
 ---
 
-## Tier 2: Strategy Call Booking (High Commitment)
-**Goal:** Identify and support serious implementers
+## Stage 2: Church Assessment (Qualification)
+**Goal:** Qualify serious implementers, gather context for discovery call
 
-**What they get (in addition to PDFs):**
-- DNA Leaders Dashboard access (premium digital experience)
-- Physical DNA Manual shipped free
-- 30-minute personalized strategy call
-- DNA Leaders community access
-- Ongoing support and follow-up
+**What they get:**
+- Personalized "3 Steps to Becoming a Community That Multiplies" based on their readiness level
+- CTA to book discovery call
 
 **Requirements:**
-- Book actual calendar appointment (commitment signal)
+- Complete 5-minute church assessment
+- Questions cover: decision-maker status, pastor commitment, leadership buy-in, past discipleship attempts, timeline
 
-**Success metric:** Call booking rate from thank you page, show-up rate, implementation rate
+**Success metric:** Assessment completion rate, readiness level distribution
+
+**Readiness Levels:**
+- **Ready to Launch** - High buy-in, leaders identified, near-term timeline
+- **Building Foundation** - Interested but need alignment or preparation
+- **Exploring** - Early stage, still casting vision internally
+
+---
+
+## Stage 3: Discovery Call (Mutual Fit)
+**Goal:** Determine if DNA is right for their church, build relationship
+
+**What they get:**
+- DNA Launch Guide (PDF)
+- Clarity on whether to proceed
+
+**Requirements:**
+- Book 15-minute discovery call
+- Show up
+
+**Call Focus:**
+- Review their assessment answers
+- Understand their context deeper
+- Address their biggest question
+- Determine mutual fit
+- If fit: invite to strategy call
+
+**Success metric:** Show-up rate, conversion to strategy call
+
+---
+
+## Stage 4: Strategy Call (Commitment)
+**Goal:** Create implementation plan, secure commitment, onboard
+
+**What they get:**
+- DNA Leaders Dashboard access
+- 8-Week Toolkit (inside dashboard)
+- Physical DNA Manual shipped free
+- Custom implementation timeline
+- Ongoing coaching relationship
+
+**Requirements:**
+- Book 60-minute strategy call
+- Commit to DNA implementation
+
+**Success metric:** Show-up rate, commitment rate, dashboard activation
+
+---
+
+## Stage 5: Active Partnership (Implementation)
+**Goal:** Guide church through 5-phase implementation
+
+**What they get:**
+- Full dashboard access with milestone tracking
+- Phase-by-phase resources
+- Check-in calls as needed
+- Access to DNA Leaders community
+
+**Success metric:** Phase completion rate, groups launched, multiplication
+
+---
+
+# Resource Unlocking Summary
+
+| Stage | Resource | How They Get It |
+|-------|----------|-----------------|
+| Email Signup | DNA Manual (PDF) | Immediate download |
+| Assessment | 3 Steps Guide | Shown on thank-you page |
+| Discovery Call | Launch Guide (PDF) | Sent after call |
+| Strategy Call | Dashboard + 8-Week Toolkit | Access granted after commitment |
+| Strategy Call | Physical Manual | Shipped after call |
 
 ---
 
@@ -43,46 +110,37 @@ Two-tier funnel that maximizes reach while qualifying serious implementers for p
 
 ## Email 1: Immediate Delivery (Triggered on form submission)
 
-**Subject:** ✓ Your DNA Resources Are Here
+**Subject:** Your DNA Manual is here
 
-**Preview Text:** Everything you need to start making disciples who make disciples
+**Preview Text:** Start here to understand multiplication discipleship
 
 **Body:**
 
 Hey [First Name],
 
-Thanks for downloading the DNA Discipleship system!
+Thanks for your interest in DNA Discipleship!
 
-**📥 Here are your resources:**
+**📥 Here's your resource:**
 
-[Download Button] DNA Discipleship Manual (PDF)  
-[Download Button] DNA Launch Guide (PDF)  
-[Download Button] DNA 8-Week Toolkit (PDF)
+[Download Button] DNA Discipleship Manual (PDF)
 
 **Where to start:**
 
-Read the **DNA Discipleship Manual first** (6 sessions, ~49 pages). It'll give you the heart and theology behind multiplication discipleship.
+Read the DNA Manual first (6 sessions, ~49 pages). It covers the heart and theology behind multiplication discipleship.
 
-Then use the **Launch Guide** to create your roadmap from "I want to disciple" to "I'm actively discipling."
-
-The **8-Week Toolkit** gives you week-by-week meeting plans once your DNA group launches.
+This will help you decide if DNA is right for your church.
 
 ---
 
-**Want more?**
+**Ready to explore further?**
 
-I built a **DNA Leaders Dashboard** with interactive modules, assessment tools, digital Creed Cards, and weekly support content.
+Take our 5-minute Church Assessment to see if DNA is a good fit:
 
-**Book a free 30-min strategy call** and I'll:
-- Give you a live demo + instant dashboard access
-- Help you create a custom implementation plan
-- Mail you a free physical copy of the DNA Manual
+[Button] See If DNA Is Right for Your Church
 
-[Button] Book Your Strategy Call
+We'll give you personalized next steps based on your answers.
 
-No pressure—just here to help you launch well.
-
-Travis  
+Travis
 ARK Identity Discipleship
 
 P.S. Have questions? Just hit reply. I read every email.
@@ -101,64 +159,44 @@ Hey [First Name],
 
 Just checking in. Have you had a chance to dive into the DNA Manual yet?
 
-**If yes:** Awesome. What's standing out to you so far? Hit reply and let me know.
+**If yes:** What's standing out to you so far? Hit reply and let me know.
 
-**If not yet:** No worries—life is busy. But I'd encourage you to carve out time this week. The manual is designed to be read over 6 sessions, but you could knock it out in a weekend if you're motivated.
+**If not yet:** No worries—life is busy. But I'd encourage you to carve out time this week.
 
-**Quick question:** What's your biggest fear or hesitation about starting a DNA group?
+**Quick question:** Is multiplying disciple-makers something your church leadership is actively pursuing?
 
-Hit reply and let me know. I read every response.
+If so, take our quick assessment to see if DNA is a good fit:
 
-And if you want to talk it through live, grab a time on my calendar:
-
-[Link to booking]
-
-You'll get:
-- Live demo of the DNA Leaders Dashboard
-- Custom implementation roadmap
-- Free physical copy of the manual
+[Button] Take the Church Assessment
 
 Talk soon,
 Travis
 
 ---
 
-## Email 3: Day 7 Co-Leader Focus
+## Email 3: Day 7 - Assessment Nudge
 
-**Subject:** Ready to find your co-leader?
+**Subject:** Is DNA right for your church?
 
-**Preview Text:** This is the most important decision you'll make
+**Preview Text:** Take 5 minutes to find out
 
 **Body:**
 
 [First Name],
 
-One of the first steps in launching a DNA group is finding your co-leader.
+By now you've had a chance to look at the DNA Manual.
 
-Here's why this matters:
-- Prevents burnout (shared workload)
-- Provides accountability (you need it too)
-- Models healthy partnership (shows disciples what teamwork looks like)
-- Doubles your capacity (you can each focus on one disciple)
+The question is: **Is this right for your church?**
 
-**Who comes to mind?**
+Our 5-minute Church Assessment will help you figure that out. You'll get:
 
-Someone who:
-- Is spiritually mature (not perfect, but growing)
-- Is faithful and reliable (proven track record)
-- Complements your gifting (different strengths than you)
-- Is hungry to multiply (wants to make disciples)
+- Clarity on your church's readiness level
+- Personalized next steps based on your context
+- The option to book a quick discovery call if it's a fit
 
-**Feeling stuck on this?**
+No pressure. If DNA isn't right for you, that's okay. Better to know now.
 
-Let's talk it through. I can help you:
-- Identify potential co-leaders in your circle
-- Craft the invitation conversation
-- Navigate any awkwardness or hesitation
-
-Book a call: [Link]
-
-Still get the free physical DNA Manual + dashboard access when you book.
+[Button] Take the Assessment
 
 Travis
 
@@ -166,7 +204,7 @@ Travis
 
 ## Email 4: Day 14 Direct Challenge
 
-**Subject:** [First Name], what's holding you back?
+**Subject:** [First Name], still thinking about it?
 
 **Preview Text:** Two weeks in—let's be honest
 
@@ -174,37 +212,19 @@ Travis
 
 Hey [First Name],
 
-Two weeks ago you downloaded the DNA system.
+Two weeks ago you downloaded the DNA Manual.
 
-Since then, I'm guessing one of these is true:
+I'm guessing one of these is true:
 
-**Option 1:** You've read it, you're fired up, and you're already moving forward.  
-*(If so—awesome! Reply and tell me how it's going.)*
+1. **You've read it and you're interested** → Take the assessment and let's talk
+2. **You're not sure it's right for your church** → That's okay. Reply and tell me what's holding you back.
+3. **It's still sitting in your downloads folder** → No judgment. But it won't read itself.
 
-**Option 2:** You've started reading but haven't taken action yet.  
-*(Normal. What's the next step you need to take?)*
+If you're serious about multiplying disciple-makers, I'd love to help.
 
-**Option 3:** It's still sitting in your downloads folder.  
-*(Also normal. Life is busy.)*
+If not, no hard feelings. I'll stop emailing about this.
 
-No judgment on any of these.
-
-But here's the deal:
-
-**Discipleship doesn't happen by accident.** You need a plan. And you need someone in your corner.
-
-That's what the strategy call is for.
-
-We'll create a custom roadmap for YOUR context so you actually launch (instead of just thinking about it).
-
-30 minutes. Free. Plus you get:
-- Dashboard access with all the tools
-- Physical book shipped
-- Ongoing support
-
-What do you have to lose?
-
-[Book Your Call]
+[Button] Take the Church Assessment
 
 Travis
 
@@ -212,393 +232,200 @@ Travis
 
 ## Email 5: Day 30 Final Push
 
-**Subject:** Last call for your free DNA strategy session
+**Subject:** Last invitation
 
-**Preview Text:** I'm moving you to the general list after this
+**Preview Text:** Moving you to the general list
 
 **Body:**
 
 [First Name],
 
-It's been a month since you downloaded the DNA resources.
+It's been a month since you downloaded the DNA Manual.
 
-I'm going to be direct: **Most people who download never implement.**
+This is my last email specifically about taking the next step with DNA.
 
-Not because the system doesn't work. But because they don't have a plan and they don't have support.
+If you're ready to explore whether this is right for your church, take the assessment:
 
-**This is your last reminder** to book a free strategy call.
+[Button] See If DNA Is Right for Your Church
 
-After this, I'll move you to our general email list (still valuable content, but no more personal invitations for the call + dashboard access).
+If not, no problem. I'll move you to our general list where you'll get occasional discipleship content and updates.
 
-If you're serious about making disciples who make disciples, let's talk.
-
-Book your call: [Link]
-
-Still comes with:
-- Free physical copy of the DNA Manual
-- DNA Leaders Dashboard access
-- Custom implementation plan
-
-If you're not ready, no worries. You can always reach out later.
-
-But don't let another month go by without taking action.
+You can always come back to this later.
 
 Travis
 
-P.S. If you've already launched or you're working through the material on your own—reply and let me know how it's going. I'd love to hear.
-
 ---
 
-## Email 6: Day 31+ (Moved to general nurture)
+## Email 6: Day 31+ (General nurture)
 
-After day 30, they move to a general ARK Identity email list with:
-- Weekly/bi-weekly discipleship tips
+Move to general ARK Identity email list with:
+- Bi-weekly discipleship tips
 - New resources when available
 - Event announcements
 - Occasional "book a call" offers (but not pushy)
 
 ---
 
-# Strategy Call Process
+# Discovery Call Process (15 minutes)
 
-## Pre-Call Setup
+## Purpose
+Quick mutual fit check. NOT a sales call. NOT the full strategy session.
 
-**Calendly/Scheduling Settings:**
-- Appointment Type: "DNA Strategy Call"
-- Duration: 30 minutes
-- Buffer: 15 minutes between calls (for notes/follow-up)
-- Reminder emails: 24 hours before + 1 hour before
+## Before the Call
+- Review their assessment answers
+- Note their readiness level
+- Identify their biggest question
 
-**Confirmation Email (Auto-sent after booking):**
+## Call Flow
 
-**Subject:** Your DNA Strategy Call is Confirmed ✓
+### Opening (2 min)
+"Hey [Name], thanks for taking the time. I've reviewed your assessment—looks like [church name] is in an interesting spot. I have about 15 minutes to help you figure out if DNA is a good fit. Sound good?"
 
-**Body:**
+### Review Their Context (5 min)
+- "I saw you mentioned [X from assessment]. Tell me more about that."
+- "What prompted you to look into DNA right now?"
+- "You said your biggest question is [X]. Let me address that..."
 
-Hey [First Name],
+### Assess Fit (5 min)
+- "Based on what you've shared, here's what I'm thinking..."
+- Be honest if it's not a fit: "It sounds like you might need to [get leadership aligned / wait until X / try Y first]"
+- If it IS a fit: "I think DNA could work well for you. Here's what the next step looks like..."
 
-Great! I'm looking forward to talking with you.
+### Close (3 min)
+**If fit:**
+"The next step is a 60-minute strategy call where we'll map out your implementation plan. I'll also send you the Launch Guide after this call so you can start preparing. Want to book that now?"
 
-**Call Details:**
-📅 [Date/Time with timezone]
-📞 [Zoom Link]
-
-**Before the call, please:**
-1. Read at least Session 1 of the DNA Manual (so we're on the same page)
-2. Think about who your potential co-leader might be
-3. Jot down 2-3 specific questions or challenges you're facing
-
-**Your free DNA Manual will ship after our call** to the address you provided.
-
-See you soon,
-Travis
+**If not fit:**
+"I don't think you're quite ready for DNA yet. Here's what I'd suggest... [specific advice]. When [X changes], reach out and we can revisit."
 
 ---
 
-## Call Script & Flow (30 minutes)
+# Strategy Call Process (60 minutes)
 
-### Opening (2 minutes)
+## Purpose
+Create implementation plan, secure commitment, onboard to dashboard.
 
-"Hey [Name], good to meet you! I've got 30 minutes to help you get DNA launched in your context. Before we dive in, tell me a little about yourself and your current discipleship situation."
+## Pre-Call
+- Send Launch Guide PDF after discovery call
+- Ask them to review it before strategy call
+- Confirm they've read at least part of the DNA Manual
 
-### Discovery Questions (10 minutes)
+## Call Flow
 
-Ask 4-5 of these based on conversation flow:
+### Opening (5 min)
+"Good to connect again! Last time we confirmed DNA looks like a good fit. Today I want to create a real implementation plan for [church name]. By the end, you'll know exactly how to launch DNA at your church."
 
-1. **Current State:**
-   - "What does discipleship look like in your church/ministry right now?"
-   - "Have you led discipleship groups before?"
-   
-2. **DNA Readiness:**
-   - "What made you interested in DNA specifically?"
-   - "Have you read any of the resources yet? What stood out?"
-   
-3. **Co-Leader:**
-   - "Who comes to mind as a potential co-leader?"
-   - "Do you have someone in your life who could partner with you on this?"
-   
-4. **Disciples:**
-   - "Who are 2-3 people you could see discipling?"
-   - "What makes them ready (or not ready)?"
-   
-5. **Challenges:**
-   - "What's your biggest fear or concern about starting a DNA group?"
-   - "What's held you back from discipling people intentionally before?"
+### Deep Dive (15 min)
+- Who will be your DNA champion?
+- Who are your first 3-5 potential leaders?
+- What's your realistic launch timeline?
+- What obstacles do you anticipate?
 
-**Listen for:**
-- Level of understanding of DNA
-- Readiness to launch (now vs. 3 months from now)
-- Quality of potential co-leader/disciples
-- Red flags (unrealistic expectations, control issues, theology concerns)
+### Dashboard Demo (15 min)
+- Walk through the 5 phases
+- Show milestone tracking
+- Highlight the 8-Week Toolkit
+- Show how resources are organized
 
-### Dashboard Demo (10 minutes)
+### Implementation Planning (15 min)
+- Set target dates for each phase
+- Identify first 3 action items
+- Discuss leader recruitment strategy
+- Address any concerns
 
-"Let me show you something that'll make this way easier. We built a dashboard specifically for DNA leaders..."
-
-**Screen share the DNA Dashboard:**
-
-1. **Quick tour (2 min):**
-   - "Here's the homepage—you can see all three resources"
-   - "Everything is broken into modules so you're not overwhelmed"
-   - "You can track your progress through each phase"
-
-2. **Highlight key features (3 min):**
-   - **Readiness Quiz:** "This is huge—helps you assess if a disciple is ready to multiply"
-   - **Creed Cards:** "Digital library you can view or print"
-   - **Weekly Updates:** "Tips and encouragement sent to your email"
-
-3. **Show mobile experience (1 min):**
-   - "Works great on phone too—check in on the go"
-
-4. **Give access (2 min):**
-   - "I'm going to set up your account right now..."
-   - Get their dashboard registration details (confirm email, get preferred password or auto-generate)
-
-5. **Answer questions (2 min):**
-   - "What questions do you have about the dashboard?"
-
-### Commitment & Next Steps (5 minutes)
-
-"Based on what we've talked about, what's your next step?"
-
-**Get specific commitments:**
-- "When will you have the co-leader conversation?" (Get a date)
-- "When do you want to officially launch your DNA group?" (Timeline)
-- "What's one thing you need to do this week to move forward?"
-
-**Set follow-up:**
-- "I'll check in with you on [specific date 2 weeks out]. How does that sound?"
-- "Between now and then, you'll get your dashboard login and your book will ship."
-
-**Invite to community:**
-- "One more thing—we have a DNA Leaders community [Slack/Facebook/whatever]. Would you want an invite?"
-- If yes: "Great, I'll send that today."
-
-### Closing (3 minutes)
-
-"This has been great, [Name]. I'm excited to see what God does through your DNA group.
-
-You'll get an email from me today with:
-- Dashboard login details
-- Shipping confirmation for your book
-- Your next steps we discussed
-- Community invite if you want it
-
-And I'll follow up on [date] to see how things are going.
-
-Any last questions before we wrap?"
-
-**End with prayer:**
-"Can I pray for you real quick before we go?"
+### Commitment & Close (10 min)
+- "Are you ready to move forward with DNA?"
+- If yes: Set up their dashboard account
+- Confirm shipping address for physical manual
+- Schedule first check-in call
+- End with prayer
 
 ---
 
-## Post-Call Process
+# Post-Strategy Call Process
 
 **Immediately after call (within 1 hour):**
 
-1. **Send follow-up email** (template below)
-2. **Create dashboard account** if not done on call
-3. **Add to shipping list** with their address
-4. **Log call notes** in your CRM/spreadsheet:
-   - Date of call
-   - Their context (church/ministry)
-   - Co-leader identified? (Y/N)
-   - Launch timeline
-   - Follow-up date
-   - Any red flags or special notes
-
-### Post-Call Email Template
-
-**Subject:** Your DNA Dashboard Access + Book Shipping Confirmation
-
-**Body:**
-
-Hey [Name],
-
-Great talking with you today! Here's everything we discussed:
-
-**Your DNA Leaders Dashboard:**
-🔗 Login: [dashboard link]
-📧 Username: [their email]
-🔑 Password: [their password or "check your email"]
-
-Inside you'll find all the resources we walked through, plus the readiness quiz, Creed Cards, and weekly updates.
-
-**Your Physical DNA Manual:**
-📦 Shipping to: [their address]
-📅 Expected arrival: [7-10 business days or specific date]
-
-**Your Next Steps** (based on our call):
-1. [Specific action from call - e.g., "Have the co-leader conversation with John by Friday"]
-2. [Specific action from call - e.g., "Complete your self-assessment in the Launch Guide"]
-3. [Specific action from call - e.g., "Start praying about your first two disciples"]
-
-**I'll check in with you on [specific date] to see how things are going.**
-
-In the meantime, if you have questions, just reply to this email.
-
-Let's get DNA activated in [their church/ministry name]!
-
-Travis
-
-P.S. Here's the invite to our DNA Leaders community: [link if applicable]
-
----
-
-## Follow-Up Sequence
-
-### Week 2 Follow-Up
-
-**Subject:** Quick check-in on DNA launch
-
-**Body:**
-
-Hey [Name],
-
-Just wanted to check in and see how things are going.
-
-Quick questions:
-- Did you have the co-leader conversation?
-- Have you started identifying potential disciples?
-- Any questions or challenges come up?
-
-Hit reply and let me know. Happy to help troubleshoot.
-
-Travis
-
----
-
-### Week 4 Follow-Up (if no response to Week 2)
-
-**Subject:** Still planning to launch DNA?
-
-**Body:**
-
-[Name],
-
-Haven't heard from you in a few weeks. How's the DNA launch coming?
-
-Sometimes life gets busy and things get delayed—totally normal.
-
-But I want to make sure you're not stuck somewhere.
-
-Reply and let me know:
-- Are you still planning to launch?
-- What's holding you back right now?
-- How can I help?
-
-Travis
-
----
-
-### Month 3 Follow-Up
-
-**Subject:** How's your DNA group going?
-
-**Body:**
-
-Hey [Name],
-
-It's been about 3 months since we talked. I wanted to check in on your DNA group.
-
-Questions:
-- Did you launch? If so, how's it going?
-- If not, what's the holdup?
-- What's been the biggest win or challenge so far?
-
-Would love an update. Reply when you get a chance.
-
-And if your group is in the Foundation or Growth phase, let me know—I have some additional resources that might help.
-
-Travis
+1. Activate their dashboard account
+2. Send welcome email with login details
+3. Add to shipping list for physical manual
+4. Log in CRM: commitment date, launch timeline, first check-in date
+5. Add to "Active Churches" list
 
 ---
 
 # Success Metrics to Track
 
-## Landing Page Performance
-- **Traffic sources:** Where are people coming from?
-- **Conversion rate:** % of visitors who submit form
-- **Benchmark goal:** 15-25% conversion rate
+## Landing Page
+- Traffic sources
+- Email capture rate (Goal: 20-30%)
 
-## Email Engagement
-- **Open rates:** Are people reading?
-  - Benchmark: 25-35% open rate
-- **Click rates:** Are they clicking download links?
-  - Benchmark: 10-20% click rate
-- **Response rates:** Are they replying to emails?
+## Assessment
+- Completion rate (Goal: 40%+ of email signups)
+- Readiness level distribution
+- Discovery call booking rate
 
-## Thank You Page Performance
-- **Call booking rate:** % who book after downloading PDFs
-  - Benchmark goal: 10-20%
-- **Time to booking:** How long after download do they book?
+## Discovery Call
+- Show-up rate (Goal: 80%+)
+- Strategy call conversion (Goal: 60%+)
 
-## Call Outcomes
-- **Show-up rate:** % of booked calls that actually happen
-  - Benchmark goal: 70%+
-- **Dashboard activation:** % who log in after call
-  - Benchmark goal: 90%+
-- **Launch rate:** % who actually start a DNA group within 60 days
-  - Benchmark goal: 50%+
+## Strategy Call
+- Show-up rate (Goal: 90%+)
+- Commitment rate (Goal: 80%+)
+- Dashboard activation within 48 hrs (Goal: 95%+)
 
-## Long-Term Success
-- **Groups launched:** Total DNA groups started
-- **Multiplication rate:** % of groups that multiply after 12 months
-- **Second generation:** DNA groups started by disciples you equipped
+## Implementation
+- Phase 1 completion rate
+- Groups launched within 90 days
+- 12-month multiplication rate
 
 ---
 
-# Common Objections & How to Handle
+# Common Objections & Responses
 
-## On Landing Page / Email:
+## During Assessment/Discovery
 
-**"I don't have time for this right now"**
-Response in email: "I get it. The PDFs will be waiting whenever you're ready. Bookmark this email for when the season changes."
+**"I'm not the decision-maker"**
+→ "That's helpful to know. Is there a way to include [pastor/board] in our next conversation? DNA works best when leadership is aligned from the start."
 
-**"I've tried discipleship before and it didn't work"**
-Response in email: "Most discipleship fails because there's no structure or multiplication plan. DNA is different—it's designed to reproduce from day one. Give it a read and see if it addresses what went wrong before."
+**"We've tried discipleship programs before and they didn't stick"**
+→ "Tell me more about what happened. [Listen] DNA is different because [address their specific issue]. But I want to make sure we're not repeating the same mistake."
 
-## On Strategy Call:
+**"Our pastor isn't fully on board yet"**
+→ "That's actually a key indicator. DNA requires pastoral buy-in to succeed. Would it help if I had a brief call with your pastor to answer questions?"
 
-**"I don't think I'm qualified to disciple anyone"**
-Response: "That's actually a good sign—the people who think they're super qualified often struggle the most. DNA gives you a proven framework. You don't have to be an expert; you just have to be one step ahead and faithful."
+## During Strategy Call
 
-**"What if I can't find a co-leader?"**
-Response: "Start praying specifically about it. God will highlight someone. In rare cases, you might start solo and look for a co-leader in the first 3 months. But don't launch without at least actively seeking one—you'll burn out."
+**"I don't think I'm qualified to lead this"**
+→ "That's actually a good sign. The best DNA champions are humble learners. You don't have to be an expert—you just have to be willing to follow the process."
 
-**"The people in my church aren't ready for this level of commitment"**
-Response: "You might be surprised. People rise to the level of expectation you set. Start with the hungriest 1-2 people, not the whole church. DNA is quality over quantity."
+**"What if we can't find enough leaders?"**
+→ "Start with who you have. Even 1-2 committed leaders is enough to pilot. Quality over quantity. Let's identify who those people might be right now."
 
-**"How is this different from [other discipleship program]?"**
-Response: "Most programs focus on individual growth. DNA focuses on producing disciple-makers who multiply. The 5-phase system has built-in checkpoints and a clear multiplication plan. It's not just about making better Christians—it's about making Christians who make disciples."
-
-**"I'm not sure my church/denomination would support this"**
-Response: "DNA is theologically sound and rooted in Scripture. It's not denominationally specific. That said, if your church leadership isn't open to multiplication discipleship, that's a bigger conversation you might need to have with them."
+**"This seems like a big commitment"**
+→ "It is. DNA isn't for every church. But the churches that commit see real multiplication. The question is: is multiplying disciple-makers important enough to prioritize?"
 
 ---
 
-# Next Steps After This Funnel
+# Next Steps After Funnel
 
-## For Those Who Download but Don't Book
-- Continue email nurture sequence
-- Invite to future webinars/trainings
-- Share testimonials as DNA groups multiply
-- Occasional re-offer of strategy call
+## Churches That Don't Complete Assessment
+- Stay on email nurture
+- Occasional re-invitation to assess
+- Share testimonials and case studies
 
-## For Those Who Book but Don't Launch
-- Check in at 2 weeks, 4 weeks, 3 months
-- Address barriers (fear, time, co-leader, etc.)
-- Offer extended timeline if needed
-- Don't chase—some won't be ready, and that's okay
+## Churches That Assess but Don't Book Discovery
+- Follow-up email sequence (3 emails over 2 weeks)
+- Address common hesitations
+- Offer to answer questions via email
 
-## For Those Who Launch Successfully
-- Check in monthly for first 6 months
-- Celebrate milestones (3 months, 6 months, multiplication)
-- Invite them to share testimonials
-- Eventually recruit them to coach others
+## Churches That Discover but Don't Commit
+- Respect their timeline
+- Check in quarterly
+- Keep them informed of new resources
 
-## For Those Who Multiply
-- Feature their story (with permission)
-- Invite them to DNA Leaders cohort (if you build one)
-- Potential future: Certify them as DNA coaches
+## Churches That Commit and Launch
+- Regular check-ins through Phase 1
+- Celebrate milestones
+- Invite to DNA Leaders community
+- Eventually: invite to coach other churches

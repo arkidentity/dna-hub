@@ -1,6 +1,6 @@
 import { Resend } from 'resend';
 
-const FROM_EMAIL = 'DNA Church Hub <notifications@arkidentity.com>';
+const FROM_EMAIL = 'DNA Church Hub <notifications@mail.arkidentity.com>';
 const TRAVIS_EMAIL = 'thearkidentity@gmail.com';
 
 // Create Resend client lazily
