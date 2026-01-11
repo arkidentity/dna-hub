@@ -13,7 +13,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { milestoneId, completed, notes } = await request.json();
+    const { milestoneId, completed, notes, targetDate } = await request.json();
     const { church, leader } = session;
 
     // Check if progress record exists
@@ -26,14 +26,20 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       // Update existing record
+      const updateData: Record<string, unknown> = {};
+
+      // Only update fields that were provided
+      if (completed !== undefined) {
+        updateData.completed = completed;
+        updateData.completed_at = completed ? new Date().toISOString() : null;
+        updateData.completed_by = completed ? leader.id : null;
+      }
+      if (notes !== undefined) updateData.notes = notes;
+      if (targetDate !== undefined) updateData.target_date = targetDate;
+
       const { error } = await supabaseAdmin
         .from('church_progress')
-        .update({
-          completed,
-          completed_at: completed ? new Date().toISOString() : null,
-          completed_by: completed ? leader.id : null,
-          notes,
-        })
+        .update(updateData)
         .eq('id', existing.id);
 
       if (error) {
@@ -50,10 +56,11 @@ export async function POST(request: NextRequest) {
         .insert({
           church_id: church.id,
           milestone_id: milestoneId,
-          completed,
+          completed: completed || false,
           completed_at: completed ? new Date().toISOString() : null,
           completed_by: completed ? leader.id : null,
           notes,
+          target_date: targetDate,
         });
 
       if (error) {

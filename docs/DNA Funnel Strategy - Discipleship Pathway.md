@@ -42,7 +42,7 @@ Multi-stage funnel that qualifies serious church implementers while providing va
 ---
 
 ## Stage 3: Discovery Call (Mutual Fit)
-**Goal:** Determine if DNA is right for their church, build relationship
+**Goal:** Determine if DNA is right for their church, build relationship, decide next steps
 
 **What they get:**
 - DNA Launch Guide (PDF)
@@ -57,31 +57,90 @@ Multi-stage funnel that qualifies serious church implementers while providing va
 - Understand their context deeper
 - Address their biggest question
 - Determine mutual fit
-- If fit: invite to strategy call
 
-**Success metric:** Show-up rate, conversion to strategy call
+**Outcomes:**
+- **If good fit:** Proceed to Proposal stage
+- **If not fit:** Send Decline email with encouragement and next steps to be reconsidered
+
+**Success metric:** Show-up rate, proposal conversion rate
 
 ---
 
-## Stage 4: Strategy Call (Commitment)
-**Goal:** Create implementation plan, secure commitment, onboard
+## Stage 4: Proposal (Partnership Options)
+**Goal:** Present partnership options tailored to their context and capacity
+
+**What they get:**
+- Customized partnership proposal with 3 tier options
+- Clear expectations for each partnership level
+- Pricing/support details for each option
+
+**Requirements:**
+- Completed Discovery Call with mutual fit confirmed
+
+**Proposal Options (Example - adjust per church):**
+- **Option 1:** Full Partnership - Comprehensive coaching + dashboard + resources
+- **Option 2:** Standard Partnership - Dashboard + resources + periodic check-ins
+- **Option 3:** Starter Partnership - Dashboard access + self-guided resources
+
+**Next Steps:**
+- If interested: Book Agreement Call to discuss and commit
+- If declined: Move to nurture list with option to revisit later
+
+**Success metric:** Proposal-to-agreement conversion rate
+
+---
+
+## Stage 5: Agreement Call (Commitment)
+**Goal:** Answer questions, clarify expectations, secure verbal commitment
+
+**What they get:**
+- Answers to all proposal questions
+- Clear partnership expectations document
+- Verbal commitment confirmation
+
+**Requirements:**
+- Book 30-minute agreement call
+- Review proposal beforehand
+
+**Call Focus:**
+- Answer questions about proposal details
+- Review partnership expectations
+- Discuss financial partnership (missionary support model)
+- Get verbal commitment
+- Schedule Strategy Call
+
+**Note:** ARK Identity operates as missionaries to the Body of Christ. We're not selling a product—we're asking churches to partner with us financially as we serve them.
+
+**Success metric:** Show-up rate, commitment rate
+
+---
+
+## Stage 6: Strategy Call (Implementation Planning)
+**Goal:** Create implementation plan, onboard to dashboard
 
 **What they get:**
 - DNA Leaders Dashboard access
 - 8-Week Toolkit (inside dashboard)
 - Physical DNA Manual shipped free
-- Custom implementation timeline
+- Custom implementation timeline with target dates
 - Ongoing coaching relationship
 
 **Requirements:**
+- Verbal commitment from Agreement Call
 - Book 60-minute strategy call
-- Commit to DNA implementation
 
-**Success metric:** Show-up rate, commitment rate, dashboard activation
+**Call Focus:**
+- Deep dive into church context and leadership
+- Dashboard demo and walkthrough
+- Set target dates for Phase 1 & 2 milestones
+- Identify first action items
+- Prayer and commissioning
+
+**Success metric:** Show-up rate, dashboard activation within 48 hrs
 
 ---
 
-## Stage 5: Active Partnership (Implementation)
+## Stage 7: Active Partnership (Implementation)
 **Goal:** Guide church through 5-phase implementation
 
 **What they get:**
@@ -101,7 +160,9 @@ Multi-stage funnel that qualifies serious church implementers while providing va
 | Email Signup | DNA Manual (PDF) | Immediate download |
 | Assessment | 3 Steps Guide | Shown on thank-you page |
 | Discovery Call | Launch Guide (PDF) | Sent after call |
-| Strategy Call | Dashboard + 8-Week Toolkit | Access granted after commitment |
+| Proposal | Partnership Options Document | Sent after discovery call |
+| Agreement Call | Expectations Document | Discussed on call |
+| Strategy Call | Dashboard + 8-Week Toolkit | Access granted after call |
 | Strategy Call | Physical Manual | Shipped after call |
 
 ---
@@ -269,7 +330,7 @@ Move to general ARK Identity email list with:
 # Discovery Call Process (15 minutes)
 
 ## Purpose
-Quick mutual fit check. NOT a sales call. NOT the full strategy session.
+Quick mutual fit check. Determine if we should proceed with a proposal. NOT a sales call.
 
 ## Before the Call
 - Review their assessment answers
@@ -293,27 +354,67 @@ Quick mutual fit check. NOT a sales call. NOT the full strategy session.
 
 ### Close (3 min)
 **If fit:**
-"The next step is a 60-minute strategy call where we'll map out your implementation plan. I'll also send you the Launch Guide after this call so you can start preparing. Want to book that now?"
+"Based on our conversation, I'd love to put together a partnership proposal for [church name]. I'll send over 3 options that fit different levels of support and investment. Once you review it, we can schedule a 30-minute call to answer questions and discuss next steps. Sound good?"
 
 **If not fit:**
 "I don't think you're quite ready for DNA yet. Here's what I'd suggest... [specific advice]. When [X changes], reach out and we can revisit."
 
 ---
 
+# Agreement Call Process (30 minutes)
+
+## Purpose
+Answer questions about proposal, clarify expectations, secure verbal commitment.
+
+## Before the Call
+- Ensure they received and reviewed the proposal
+- Prepare to discuss each partnership option
+- Have expectations document ready
+
+## Call Flow
+
+### Opening (3 min)
+"Hey [Name], great to connect again! I wanted to give you time to ask any questions about the partnership proposal. What stood out to you?"
+
+### Proposal Discussion (12 min)
+- Address questions about each option
+- Clarify what's included at each level
+- Discuss the financial partnership aspect
+- "We operate as missionaries to the Body of Christ—we're not selling a product, we're asking churches to partner with us as we serve you."
+
+### Expectations Review (10 min)
+- Review partnership expectations document
+- What we commit to providing
+- What we expect from the church
+- Timeline expectations
+
+### Commitment & Close (5 min)
+**If ready to commit:**
+- "Are you ready to move forward with Option [X]?"
+- Confirm verbal commitment
+- Schedule Strategy Call: "Let's book a 60-minute strategy call to build your implementation plan."
+
+**If needs more time:**
+- "Take the time you need. I'll follow up in [timeframe]."
+- Set specific follow-up date
+
+---
+
 # Strategy Call Process (60 minutes)
 
 ## Purpose
-Create implementation plan, secure commitment, onboard to dashboard.
+Create implementation plan, onboard to dashboard. Verbal commitment already secured.
 
 ## Pre-Call
-- Send Launch Guide PDF after discovery call
+- Send Launch Guide PDF after agreement call
 - Ask them to review it before strategy call
 - Confirm they've read at least part of the DNA Manual
+- Create their dashboard account (ready to activate)
 
 ## Call Flow
 
 ### Opening (5 min)
-"Good to connect again! Last time we confirmed DNA looks like a good fit. Today I want to create a real implementation plan for [church name]. By the end, you'll know exactly how to launch DNA at your church."
+"Great to have you officially on board! Today we're going to build your DNA implementation plan. By the end, you'll have access to your dashboard and know exactly what the first steps look like."
 
 ### Deep Dive (15 min)
 - Who will be your DNA champion?
@@ -328,17 +429,16 @@ Create implementation plan, secure commitment, onboard to dashboard.
 - Show how resources are organized
 
 ### Implementation Planning (15 min)
-- Set target dates for each phase
+- Set target dates for Phase 1 & 2 milestones
 - Identify first 3 action items
 - Discuss leader recruitment strategy
 - Address any concerns
 
-### Commitment & Close (10 min)
-- "Are you ready to move forward with DNA?"
-- If yes: Set up their dashboard account
+### Close & Commission (10 min)
+- Activate their dashboard account
 - Confirm shipping address for physical manual
-- Schedule first check-in call
-- End with prayer
+- Schedule first check-in call (usually 2 weeks out)
+- End with prayer and commissioning
 
 ---
 
@@ -367,11 +467,18 @@ Create implementation plan, secure commitment, onboard to dashboard.
 
 ## Discovery Call
 - Show-up rate (Goal: 80%+)
-- Strategy call conversion (Goal: 60%+)
+- Proposal sent rate (Goal: 70%+)
+
+## Proposal → Agreement
+- Proposal review rate
+- Agreement call booking rate (Goal: 60%+)
+
+## Agreement Call
+- Show-up rate (Goal: 85%+)
+- Commitment rate (Goal: 75%+)
 
 ## Strategy Call
-- Show-up rate (Goal: 90%+)
-- Commitment rate (Goal: 80%+)
+- Show-up rate (Goal: 95%+)
 - Dashboard activation within 48 hrs (Goal: 95%+)
 
 ## Implementation
@@ -419,13 +526,49 @@ Create implementation plan, secure commitment, onboard to dashboard.
 - Address common hesitations
 - Offer to answer questions via email
 
-## Churches That Discover but Don't Commit
+## Churches That Discover but Don't Receive Proposal (Declined)
+- Send decline email with encouragement
+- Provide specific next steps for future reconsideration
+- Move to general nurture list
+- Check in after 6 months
+
+## Churches That Receive Proposal but Don't Book Agreement
+- Follow-up sequence (2 emails over 1 week)
+- Address common proposal questions
+- Offer to answer questions via email or quick call
+- Keep door open for future
+
+## Churches That Don't Commit at Agreement Call
 - Respect their timeline
-- Check in quarterly
+- Schedule specific follow-up date
+- Check in monthly
 - Keep them informed of new resources
 
 ## Churches That Commit and Launch
 - Regular check-ins through Phase 1
-- Celebrate milestones
+- Celebrate milestones in dashboard
 - Invite to DNA Leaders community
 - Eventually: invite to coach other churches
+
+---
+
+# Decline Email Template
+
+**Subject:** Thank you for exploring DNA with us
+
+**Body:**
+
+Hey [Name],
+
+Thanks for taking the time to explore DNA Discipleship with me. After our conversation, I don't think now is the right time for [church name] to launch DNA.
+
+Here's what I'd encourage you to work on:
+- [Specific recommendation based on conversation]
+- [Second recommendation if applicable]
+
+This isn't a "no forever"—it's a "not yet." When [specific condition is met], I'd love to revisit this conversation.
+
+In the meantime, I'll keep you on our list for occasional discipleship resources and updates. And if anything changes on your end, just hit reply.
+
+Praying for you and your church,
+Travis

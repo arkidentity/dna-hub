@@ -16,6 +16,8 @@ import {
   LogOut,
   User,
   Loader2,
+  Calendar,
+  Download,
 } from 'lucide-react';
 import { PhaseWithMilestones, MilestoneWithProgress, Church, ChurchLeader } from '@/lib/types';
 
@@ -148,6 +150,31 @@ export default function DashboardPage() {
     return null;
   };
 
+  const exportCalendar = (phaseNumber?: number) => {
+    const url = phaseNumber
+      ? `/api/calendar?phase=${phaseNumber}`
+      : '/api/calendar';
+    window.location.href = url;
+  };
+
+  const formatTargetDate = (dateStr?: string) => {
+    if (!dateStr) return null;
+    const date = new Date(dateStr);
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
+    });
+  };
+
+  const isOverdue = (dateStr?: string, completed?: boolean) => {
+    if (!dateStr || completed) return false;
+    const targetDate = new Date(dateStr);
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return targetDate < today;
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -245,50 +272,65 @@ export default function DashboardPage() {
                 } ${isLocked ? 'opacity-50' : ''}`}
               >
                 {/* Phase Header */}
-                <button
-                  onClick={() => !isLocked && togglePhase(phase.id)}
-                  disabled={isLocked}
-                  className={`w-full flex items-center justify-between ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
-                >
-                  <div className="flex items-center gap-4">
-                    {isLocked ? (
-                      <Lock className="w-5 h-5 text-foreground-muted" />
-                    ) : isExpanded ? (
-                      <ChevronDown className="w-5 h-5 text-gold" />
-                    ) : (
-                      <ChevronRight className="w-5 h-5 text-gold" />
-                    )}
-                    <div className="text-left">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-navy">
-                          Phase {phase.phase_number}: {phase.name}
-                        </h3>
-                        {phase.status === 'current' && (
-                          <span className="text-xs bg-gold text-white px-2 py-0.5 rounded-full">
-                            Current
-                          </span>
-                        )}
-                        {isUpcoming && (
-                          <span className="text-xs bg-teal text-white px-2 py-0.5 rounded-full">
-                            Up Next
-                          </span>
+                <div className="flex items-center justify-between">
+                  <button
+                    onClick={() => !isLocked && togglePhase(phase.id)}
+                    disabled={isLocked}
+                    className={`flex-1 flex items-center justify-between ${isLocked ? 'cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <div className="flex items-center gap-4">
+                      {isLocked ? (
+                        <Lock className="w-5 h-5 text-foreground-muted" />
+                      ) : isExpanded ? (
+                        <ChevronDown className="w-5 h-5 text-gold" />
+                      ) : (
+                        <ChevronRight className="w-5 h-5 text-gold" />
+                      )}
+                      <div className="text-left">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-semibold text-navy">
+                            Phase {phase.phase_number}: {phase.name}
+                          </h3>
+                          {phase.status === 'current' && (
+                            <span className="text-xs bg-gold text-white px-2 py-0.5 rounded-full">
+                              Current
+                            </span>
+                          )}
+                          {isUpcoming && (
+                            <span className="text-xs bg-teal text-white px-2 py-0.5 rounded-full">
+                              Up Next
+                            </span>
+                          )}
+                        </div>
+                        {phaseDate && (
+                          <p className="text-sm text-foreground-muted flex items-center gap-1 mt-1">
+                            <Clock className="w-3 h-3" />
+                            {phaseDate}
+                          </p>
                         )}
                       </div>
-                      {phaseDate && (
-                        <p className="text-sm text-foreground-muted flex items-center gap-1 mt-1">
-                          <Clock className="w-3 h-3" />
-                          {phaseDate}
-                        </p>
-                      )}
                     </div>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-sm font-medium text-navy">
-                      {phase.completedCount}/{phase.totalCount}
-                    </p>
-                    <p className="text-xs text-foreground-muted">completed</p>
-                  </div>
-                </button>
+                    <div className="text-right">
+                      <p className="text-sm font-medium text-navy">
+                        {phase.completedCount}/{phase.totalCount}
+                      </p>
+                      <p className="text-xs text-foreground-muted">completed</p>
+                    </div>
+                  </button>
+                  {/* Calendar Export Button */}
+                  {isExpanded && !isLocked && phase.milestones.some(m => m.progress?.target_date) && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        exportCalendar(phase.phase_number);
+                      }}
+                      className="ml-4 p-2 text-teal hover:text-teal-light hover:bg-teal/10 rounded-lg transition-colors"
+                      title="Export to Calendar"
+                    >
+                      <Download className="w-5 h-5" />
+                    </button>
+                  )}
+                </div>
 
                 {/* Phase Description */}
                 {isExpanded && phase.description && (
@@ -364,6 +406,21 @@ export default function DashboardPage() {
                                   day: 'numeric',
                                   year: 'numeric',
                                 })}
+                              </p>
+                            )}
+
+                            {/* Target date display */}
+                            {milestone.progress?.target_date && (
+                              <p className={`text-xs mt-2 flex items-center gap-1 ${
+                                isOverdue(milestone.progress.target_date, milestone.progress?.completed)
+                                  ? 'text-error font-medium'
+                                  : 'text-foreground-muted'
+                              }`}>
+                                <Calendar className="w-3 h-3" />
+                                {isOverdue(milestone.progress.target_date, milestone.progress?.completed) && (
+                                  <span className="text-error">Overdue:</span>
+                                )}
+                                Target: {formatTargetDate(milestone.progress.target_date)}
                               </p>
                             )}
 

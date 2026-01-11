@@ -145,12 +145,12 @@ Take our 5-minute Church Assessment and get:
 
 ## What Happens After the Assessment
 
-**Visual: 3-step process**
+**Visual: 4-step process**
 
 ```
-1. ASSESSMENT (5 min)          2. DISCOVERY CALL (15 min)       3. STRATEGY CALL (60 min)
-   Tell us about your church      Quick fit check with Travis      Full implementation plan
-   Get personalized next steps    Get the DNA Launch Guide         Dashboard access + physical book
+1. ASSESSMENT (5 min)          2. DISCOVERY CALL (15 min)       3. AGREEMENT CALL (30 min)    4. STRATEGY CALL (60 min)
+   Tell us about your church      Quick fit check with Travis      Review proposal options        Full implementation plan
+   Get personalized next steps    Receive partnership proposal     Get questions answered         Dashboard access + physical book
 ```
 
 **Supporting Text:**
@@ -251,6 +251,16 @@ If DNA resonates with you after reading it, come back and take the assessment wh
 | Email signup | DNA Manual (PDF) |
 | Assessment completion | Personalized 3 Steps |
 | After discovery call | DNA Launch Guide (PDF) |
+| After proposal sent | Partnership Options Document |
+| After agreement call | Expectations Document |
 | After strategy call | Dashboard access + 8-Week Toolkit + Physical book |
 
 The landing page only promises the Manual. Other resources are earned through progressive commitment.
+
+**Updated Funnel Flow:**
+1. Landing Page (Email Capture) → DNA Manual
+2. Church Assessment → 3 Steps Guide + CTA to book Discovery Call
+3. Discovery Call (15 min) → Mutual fit check → Proposal or Decline
+4. Proposal → 3 partnership options sent
+5. Agreement Call (30 min) → Answer questions, get verbal commitment
+6. Strategy Call (60 min) → Implementation plan, dashboard access

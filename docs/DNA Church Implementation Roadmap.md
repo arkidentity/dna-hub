@@ -39,33 +39,35 @@ These are disciples who have completed a 12-month DNA cycle and are ready to mul
 
 ## Complete Timeline Overview
 
-**Total preparation time:** ~6 months (24 weeks)  
-**Then:** 12 months leading their first DNA group  
-**Total:** 18 months from start to multiplication
+**Total preparation time:** ~9 months (36-40 weeks)
+**Then:** 12 months leading their first DNA group
+**Total:** 21 months from assessment to multiplication
 
 ```
-MONTHS 1-6: PREPARATION
-├── Month 1-2: Church Assessment + Strategy Call
-├── Month 2: Dam Assessment + Debrief
-├── Month 2-3: DNA Discipleship Manual (6 weeks)
-├── Month 3-5: DNA Launch Guide Phase 1-5 (8 weeks)
-├── Month 5-6: 8-Week Toolkit Experience (8 weeks)
-└── End of Month 6: DNA Readiness Quiz + Launch Decision
+MONTHS 1-9: PREPARATION
+├── Month 1: Church Assessment + Discovery Call
+├── Month 1-2: Proposal + Agreement Call + Strategy Call
+├── Month 2-3: Phase 1 - Vision Alignment + DNA Champion + Dam Assessment + Debrief
+├── Month 3-4: Phase 2 - Confirm Leaders + Pair Co-Leaders + Order Manuals + Schedule Sessions
+├── Month 4-6: Phase 3 - DNA Discipleship Manual (6 weeks)
+├── Month 6-8: Phase 4 - DNA Launch Guide Phase 1-5 (8 weeks)
+├── Month 8-10: Phase 5 - 8-Week Toolkit Experience (8 weeks)
+└── End of Month 9: DNA Readiness Quiz + Launch Decision
 
-MONTHS 7-18: LEADING DNA GROUP
-├── Months 7-18: Lead DNA group through 5 phases (12 months)
-├── Month 16-17: Lake to River Series (Weeks 9-10 of group)
-├── Month 17-18: Hero Maker Updates + Multiplication Prep
-└── Month 18: Multiply into 2-4 new groups
+MONTHS 10-22: LEADING DNA GROUP
+├── Months 10-22: Lead DNA group through 5 phases (12 months)
+├── Month 19-20: Lake to River Series (Weeks 9-10 of group)
+├── Month 20-21: Hero Maker Updates + Multiplication Prep
+└── Month 22: Multiply into 2-4 new groups
 ```
 
 ---
 
 ## Phase-by-Phase Breakdown
 
-### **PHASE 0: Church Partnership (Weeks 1-4)**
+### **PHASE 0: Church Partnership (Weeks 1-6)**
 
-**Goal:** Assess church readiness and secure leadership commitment
+**Goal:** Assess church readiness, determine mutual fit, and secure partnership commitment
 
 #### **Week 1-2: Church Assessment**
 
@@ -78,85 +80,237 @@ MONTHS 7-18: LEADING DNA GROUP
 - Evaluate church's readiness level (using 5 Levels framework)
 
 **Resources Needed:**
-- DNA Church Assessment form (on dna.arkidentity.com/onboarding)
+- DNA Church Assessment form (on dna.arkidentity.com/assessment)
 
-**Outcome:** Decision to move forward or not
+**Outcome:** Assessment submitted, CTA to book Discovery Call
 
 ---
 
-#### **Week 3-4: Strategy Call**
+#### **Week 2-3: Discovery Call**
 
-**Who:** Senior Pastor + Discipleship Leader + Travis (or ARK Coach)
+**Who:** Senior Pastor or Discipleship Leader + Travis
 
 **What:**
-- 60-minute video call
-- Review church assessment results
-- Customize DNA implementation plan for your context
-- Address questions and concerns
-- Set timeline and expectations
-- Receive access to DNA Leaders Dashboard
+- 15-minute video call
+- Review assessment answers
+- Understand church context deeper
+- Determine mutual fit for DNA partnership
 
 **Resources Needed:**
 - Church Assessment results
 - Calendar for scheduling
 
-**Outcome:** 
-- Signed commitment to launch DNA
-- Strategy call notes and customized timeline
-- Access to DNA resources
+**Outcome:**
+- **If good fit:** Proposal sent with 3 partnership options
+- **If not fit:** Decline email with encouragement and next steps to be reconsidered
 
 ---
 
-### **PHASE 1: Leader Preparation (Weeks 5-8)**
+#### **Week 3-4: Proposal Review**
 
-**Goal:** Prepare hearts and assess readiness of potential DNA leaders
-
-#### **Week 5-6: Dam Assessment**
-
-**Who:** 4-6 potential DNA leaders identified by pastor
+**Who:** Church leadership team
 
 **What:**
-- Pastor sends framing email explaining the Dam Assessment
-- Each leader completes Personal Dam Assessment (45 minutes)
+- Review 3 partnership options
+- Discuss internally which option fits their context
+- Prepare questions for Agreement Call
+
+**Partnership Options (Example):**
+- **Full Partnership:** Comprehensive coaching + dashboard + resources
+- **Standard Partnership:** Dashboard + resources + periodic check-ins
+- **Starter Partnership:** Dashboard access + self-guided resources
+
+**Outcome:** Book Agreement Call to discuss and commit
+
+---
+
+#### **Week 4-5: Agreement Call**
+
+**Who:** Senior Pastor + Discipleship Leader + Travis
+
+**What:**
+- 30-minute video call
+- Answer questions about proposal details
+- Review partnership expectations document
+- Discuss financial partnership (missionary support model)
+- Get verbal commitment
+
+**Note:** ARK Identity operates as missionaries to the Body of Christ—we're not selling a product, we're asking churches to partner with us financially as we serve them.
+
+**Resources Needed:**
+- Partnership proposal
+- Expectations document
+
+**Outcome:**
+- Verbal commitment to partnership
+- Schedule Strategy Call
+
+---
+
+#### **Week 5-6: Strategy Call**
+
+**Who:** Senior Pastor + Discipleship Leader + Travis (or ARK Coach)
+
+**What:**
+- 60-minute video call
+- Deep dive into church context and leadership
+- Walk through DNA Leaders Dashboard
+- Set target dates for Phase 1 & 2 milestones
+- Identify first 3 action items
+- Prayer and commissioning
+
+**Resources Needed:**
+- Verbal commitment from Agreement Call
+- Calendar for scheduling
+
+**Outcome:**
+- Dashboard access activated
+- Custom implementation timeline with target dates
+- Strategy call notes
+- Physical DNA Manual shipping confirmed
+
+---
+
+### **PHASE 1: Church Partnership (Weeks 7-10)**
+
+**Goal:** Establish the foundation for DNA implementation with church leadership alignment
+
+#### **Week 7: Vision Alignment Meeting**
+
+**Who:** Senior Pastor + key leadership + Travis (or ARK Coach)
+
+**What:**
+- Meet with church leadership to align on DNA vision and commitment
+- Review partnership expectations
+- Address any remaining questions
+- Confirm implementation timeline
+
+**Resources Needed:**
+- Partnership expectations document
+- Strategy call notes
+
+**Outcome:** Full leadership buy-in and alignment
+
+---
+
+#### **Week 7-8: Identify DNA Champion**
+
+**Who:** Senior Pastor + Discipleship Leader
+
+**What:**
+- Designate who will oversee DNA implementation at your church
+- DNA Champion takes ownership of the process
+- Set up regular check-ins with Travis
+
+**Outcome:** Clear ownership and accountability
+
+---
+
+#### **Week 8-9: Dam Assessment**
+
+**Who:** DNA Champion + 4-6 potential DNA leaders
+
+**What:**
+- Each leader completes the Dam Assessment in the ARK app
 - Identifies their top 2-3 internal obstacles (fears, insecurities)
 - Creates personal action plan
 
 **Resources Needed:**
-- DNA Personal Dam Assessment (PDF)
-- Pastor's Framing Email Template
-- Private time for honest reflection
+- ARK app access for Dam Assessment
+- Pastor's Guide to Dam Assessment (PDF)
 
 **Outcome:** Leaders identify internal barriers to multiplication
 
 ---
 
-#### **Week 7-8: Dam Debrief**
+#### **Week 9-10: Dam Debrief Meetings**
 
-**Who:** Pastor + each potential DNA leader (one-on-one)
+**Who:** Pastor/DNA Champion + each potential leader (one-on-one)
 
 **What:**
 - 30-minute individual debrief meetings
+- Review Dam Assessment results together
 - Discuss top dams identified
-- Assess readiness to proceed
 - Pray together over identified obstacles
 - Decision: Move forward / Delay / Not this season
 
 **Resources Needed:**
-- Pastor's Dam Debrief Guide
+- Pastor's Guide to Dam Assessment
 - Leader's completed assessment
 
-**Outcome:** 
-- Decision on who proceeds to DNA Manual
+**Outcome:**
+- Decision on who proceeds to Phase 2
 - Action plans for addressing dams
 - Filtered list of committed leaders
 
 ---
 
-### **PHASE 2: DNA Foundation (Weeks 9-14)**
+### **PHASE 2: Leader Preparation (Weeks 11-14)**
+
+**Goal:** Finalize leader roster and prepare for DNA Manual sessions
+
+#### **Week 11: Confirm Leader Roster**
+
+**Who:** DNA Champion + Pastor
+
+**What:**
+- Review Dam Assessment debrief results
+- Finalize which leaders are moving forward
+- Communicate decisions to all potential leaders
+- Celebrate those moving forward
+
+**Outcome:** Final list of 2-4 committed DNA leaders
+
+---
+
+#### **Week 11-12: Pair Leaders with Co-Leaders**
+
+**Who:** DNA Champion + confirmed leaders
+
+**What:**
+- Ensure each DNA leader has a co-leader partner
+- Match based on complementary gifts and availability
+- Co-leaders commit together to the journey
+
+**Outcome:** Leader/co-leader pairs established
+
+---
+
+#### **Week 12: Order DNA Manuals**
+
+**Who:** Church admin / DNA Champion
+
+**What:**
+- Order physical DNA Discipleship Manuals for each leader
+- One manual per leader and co-leader
+- Allow 1-2 weeks for shipping
+
+**Resources Needed:**
+- Amazon link for DNA Manual ordering
+
+**Outcome:** Physical manuals on order
+
+---
+
+#### **Week 13-14: Schedule DNA Manual Sessions**
+
+**Who:** DNA Champion + all leaders
+
+**What:**
+- Set dates for 6 weekly DNA Manual sessions
+- Coordinate everyone's calendars
+- Book meeting space (in-person or video)
+- Communicate schedule to all participants
+
+**Outcome:** DNA Manual session schedule confirmed
+
+---
+
+### **PHASE 3: DNA Foundation (Weeks 15-20)**
 
 **Goal:** Understand DNA philosophy, theology, and values
 
-#### **Weeks 9-14: DNA Discipleship Manual**
+#### **Weeks 15-20: DNA Discipleship Manual**
 
 **Who:** All proceeding DNA leaders (as a cohort)
 
@@ -179,18 +333,18 @@ MONTHS 7-18: LEADING DNA GROUP
 - Meeting space
 - Pastor or coach to facilitate
 
-**Outcome:** 
+**Outcome:**
 - Shared DNA language and values
 - Cohesion among leader cohort
 - Understanding of multiplication mandate
 
 ---
 
-### **PHASE 3: Practical Preparation (Weeks 15-22)**
+### **PHASE 4: Practical Preparation (Weeks 21-28)**
 
 **Goal:** Complete practical launch preparation
 
-#### **Weeks 15-22: DNA Launch Guide (Phase 1-5)**
+#### **Weeks 21-28: DNA Launch Guide (Phase 1-5)**
 
 **Who:** Each potential DNA leader (with pastor oversight)
 
@@ -228,11 +382,11 @@ MONTHS 7-18: LEADING DNA GROUP
 
 ---
 
-### **PHASE 4: Toolkit Experience (Weeks 23-30)**
+### **PHASE 5: Toolkit Experience (Weeks 29-36)**
 
 **Goal:** EXPERIENCE DNA tools before leading them
 
-#### **Weeks 23-30: 8-Week Toolkit as Practice Group**
+#### **Weeks 29-36: 8-Week Toolkit as Practice Group**
 
 **Who:** All DNA leaders together (4-6 people)
 
@@ -268,11 +422,11 @@ MONTHS 7-18: LEADING DNA GROUP
 
 ---
 
-### **PHASE 5: Final Validation (Week 31)**
+### **Final Validation (Week 37)**
 
 **Goal:** Confirm readiness to launch
 
-#### **Week 31: DNA Readiness Quiz**
+#### **Week 37: DNA Readiness Quiz**
 
 **Who:** Each potential DNA leader
 
@@ -296,7 +450,7 @@ MONTHS 7-18: LEADING DNA GROUP
 
 ---
 
-#### **Week 31-32: Final Debrief & Launch Decision**
+#### **Week 37-38: Final Debrief & Launch Decision**
 
 **Who:** Pastor + each DNA leader (one-on-one)
 
@@ -305,13 +459,13 @@ MONTHS 7-18: LEADING DNA GROUP
 - Review quiz results
 - Discuss any concerns or gaps
 - Make final decision: LAUNCH or DELAY
-- If launching: Set official launch date (Week 32-34)
+- If launching: Set official launch date (Weeks 39-40)
 
 **Decisions:**
 
 **IF READY:**
 - Celebrate and pray together
-- Set launch date (2-3 weeks out)
+- Set launch date (Weeks 39-40)
 - Finalize co-leader and disciples
 - Prepare for first DNA meeting
 
@@ -336,7 +490,7 @@ MONTHS 7-18: LEADING DNA GROUP
 
 ## LAUNCH: First DNA Groups Begin
 
-**Week 32-34:** Official DNA Group Launch
+**Week 39-40:** Official DNA Group Launch
 
 **What happens:**
 - 2-4 DNA groups launch simultaneously

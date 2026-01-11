@@ -112,6 +112,7 @@ export interface ChurchProgress {
   completed_at?: string;
   completed_by?: string;
   notes?: string;
+  target_date?: string;
   created_at: string;
   updated_at: string;
 }
