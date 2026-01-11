@@ -14,18 +14,23 @@ export async function POST(request: NextRequest) {
     }
 
     // Find the leader by email
+    console.log('[MAGIC-LINK] Looking up email:', email.toLowerCase());
     const leader = await getLeaderByEmail(email);
 
     if (!leader) {
       // Don't reveal if email exists or not for security
+      console.log('[MAGIC-LINK] No leader found for email:', email.toLowerCase());
       return NextResponse.json({
         success: true,
         message: 'If this email is registered, a login link has been sent.',
       });
     }
 
+    console.log('[MAGIC-LINK] Found leader:', leader.name, '| Church status:', leader.church?.status);
+
     // Check if church is active
     if (leader.church?.status !== 'active') {
+      console.log('[MAGIC-LINK] Church not active, status:', leader.church?.status);
       return NextResponse.json({
         success: true,
         message: 'If this email is registered, a login link has been sent.',
