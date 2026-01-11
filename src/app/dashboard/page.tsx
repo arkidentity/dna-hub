@@ -18,6 +18,10 @@ import {
   Loader2,
   Calendar,
   Download,
+  Pencil,
+  MessageSquare,
+  X,
+  Save,
 } from 'lucide-react';
 import { PhaseWithMilestones, MilestoneWithProgress, Church, ChurchLeader } from '@/lib/types';
 
@@ -25,6 +29,7 @@ interface DashboardData {
   church: Church;
   leader: ChurchLeader;
   phases: PhaseWithMilestones[];
+  isAdmin: boolean;
 }
 
 export default function DashboardPage() {
@@ -33,6 +38,12 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [updatingMilestone, setUpdatingMilestone] = useState<string | null>(null);
+
+  // Admin editing state
+  const [editingDateId, setEditingDateId] = useState<string | null>(null);
+  const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
+  const [editDateValue, setEditDateValue] = useState<string>('');
+  const [editNotesValue, setEditNotesValue] = useState<string>('');
 
   useEffect(() => {
     fetchDashboard();
@@ -109,6 +120,74 @@ export default function DashboardPage() {
     } finally {
       setUpdatingMilestone(null);
     }
+  };
+
+  // Admin: Save target date
+  const saveTargetDate = async (milestoneId: string) => {
+    setUpdatingMilestone(milestoneId);
+    try {
+      const response = await fetch('/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          milestoneId,
+          targetDate: editDateValue || null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update date');
+      }
+
+      await fetchDashboard();
+      setEditingDateId(null);
+      setEditDateValue('');
+    } catch (error) {
+      console.error('Date update error:', error);
+    } finally {
+      setUpdatingMilestone(null);
+    }
+  };
+
+  // Admin: Save notes
+  const saveNotes = async (milestoneId: string) => {
+    setUpdatingMilestone(milestoneId);
+    try {
+      const response = await fetch('/api/progress', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          milestoneId,
+          notes: editNotesValue,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update notes');
+      }
+
+      await fetchDashboard();
+      setEditingNotesId(null);
+      setEditNotesValue('');
+    } catch (error) {
+      console.error('Notes update error:', error);
+    } finally {
+      setUpdatingMilestone(null);
+    }
+  };
+
+  // Admin: Start editing date
+  const startEditingDate = (milestoneId: string, currentDate?: string) => {
+    setEditingDateId(milestoneId);
+    setEditDateValue(currentDate ? currentDate.split('T')[0] : '');
+    setEditingNotesId(null); // Close notes editor if open
+  };
+
+  // Admin: Start editing notes
+  const startEditingNotes = (milestoneId: string, currentNotes?: string) => {
+    setEditingNotesId(milestoneId);
+    setEditNotesValue(currentNotes || '');
+    setEditingDateId(null); // Close date editor if open
   };
 
   const handleLogout = async () => {
@@ -191,7 +270,7 @@ export default function DashboardPage() {
     );
   }
 
-  const { church, leader, phases } = data;
+  const { church, leader, phases, isAdmin } = data;
 
   // Calculate overall progress
   const totalMilestones = phases.reduce((sum, p) => sum + p.totalCount, 0);
@@ -222,6 +301,11 @@ export default function DashboardPage() {
             <div className="flex items-center gap-2 text-sm text-gray-300">
               <User className="w-4 h-4" />
               <span>{leader.name}</span>
+              {isAdmin && (
+                <span className="text-xs bg-gold/20 text-gold px-2 py-0.5 rounded-full font-medium">
+                  Admin
+                </span>
+              )}
             </div>
             <button
               onClick={handleLogout}
@@ -409,20 +493,137 @@ export default function DashboardPage() {
                               </p>
                             )}
 
-                            {/* Target date display */}
-                            {milestone.progress?.target_date && (
-                              <p className={`text-xs mt-2 flex items-center gap-1 ${
-                                isOverdue(milestone.progress.target_date, milestone.progress?.completed)
-                                  ? 'text-error font-medium'
-                                  : 'text-foreground-muted'
-                              }`}>
-                                <Calendar className="w-3 h-3" />
-                                {isOverdue(milestone.progress.target_date, milestone.progress?.completed) && (
-                                  <span className="text-error">Overdue:</span>
+                            {/* Target date display/edit */}
+                            {editingDateId === milestone.id ? (
+                              // Admin: Date editing mode
+                              <div className="flex items-center gap-2 mt-2">
+                                <Calendar className="w-3 h-3 text-foreground-muted" />
+                                <input
+                                  type="date"
+                                  value={editDateValue}
+                                  onChange={(e) => setEditDateValue(e.target.value)}
+                                  className="text-xs px-2 py-1 border border-input-border rounded bg-white"
+                                  autoFocus
+                                />
+                                <button
+                                  onClick={() => saveTargetDate(milestone.id)}
+                                  disabled={updatingMilestone === milestone.id}
+                                  className="p-1 text-success hover:bg-success/10 rounded"
+                                  title="Save"
+                                >
+                                  {updatingMilestone === milestone.id ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <Save className="w-3 h-3" />
+                                  )}
+                                </button>
+                                <button
+                                  onClick={() => { setEditingDateId(null); setEditDateValue(''); }}
+                                  className="p-1 text-foreground-muted hover:bg-background-secondary rounded"
+                                  title="Cancel"
+                                >
+                                  <X className="w-3 h-3" />
+                                </button>
+                              </div>
+                            ) : milestone.progress?.target_date ? (
+                              // Display existing date
+                              <div className="flex items-center gap-1 mt-2">
+                                <p className={`text-xs flex items-center gap-1 ${
+                                  isOverdue(milestone.progress.target_date, milestone.progress?.completed)
+                                    ? 'text-error font-medium'
+                                    : 'text-foreground-muted'
+                                }`}>
+                                  <Calendar className="w-3 h-3" />
+                                  {isOverdue(milestone.progress.target_date, milestone.progress?.completed) && (
+                                    <span className="text-error">Overdue:</span>
+                                  )}
+                                  Target: {formatTargetDate(milestone.progress.target_date)}
+                                </p>
+                                {isAdmin && (
+                                  <button
+                                    onClick={() => startEditingDate(milestone.id, milestone.progress?.target_date)}
+                                    className="p-1 text-foreground-muted hover:text-teal hover:bg-teal/10 rounded ml-1"
+                                    title="Edit date"
+                                  >
+                                    <Pencil className="w-3 h-3" />
+                                  </button>
                                 )}
-                                Target: {formatTargetDate(milestone.progress.target_date)}
-                              </p>
-                            )}
+                              </div>
+                            ) : isAdmin ? (
+                              // Admin: Add date button (no date set yet)
+                              <button
+                                onClick={() => startEditingDate(milestone.id)}
+                                className="text-xs text-teal hover:text-teal-light flex items-center gap-1 mt-2"
+                              >
+                                <Calendar className="w-3 h-3" />
+                                <span>Add target date</span>
+                              </button>
+                            ) : null}
+
+                            {/* Admin notes display/edit */}
+                            {editingNotesId === milestone.id ? (
+                              // Admin: Notes editing mode
+                              <div className="mt-3 space-y-2">
+                                <textarea
+                                  value={editNotesValue}
+                                  onChange={(e) => setEditNotesValue(e.target.value)}
+                                  placeholder="Add a note (challenges, victories, updates...)"
+                                  className="w-full text-sm px-3 py-2 border border-input-border rounded bg-white resize-none"
+                                  rows={3}
+                                  autoFocus
+                                />
+                                <div className="flex items-center gap-2">
+                                  <button
+                                    onClick={() => saveNotes(milestone.id)}
+                                    disabled={updatingMilestone === milestone.id}
+                                    className="text-xs px-3 py-1 bg-gold text-white rounded hover:bg-gold/90 flex items-center gap-1"
+                                  >
+                                    {updatingMilestone === milestone.id ? (
+                                      <Loader2 className="w-3 h-3 animate-spin" />
+                                    ) : (
+                                      <Save className="w-3 h-3" />
+                                    )}
+                                    Save
+                                  </button>
+                                  <button
+                                    onClick={() => { setEditingNotesId(null); setEditNotesValue(''); }}
+                                    className="text-xs px-3 py-1 text-foreground-muted hover:bg-background-secondary rounded"
+                                  >
+                                    Cancel
+                                  </button>
+                                </div>
+                              </div>
+                            ) : milestone.progress?.notes ? (
+                              // Display existing notes (visible to all, editable by admin)
+                              <div className="mt-3 p-2 bg-gold/5 border-l-2 border-gold/30 rounded-r">
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex-1">
+                                    <p className="text-xs font-medium text-gold/80 mb-1">Admin Note:</p>
+                                    <p className="text-sm text-foreground-muted italic whitespace-pre-wrap">
+                                      {milestone.progress.notes}
+                                    </p>
+                                  </div>
+                                  {isAdmin && (
+                                    <button
+                                      onClick={() => startEditingNotes(milestone.id, milestone.progress?.notes)}
+                                      className="p-1 text-foreground-muted hover:text-teal hover:bg-teal/10 rounded flex-shrink-0"
+                                      title="Edit note"
+                                    >
+                                      <Pencil className="w-3 h-3" />
+                                    </button>
+                                  )}
+                                </div>
+                              </div>
+                            ) : isAdmin ? (
+                              // Admin: Add note button (no note yet)
+                              <button
+                                onClick={() => startEditingNotes(milestone.id)}
+                                className="text-xs text-teal hover:text-teal-light flex items-center gap-1 mt-2"
+                              >
+                                <MessageSquare className="w-3 h-3" />
+                                <span>Add note</span>
+                              </button>
+                            ) : null}
 
                             {/* Key milestone badge */}
                             {milestone.is_key_milestone && (

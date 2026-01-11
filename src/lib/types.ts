@@ -134,6 +134,7 @@ export interface ChurchDashboardData {
   church: Church;
   leader: ChurchLeader;
   phases: PhaseWithMilestones[];
+  isAdmin: boolean;
 }
 
 // Assessment form data

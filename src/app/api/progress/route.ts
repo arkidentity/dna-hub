@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, supabaseAdmin } from '@/lib/auth';
+import { getSession, supabaseAdmin, isAdmin } from '@/lib/auth';
 import { sendMilestoneNotification, sendPhaseCompletionNotification } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
@@ -15,6 +15,15 @@ export async function POST(request: NextRequest) {
 
     const { milestoneId, completed, notes, targetDate } = await request.json();
     const { church, leader } = session;
+    const userIsAdmin = isAdmin(leader.email);
+
+    // Only admins can update notes and target dates
+    if ((notes !== undefined || targetDate !== undefined) && !userIsAdmin) {
+      return NextResponse.json(
+        { error: 'Only admins can update notes and dates' },
+        { status: 403 }
+      );
+    }
 
     // Check if progress record exists
     const { data: existing } = await supabaseAdmin

@@ -5,6 +5,14 @@ import crypto from 'crypto';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
+// Admin email addresses - these users get edit access to dates and notes
+const ADMIN_EMAILS = ['thearkidentity@gmail.com', 'travis@arkidentity.com'];
+
+// Check if an email is an admin
+export function isAdmin(email: string): boolean {
+  return ADMIN_EMAILS.includes(email.toLowerCase());
+}
+
 // Create client lazily to avoid build-time errors when env vars aren't set
 let _supabaseAdmin: SupabaseClient | null = null;
 

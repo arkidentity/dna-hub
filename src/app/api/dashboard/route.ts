@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getSession, supabaseAdmin } from '@/lib/auth';
+import { getSession, supabaseAdmin, isAdmin } from '@/lib/auth';
 import { PhaseWithMilestones, MilestoneWithProgress } from '@/lib/types';
 
 export async function GET() {
@@ -111,6 +111,7 @@ export async function GET() {
       church,
       leader,
       phases: phasesWithMilestones,
+      isAdmin: isAdmin(leader.email),
     });
   } catch (error) {
     console.error('Dashboard fetch error:', error);
