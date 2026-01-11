@@ -47,7 +47,15 @@ export async function POST(request: NextRequest) {
     const magicLink = `${baseUrl}/api/auth/verify?token=${token}`;
 
     // Send email with magic link
-    await sendMagicLinkEmail(email, leader.name, magicLink);
+    console.log('[MAGIC-LINK] Attempting to send email to:', email);
+    const emailResult = await sendMagicLinkEmail(email, leader.name, magicLink);
+    console.log('[MAGIC-LINK] Email result:', JSON.stringify(emailResult));
+
+    if (!emailResult.success) {
+      console.error('[MAGIC-LINK] Email failed to send:', emailResult.error);
+      // Still return success to user (don't reveal email issues for security)
+      // but now we have logs to diagnose
+    }
 
     // In development, also return the link directly for testing
     if (process.env.NODE_ENV === 'development') {

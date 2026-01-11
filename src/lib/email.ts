@@ -25,12 +25,15 @@ async function sendEmail({ to, subject, html }: EmailOptions) {
   const resend = getResend();
 
   if (!resend) {
+    console.log('[EMAIL] No RESEND_API_KEY found - running in DEV MODE');
     console.log('[EMAIL - DEV MODE]', { to, subject });
     return { success: true, dev: true };
   }
 
+  console.log('[EMAIL] Sending email via Resend:', { from: FROM_EMAIL, to, subject });
+
   try {
-    const { error } = await resend.emails.send({
+    const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to,
       subject,
@@ -38,13 +41,14 @@ async function sendEmail({ to, subject, html }: EmailOptions) {
     });
 
     if (error) {
-      console.error('Email send error:', error);
+      console.error('[EMAIL] Resend API error:', JSON.stringify(error));
       return { success: false, error };
     }
 
-    return { success: true };
+    console.log('[EMAIL] Successfully sent, ID:', data?.id);
+    return { success: true, emailId: data?.id };
   } catch (error) {
-    console.error('Email error:', error);
+    console.error('[EMAIL] Exception during send:', error);
     return { success: false, error };
   }
 }
