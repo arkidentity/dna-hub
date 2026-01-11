@@ -89,17 +89,20 @@ export async function GET(request: NextRequest) {
     let events = progressData?.filter(p => p.milestone && p.target_date) || [];
 
     if (phaseNumber) {
-      events = events.filter(p =>
-        (p.milestone as { phase?: { phase_number: number } })?.phase?.phase_number === parseInt(phaseNumber)
-      );
+      events = events.filter(p => {
+        const milestone = p.milestone as unknown as {
+          phase: Array<{ phase_number: number }>;
+        };
+        return milestone?.phase?.[0]?.phase_number === parseInt(phaseNumber);
+      });
     }
 
     // Transform to calendar events
     const calendarEvents = events.map(p => {
-      const milestone = p.milestone as {
+      const milestone = p.milestone as unknown as {
         title: string;
         description?: string;
-        phase?: { name: string; phase_number: number };
+        phase: Array<{ name: string; phase_number: number }>;
       };
 
       return {
