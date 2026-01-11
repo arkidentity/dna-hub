@@ -149,6 +149,8 @@ export async function clearSession() {
 
 // Get leader by email
 export async function getLeaderByEmail(email: string) {
+  console.log('[AUTH] getLeaderByEmail called with:', email.toLowerCase());
+
   const { data, error } = await supabaseAdmin
     .from('church_leaders')
     .select(`
@@ -159,8 +161,10 @@ export async function getLeaderByEmail(email: string) {
     .single();
 
   if (error) {
+    console.error('[AUTH] Supabase error in getLeaderByEmail:', JSON.stringify(error));
     return null;
   }
 
+  console.log('[AUTH] Found leader:', data?.name, '| Church:', data?.church?.name);
   return data;
 }
