@@ -1,81 +1,76 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import Link from 'next/link';
-import { CheckCircle, Calendar, BookOpen, Users, Target, ArrowRight } from 'lucide-react';
+import { CheckCircle, Download, BookOpen, Rocket, Compass } from 'lucide-react';
 import { Suspense } from 'react';
 
 type ReadinessLevel = 'ready' | 'building' | 'exploring';
 
-interface StepContent {
-  title: string;
-  description: string;
-  icon: React.ReactNode;
+// PDF URLs - placeholders until actual PDFs are hosted
+const PDF_URLS = {
+  threeStepsReady: process.env.NEXT_PUBLIC_THREE_STEPS_READY_URL || '#',
+  threeStepsBuilding: process.env.NEXT_PUBLIC_THREE_STEPS_BUILDING_URL || '#',
+  threeStepsExploring: process.env.NEXT_PUBLIC_THREE_STEPS_EXPLORING_URL || '#',
+  launchGuide: process.env.NEXT_PUBLIC_LAUNCH_GUIDE_URL || '#',
+  dnaManual: process.env.NEXT_PUBLIC_DNA_MANUAL_URL || '#',
+};
+
+// Google Calendar embed URL for Discovery Call (15 min)
+const DISCOVERY_CALENDAR_EMBED = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ0LdUpKkvo_qoOrtiu6fQfPgkQJUZaG9RxPtYVieJrl1RAFnUmgTN9WATs6jAxSbkdo5M4-bpfI?gv=true';
+
+interface TieredContent {
+  readinessHeadline: string;
+  readinessMessage: string;
+  readinessIcon: React.ReactNode;
+  threeStepsPdfUrl: string;
+  resource: {
+    title: string;
+    description: string;
+    buttonText: string;
+    pdfUrl: string;
+  };
+  calendarIncentive: string;
 }
 
-const stepsContent: Record<ReadinessLevel, { headline: string; subheadline: string; steps: StepContent[] }> = {
+const tieredContent: Record<ReadinessLevel, TieredContent> = {
   ready: {
-    headline: 'You\'re Ready to Launch',
-    subheadline: 'Your church has the foundation in place. Here\'s how to move forward quickly.',
-    steps: [
-      {
-        title: 'Confirm Your DNA Champion',
-        description: 'Finalize who will lead this initiative. They\'ll be your point person for training, communication, and ongoing support.',
-        icon: <Users className="w-6 h-6" />,
-      },
-      {
-        title: 'Identify Your First 3-5 Leaders',
-        description: 'Look for people who are spiritually mature, faithful, and hungry to multiply. They don\'t need to be perfect—just willing.',
-        icon: <Target className="w-6 h-6" />,
-      },
-      {
-        title: 'Schedule Your Discovery Call',
-        description: 'Let\'s talk through your specific context and create a launch timeline. We\'ll make sure you\'re set up for success.',
-        icon: <Calendar className="w-6 h-6" />,
-      },
-    ],
+    readinessHeadline: "You're Ready to Launch!",
+    readinessMessage: "Your church shows strong alignment for DNA implementation. You have the leadership buy-in and foundation in place to move quickly.",
+    readinessIcon: <Rocket className="w-8 h-8" />,
+    threeStepsPdfUrl: PDF_URLS.threeStepsReady,
+    resource: {
+      title: 'Get Your Launch Guide',
+      description: "Everything you need to prepare for a successful DNA launch at your church.",
+      buttonText: 'Download Launch Guide',
+      pdfUrl: PDF_URLS.launchGuide,
+    },
+    calendarIncentive: "Book Your Discovery Call and Receive the 8-Week Toolkit",
   },
   building: {
-    headline: 'You\'re Building the Foundation',
-    subheadline: 'You\'re on the right track. A few key pieces will set you up for a strong launch.',
-    steps: [
-      {
-        title: 'Read the DNA Manual',
-        description: 'Start with the theology and heart behind DNA. This 6-session resource will give you and your leaders a shared vision for multiplication.',
-        icon: <BookOpen className="w-6 h-6" />,
-      },
-      {
-        title: 'Get Leadership Alignment',
-        description: 'Before launching to the church, make sure your elders/board are fully on board. DNA works best when it\'s championed from the top.',
-        icon: <Users className="w-6 h-6" />,
-      },
-      {
-        title: 'Schedule Your Discovery Call',
-        description: 'We\'ll help you think through timing, leader selection, and how to communicate DNA to your congregation.',
-        icon: <Calendar className="w-6 h-6" />,
-      },
-    ],
+    readinessHeadline: "You're Building the Foundation",
+    readinessMessage: "You're on the right track. There are a few things to align before launching DNA, and we can help you get there.",
+    readinessIcon: <BookOpen className="w-8 h-8" />,
+    threeStepsPdfUrl: PDF_URLS.threeStepsBuilding,
+    resource: {
+      title: 'Read the DNA Manual',
+      description: "Understand the theology and heart behind DNA. Share it with your leadership team.",
+      buttonText: 'Download DNA Manual',
+      pdfUrl: PDF_URLS.dnaManual,
+    },
+    calendarIncentive: "Book Your Discovery Call and Receive the Launch Guide",
   },
   exploring: {
-    headline: 'You\'re Exploring the Possibilities',
-    subheadline: 'Great that you\'re thinking about discipleship multiplication. Here\'s where to start.',
-    steps: [
-      {
-        title: 'Read the DNA Manual',
-        description: 'Before anything else, understand what DNA is and isn\'t. The manual covers the theology, process, and vision for multiplication discipleship.',
-        icon: <BookOpen className="w-6 h-6" />,
-      },
-      {
-        title: 'Cast Vision to Your Leadership',
-        description: 'Share what you\'re learning with your pastor or board. DNA requires buy-in from the top to succeed long-term.',
-        icon: <Users className="w-6 h-6" />,
-      },
-      {
-        title: 'Schedule Your Discovery Call',
-        description: 'Even if you\'re early in the process, we can help you think through whether DNA is right for your context and what it would take to launch.',
-        icon: <Calendar className="w-6 h-6" />,
-      },
-    ],
+    readinessHeadline: "You're in Discovery Mode",
+    readinessMessage: "DNA might be a good fit down the road. Start by understanding the vision and sharing it with your team.",
+    readinessIcon: <Compass className="w-8 h-8" />,
+    threeStepsPdfUrl: PDF_URLS.threeStepsExploring,
+    resource: {
+      title: 'Read the DNA Manual',
+      description: "Start with the 'why' behind multiplication discipleship before the 'how'.",
+      buttonText: 'Download DNA Manual',
+      pdfUrl: PDF_URLS.dnaManual,
+    },
+    calendarIncentive: "Book Your Discovery Call",
   },
 };
 
@@ -84,74 +79,108 @@ function ThankYouContent() {
   const level = (searchParams.get('level') as ReadinessLevel) || 'building';
   const churchName = searchParams.get('church') || 'your church';
 
-  const content = stepsContent[level] || stepsContent.building;
+  const content = tieredContent[level] || tieredContent.building;
 
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
       <header className="bg-navy text-white py-4 px-6">
-        <div className="max-w-3xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <p className="text-gold font-medium text-sm tracking-wide">DNA CHURCH HUB</p>
         </div>
       </header>
 
-      <main className="max-w-3xl mx-auto px-6 py-12">
+      <main className="max-w-4xl mx-auto px-6 py-12">
         {/* Success Message */}
-        <div className="text-center mb-12">
+        <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-success/10 rounded-full mb-6">
             <CheckCircle className="w-8 h-8 text-success" />
           </div>
-          <h1 className="text-3xl font-bold text-navy mb-3">Assessment Received</h1>
-          <p className="text-foreground-muted text-lg">
-            Thanks for taking the time to tell us about {churchName}.
+          <h1 className="text-3xl font-bold text-navy mb-2">Assessment Received</h1>
+          <p className="text-foreground-muted">
+            Thanks for telling us about {churchName}.
           </p>
         </div>
 
-        {/* Personalized 3 Steps */}
-        <div className="card mb-10">
-          <div className="mb-8">
-            <h2 className="text-2xl font-semibold text-navy mb-2">{content.headline}</h2>
-            <p className="text-foreground-muted">{content.subheadline}</p>
-          </div>
-
-          <div className="space-y-6">
-            {content.steps.map((step, index) => (
-              <div key={index} className="flex gap-4">
-                <div className="flex-shrink-0 w-10 h-10 bg-gold/10 text-gold rounded-full flex items-center justify-center">
-                  {step.icon}
-                </div>
-                <div>
-                  <h3 className="font-semibold text-navy mb-1">
-                    Step {index + 1}: {step.title}
-                  </h3>
-                  <p className="text-foreground-muted text-sm">{step.description}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* CTA: Book Discovery Call */}
-        <div className="card bg-navy text-white text-center">
-          <h3 className="text-xl font-semibold mb-3">Ready to Take the Next Step?</h3>
-          <p className="text-white/80 mb-6">
-            Schedule a 15-minute discovery call. We&apos;ll review your assessment together and see if DNA is a good fit for {churchName}.
+        {/* 3 Steps Resource */}
+        <div className="card text-center mb-8">
+          <h2 className="text-2xl font-semibold text-navy mb-2">
+            3 Steps to Becoming a Community That Multiplies
+          </h2>
+          <p className="text-foreground-muted mb-6">
+            Your personalized guide based on where {churchName} is right now.
           </p>
           <a
-            href="https://calendly.com/arkidentity"
+            href={content.threeStepsPdfUrl}
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-2 bg-gold hover:bg-gold-dark text-white font-medium px-6 py-3 rounded-lg transition-colors"
           >
-            Book Your Discovery Call
-            <ArrowRight className="w-4 h-4" />
+            <Download className="w-5 h-5" />
+            Download Your 3 Steps Guide (PDF)
           </a>
+        </div>
+
+        {/* Readiness Level Message with Integrated Resource */}
+        <div className={`card mb-8 ${
+          level === 'ready' ? 'bg-success/5 border-success/20' :
+          level === 'building' ? 'bg-gold/5 border-gold/20' :
+          'bg-teal/5 border-teal/20'
+        } border`}>
+          <div className="flex items-start gap-4 mb-6">
+            <div className={`flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center ${
+              level === 'ready' ? 'bg-success/10 text-success' :
+              level === 'building' ? 'bg-gold/10 text-gold' :
+              'bg-teal/10 text-teal'
+            }`}>
+              {content.readinessIcon}
+            </div>
+            <div>
+              <h3 className="text-xl font-semibold text-navy mb-1">{content.readinessHeadline}</h3>
+              <p className="text-foreground-muted">{content.readinessMessage}</p>
+            </div>
+          </div>
+
+          {/* Nested Resource Box */}
+          <div className="bg-white rounded-lg p-4 border border-border">
+            <h4 className="font-semibold text-navy mb-1">{content.resource.title}</h4>
+            <p className="text-foreground-muted text-sm mb-3">{content.resource.description}</p>
+            <a
+              href={content.resource.pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`inline-flex items-center gap-2 font-medium transition-colors ${
+                level === 'ready' ? 'text-success hover:text-success/80' : 'text-teal hover:text-teal-light'
+              }`}
+            >
+              <Download className="w-4 h-4" />
+              {content.resource.buttonText}
+            </a>
+          </div>
+        </div>
+
+        {/* Embedded Google Calendar */}
+        <div className="card">
+          <h3 className="text-xl font-semibold text-navy mb-2 text-center">{content.calendarIncentive}</h3>
+          <p className="text-foreground-muted text-center mb-6">
+            Choose a time that works for you. This is a 15-minute conversation to see if DNA is right for {churchName}.
+          </p>
+          <div className="rounded-lg overflow-hidden border border-border">
+            <iframe
+              src={DISCOVERY_CALENDAR_EMBED}
+              style={{ border: 0 }}
+              width="100%"
+              height="600"
+              frameBorder="0"
+              title="Book Discovery Call"
+            />
+          </div>
         </div>
 
         {/* What Happens Next */}
         <div className="mt-10 text-center text-foreground-muted">
           <p className="text-sm">
-            <strong>What happens next?</strong> We&apos;ll review your assessment and reach out within 2 business days.
+            <strong>What happens next?</strong> We&apos;ll also review your assessment and reach out within 2 business days.
             <br />
             Questions? Email <a href="mailto:travis@arkidentity.com" className="text-teal hover:text-teal-light">travis@arkidentity.com</a>
           </p>

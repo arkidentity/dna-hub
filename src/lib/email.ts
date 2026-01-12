@@ -246,7 +246,8 @@ export async function sendProposalReadyEmail(
   churchName: string,
   portalUrl: string
 ) {
-  const proposalCallUrl = 'https://calendar.app.google/QCxrVixhV9yV8dvD7';
+  // Proposal Review Call (30 min)
+  const proposalCallUrl = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ1E8bA8sb4SP7QBJw45-6zKwxVNFu6x7w4YMBABJ1qdiE9ALT7hGvOlJ2RUGcfV9LwopqFiGPGe?gv=true';
 
   const subject = `Your DNA Proposal is Ready - ${churchName}`;
   const html = `
@@ -294,7 +295,8 @@ export async function sendAgreementConfirmedEmail(
   tierName: string,
   portalUrl: string
 ) {
-  const strategyCallUrl = 'https://calendar.app.google/DaGEKGrMYdfsTAr7';
+  // Strategy Call (60 min)
+  const strategyCallUrl = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ06-H6-Lu-ReUlLa7bTB0qgXj9c1DxocZWH7WxTLw__s9chlLMDflEtH_my63oqNrQAaV7oahqR?gv=true';
 
   const subject = `Welcome to DNA! - ${churchName}`;
   const html = `
@@ -405,62 +407,99 @@ export async function send3StepsEmail(
   firstName: string,
   readinessLevel: 'ready' | 'building' | 'exploring'
 ) {
-  // TODO: Replace with actual hosted PDF URL when available
-  const threeStepsUrl = process.env.THREE_STEPS_URL || 'https://arkidentity.com/3-steps.pdf';
-  const discoveryCallUrl = 'https://calendar.app.google/Qi2b2ZNx163nYdeR7';
+  // PDF URLs - different version for each readiness level
+  const threeStepsPdfUrls = {
+    ready: process.env.THREE_STEPS_READY_URL || 'https://arkidentity.com/3-steps-ready.pdf',
+    building: process.env.THREE_STEPS_BUILDING_URL || 'https://arkidentity.com/3-steps-building.pdf',
+    exploring: process.env.THREE_STEPS_EXPLORING_URL || 'https://arkidentity.com/3-steps-exploring.pdf',
+  };
 
-  const readinessMessages = {
+  // Additional resource URLs
+  const launchGuideUrl = process.env.LAUNCH_GUIDE_URL || 'https://arkidentity.com/launch-guide.pdf';
+  const dnaManualUrl = process.env.DNA_MANUAL_URL || 'https://arkidentity.com/dna-manual.pdf';
+  const eightWeekToolkitUrl = process.env.EIGHT_WEEK_TOOLKIT_URL || 'https://arkidentity.com/8-week-toolkit.pdf';
+
+  // Discovery call booking URL
+  const discoveryCallUrl = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ0LdUpKkvo_qoOrtiu6fQfPgkQJUZaG9RxPtYVieJrl1RAFnUmgTN9WATs6jAxSbkdo5M4-bpfI?gv=true';
+
+  const threeStepsUrl = threeStepsPdfUrls[readinessLevel];
+
+  // Tiered content matching thank-you page
+  const tieredContent = {
     ready: {
       headline: "You're Ready to Launch!",
-      message: "Based on your assessment, your church shows strong alignment for DNA implementation. Let's talk about next steps.",
-      cta: "Book Your Discovery Call"
+      message: "Your church shows strong alignment for DNA implementation. You have the leadership buy-in and foundation in place to move quickly.",
+      suggestion1Title: "Get Your Launch Guide",
+      suggestion1Description: "Everything you need to prepare for a successful DNA launch at your church.",
+      suggestion1Url: launchGuideUrl,
+      suggestion1ButtonText: "Download Launch Guide",
+      suggestion2Incentive: "Book your Discovery Call now and receive the 8-Week Implementation Toolkit",
+      cta: "Book Discovery Call (15 min)"
     },
     building: {
       headline: "You're Building the Foundation",
       message: "You're on the right track. There are a few things to align before launching DNA, and we can help you get there.",
-      cta: "Let's Discuss Your Path Forward"
+      suggestion1Title: "Read the DNA Manual",
+      suggestion1Description: "Understand the theology and heart behind DNA. Share it with your leadership team.",
+      suggestion1Url: dnaManualUrl,
+      suggestion1ButtonText: "Download DNA Manual",
+      suggestion2Incentive: "Book your Discovery Call now and receive the Launch Guide",
+      cta: "Book Discovery Call (15 min)"
     },
     exploring: {
       headline: "You're in Discovery Mode",
-      message: "DNA might be a good fit down the road. Start with the 3 Steps guide and the DNA Manual to cast vision with your team.",
-      cta: "Have Questions? Let's Talk"
+      message: "DNA might be a good fit down the road. Start by understanding the vision and sharing it with your team.",
+      suggestion1Title: "Read the DNA Manual",
+      suggestion1Description: "Start with the 'why' behind multiplication discipleship before the 'how'.",
+      suggestion1Url: dnaManualUrl,
+      suggestion1ButtonText: "Download DNA Manual",
+      suggestion2Incentive: "Let's discuss your path forward together",
+      cta: "Book Discovery Call (15 min)"
     }
   };
 
-  const content = readinessMessages[readinessLevel];
+  const content = tieredContent[readinessLevel];
 
-  const subject = `Your Personalized 3 Steps to Becoming a Community That Multiplies`;
+  const subject = `Your 3 Steps to Becoming a Community That Multiplies`;
   const html = `
     <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #1A2332;">Hey ${firstName},</h2>
 
       <p>Thanks for completing the DNA Church Assessment!</p>
 
+      <div style="background: #F4E7D7; padding: 24px; border-radius: 8px; margin: 24px 0; text-align: center;">
+        <h3 style="color: #1A2332; margin: 0 0 16px 0;">3 Steps to Becoming a Community That Multiplies</h3>
+        <p style="margin: 0 0 20px 0; color: #5A6577;">Your personalized guide based on where your church is right now.</p>
+        <a href="${threeStepsUrl}"
+           style="background: #D4A853; color: white; padding: 16px 32px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          Download Your 3 Steps Guide (PDF)
+        </a>
+      </div>
+
       <div style="background: #1A2332; color: white; padding: 24px; border-radius: 8px; margin: 24px 0;">
         <h3 style="color: #D4A853; margin: 0 0 12px 0;">${content.headline}</h3>
         <p style="margin: 0; color: #E8E8E8;">${content.message}</p>
       </div>
 
-      <h3 style="color: #1A2332;">Your Resource: 3 Steps to Becoming a Community That Multiplies</h3>
-      <p>This guide will help you understand the foundational steps every church needs to take before launching DNA groups.</p>
+      <h3 style="color: #1A2332;">Suggested Next Steps</h3>
 
-      <div style="text-align: center; margin: 24px 0;">
-        <a href="${threeStepsUrl}"
-           style="background: #D4A853; color: white; padding: 16px 32px;
-                  border-radius: 8px; text-decoration: none; font-weight: 500;
-                  display: inline-block;">
-          Download 3 Steps Guide (PDF)
+      <div style="background: #F8F9FA; padding: 20px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #2D6A6A;">
+        <h4 style="color: #1A2332; margin: 0 0 8px 0;">${content.suggestion1Title}</h4>
+        <p style="color: #5A6577; margin: 0 0 12px 0; font-size: 14px;">${content.suggestion1Description}</p>
+        <a href="${content.suggestion1Url}"
+           style="color: #2D6A6A; text-decoration: none; font-weight: 500;">
+          ${content.suggestion1ButtonText} →
         </a>
       </div>
 
-      <hr style="border: none; border-top: 1px solid #E8DDD0; margin: 32px 0;" />
-
-      <h3 style="color: #1A2332;">Next Step: Book a Discovery Call</h3>
-      <p>A 15-minute conversation to see if DNA is the right fit for your church. No pressure, no sales pitch—just an honest conversation about where you are and where you want to go.</p>
-
-      <div style="text-align: center; margin: 24px 0;">
+      <div style="background: #1A2332; padding: 20px; border-radius: 8px; margin: 16px 0;">
+        <h4 style="color: white; margin: 0 0 8px 0;">Book Your Discovery Call</h4>
+        <p style="color: #E8E8E8; margin: 0 0 12px 0; font-size: 14px;">A 15-minute conversation to see if DNA is the right fit for your church.</p>
+        <p style="color: #D4A853; margin: 0 0 16px 0; font-size: 14px; font-weight: 500;">${content.suggestion2Incentive}</p>
         <a href="${discoveryCallUrl}"
-           style="background: #2D6A6A; color: white; padding: 14px 28px;
+           style="background: #D4A853; color: white; padding: 12px 24px;
                   border-radius: 8px; text-decoration: none; font-weight: 500;
                   display: inline-block;">
           ${content.cta}
@@ -469,6 +508,10 @@ export async function send3StepsEmail(
 
       <p style="margin-top: 32px;">Travis<br>
       <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+
+      <p style="color: #5A6577; font-size: 14px; margin-top: 24px;">
+        P.S. Have questions? Just hit reply. I read every email.
+      </p>
     </div>
   `;
 

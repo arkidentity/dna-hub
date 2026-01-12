@@ -67,14 +67,17 @@ ALTER TABLE funnel_documents ENABLE ROW LEVEL SECURITY;
 ALTER TABLE scheduled_calls ENABLE ROW LEVEL SECURITY;
 
 -- 7. RLS Policies for email_subscribers (admin only)
+DROP POLICY IF EXISTS "Service role can manage subscribers" ON email_subscribers;
 CREATE POLICY "Service role can manage subscribers" ON email_subscribers
   FOR ALL USING (true);
 
 -- 8. RLS Policies for funnel_documents
+DROP POLICY IF EXISTS "Service role can manage funnel documents" ON funnel_documents;
 CREATE POLICY "Service role can manage funnel documents" ON funnel_documents
   FOR ALL USING (true);
 
 -- 9. RLS Policies for scheduled_calls
+DROP POLICY IF EXISTS "Service role can manage scheduled calls" ON scheduled_calls;
 CREATE POLICY "Service role can manage scheduled calls" ON scheduled_calls
   FOR ALL USING (true);
 
@@ -92,21 +95,25 @@ VALUES ('funnel-documents', 'funnel-documents', true)
 ON CONFLICT (id) DO NOTHING;
 
 -- 12. Storage policies for funnel-documents bucket
+DROP POLICY IF EXISTS "Service role can upload to funnel-documents" ON storage.objects;
 CREATE POLICY "Service role can upload to funnel-documents"
 ON storage.objects FOR INSERT
 TO service_role
 WITH CHECK (bucket_id = 'funnel-documents');
 
+DROP POLICY IF EXISTS "Service role can update funnel-documents" ON storage.objects;
 CREATE POLICY "Service role can update funnel-documents"
 ON storage.objects FOR UPDATE
 TO service_role
 USING (bucket_id = 'funnel-documents');
 
+DROP POLICY IF EXISTS "Service role can delete from funnel-documents" ON storage.objects;
 CREATE POLICY "Service role can delete from funnel-documents"
 ON storage.objects FOR DELETE
 TO service_role
 USING (bucket_id = 'funnel-documents');
 
+DROP POLICY IF EXISTS "Public can read funnel-documents" ON storage.objects;
 CREATE POLICY "Public can read funnel-documents"
 ON storage.objects FOR SELECT
 TO public
