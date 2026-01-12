@@ -63,11 +63,25 @@ export default function DashboardPage() {
         return;
       }
 
+      if (response.status === 307) {
+        // Church not yet active, redirect to portal
+        const data = await response.json();
+        router.push(data.redirect || '/portal');
+        return;
+      }
+
       if (!response.ok) {
         throw new Error('Failed to fetch dashboard');
       }
 
       const dashboardData = await response.json();
+
+      // Also check for redirect in response body
+      if (dashboardData.redirect) {
+        router.push(dashboardData.redirect);
+        return;
+      }
+
       setData(dashboardData);
 
       // Auto-expand current, upcoming, and onboarding (phase 0) phases

@@ -179,3 +179,136 @@ export async function sendMagicLinkEmail(
 
   return sendEmail({ to, subject, html });
 }
+
+// DNA Manual delivery email
+export async function sendDNAManualEmail(to: string, firstName: string) {
+  // TODO: Replace with actual hosted PDF URL when available
+  const manualUrl = process.env.DNA_MANUAL_URL || 'https://arkidentity.com/dna-manual.pdf';
+  const assessmentUrl = process.env.NEXT_PUBLIC_APP_URL
+    ? `${process.env.NEXT_PUBLIC_APP_URL}/assessment`
+    : 'https://dna.arkidentity.com/assessment';
+
+  const subject = 'Your DNA Manual is here';
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1A2332;">Hey ${firstName},</h2>
+
+      <p>Thanks for your interest in DNA Discipleship!</p>
+
+      <div style="background: #F4E7D7; padding: 24px; border-radius: 8px; margin: 24px 0; text-align: center;">
+        <p style="margin: 0 0 16px 0; font-weight: 600; color: #1A2332;">Here's your resource:</p>
+        <a href="${manualUrl}"
+           style="background: #D4A853; color: white; padding: 16px 32px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          Download DNA Manual (PDF)
+        </a>
+      </div>
+
+      <h3 style="color: #1A2332; margin-top: 32px;">Where to start:</h3>
+      <p>Read the DNA Manual first (6 sessions, ~49 pages). It covers the heart and theology behind multiplication discipleship.</p>
+      <p>This will help you decide if DNA is right for your church.</p>
+
+      <hr style="border: none; border-top: 1px solid #E8DDD0; margin: 32px 0;" />
+
+      <h3 style="color: #1A2332;">Ready to explore further?</h3>
+      <p>Take our 5-minute Church Assessment to see if DNA is a good fit:</p>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${assessmentUrl}"
+           style="background: #2D6A6A; color: white; padding: 14px 28px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          See If DNA Is Right for Your Church
+        </a>
+      </div>
+
+      <p>We'll give you personalized next steps based on your answers.</p>
+
+      <p style="margin-top: 32px;">Travis<br>
+      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+
+      <p style="color: #5A6577; font-size: 14px; margin-top: 24px;">
+        P.S. Have questions? Just hit reply. I read every email.
+      </p>
+    </div>
+  `;
+
+  return sendEmail({ to, subject, html });
+}
+
+// 3 Steps resource email (sent after assessment)
+export async function send3StepsEmail(
+  to: string,
+  firstName: string,
+  readinessLevel: 'ready' | 'building' | 'exploring'
+) {
+  // TODO: Replace with actual hosted PDF URL when available
+  const threeStepsUrl = process.env.THREE_STEPS_URL || 'https://arkidentity.com/3-steps.pdf';
+  const discoveryCallUrl = 'https://calendar.app.google/Qi2b2ZNx163nYdeR7';
+
+  const readinessMessages = {
+    ready: {
+      headline: "You're Ready to Launch!",
+      message: "Based on your assessment, your church shows strong alignment for DNA implementation. Let's talk about next steps.",
+      cta: "Book Your Discovery Call"
+    },
+    building: {
+      headline: "You're Building the Foundation",
+      message: "You're on the right track. There are a few things to align before launching DNA, and we can help you get there.",
+      cta: "Let's Discuss Your Path Forward"
+    },
+    exploring: {
+      headline: "You're in Discovery Mode",
+      message: "DNA might be a good fit down the road. Start with the 3 Steps guide and the DNA Manual to cast vision with your team.",
+      cta: "Have Questions? Let's Talk"
+    }
+  };
+
+  const content = readinessMessages[readinessLevel];
+
+  const subject = `Your Personalized 3 Steps to Becoming a Community That Multiplies`;
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1A2332;">Hey ${firstName},</h2>
+
+      <p>Thanks for completing the DNA Church Assessment!</p>
+
+      <div style="background: #1A2332; color: white; padding: 24px; border-radius: 8px; margin: 24px 0;">
+        <h3 style="color: #D4A853; margin: 0 0 12px 0;">${content.headline}</h3>
+        <p style="margin: 0; color: #E8E8E8;">${content.message}</p>
+      </div>
+
+      <h3 style="color: #1A2332;">Your Resource: 3 Steps to Becoming a Community That Multiplies</h3>
+      <p>This guide will help you understand the foundational steps every church needs to take before launching DNA groups.</p>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${threeStepsUrl}"
+           style="background: #D4A853; color: white; padding: 16px 32px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          Download 3 Steps Guide (PDF)
+        </a>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid #E8DDD0; margin: 32px 0;" />
+
+      <h3 style="color: #1A2332;">Next Step: Book a Discovery Call</h3>
+      <p>A 15-minute conversation to see if DNA is the right fit for your church. No pressure, no sales pitch—just an honest conversation about where you are and where you want to go.</p>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${discoveryCallUrl}"
+           style="background: #2D6A6A; color: white; padding: 14px 28px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          ${content.cta}
+        </a>
+      </div>
+
+      <p style="margin-top: 32px;">Travis<br>
+      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+    </div>
+  `;
+
+  return sendEmail({ to, subject, html });
+}

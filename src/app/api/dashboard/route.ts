@@ -15,6 +15,15 @@ export async function GET() {
 
     const { church, leader } = session;
 
+    // If church is not active, redirect to portal (unless admin)
+    const adminUser = isAdmin(leader.email);
+    if (!adminUser && church.status !== 'active' && church.status !== 'completed') {
+      return NextResponse.json(
+        { redirect: '/portal' },
+        { status: 307 }
+      );
+    }
+
     // Get all phases
     const { data: phases, error: phasesError } = await supabaseAdmin
       .from('phases')

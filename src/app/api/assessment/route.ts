@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/auth';
-import { sendAssessmentNotification } from '@/lib/email';
+import { sendAssessmentNotification, send3StepsEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
@@ -64,10 +64,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update church status to assessment complete
+    // Update church status to awaiting discovery call
     await supabaseAdmin
       .from('churches')
-      .update({ status: 'awaiting_call' })
+      .update({ status: 'awaiting_discovery' })
       .eq('id', church.id);
 
     // Create primary leader record
@@ -88,9 +88,44 @@ export async function POST(request: NextRequest) {
       data.contact_email
     );
 
+    // Calculate readiness level for 3 Steps email
+    let readinessScore = 0;
+
+    // Decision maker (from leadership_buy_in)
+    if (data.leadership_buy_in === 'fully_committed') readinessScore += 3;
+    else if (data.leadership_buy_in === 'exploring') readinessScore += 1;
+
+    // Pastor commitment (from pastor_commitment - if different field exists)
+    if (data.pastor_commitment >= 8) readinessScore += 3;
+    else if (data.pastor_commitment >= 5) readinessScore += 1;
+
+    // Leaders identified
+    const leaderCount = data.potential_leaders_count === '10_plus' ? 10 :
+      parseInt(data.potential_leaders_count?.split('_')[0]) || 0;
+    if (leaderCount >= 5) readinessScore += 2;
+    else if (leaderCount >= 2) readinessScore += 1;
+
+    // Manual reading
+    if (data.leaders_experienced === 'yes_many') readinessScore += 2;
+    else if (data.leaders_experienced === 'a_few') readinessScore += 1;
+
+    // Timeline
+    if (data.launch_timeline === '1_3_months') readinessScore += 2;
+    else if (data.launch_timeline === '3_6_months') readinessScore += 1;
+
+    // Determine readiness level
+    let readinessLevel: 'ready' | 'building' | 'exploring' = 'exploring';
+    if (readinessScore >= 10) readinessLevel = 'ready';
+    else if (readinessScore >= 5) readinessLevel = 'building';
+
+    // Send 3 Steps email to the church contact
+    const firstName = data.your_name_role.split(',')[0].split(' ')[0].trim();
+    await send3StepsEmail(data.contact_email, firstName, readinessLevel);
+
     return NextResponse.json({
       success: true,
-      churchId: church.id
+      churchId: church.id,
+      readinessLevel,
     });
   } catch (error) {
     console.error('Assessment submission error:', error);

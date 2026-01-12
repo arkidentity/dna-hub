@@ -1,11 +1,47 @@
 // Database types for DNA Church Hub
 
 export type ChurchStatus =
-  | 'pending_assessment'
-  | 'awaiting_call'
-  | 'active'
-  | 'completed'
-  | 'paused';
+  | 'pending_assessment'    // Just submitted assessment
+  | 'awaiting_discovery'    // Assessment reviewed, waiting for discovery call
+  | 'proposal_sent'         // Discovery done, proposal sent
+  | 'awaiting_agreement'    // Proposal reviewed, waiting for agreement call
+  | 'awaiting_strategy'     // Agreement done, waiting for strategy call
+  | 'active'                // Strategy done, full dashboard access
+  | 'completed'             // Finished all phases
+  | 'paused'                // On hold
+  | 'declined';             // Not a fit
+
+// Funnel document types for pre-dashboard
+export interface FunnelDocument {
+  id: string;
+  church_id: string;
+  document_type: 'discovery_notes' | 'proposal_pdf' | 'agreement_notes' | 'agreement_pdf' | '3_steps_pdf';
+  file_url?: string;
+  notes?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Scheduled calls/appointments
+export interface ScheduledCall {
+  id: string;
+  church_id: string;
+  call_type: 'discovery' | 'proposal' | 'strategy';
+  scheduled_at: string;
+  completed: boolean;
+  notes?: string;
+  created_at: string;
+}
+
+// Email subscribers (for landing page)
+export interface EmailSubscriber {
+  id: string;
+  email: string;
+  first_name: string;
+  subscribed_at: string;
+  manual_sent: boolean;
+  assessment_started: boolean;
+}
 
 export interface Church {
   id: string;
