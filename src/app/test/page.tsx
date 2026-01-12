@@ -246,9 +246,6 @@ export default function TestIndexPage() {
                       {page.description}
                     </p>
                     <p className="text-xs text-teal mt-1 font-mono">{page.href}</p>
-                    {page.note && (
-                      <p className="text-xs text-foreground-muted italic mt-1">{page.note}</p>
-                    )}
                   </div>
                   <div className="flex items-center gap-2">
                     {page.testHref && (

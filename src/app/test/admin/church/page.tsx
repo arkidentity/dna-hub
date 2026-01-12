@@ -20,8 +20,82 @@ import {
   Send,
 } from 'lucide-react';
 
+// Types for mock data
+interface MockCall {
+  id: string;
+  call_type: string;
+  scheduled_at: string;
+  completed: boolean;
+  notes?: string;
+}
+
+interface MockDocument {
+  id: string;
+  document_type: string;
+  file_url: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+interface MockMilestone {
+  id: string;
+  title: string;
+  is_key_milestone: boolean;
+  progress?: {
+    completed: boolean;
+    completed_at?: string;
+    target_date?: string;
+  };
+}
+
+interface MockPhase {
+  id: string;
+  phase_number: number;
+  name: string;
+  description: string;
+  status: string;
+  completedCount: number;
+  totalCount: number;
+  milestones: MockMilestone[];
+}
+
+interface MockChurchData {
+  church: {
+    id: string;
+    name: string;
+    status: string;
+    current_phase: number;
+    created_at: string;
+  };
+  leader: {
+    id: string;
+    name: string;
+    email: string;
+    phone: string;
+  };
+  assessment: {
+    id: string;
+    contact_name: string;
+    contact_email: string;
+    church_name: string;
+    submitted_at: string;
+    congregation_size: string;
+    why_interested: string;
+    pastor_commitment_level: string;
+    desired_launch_timeline: string;
+    current_discipleship_approach: string;
+    identified_leaders: number;
+    potential_barriers: string;
+    first_year_goals: string;
+    additional_questions: string;
+  };
+  documents: MockDocument[];
+  calls: MockCall[];
+  phases: MockPhase[];
+}
+
 // Mock data for a test church
-const MOCK_CHURCH_DATA = {
+const MOCK_CHURCH_DATA: MockChurchData = {
   church: {
     id: 'test-church-1',
     name: 'Grace Community Church',
@@ -191,12 +265,11 @@ export default function TestAdminChurchPage() {
 
     // Simulate API call
     setTimeout(() => {
-      const newCall = {
+      const newCall: MockCall = {
         id: `call-${Date.now()}`,
         call_type: callType,
         scheduled_at: new Date(callDate).toISOString(),
         completed: false,
-        notes: undefined,
       };
       setData(prev => ({
         ...prev,
