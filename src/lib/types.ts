@@ -117,10 +117,23 @@ export interface ChurchProgress {
   updated_at: string;
 }
 
+export interface MilestoneAttachment {
+  id: string;
+  church_id: string;
+  milestone_id: string;
+  file_name: string;
+  file_url: string;
+  file_type?: string;
+  file_size?: number;
+  uploaded_by?: string;
+  created_at: string;
+}
+
 // Extended types for UI
 export interface MilestoneWithProgress extends Milestone {
   progress?: ChurchProgress;
   completed_by_name?: string;
+  attachments?: MilestoneAttachment[];
 }
 
 export interface PhaseWithMilestones extends Phase {

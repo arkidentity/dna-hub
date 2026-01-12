@@ -68,6 +68,20 @@ export async function GET() {
       }]) || []
     );
 
+    // Get all attachments for this church
+    const { data: attachments } = await supabaseAdmin
+      .from('milestone_attachments')
+      .select('*')
+      .eq('church_id', church.id)
+      .order('created_at', { ascending: true });
+
+    // Create a map of milestone attachments
+    const attachmentsMap = new Map<string, typeof attachments>();
+    attachments?.forEach(attachment => {
+      const existing = attachmentsMap.get(attachment.milestone_id) || [];
+      attachmentsMap.set(attachment.milestone_id, [...existing, attachment]);
+    });
+
     // Build phases with milestones and progress
     const phasesWithMilestones: PhaseWithMilestones[] = phases.map(phase => {
       const phaseMilestones: MilestoneWithProgress[] = milestones
@@ -76,6 +90,7 @@ export async function GET() {
           ...milestone,
           progress: progressMap.get(milestone.id),
           completed_by_name: progressMap.get(milestone.id)?.completed_by_name,
+          attachments: attachmentsMap.get(milestone.id) || [],
         }));
 
       const completedCount = phaseMilestones.filter(m => m.progress?.completed).length;
@@ -83,7 +98,11 @@ export async function GET() {
 
       // Determine phase status
       let status: 'locked' | 'current' | 'completed' | 'upcoming';
-      if (phase.phase_number < church.current_phase) {
+
+      // Phase 0 (Onboarding) is always accessible - treat as completed
+      if (phase.phase_number === 0) {
+        status = 'completed';
+      } else if (phase.phase_number < church.current_phase) {
         status = 'completed';
       } else if (phase.phase_number === church.current_phase) {
         status = 'current';

@@ -22,6 +22,10 @@ import {
   MessageSquare,
   X,
   Save,
+  Paperclip,
+  Upload,
+  Trash2,
+  File,
 } from 'lucide-react';
 import { PhaseWithMilestones, MilestoneWithProgress, Church, ChurchLeader } from '@/lib/types';
 
@@ -44,6 +48,7 @@ export default function DashboardPage() {
   const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
   const [editDateValue, setEditDateValue] = useState<string>('');
   const [editNotesValue, setEditNotesValue] = useState<string>('');
+  const [uploadingMilestone, setUploadingMilestone] = useState<string | null>(null);
 
   useEffect(() => {
     fetchDashboard();
@@ -65,10 +70,10 @@ export default function DashboardPage() {
       const dashboardData = await response.json();
       setData(dashboardData);
 
-      // Auto-expand current and upcoming phases
+      // Auto-expand current, upcoming, and onboarding (phase 0) phases
       const toExpand = new Set<string>();
       dashboardData.phases.forEach((phase: PhaseWithMilestones) => {
-        if (phase.status === 'current' || phase.status === 'upcoming') {
+        if (phase.status === 'current' || phase.status === 'upcoming' || phase.phase_number === 0) {
           toExpand.add(phase.id);
         }
       });
@@ -190,6 +195,71 @@ export default function DashboardPage() {
     setEditingDateId(null); // Close date editor if open
   };
 
+  // Admin: Upload file attachment
+  const handleFileUpload = async (milestoneId: string, file: File) => {
+    setUploadingMilestone(milestoneId);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('milestoneId', milestoneId);
+
+      const response = await fetch('/api/attachments', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || 'Failed to upload file');
+        return;
+      }
+
+      await fetchDashboard();
+    } catch (error) {
+      console.error('Upload error:', error);
+      alert('Failed to upload file');
+    } finally {
+      setUploadingMilestone(null);
+    }
+  };
+
+  // Admin: Delete file attachment
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    if (!confirm('Delete this attachment?')) return;
+
+    try {
+      const response = await fetch(`/api/attachments?id=${attachmentId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        alert(error.error || 'Failed to delete attachment');
+        return;
+      }
+
+      await fetchDashboard();
+    } catch (error) {
+      console.error('Delete error:', error);
+      alert('Failed to delete attachment');
+    }
+  };
+
+  // Get file icon based on type
+  const getFileIcon = (fileType?: string) => {
+    if (fileType?.includes('pdf')) return <FileText className="w-4 h-4" />;
+    if (fileType?.includes('image')) return <File className="w-4 h-4" />;
+    return <File className="w-4 h-4" />;
+  };
+
+  // Format file size
+  const formatFileSize = (bytes?: number) => {
+    if (!bytes) return '';
+    if (bytes < 1024) return `${bytes} B`;
+    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+    return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  };
+
   const handleLogout = async () => {
     await fetch('/api/auth/logout', { method: 'POST' });
     router.push('/login');
@@ -210,6 +280,12 @@ export default function DashboardPage() {
     }
   };
 
+  // Helper to parse date string as local date (avoids timezone shift)
+  const parseLocalDate = (dateStr: string) => {
+    const parts = dateStr.split('T')[0].split('-');
+    return new Date(parseInt(parts[0]), parseInt(parts[1]) - 1, parseInt(parts[2]));
+  };
+
   const getPhaseDate = (phase: PhaseWithMilestones) => {
     if (!data?.church) return null;
     const church = data.church;
@@ -221,8 +297,8 @@ export default function DashboardPage() {
     const target = church[targetKey] as string | undefined;
 
     if (start && target) {
-      const startDate = new Date(start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
-      const targetDate = new Date(target).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const startDate = parseLocalDate(start).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      const targetDate = parseLocalDate(target).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       return `${startDate} - ${targetDate}`;
     }
 
@@ -238,8 +314,7 @@ export default function DashboardPage() {
 
   const formatTargetDate = (dateStr?: string) => {
     if (!dateStr) return null;
-    const date = new Date(dateStr);
-    return date.toLocaleDateString('en-US', {
+    return parseLocalDate(dateStr).toLocaleDateString('en-US', {
       weekday: 'short',
       month: 'short',
       day: 'numeric',
@@ -248,7 +323,7 @@ export default function DashboardPage() {
 
   const isOverdue = (dateStr?: string, completed?: boolean) => {
     if (!dateStr || completed) return false;
-    const targetDate = new Date(dateStr);
+    const targetDate = parseLocalDate(dateStr);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     return targetDate < today;
@@ -272,9 +347,9 @@ export default function DashboardPage() {
 
   const { church, leader, phases, isAdmin } = data;
 
-  // Calculate overall progress
-  const totalMilestones = phases.reduce((sum, p) => sum + p.totalCount, 0);
-  const completedMilestones = phases.reduce((sum, p) => sum + p.completedCount, 0);
+  // Calculate overall progress (exclude Phase 0 - Onboarding from progress)
+  const totalMilestones = phases.filter(p => p.phase_number > 0).reduce((sum, p) => sum + p.totalCount, 0);
+  const completedMilestones = phases.filter(p => p.phase_number > 0).reduce((sum, p) => sum + p.completedCount, 0);
   const overallProgress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
 
   return (
@@ -373,7 +448,7 @@ export default function DashboardPage() {
                       <div className="text-left">
                         <div className="flex items-center gap-2">
                           <h3 className="font-semibold text-navy">
-                            Phase {phase.phase_number}: {phase.name}
+                            {phase.phase_number === 0 ? phase.name : `Phase ${phase.phase_number}: ${phase.name}`}
                           </h3>
                           {phase.status === 'current' && (
                             <span className="text-xs bg-gold text-white px-2 py-0.5 rounded-full">
@@ -623,6 +698,75 @@ export default function DashboardPage() {
                                 <MessageSquare className="w-3 h-3" />
                                 <span>Add note</span>
                               </button>
+                            ) : null}
+
+                            {/* Attachments section */}
+                            {(milestone.attachments && milestone.attachments.length > 0) || isAdmin ? (
+                              <div className="mt-3">
+                                {/* Display existing attachments */}
+                                {milestone.attachments && milestone.attachments.length > 0 && (
+                                  <div className="space-y-1 mb-2">
+                                    {milestone.attachments.map(attachment => (
+                                      <div
+                                        key={attachment.id}
+                                        className="flex items-center gap-2 text-xs bg-teal/5 px-2 py-1.5 rounded group"
+                                      >
+                                        {getFileIcon(attachment.file_type)}
+                                        <a
+                                          href={attachment.file_url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-teal hover:text-teal-light flex-1 truncate"
+                                          title={attachment.file_name}
+                                        >
+                                          {attachment.file_name}
+                                        </a>
+                                        <span className="text-foreground-muted">
+                                          {formatFileSize(attachment.file_size)}
+                                        </span>
+                                        {isAdmin && (
+                                          <button
+                                            onClick={() => handleDeleteAttachment(attachment.id)}
+                                            className="p-1 text-foreground-muted hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
+                                            title="Delete attachment"
+                                          >
+                                            <Trash2 className="w-3 h-3" />
+                                          </button>
+                                        )}
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {/* Admin: Upload button */}
+                                {isAdmin && (
+                                  <label className="text-xs text-teal hover:text-teal-light flex items-center gap-1 cursor-pointer">
+                                    {uploadingMilestone === milestone.id ? (
+                                      <>
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                        <span>Uploading...</span>
+                                      </>
+                                    ) : (
+                                      <>
+                                        <Paperclip className="w-3 h-3" />
+                                        <span>Attach file</span>
+                                        <input
+                                          type="file"
+                                          className="hidden"
+                                          accept=".pdf,.png,.jpg,.jpeg,.gif,.doc,.docx"
+                                          onChange={(e) => {
+                                            const file = e.target.files?.[0];
+                                            if (file) {
+                                              handleFileUpload(milestone.id, file);
+                                              e.target.value = ''; // Reset input
+                                            }
+                                          }}
+                                        />
+                                      </>
+                                    )}
+                                  </label>
+                                )}
+                              </div>
                             ) : null}
 
                             {/* Key milestone badge */}
