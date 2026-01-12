@@ -15,6 +15,7 @@ import {
   BookOpen,
   Compass,
   ExternalLink,
+  Mail,
 } from 'lucide-react';
 
 export default function TestIndexPage() {
@@ -93,6 +94,17 @@ export default function TestIndexPage() {
       color: 'bg-gold/10 text-gold',
       requiresAuth: true,
       testHref: '/test/dashboard',
+    },
+  ];
+
+  // Email templates
+  const emailPages = [
+    {
+      title: 'Email Templates & Flow',
+      description: 'All automated emails with preview and copy',
+      href: '/test/emails',
+      icon: Mail,
+      color: 'bg-teal/10 text-teal',
     },
   ];
 
@@ -262,6 +274,46 @@ export default function TestIndexPage() {
           })}
         </div>
 
+        {/* Email Templates */}
+        <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+          <span className="w-8 h-8 bg-teal/10 rounded-full flex items-center justify-center text-teal text-sm font-bold">3</span>
+          Email Templates
+        </h2>
+        <div className="grid gap-3 mb-10">
+          {emailPages.map((page) => {
+            const Icon = page.icon;
+
+            return (
+              <Link
+                key={page.href}
+                href={page.href}
+                className="card hover:shadow-md transition-shadow group"
+              >
+                <div className="flex items-start gap-4">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${page.color}`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-navy group-hover:text-teal transition-colors">
+                      {page.title}
+                    </h3>
+                    <p className="text-sm text-foreground-muted mt-1">
+                      {page.description}
+                    </p>
+                    <p className="text-xs text-teal mt-1 font-mono">{page.href}</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span className="flex items-center gap-1 px-3 py-1.5 bg-teal text-white text-sm rounded group-hover:bg-teal-light transition-colors">
+                      <Mail className="w-4 h-4" />
+                      View All
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
+        </div>
+
         {/* Legend */}
         <div className="card bg-background-secondary">
           <h3 className="font-semibold text-navy mb-3">Legend</h3>
@@ -300,6 +352,9 @@ export default function TestIndexPage() {
             </Link>
             <Link href="/test/portal" className="text-sm px-3 py-1.5 bg-purple-600 text-white rounded hover:bg-purple-700 transition-colors">
               Test Portal
+            </Link>
+            <Link href="/test/emails" className="text-sm px-3 py-1.5 bg-teal text-white rounded hover:bg-teal-light transition-colors">
+              Email Templates
             </Link>
           </div>
         </div>
