@@ -502,14 +502,14 @@ export default function TestAdminPage() {
 
                     {/* Actions */}
                     <div className="flex flex-col items-end gap-2">
-                      {/* View Dashboard Button */}
+                      {/* View Church Detail Button */}
                       <div className="flex items-center gap-2">
                         <Link
-                          href="/test/dashboard"
+                          href="/test/admin/church"
                           className="flex items-center gap-2 px-4 py-2 bg-navy text-white rounded-lg hover:bg-navy/90 transition-colors text-sm"
                         >
                           <Eye className="w-4 h-4" />
-                          View
+                          Manage
                         </Link>
                         <button
                           onClick={() => sendMagicLink(church.leader_email, church.leader_name)}

@@ -130,12 +130,12 @@ export default function TestIndexPage() {
     },
     {
       title: 'Church Detail (Admin)',
-      description: 'Individual church management page',
+      description: 'Individual church management page with call scheduling',
       href: '/admin/church/[id]',
       icon: Eye,
       color: 'bg-navy/10 text-navy',
       requiresAuth: true,
-      note: 'No test page - requires real church ID',
+      testHref: '/test/admin/church',
     },
   ];
 
