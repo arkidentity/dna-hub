@@ -1,10 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/auth';
+import { getSupabaseAdmin } from '@/lib/auth';
 import { sendAssessmentNotification, send3StepsEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
     const data = await request.json();
+    const supabaseAdmin = getSupabaseAdmin();
+
+    // Combine name and role for contact_name
+    const contactName = data.your_role
+      ? `${data.your_name}, ${data.your_role}`
+      : data.your_name;
 
     // Create church record first
     const { data: church, error: churchError } = await supabaseAdmin
@@ -24,33 +30,37 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Parse leader count from form field
+    const parseLeaderCount = (val: string): number => {
+      if (!val) return 0;
+      if (val === '10_plus' || val === '10+') return 10;
+      const match = val.match(/\d+/);
+      return match ? parseInt(match[0]) : 0;
+    };
+
     // Create assessment record linked to church
     const { error: assessmentError } = await supabaseAdmin
       .from('church_assessments')
       .insert({
         church_id: church.id,
-        contact_name: data.your_name_role,
+        contact_name: contactName,
         contact_email: data.contact_email,
         contact_phone: data.contact_phone || null,
         church_name: data.church_name,
         church_city: data.church_city,
         church_state: data.church_state,
         congregation_size: data.attendance_size,
-        current_discipleship_approach: data.discipleship_culture === 'other'
-          ? data.discipleship_culture_other
-          : data.discipleship_culture,
-        why_interested: data.driving_interest,
-        identified_leaders: data.potential_leaders_count === '10_plus'
-          ? 10
-          : parseInt(data.potential_leaders_count?.split('_')[0]) || 0,
-        leaders_completed_dna: data.leaders_experienced === 'yes_many' || data.leaders_experienced === 'a_few',
-        pastor_commitment_level: data.leadership_buy_in,
+        current_discipleship_approach: data.discipleship_culture,
+        why_interested: data.why_now,
+        identified_leaders: parseLeaderCount(data.potential_leaders_count),
+        leaders_completed_dna: data.read_dna_manual === 'yes_fully' || data.read_dna_manual === 'yes_partially',
+        pastor_commitment_level: data.pastor_commitment,
         desired_launch_timeline: data.launch_timeline,
-        potential_barriers: JSON.stringify(data.potential_barriers || []),
-        first_year_goals: data.success_vision,
-        support_needed: JSON.stringify(data.support_needed || []),
-        how_heard_about_us: null, // Not in current form
-        additional_questions: data.additional_notes,
+        potential_barriers: data.what_would_make_you_say_no || null,
+        first_year_goals: null,
+        support_needed: null,
+        how_heard_about_us: data.how_heard === 'other' ? data.how_heard_other : data.how_heard,
+        additional_questions: data.biggest_question,
         call_already_booked: false,
       });
 
@@ -74,40 +84,44 @@ export async function POST(request: NextRequest) {
     await supabaseAdmin.from('church_leaders').insert({
       church_id: church.id,
       email: data.contact_email,
-      name: data.your_name_role.split(',')[0].trim(), // Get just the name part
-      role: data.your_name_role.includes(',')
-        ? data.your_name_role.split(',').slice(1).join(',').trim()
-        : null,
+      name: data.your_name,
+      role: data.your_role || null,
       is_primary_contact: true,
     });
 
     // Send notification email to Travis
     await sendAssessmentNotification(
       data.church_name,
-      data.your_name_role,
+      contactName,
       data.contact_email
     );
 
     // Calculate readiness level for 3 Steps email
     let readinessScore = 0;
 
-    // Decision maker (from leadership_buy_in)
-    if (data.leadership_buy_in === 'fully_committed') readinessScore += 3;
+    // Decision maker
+    if (data.is_decision_maker === 'yes') readinessScore += 2;
+    else if (data.is_decision_maker === 'partial') readinessScore += 1;
+
+    // Pastor commitment (1-10 scale)
+    const pastorCommitment = parseInt(data.pastor_commitment) || 0;
+    if (pastorCommitment >= 9) readinessScore += 3;
+    else if (pastorCommitment >= 7) readinessScore += 2;
+    else if (pastorCommitment >= 5) readinessScore += 1;
+
+    // Leadership buy-in
+    if (data.leadership_buy_in === 'fully_supportive') readinessScore += 3;
+    else if (data.leadership_buy_in === 'mostly_supportive') readinessScore += 2;
     else if (data.leadership_buy_in === 'exploring') readinessScore += 1;
 
-    // Pastor commitment (from pastor_commitment - if different field exists)
-    if (data.pastor_commitment >= 8) readinessScore += 3;
-    else if (data.pastor_commitment >= 5) readinessScore += 1;
+    // Have read the manual
+    if (data.read_dna_manual === 'yes_fully') readinessScore += 2;
+    else if (data.read_dna_manual === 'yes_partially') readinessScore += 1;
 
     // Leaders identified
-    const leaderCount = data.potential_leaders_count === '10_plus' ? 10 :
-      parseInt(data.potential_leaders_count?.split('_')[0]) || 0;
+    const leaderCount = parseLeaderCount(data.potential_leaders_count);
     if (leaderCount >= 5) readinessScore += 2;
     else if (leaderCount >= 2) readinessScore += 1;
-
-    // Manual reading
-    if (data.leaders_experienced === 'yes_many') readinessScore += 2;
-    else if (data.leaders_experienced === 'a_few') readinessScore += 1;
 
     // Timeline
     if (data.launch_timeline === '1_3_months') readinessScore += 2;
@@ -119,7 +133,7 @@ export async function POST(request: NextRequest) {
     else if (readinessScore >= 5) readinessLevel = 'building';
 
     // Send 3 Steps email to the church contact
-    const firstName = data.your_name_role.split(',')[0].split(' ')[0].trim();
+    const firstName = data.your_name.split(' ')[0].trim();
     await send3StepsEmail(data.contact_email, firstName, readinessLevel);
 
     return NextResponse.json({

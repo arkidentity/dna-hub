@@ -1,5 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, isAdmin, getSupabaseAdmin } from '@/lib/auth';
+import {
+  sendProposalReadyEmail,
+  sendAgreementConfirmedEmail,
+  sendDashboardAccessEmail,
+} from '@/lib/email';
 
 export async function GET() {
   try {
@@ -152,11 +157,25 @@ export async function PATCH(request: NextRequest) {
 
     const supabase = getSupabaseAdmin();
 
-    const { churchId, status, current_phase } = await request.json();
+    const { churchId, status, current_phase, tierName, sendEmail = true } = await request.json();
 
     if (!churchId) {
       return NextResponse.json({ error: 'Church ID required' }, { status: 400 });
     }
+
+    // Get current church data and leader info for email notifications
+    const { data: churchData } = await supabase
+      .from('churches')
+      .select('id, name, status')
+      .eq('id', churchId)
+      .single();
+
+    const { data: leaderData } = await supabase
+      .from('church_leaders')
+      .select('name, email')
+      .eq('church_id', churchId)
+      .eq('is_primary_contact', true)
+      .single();
 
     const updates: Record<string, unknown> = {
       updated_at: new Date().toISOString(),
@@ -178,6 +197,49 @@ export async function PATCH(request: NextRequest) {
     if (updateError) {
       console.error('[ADMIN] Update error:', updateError);
       return NextResponse.json({ error: 'Failed to update church' }, { status: 500 });
+    }
+
+    // Send email notifications based on status change
+    if (sendEmail && status && leaderData && churchData) {
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dna.arkidentity.com';
+      const portalUrl = `${baseUrl}/portal`;
+      const dashboardUrl = `${baseUrl}/dashboard`;
+      const firstName = leaderData.name.split(' ')[0];
+
+      try {
+        if (status === 'proposal_sent' && churchData.status !== 'proposal_sent') {
+          // Send proposal ready email
+          await sendProposalReadyEmail(
+            leaderData.email,
+            firstName,
+            churchData.name,
+            portalUrl
+          );
+          console.log('[ADMIN] Sent proposal ready email to', leaderData.email);
+        } else if (status === 'awaiting_strategy' && churchData.status !== 'awaiting_strategy') {
+          // Send agreement confirmed email
+          await sendAgreementConfirmedEmail(
+            leaderData.email,
+            firstName,
+            churchData.name,
+            tierName || 'DNA Implementation',
+            portalUrl
+          );
+          console.log('[ADMIN] Sent agreement confirmed email to', leaderData.email);
+        } else if (status === 'active' && churchData.status !== 'active') {
+          // Send dashboard access email
+          await sendDashboardAccessEmail(
+            leaderData.email,
+            firstName,
+            churchData.name,
+            dashboardUrl
+          );
+          console.log('[ADMIN] Sent dashboard access email to', leaderData.email);
+        }
+      } catch (emailError) {
+        console.error('[ADMIN] Email send error:', emailError);
+        // Don't fail the request if email fails
+      }
     }
 
     return NextResponse.json({ success: true });

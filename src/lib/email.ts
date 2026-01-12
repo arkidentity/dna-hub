@@ -237,6 +237,168 @@ export async function sendDNAManualEmail(to: string, firstName: string) {
   return sendEmail({ to, subject, html });
 }
 
+// Status change notification emails to church leaders
+
+// Sent when admin moves church to 'proposal_sent' - after discovery call
+export async function sendProposalReadyEmail(
+  to: string,
+  firstName: string,
+  churchName: string,
+  portalUrl: string
+) {
+  const proposalCallUrl = 'https://calendar.app.google/QCxrVixhV9yV8dvD7';
+
+  const subject = `Your DNA Proposal is Ready - ${churchName}`;
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1A2332;">Hey ${firstName},</h2>
+
+      <p>Great news! Following our discovery call, I've put together a customized DNA implementation proposal for ${churchName}.</p>
+
+      <div style="background: #F4E7D7; padding: 24px; border-radius: 8px; margin: 24px 0;">
+        <h3 style="color: #1A2332; margin: 0 0 12px 0;">Your Proposal is Ready</h3>
+        <p style="margin: 0 0 16px 0;">View your proposal and all your discovery notes in your portal:</p>
+        <a href="${portalUrl}"
+           style="background: #D4A853; color: white; padding: 14px 28px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          View Your Portal
+        </a>
+      </div>
+
+      <h3 style="color: #1A2332;">Next Step: Proposal Review Call</h3>
+      <p>Book a 30-minute call to walk through the proposal together. I'll answer any questions and we can discuss which tier makes the most sense for ${churchName}.</p>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${proposalCallUrl}"
+           style="background: #2D6A6A; color: white; padding: 14px 28px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          Book Proposal Review Call (30 min)
+        </a>
+      </div>
+
+      <p style="margin-top: 32px;">Travis<br>
+      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+    </div>
+  `;
+
+  return sendEmail({ to, subject, html });
+}
+
+// Sent when admin moves church to 'awaiting_strategy' - after agreement
+export async function sendAgreementConfirmedEmail(
+  to: string,
+  firstName: string,
+  churchName: string,
+  tierName: string,
+  portalUrl: string
+) {
+  const strategyCallUrl = 'https://calendar.app.google/DaGEKGrMYdfsTAr7';
+
+  const subject = `Welcome to DNA! - ${churchName}`;
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1A2332;">Hey ${firstName}!</h2>
+
+      <div style="background: #4A9E7F; color: white; padding: 24px; border-radius: 8px; margin: 24px 0; text-align: center;">
+        <h3 style="margin: 0 0 8px 0;">Welcome to DNA!</h3>
+        <p style="margin: 0; font-size: 18px;">${churchName} is now part of the DNA family</p>
+      </div>
+
+      <p>I'm excited to partner with you on this journey. You've chosen the <strong>${tierName}</strong> tier, and I can't wait to see how God uses DNA at ${churchName}.</p>
+
+      <h3 style="color: #1A2332;">Your Agreement</h3>
+      <p>Your signed agreement and all documents are available in your portal:</p>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${portalUrl}"
+           style="background: #D4A853; color: white; padding: 14px 28px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          View Your Portal
+        </a>
+      </div>
+
+      <hr style="border: none; border-top: 1px solid #E8DDD0; margin: 32px 0;" />
+
+      <h3 style="color: #1A2332;">Final Step: Strategy Call</h3>
+      <p>Let's schedule a 60-minute strategy call to:</p>
+      <ul style="color: #5A6577;">
+        <li>Create your customized implementation timeline</li>
+        <li>Identify your first DNA group leaders</li>
+        <li>Set you up with full dashboard access</li>
+        <li>Answer any final questions</li>
+      </ul>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${strategyCallUrl}"
+           style="background: #2D6A6A; color: white; padding: 14px 28px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          Book Strategy Call (60 min)
+        </a>
+      </div>
+
+      <p style="margin-top: 32px;">Travis<br>
+      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+    </div>
+  `;
+
+  return sendEmail({ to, subject, html });
+}
+
+// Sent when admin moves church to 'active' - after strategy call, full dashboard access
+export async function sendDashboardAccessEmail(
+  to: string,
+  firstName: string,
+  churchName: string,
+  dashboardUrl: string
+) {
+  const subject = `Your DNA Dashboard is Live! - ${churchName}`;
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1A2332;">Hey ${firstName}!</h2>
+
+      <div style="background: #1A2332; color: white; padding: 24px; border-radius: 8px; margin: 24px 0; text-align: center;">
+        <h3 style="color: #D4A853; margin: 0 0 8px 0;">Your Dashboard is Live!</h3>
+        <p style="margin: 0;">Full access to ${churchName}'s DNA implementation hub</p>
+      </div>
+
+      <p>Following our strategy call, you now have full access to your DNA Dashboard. This is your home base for the entire implementation journey.</p>
+
+      <h3 style="color: #1A2332;">What You Can Do:</h3>
+      <ul style="color: #5A6577;">
+        <li><strong>Track Progress</strong> - See your journey through all 5 phases</li>
+        <li><strong>Access Resources</strong> - Download materials for each milestone</li>
+        <li><strong>Mark Milestones</strong> - Check off completed items as you go</li>
+        <li><strong>Upload Documents</strong> - Store your church's DNA documents</li>
+        <li><strong>Export Calendar</strong> - Add milestones to your calendar</li>
+      </ul>
+
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${dashboardUrl}"
+           style="background: #D4A853; color: white; padding: 16px 32px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block; font-size: 18px;">
+          Access Your Dashboard
+        </a>
+      </div>
+
+      <p style="background: #F4E7D7; padding: 16px; border-radius: 8px;">
+        <strong>Bookmark this link</strong> - You can always request a new login link from the login page, but bookmarking makes access easy.
+      </p>
+
+      <p style="margin-top: 32px;">Let's multiply disciples together!</p>
+
+      <p>Travis<br>
+      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+    </div>
+  `;
+
+  return sendEmail({ to, subject, html });
+}
+
 // 3 Steps resource email (sent after assessment)
 export async function send3StepsEmail(
   to: string,

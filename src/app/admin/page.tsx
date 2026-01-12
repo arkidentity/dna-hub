@@ -66,6 +66,13 @@ const STATUS_LABELS: Record<string, { label: string; color: string; icon: typeof
   declined: { label: 'Declined', color: 'bg-red-100 text-red-800', icon: Ban },
 };
 
+const TIER_OPTIONS = [
+  { value: 'foundation', label: 'Foundation Tier' },
+  { value: 'growth', label: 'Growth Tier' },
+  { value: 'multiplier', label: 'Multiplier Tier' },
+  { value: 'custom', label: 'Custom Package' },
+];
+
 export default function AdminPage() {
   const router = useRouter();
   const [churches, setChurches] = useState<ChurchSummary[]>([]);
@@ -74,6 +81,11 @@ export default function AdminPage() {
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [refreshing, setRefreshing] = useState(false);
+
+  // Tier selection modal state
+  const [tierModalOpen, setTierModalOpen] = useState(false);
+  const [tierModalChurch, setTierModalChurch] = useState<ChurchSummary | null>(null);
+  const [selectedTier, setSelectedTier] = useState('growth');
 
   useEffect(() => {
     fetchAdminData();
@@ -118,12 +130,12 @@ export default function AdminPage() {
     router.push('/login');
   };
 
-  const handleStatusChange = async (churchId: string, newStatus: string) => {
+  const handleStatusChange = async (churchId: string, newStatus: string, tierName?: string) => {
     try {
       const response = await fetch('/api/admin/churches', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ churchId, status: newStatus }),
+        body: JSON.stringify({ churchId, status: newStatus, tierName }),
       });
 
       if (!response.ok) {
@@ -134,6 +146,41 @@ export default function AdminPage() {
     } catch (error) {
       console.error('Status update error:', error);
       alert('Failed to update church status');
+    }
+  };
+
+  const openTierModal = (church: ChurchSummary) => {
+    setTierModalChurch(church);
+    setSelectedTier('growth');
+    setTierModalOpen(true);
+  };
+
+  const handleTierConfirm = async () => {
+    if (!tierModalChurch) return;
+
+    const tierLabel = TIER_OPTIONS.find(t => t.value === selectedTier)?.label || 'DNA Implementation';
+    await handleStatusChange(tierModalChurch.id, 'awaiting_strategy', tierLabel);
+
+    setTierModalOpen(false);
+    setTierModalChurch(null);
+  };
+
+  const sendMagicLink = async (email: string, name: string) => {
+    try {
+      const response = await fetch('/api/auth/magic-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (response.ok) {
+        alert(`Magic link sent to ${name} (${email})`);
+      } else {
+        throw new Error('Failed to send magic link');
+      }
+    } catch (error) {
+      console.error('Magic link error:', error);
+      alert('Failed to send magic link');
     }
   };
 
@@ -367,13 +414,23 @@ export default function AdminPage() {
                     {/* Actions */}
                     <div className="flex flex-col items-end gap-2">
                       {/* View Dashboard Button */}
-                      <Link
-                        href={`/admin/church/${church.id}`}
-                        className="flex items-center gap-2 px-4 py-2 bg-navy text-white rounded-lg hover:bg-navy/90 transition-colors text-sm"
-                      >
-                        <Eye className="w-4 h-4" />
-                        View Dashboard
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link
+                          href={`/admin/church/${church.id}`}
+                          className="flex items-center gap-2 px-4 py-2 bg-navy text-white rounded-lg hover:bg-navy/90 transition-colors text-sm"
+                        >
+                          <Eye className="w-4 h-4" />
+                          View
+                        </Link>
+                        <button
+                          onClick={() => sendMagicLink(church.leader_email, church.leader_name)}
+                          className="flex items-center gap-2 px-3 py-2 border border-teal text-teal rounded-lg hover:bg-teal/10 transition-colors text-sm"
+                          title="Send login link to leader"
+                        >
+                          <Mail className="w-4 h-4" />
+                          Send Login
+                        </button>
+                      </div>
 
                       {/* Status Actions */}
                       <div className="flex items-center gap-2">
@@ -406,10 +463,10 @@ export default function AdminPage() {
 
                         {church.status === 'awaiting_agreement' && (
                           <button
-                            onClick={() => handleStatusChange(church.id, 'awaiting_strategy')}
+                            onClick={() => openTierModal(church)}
                             className="text-xs px-3 py-1.5 bg-gold text-white rounded hover:bg-gold-dark transition-colors"
                           >
-                            Mark Awaiting Strategy
+                            Mark Agreement Signed
                           </button>
                         )}
 
@@ -461,6 +518,61 @@ export default function AdminPage() {
           )}
         </div>
       </main>
+
+      {/* Tier Selection Modal */}
+      {tierModalOpen && tierModalChurch && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-navy mb-2">
+              Agreement Signed: {tierModalChurch.name}
+            </h3>
+            <p className="text-foreground-muted text-sm mb-4">
+              Select the tier this church has agreed to. An email will be sent to {tierModalChurch.leader_name} confirming their agreement and prompting them to book a strategy call.
+            </p>
+
+            <div className="space-y-2 mb-6">
+              {TIER_OPTIONS.map(tier => (
+                <label
+                  key={tier.value}
+                  className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+                    selectedTier === tier.value
+                      ? 'border-gold bg-gold/5'
+                      : 'border-border hover:border-foreground-muted'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="tier"
+                    value={tier.value}
+                    checked={selectedTier === tier.value}
+                    onChange={(e) => setSelectedTier(e.target.value)}
+                    className="accent-gold"
+                  />
+                  <span className="font-medium text-navy">{tier.label}</span>
+                </label>
+              ))}
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setTierModalOpen(false);
+                  setTierModalChurch(null);
+                }}
+                className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-background-secondary transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleTierConfirm}
+                className="flex-1 px-4 py-2 bg-gold text-white rounded-lg hover:bg-gold-dark transition-colors"
+              >
+                Confirm Agreement
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
