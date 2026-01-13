@@ -117,6 +117,13 @@ interface ChurchDetail {
         file_type?: string;
         file_size?: number;
       }>;
+      resources?: Array<{
+        id: string;
+        name: string;
+        description?: string;
+        file_url?: string;
+        resource_type?: string;
+      }>;
     }>;
     status: string;
     completedCount: number;
@@ -130,6 +137,7 @@ const DOCUMENT_TYPES = [
   { type: 'proposal_pdf', label: 'Proposal PDF', description: '3-tier partnership proposal' },
   { type: 'agreement_notes', label: 'Agreement Notes', description: 'Notes from agreement call' },
   { type: 'agreement_pdf', label: 'Agreement PDF', description: 'Final signed agreement' },
+  { type: 'implementation_plan', label: 'Implementation Plan', description: '12-month overview + 90-day game plan' },
 ];
 
 export default function AdminChurchPage({ params }: { params: Promise<{ id: string }> }) {
@@ -908,48 +916,88 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
                       {isExpanded && (
                         <div className="mt-4 pl-8 space-y-2">
                           {phase.milestones.map((milestone) => (
-                            <div
-                              key={milestone.id}
-                              className={`p-2 rounded flex items-center gap-3 group ${
-                                milestone.progress?.completed ? 'bg-success/5' : 'bg-background-secondary'
-                              }`}
-                            >
-                              {togglingMilestone === milestone.id ? (
-                                <Loader2 className="w-4 h-4 animate-spin text-gold flex-shrink-0" />
-                              ) : (
-                                <button
-                                  onClick={() => handleToggleMilestone(milestone.id, !!milestone.progress?.completed)}
-                                  className="flex-shrink-0 hover:scale-110 transition-transform"
-                                >
-                                  {milestone.progress?.completed ? (
-                                    <CheckCircle className="w-4 h-4 text-success" />
-                                  ) : (
-                                    <div className="w-4 h-4 border-2 border-card-border rounded hover:border-gold" />
-                                  )}
-                                </button>
-                              )}
-                              <span className={`text-sm flex-1 ${milestone.progress?.completed ? 'line-through text-foreground-muted' : ''}`}>
-                                {milestone.title}
-                              </span>
-                              {milestone.is_key_milestone && (
-                                <span className="text-xs bg-gold/10 text-gold px-2 py-0.5 rounded">Key</span>
-                              )}
-                              {milestone.is_custom && (
-                                <span className="text-xs bg-teal/10 text-teal px-2 py-0.5 rounded">Custom</span>
-                              )}
-                              {milestone.progress?.target_date && (
-                                <span className="text-xs text-foreground-muted">
-                                  Target: {formatDate(milestone.progress.target_date)}
+                            <div key={milestone.id} className="space-y-1">
+                              <div
+                                className={`p-2 rounded flex items-center gap-3 group ${
+                                  milestone.progress?.completed ? 'bg-success/5' : 'bg-background-secondary'
+                                }`}
+                              >
+                                {togglingMilestone === milestone.id ? (
+                                  <Loader2 className="w-4 h-4 animate-spin text-gold flex-shrink-0" />
+                                ) : (
+                                  <button
+                                    onClick={() => handleToggleMilestone(milestone.id, !!milestone.progress?.completed)}
+                                    className="flex-shrink-0 hover:scale-110 transition-transform"
+                                  >
+                                    {milestone.progress?.completed ? (
+                                      <CheckCircle className="w-4 h-4 text-success" />
+                                    ) : (
+                                      <div className="w-4 h-4 border-2 border-card-border rounded hover:border-gold" />
+                                    )}
+                                  </button>
+                                )}
+                                <span className={`text-sm flex-1 ${milestone.progress?.completed ? 'line-through text-foreground-muted' : ''}`}>
+                                  {milestone.title}
                                 </span>
-                              )}
-                              {milestone.is_custom && (
-                                <button
-                                  onClick={() => handleDeleteMilestone(milestone.id)}
-                                  className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:bg-red-50 rounded transition-opacity"
-                                  title="Delete custom milestone"
-                                >
-                                  <Trash2 className="w-3 h-3" />
-                                </button>
+                                {milestone.is_key_milestone && (
+                                  <span className="text-xs bg-gold/10 text-gold px-2 py-0.5 rounded">Key</span>
+                                )}
+                                {milestone.is_custom && (
+                                  <span className="text-xs bg-teal/10 text-teal px-2 py-0.5 rounded">Custom</span>
+                                )}
+                                {milestone.resources && milestone.resources.length > 0 && (
+                                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded flex items-center gap-1">
+                                    <FileText className="w-3 h-3" />
+                                    {milestone.resources.length}
+                                  </span>
+                                )}
+                                {milestone.progress?.target_date && (
+                                  <span className="text-xs text-foreground-muted">
+                                    Target: {formatDate(milestone.progress.target_date)}
+                                  </span>
+                                )}
+                                {milestone.is_custom && (
+                                  <button
+                                    onClick={() => handleDeleteMilestone(milestone.id)}
+                                    className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:bg-red-50 rounded transition-opacity"
+                                    title="Delete custom milestone"
+                                  >
+                                    <Trash2 className="w-3 h-3" />
+                                  </button>
+                                )}
+                              </div>
+                              {/* Resources attached to this milestone */}
+                              {milestone.resources && milestone.resources.length > 0 && (
+                                <div className="ml-7 pl-3 border-l-2 border-purple-200 space-y-1">
+                                  {milestone.resources.map((resource) => (
+                                    <div
+                                      key={resource.id}
+                                      className="flex items-center gap-2 p-1.5 rounded text-xs hover:bg-purple-50 transition-colors"
+                                    >
+                                      {resource.resource_type === 'pdf' && <FileText className="w-3 h-3 text-red-500" />}
+                                      {resource.resource_type === 'worksheet' && <FileText className="w-3 h-3 text-blue-500" />}
+                                      {resource.resource_type === 'video' && <Video className="w-3 h-3 text-purple-500" />}
+                                      {resource.resource_type === 'guide' && <BookOpen className="w-3 h-3 text-teal" />}
+                                      {resource.resource_type === 'link' && <ExternalLink className="w-3 h-3 text-gray-500" />}
+                                      {!resource.resource_type && <File className="w-3 h-3 text-gray-400" />}
+                                      {resource.file_url ? (
+                                        <a
+                                          href={resource.file_url}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="text-purple-700 hover:text-purple-900 hover:underline flex-1"
+                                        >
+                                          {resource.name}
+                                        </a>
+                                      ) : (
+                                        <span className="text-foreground-muted flex-1">
+                                          {resource.name}
+                                          <span className="text-orange-500 ml-1">(no file uploaded)</span>
+                                        </span>
+                                      )}
+                                    </div>
+                                  ))}
+                                </div>
                               )}
                             </div>
                           ))}
