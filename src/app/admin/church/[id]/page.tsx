@@ -34,6 +34,8 @@ import {
   Send,
   Play,
   Pause,
+  Plus,
+  Star,
 } from 'lucide-react';
 
 interface ChurchDetail {
@@ -101,6 +103,7 @@ interface ChurchDetail {
       title: string;
       description?: string;
       is_key_milestone: boolean;
+      is_custom?: boolean;
       progress?: {
         completed: boolean;
         completed_at?: string;
@@ -149,6 +152,13 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
 
   // Dashboard state
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
+  const [addingMilestone, setAddingMilestone] = useState<string | null>(null);
+  const [newMilestoneTitle, setNewMilestoneTitle] = useState('');
+  const [newMilestoneDescription, setNewMilestoneDescription] = useState('');
+  const [newMilestoneTargetDate, setNewMilestoneTargetDate] = useState('');
+  const [newMilestoneIsKey, setNewMilestoneIsKey] = useState(false);
+  const [savingMilestone, setSavingMilestone] = useState(false);
+  const [togglingMilestone, setTogglingMilestone] = useState<string | null>(null);
 
   useEffect(() => {
     fetchChurchData();
@@ -351,6 +361,85 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
     } catch (error) {
       console.error('Magic link error:', error);
       alert('Failed to send magic link');
+    }
+  };
+
+  const handleAddMilestone = async (phaseId: string) => {
+    if (!newMilestoneTitle.trim()) return;
+    setSavingMilestone(true);
+    try {
+      const response = await fetch(`/api/admin/church/${churchId}/milestones`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          phase_id: phaseId,
+          title: newMilestoneTitle.trim(),
+          description: newMilestoneDescription.trim() || null,
+          is_key_milestone: newMilestoneIsKey,
+          target_date: newMilestoneTargetDate || null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to create milestone');
+      }
+
+      await fetchChurchData();
+      setAddingMilestone(null);
+      setNewMilestoneTitle('');
+      setNewMilestoneDescription('');
+      setNewMilestoneTargetDate('');
+      setNewMilestoneIsKey(false);
+    } catch (error) {
+      console.error('Add milestone error:', error);
+      alert('Failed to add milestone');
+    } finally {
+      setSavingMilestone(false);
+    }
+  };
+
+  const handleToggleMilestone = async (milestoneId: string, currentCompleted: boolean) => {
+    setTogglingMilestone(milestoneId);
+    try {
+      const response = await fetch(`/api/admin/church/${churchId}/milestones`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          milestone_id: milestoneId,
+          completed: !currentCompleted,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update milestone');
+      }
+
+      await fetchChurchData();
+    } catch (error) {
+      console.error('Toggle milestone error:', error);
+      alert('Failed to update milestone');
+    } finally {
+      setTogglingMilestone(null);
+    }
+  };
+
+  const handleDeleteMilestone = async (milestoneId: string) => {
+    if (!confirm('Are you sure you want to delete this custom milestone?')) return;
+
+    try {
+      const response = await fetch(
+        `/api/admin/church/${churchId}/milestones?milestone_id=${milestoneId}`,
+        { method: 'DELETE' }
+      );
+
+      if (!response.ok) {
+        throw new Error('Failed to delete milestone');
+      }
+
+      await fetchChurchData();
+    } catch (error) {
+      console.error('Delete milestone error:', error);
+      alert('Failed to delete milestone');
     }
   };
 
@@ -738,113 +827,224 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
         )}
 
         {/* Dashboard Tab */}
-        {activeTab === 'dashboard' && phases && (
+        {activeTab === 'dashboard' && (
           <div className="space-y-4">
-            {/* Progress Overview */}
-            <div className="card mb-6">
-              <div className="flex items-center justify-between mb-2">
-                <h3 className="font-semibold text-navy">Implementation Progress</h3>
-                <span className="text-lg font-bold text-gold">
-                  Phase {church.current_phase} of 5
-                </span>
-              </div>
-              {phases.filter(p => p.phase_number > 0).map((phase) => {
-                const percent = phase.totalCount > 0
-                  ? Math.round((phase.completedCount / phase.totalCount) * 100)
-                  : 0;
-                const isCurrent = phase.phase_number === church.current_phase;
-
-                return (
-                  <div key={phase.id} className="flex items-center gap-3 mb-2">
-                    <span className="w-20 text-sm text-foreground-muted">Phase {phase.phase_number}</span>
-                    <div className="flex-1 h-2 bg-background-secondary rounded-full overflow-hidden">
-                      <div
-                        className={`h-full transition-all ${isCurrent ? 'bg-gold' : 'bg-success'}`}
-                        style={{ width: `${percent}%` }}
-                      />
-                    </div>
-                    <span className="w-12 text-sm text-right">{percent}%</span>
-                    {isCurrent && phase.completedCount === phase.totalCount && phase.totalCount > 0 && (
-                      <button
-                        onClick={() => handlePhaseComplete(phase.phase_number)}
-                        className="text-xs px-2 py-1 bg-success text-white rounded hover:bg-success/90"
-                      >
-                        Complete Phase
-                      </button>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-
-            {/* Phases list - simplified admin view */}
-            {phases.map((phase) => {
-              const isExpanded = expandedPhases.has(phase.id);
-
-              return (
-                <div key={phase.id} className="card">
-                  <button
-                    onClick={() => {
-                      const next = new Set(expandedPhases);
-                      if (next.has(phase.id)) {
-                        next.delete(phase.id);
-                      } else {
-                        next.add(phase.id);
-                      }
-                      setExpandedPhases(next);
-                    }}
-                    className="w-full flex items-center justify-between"
-                  >
-                    <div className="flex items-center gap-3">
-                      {isExpanded ? (
-                        <ChevronDown className="w-5 h-5 text-gold" />
-                      ) : (
-                        <ChevronRight className="w-5 h-5 text-gold" />
-                      )}
-                      <div className="text-left">
-                        <h4 className="font-semibold text-navy">
-                          {phase.phase_number === 0 ? phase.name : `Phase ${phase.phase_number}: ${phase.name}`}
-                        </h4>
-                        <p className="text-sm text-foreground-muted">{phase.description}</p>
-                      </div>
-                    </div>
-                    <span className="text-sm font-medium">
-                      {phase.completedCount}/{phase.totalCount}
+            {phases && phases.length > 0 ? (
+              <>
+                {/* Progress Overview */}
+                <div className="card mb-6">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="font-semibold text-navy">Implementation Progress</h3>
+                    <span className="text-lg font-bold text-gold">
+                      Phase {church.current_phase} of 5
                     </span>
-                  </button>
+                  </div>
+                  {phases.filter(p => p.phase_number > 0).map((phase) => {
+                    const percent = phase.totalCount > 0
+                      ? Math.round((phase.completedCount / phase.totalCount) * 100)
+                      : 0;
+                    const isCurrent = phase.phase_number === church.current_phase;
 
-                  {isExpanded && (
-                    <div className="mt-4 pl-8 space-y-2">
-                      {phase.milestones.map((milestone) => (
-                        <div
-                          key={milestone.id}
-                          className={`p-2 rounded flex items-center gap-3 ${
-                            milestone.progress?.completed ? 'bg-success/5' : 'bg-background-secondary'
-                          }`}
-                        >
-                          {milestone.progress?.completed ? (
-                            <CheckCircle className="w-4 h-4 text-success flex-shrink-0" />
+                    return (
+                      <div key={phase.id} className="flex items-center gap-3 mb-2">
+                        <span className="w-20 text-sm text-foreground-muted">Phase {phase.phase_number}</span>
+                        <div className="flex-1 h-2 bg-background-secondary rounded-full overflow-hidden">
+                          <div
+                            className={`h-full transition-all ${isCurrent ? 'bg-gold' : 'bg-success'}`}
+                            style={{ width: `${percent}%` }}
+                          />
+                        </div>
+                        <span className="w-12 text-sm text-right">{percent}%</span>
+                        {isCurrent && phase.completedCount === phase.totalCount && phase.totalCount > 0 && (
+                          <button
+                            onClick={() => handlePhaseComplete(phase.phase_number)}
+                            className="text-xs px-2 py-1 bg-success text-white rounded hover:bg-success/90"
+                          >
+                            Complete Phase
+                          </button>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Phases list - admin view with add/toggle capability */}
+                {phases.map((phase) => {
+                  const isExpanded = expandedPhases.has(phase.id);
+                  const isAddingToPhase = addingMilestone === phase.id;
+
+                  return (
+                    <div key={phase.id} className="card">
+                      <button
+                        onClick={() => {
+                          const next = new Set(expandedPhases);
+                          if (next.has(phase.id)) {
+                            next.delete(phase.id);
+                          } else {
+                            next.add(phase.id);
+                          }
+                          setExpandedPhases(next);
+                        }}
+                        className="w-full flex items-center justify-between"
+                      >
+                        <div className="flex items-center gap-3">
+                          {isExpanded ? (
+                            <ChevronDown className="w-5 h-5 text-gold" />
                           ) : (
-                            <div className="w-4 h-4 border-2 border-card-border rounded flex-shrink-0" />
+                            <ChevronRight className="w-5 h-5 text-gold" />
                           )}
-                          <span className={`text-sm ${milestone.progress?.completed ? 'line-through text-foreground-muted' : ''}`}>
-                            {milestone.title}
-                          </span>
-                          {milestone.is_key_milestone && (
-                            <span className="text-xs bg-gold/10 text-gold px-2 py-0.5 rounded">Key</span>
-                          )}
-                          {milestone.progress?.target_date && (
-                            <span className="text-xs text-foreground-muted ml-auto">
-                              Target: {formatDate(milestone.progress.target_date)}
-                            </span>
+                          <div className="text-left">
+                            <h4 className="font-semibold text-navy">
+                              {phase.phase_number === 0 ? phase.name : `Phase ${phase.phase_number}: ${phase.name}`}
+                            </h4>
+                            <p className="text-sm text-foreground-muted">{phase.description}</p>
+                          </div>
+                        </div>
+                        <span className="text-sm font-medium">
+                          {phase.completedCount}/{phase.totalCount}
+                        </span>
+                      </button>
+
+                      {isExpanded && (
+                        <div className="mt-4 pl-8 space-y-2">
+                          {phase.milestones.map((milestone) => (
+                            <div
+                              key={milestone.id}
+                              className={`p-2 rounded flex items-center gap-3 group ${
+                                milestone.progress?.completed ? 'bg-success/5' : 'bg-background-secondary'
+                              }`}
+                            >
+                              {togglingMilestone === milestone.id ? (
+                                <Loader2 className="w-4 h-4 animate-spin text-gold flex-shrink-0" />
+                              ) : (
+                                <button
+                                  onClick={() => handleToggleMilestone(milestone.id, !!milestone.progress?.completed)}
+                                  className="flex-shrink-0 hover:scale-110 transition-transform"
+                                >
+                                  {milestone.progress?.completed ? (
+                                    <CheckCircle className="w-4 h-4 text-success" />
+                                  ) : (
+                                    <div className="w-4 h-4 border-2 border-card-border rounded hover:border-gold" />
+                                  )}
+                                </button>
+                              )}
+                              <span className={`text-sm flex-1 ${milestone.progress?.completed ? 'line-through text-foreground-muted' : ''}`}>
+                                {milestone.title}
+                              </span>
+                              {milestone.is_key_milestone && (
+                                <span className="text-xs bg-gold/10 text-gold px-2 py-0.5 rounded">Key</span>
+                              )}
+                              {milestone.is_custom && (
+                                <span className="text-xs bg-teal/10 text-teal px-2 py-0.5 rounded">Custom</span>
+                              )}
+                              {milestone.progress?.target_date && (
+                                <span className="text-xs text-foreground-muted">
+                                  Target: {formatDate(milestone.progress.target_date)}
+                                </span>
+                              )}
+                              {milestone.is_custom && (
+                                <button
+                                  onClick={() => handleDeleteMilestone(milestone.id)}
+                                  className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:bg-red-50 rounded transition-opacity"
+                                  title="Delete custom milestone"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </button>
+                              )}
+                            </div>
+                          ))}
+
+                          {/* Add Milestone Form */}
+                          {isAddingToPhase ? (
+                            <div className="p-3 border border-gold/30 rounded-lg bg-gold/5 space-y-3">
+                              <input
+                                type="text"
+                                value={newMilestoneTitle}
+                                onChange={(e) => setNewMilestoneTitle(e.target.value)}
+                                placeholder="Milestone title *"
+                                className="w-full text-sm px-3 py-2 border border-input-border rounded-lg"
+                                autoFocus
+                              />
+                              <textarea
+                                value={newMilestoneDescription}
+                                onChange={(e) => setNewMilestoneDescription(e.target.value)}
+                                placeholder="Description (optional)"
+                                className="w-full text-sm px-3 py-2 border border-input-border rounded-lg"
+                                rows={2}
+                              />
+                              <div className="flex items-center gap-4">
+                                <div className="flex-1">
+                                  <label className="text-xs text-foreground-muted block mb-1">Target Date</label>
+                                  <input
+                                    type="date"
+                                    value={newMilestoneTargetDate}
+                                    onChange={(e) => setNewMilestoneTargetDate(e.target.value)}
+                                    className="text-sm px-3 py-1.5 border border-input-border rounded"
+                                  />
+                                </div>
+                                <label className="flex items-center gap-2 cursor-pointer">
+                                  <input
+                                    type="checkbox"
+                                    checked={newMilestoneIsKey}
+                                    onChange={(e) => setNewMilestoneIsKey(e.target.checked)}
+                                    className="w-4 h-4 rounded border-gray-300"
+                                  />
+                                  <span className="text-sm flex items-center gap-1">
+                                    <Star className="w-3 h-3 text-gold" />
+                                    Key Milestone
+                                  </span>
+                                </label>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <button
+                                  onClick={() => handleAddMilestone(phase.id)}
+                                  disabled={savingMilestone || !newMilestoneTitle.trim()}
+                                  className="flex items-center gap-1 px-3 py-1.5 bg-gold text-white rounded hover:bg-gold-dark transition-colors disabled:opacity-50 text-sm"
+                                >
+                                  {savingMilestone ? (
+                                    <Loader2 className="w-3 h-3 animate-spin" />
+                                  ) : (
+                                    <Plus className="w-3 h-3" />
+                                  )}
+                                  Add
+                                </button>
+                                <button
+                                  onClick={() => {
+                                    setAddingMilestone(null);
+                                    setNewMilestoneTitle('');
+                                    setNewMilestoneDescription('');
+                                    setNewMilestoneTargetDate('');
+                                    setNewMilestoneIsKey(false);
+                                  }}
+                                  className="px-3 py-1.5 text-foreground-muted hover:bg-background-secondary rounded transition-colors text-sm"
+                                >
+                                  Cancel
+                                </button>
+                              </div>
+                            </div>
+                          ) : (
+                            <button
+                              onClick={() => setAddingMilestone(phase.id)}
+                              className="flex items-center gap-2 p-2 text-sm text-teal hover:bg-teal/5 rounded transition-colors w-full"
+                            >
+                              <Plus className="w-4 h-4" />
+                              Add custom item
+                            </button>
                           )}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
+                  );
+                })}
+              </>
+            ) : (
+              <div className="card text-center py-8">
+                <p className="text-foreground-muted mb-4">No implementation phases found in the database.</p>
+                <p className="text-sm text-foreground-muted">
+                  Run the database schema SQL to seed the phases and milestones.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </main>

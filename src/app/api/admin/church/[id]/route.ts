@@ -61,65 +61,66 @@ export async function GET(
       .eq('church_id', churchId)
       .order('scheduled_at', { ascending: true });
 
-    // Get phases and milestones for active churches
+    // Get phases and milestones for all churches (admin view)
     let phases = null;
-    if (church.status === 'active' || church.status === 'completed') {
-      const { data: phasesData } = await supabase
-        .from('phases')
+    const { data: phasesData } = await supabase
+      .from('phases')
+      .select('*')
+      .order('phase_number', { ascending: true });
+
+    if (phasesData) {
+      // Get template milestones (no church_id) and church-specific milestones
+      const { data: milestones } = await supabase
+        .from('milestones')
         .select('*')
-        .order('phase_number', { ascending: true });
+        .or(`church_id.is.null,church_id.eq.${churchId}`)
+        .order('display_order', { ascending: true });
 
-      if (phasesData) {
-        const { data: milestones } = await supabase
-          .from('milestones')
-          .select('*')
-          .order('display_order', { ascending: true });
+      const { data: progress } = await supabase
+        .from('church_progress')
+        .select('*')
+        .eq('church_id', churchId);
 
-        const { data: progress } = await supabase
-          .from('church_progress')
-          .select('*')
-          .eq('church_id', churchId);
+      const { data: attachments } = await supabase
+        .from('milestone_attachments')
+        .select('*')
+        .eq('church_id', churchId);
 
-        const { data: attachments } = await supabase
-          .from('milestone_attachments')
-          .select('*')
-          .eq('church_id', churchId);
-
-        phases = phasesData.map((phase) => {
-          const phaseMilestones = milestones?.filter((m) => m.phase_id === phase.id) || [];
-          const milestonesWithProgress = phaseMilestones.map((m) => {
-            const milestoneProgress = progress?.find((p) => p.milestone_id === m.id);
-            const milestoneAttachments = attachments?.filter((a) => a.milestone_id === m.id);
-            return {
-              ...m,
-              progress: milestoneProgress || null,
-              attachments: milestoneAttachments || [],
-            };
-          });
-
-          const completedCount = milestonesWithProgress.filter((m) => m.progress?.completed).length;
-
-          // Determine phase status
-          let status = 'locked';
-          if (phase.phase_number === 0) {
-            status = 'current';
-          } else if (phase.phase_number < church.current_phase) {
-            status = 'completed';
-          } else if (phase.phase_number === church.current_phase) {
-            status = 'current';
-          } else if (phase.phase_number === church.current_phase + 1) {
-            status = 'upcoming';
-          }
-
+      phases = phasesData.map((phase) => {
+        const phaseMilestones = milestones?.filter((m) => m.phase_id === phase.id) || [];
+        const milestonesWithProgress = phaseMilestones.map((m) => {
+          const milestoneProgress = progress?.find((p) => p.milestone_id === m.id);
+          const milestoneAttachments = attachments?.filter((a) => a.milestone_id === m.id);
           return {
-            ...phase,
-            milestones: milestonesWithProgress,
-            status,
-            completedCount,
-            totalCount: phaseMilestones.length,
+            ...m,
+            progress: milestoneProgress || null,
+            attachments: milestoneAttachments || [],
+            is_custom: !!m.church_id, // Flag for church-specific milestones
           };
         });
-      }
+
+        const completedCount = milestonesWithProgress.filter((m) => m.progress?.completed).length;
+
+        // Determine phase status
+        let status = 'locked';
+        if (phase.phase_number === 0) {
+          status = 'current';
+        } else if (phase.phase_number < church.current_phase) {
+          status = 'completed';
+        } else if (phase.phase_number === church.current_phase) {
+          status = 'current';
+        } else if (phase.phase_number === church.current_phase + 1) {
+          status = 'upcoming';
+        }
+
+        return {
+          ...phase,
+          milestones: milestonesWithProgress,
+          status,
+          completedCount,
+          totalCount: phaseMilestones.length,
+        };
+      });
     }
 
     return NextResponse.json({
