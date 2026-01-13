@@ -416,10 +416,11 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
             <div className="flex items-center gap-3">
               <button
                 onClick={handleSendMagicLink}
-                className="flex items-center gap-2 px-4 py-2 bg-teal text-white rounded-lg hover:bg-teal-light transition-colors text-sm"
+                className="flex items-center gap-1.5 px-2 py-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors text-xs"
+                title="Send login link to church leader"
               >
-                <Send className="w-4 h-4" />
-                Send Login Link
+                <Send className="w-3 h-3" />
+                Send Link
               </button>
               <select
                 value={church.status}
@@ -464,7 +465,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
 
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Overview Tab */}
-        {activeTab === 'overview' && assessment && (
+        {activeTab === 'overview' && (
           <div className="grid md:grid-cols-2 gap-6">
             {/* Assessment Details */}
             <div className="card">
@@ -472,66 +473,70 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
                 <FileText className="w-5 h-5 text-gold" />
                 Assessment Details
               </h3>
-              <div className="space-y-3 text-sm">
-                <div>
-                  <p className="text-foreground-muted">Submitted</p>
-                  <p className="font-medium">{formatDate(assessment.submitted_at)}</p>
+              {assessment ? (
+                <div className="space-y-3 text-sm">
+                  <div>
+                    <p className="text-foreground-muted">Submitted</p>
+                    <p className="font-medium">{formatDate(assessment.submitted_at)}</p>
+                  </div>
+                  {assessment.congregation_size && (
+                    <div>
+                      <p className="text-foreground-muted">Congregation Size</p>
+                      <p className="font-medium">{assessment.congregation_size}</p>
+                    </div>
+                  )}
+                  {assessment.pastor_commitment_level && (
+                    <div>
+                      <p className="text-foreground-muted">Pastor Commitment</p>
+                      <p className="font-medium capitalize">{assessment.pastor_commitment_level.replace('_', ' ')}</p>
+                    </div>
+                  )}
+                  {assessment.identified_leaders && (
+                    <div>
+                      <p className="text-foreground-muted">Identified Leaders</p>
+                      <p className="font-medium">{assessment.identified_leaders}</p>
+                    </div>
+                  )}
+                  {assessment.desired_launch_timeline && (
+                    <div>
+                      <p className="text-foreground-muted">Desired Timeline</p>
+                      <p className="font-medium">{assessment.desired_launch_timeline}</p>
+                    </div>
+                  )}
+                  {assessment.current_discipleship_approach && (
+                    <div>
+                      <p className="text-foreground-muted">Current Approach</p>
+                      <p className="font-medium">{assessment.current_discipleship_approach}</p>
+                    </div>
+                  )}
+                  {assessment.why_interested && (
+                    <div>
+                      <p className="text-foreground-muted">Why DNA?</p>
+                      <p className="font-medium">{assessment.why_interested}</p>
+                    </div>
+                  )}
+                  {assessment.potential_barriers && (
+                    <div>
+                      <p className="text-foreground-muted">Potential Barriers</p>
+                      <p className="font-medium">{assessment.potential_barriers}</p>
+                    </div>
+                  )}
+                  {assessment.first_year_goals && (
+                    <div>
+                      <p className="text-foreground-muted">First Year Goals</p>
+                      <p className="font-medium">{assessment.first_year_goals}</p>
+                    </div>
+                  )}
+                  {assessment.additional_questions && (
+                    <div>
+                      <p className="text-foreground-muted">Additional Questions</p>
+                      <p className="font-medium">{assessment.additional_questions}</p>
+                    </div>
+                  )}
                 </div>
-                {assessment.congregation_size && (
-                  <div>
-                    <p className="text-foreground-muted">Congregation Size</p>
-                    <p className="font-medium">{assessment.congregation_size}</p>
-                  </div>
-                )}
-                {assessment.pastor_commitment_level && (
-                  <div>
-                    <p className="text-foreground-muted">Pastor Commitment</p>
-                    <p className="font-medium capitalize">{assessment.pastor_commitment_level.replace('_', ' ')}</p>
-                  </div>
-                )}
-                {assessment.identified_leaders && (
-                  <div>
-                    <p className="text-foreground-muted">Identified Leaders</p>
-                    <p className="font-medium">{assessment.identified_leaders}</p>
-                  </div>
-                )}
-                {assessment.desired_launch_timeline && (
-                  <div>
-                    <p className="text-foreground-muted">Desired Timeline</p>
-                    <p className="font-medium">{assessment.desired_launch_timeline}</p>
-                  </div>
-                )}
-                {assessment.current_discipleship_approach && (
-                  <div>
-                    <p className="text-foreground-muted">Current Approach</p>
-                    <p className="font-medium">{assessment.current_discipleship_approach}</p>
-                  </div>
-                )}
-                {assessment.why_interested && (
-                  <div>
-                    <p className="text-foreground-muted">Why DNA?</p>
-                    <p className="font-medium">{assessment.why_interested}</p>
-                  </div>
-                )}
-                {assessment.potential_barriers && (
-                  <div>
-                    <p className="text-foreground-muted">Potential Barriers</p>
-                    <p className="font-medium">{assessment.potential_barriers}</p>
-                  </div>
-                )}
-                {assessment.first_year_goals && (
-                  <div>
-                    <p className="text-foreground-muted">First Year Goals</p>
-                    <p className="font-medium">{assessment.first_year_goals}</p>
-                  </div>
-                )}
-                {assessment.additional_questions && (
-                  <div>
-                    <p className="text-foreground-muted">Additional Questions</p>
-                    <p className="font-medium">{assessment.additional_questions}</p>
-                  </div>
-                )}
-              </div>
+              ) : (
+                <p className="text-sm text-foreground-muted">No assessment submitted yet for this church.</p>
+              )}
             </div>
 
             {/* Scheduled Calls */}
