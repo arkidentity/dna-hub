@@ -28,9 +28,20 @@ export async function POST(request: NextRequest) {
 
     console.log('[MAGIC-LINK] Found leader:', leader.name, '| Church status:', leader.church?.status);
 
-    // Check if church is active
-    if (leader.church?.status !== 'active') {
-      console.log('[MAGIC-LINK] Church not active, status:', leader.church?.status);
+    // Allow login for any valid church status (they'll be routed to portal or dashboard accordingly)
+    const validStatuses = [
+      'pending_assessment',
+      'awaiting_discovery',
+      'proposal_sent',
+      'awaiting_agreement',
+      'awaiting_strategy',
+      'active',
+      'completed',
+      'paused',
+    ];
+
+    if (!leader.church?.status || !validStatuses.includes(leader.church.status)) {
+      console.log('[MAGIC-LINK] Invalid church status:', leader.church?.status);
       return NextResponse.json({
         success: true,
         message: 'If this email is registered, a login link has been sent.',
