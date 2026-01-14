@@ -5,10 +5,6 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowLeft,
-  Building2,
-  Users,
-  Mail,
-  Phone,
   Calendar,
   FileText,
   Upload,
@@ -19,23 +15,21 @@ import {
   ExternalLink,
   CheckCircle,
   Clock,
-  AlertCircle,
   ChevronDown,
   ChevronRight,
   Check,
-  Lock,
   Video,
   BookOpen,
-  Download,
   Pencil,
   MessageSquare,
-  Paperclip,
   File,
   Send,
-  Play,
-  Pause,
   Plus,
   Star,
+  LayoutDashboard,
+  Map,
+  List,
+  LayoutList,
 } from 'lucide-react';
 
 interface ChurchDetail {
@@ -92,6 +86,7 @@ interface ChurchDetail {
     scheduled_at: string;
     completed: boolean;
     notes?: string;
+    meet_link?: string;
   }>;
   phases?: Array<{
     id: string;
@@ -145,7 +140,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
   const router = useRouter();
   const [data, setData] = useState<ChurchDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'funnel' | 'dashboard'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'journey'>('overview');
 
   // Document editing
   const [editingDoc, setEditingDoc] = useState<string | null>(null);
@@ -158,8 +153,9 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
   const [callDate, setCallDate] = useState('');
   const [savingCall, setSavingCall] = useState(false);
 
-  // Dashboard state
+  // Journey state
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
+  const [compactView, setCompactView] = useState(false);
   const [addingMilestone, setAddingMilestone] = useState<string | null>(null);
   const [newMilestoneTitle, setNewMilestoneTitle] = useState('');
   const [newMilestoneDescription, setNewMilestoneDescription] = useState('');
@@ -351,22 +347,22 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  const handlePhaseComplete = async (phaseNumber: number) => {
+  const handlePhaseChange = async (newPhase: number) => {
     try {
       const response = await fetch('/api/admin/churches', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ churchId, current_phase: phaseNumber + 1 }),
+        body: JSON.stringify({ churchId, current_phase: newPhase }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to advance phase');
+        throw new Error('Failed to update phase');
       }
 
       await fetchChurchData();
     } catch (error) {
-      console.error('Phase advance error:', error);
-      alert('Failed to advance phase');
+      console.error('Phase update error:', error);
+      alert('Failed to update phase');
     }
   };
 
@@ -506,6 +502,11 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
 
   const { church, leader, assessment, documents, calls, phases } = data;
 
+  // Calculate progress stats
+  const totalMilestones = phases?.filter(p => p.phase_number > 0).reduce((sum, p) => sum + p.totalCount, 0) || 0;
+  const completedMilestones = phases?.filter(p => p.phase_number > 0).reduce((sum, p) => sum + p.completedCount, 0) || 0;
+  const overallProgress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -558,21 +559,25 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
         </div>
       </header>
 
-      {/* Tabs */}
+      {/* Tab Navigation */}
       <div className="bg-white border-b border-card-border">
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex gap-6">
-            {['overview', 'funnel', 'dashboard'].map((tab) => (
+            {[
+              { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+              { id: 'journey', label: 'DNA Journey', icon: Map },
+            ].map((tab) => (
               <button
-                key={tab}
-                onClick={() => setActiveTab(tab as typeof activeTab)}
-                className={`py-4 px-2 border-b-2 font-medium text-sm capitalize transition-colors ${
-                  activeTab === tab
-                    ? 'border-gold text-gold'
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                className={`flex items-center gap-2 py-4 border-b-2 transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-gold text-navy font-medium'
                     : 'border-transparent text-foreground-muted hover:text-navy'
                 }`}
               >
-                {tab === 'dashboard' ? 'Implementation Dashboard' : tab}
+                <tab.icon className="w-4 h-4" />
+                {tab.label}
               </button>
             ))}
           </div>
@@ -582,209 +587,268 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
       <main className="max-w-6xl mx-auto px-6 py-8">
         {/* Overview Tab */}
         {activeTab === 'overview' && (
-          <div className="grid md:grid-cols-2 gap-6">
-            {/* Assessment Details */}
+          <div className="space-y-6">
+            {/* Progress Overview Card */}
             <div className="card">
-              <h3 className="font-semibold text-navy mb-4 flex items-center gap-2">
-                <FileText className="w-5 h-5 text-gold" />
-                Assessment Details
-              </h3>
-              {assessment ? (
-                <div className="space-y-3 text-sm">
-                  <div>
-                    <p className="text-foreground-muted">Submitted</p>
-                    <p className="font-medium">{formatDate(assessment.submitted_at)}</p>
-                  </div>
-                  {assessment.congregation_size && (
-                    <div>
-                      <p className="text-foreground-muted">Congregation Size</p>
-                      <p className="font-medium">{assessment.congregation_size}</p>
-                    </div>
-                  )}
-                  {assessment.pastor_commitment_level && (
-                    <div>
-                      <p className="text-foreground-muted">Pastor Commitment</p>
-                      <p className="font-medium capitalize">{assessment.pastor_commitment_level.replace('_', ' ')}</p>
-                    </div>
-                  )}
-                  {assessment.identified_leaders && (
-                    <div>
-                      <p className="text-foreground-muted">Identified Leaders</p>
-                      <p className="font-medium">{assessment.identified_leaders}</p>
-                    </div>
-                  )}
-                  {assessment.desired_launch_timeline && (
-                    <div>
-                      <p className="text-foreground-muted">Desired Timeline</p>
-                      <p className="font-medium">{assessment.desired_launch_timeline}</p>
-                    </div>
-                  )}
-                  {assessment.current_discipleship_approach && (
-                    <div>
-                      <p className="text-foreground-muted">Current Approach</p>
-                      <p className="font-medium">{assessment.current_discipleship_approach}</p>
-                    </div>
-                  )}
-                  {assessment.why_interested && (
-                    <div>
-                      <p className="text-foreground-muted">Why DNA?</p>
-                      <p className="font-medium">{assessment.why_interested}</p>
-                    </div>
-                  )}
-                  {assessment.potential_barriers && (
-                    <div>
-                      <p className="text-foreground-muted">Potential Barriers</p>
-                      <p className="font-medium">{assessment.potential_barriers}</p>
-                    </div>
-                  )}
-                  {assessment.first_year_goals && (
-                    <div>
-                      <p className="text-foreground-muted">First Year Goals</p>
-                      <p className="font-medium">{assessment.first_year_goals}</p>
-                    </div>
-                  )}
-                  {assessment.additional_questions && (
-                    <div>
-                      <p className="text-foreground-muted">Additional Questions</p>
-                      <p className="font-medium">{assessment.additional_questions}</p>
-                    </div>
-                  )}
-                </div>
-              ) : (
-                <p className="text-sm text-foreground-muted">No assessment submitted yet for this church.</p>
-              )}
-            </div>
-
-            {/* Scheduled Calls */}
-            <div className="card">
-              <h3 className="font-semibold text-navy mb-4 flex items-center gap-2">
-                <Calendar className="w-5 h-5 text-teal" />
-                Scheduled Calls
-              </h3>
-              <div className="space-y-3">
-                {calls.length === 0 ? (
-                  <p className="text-sm text-foreground-muted">No calls scheduled yet</p>
-                ) : (
-                  calls.map((call) => (
-                    <div
-                      key={call.id}
-                      className={`p-3 rounded-lg group ${call.completed ? 'bg-success/5' : 'bg-background-secondary'}`}
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-navy">Implementation Progress</h2>
+                <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm text-foreground-muted">Phase:</span>
+                    <select
+                      value={church.current_phase}
+                      onChange={(e) => handlePhaseChange(Number(e.target.value))}
+                      className="text-sm border border-input-border rounded px-2 py-1"
                     >
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="font-medium text-navy capitalize">{call.call_type} Call</span>
-                        <div className="flex items-center gap-2">
-                          {call.completed ? (
-                            <span className="text-xs text-success flex items-center gap-1">
-                              <CheckCircle className="w-3 h-3" />
-                              Completed
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => handleCompleteCall(call.id)}
-                              className="text-xs text-teal hover:text-teal-light"
-                            >
-                              Mark Complete
-                            </button>
-                          )}
-                          <button
-                            onClick={() => handleDeleteCall(call.id)}
-                            className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:bg-red-50 rounded transition-opacity"
-                            title="Delete call"
-                          >
-                            <Trash2 className="w-3 h-3" />
-                          </button>
-                        </div>
-                      </div>
-                      <p className="text-sm text-foreground-muted">{formatDateTime(call.scheduled_at)}</p>
-                      {call.notes && (
-                        <p className="text-sm mt-2 p-2 bg-white rounded border border-card-border">
-                          {call.notes}
-                        </p>
-                      )}
-                    </div>
-                  ))
-                )}
-
-                {/* Add call buttons */}
-                <div className="flex flex-wrap gap-2 mt-4">
-                  {['discovery', 'proposal', 'strategy'].map((callType) => {
-                    const hasCall = calls.some((c) => c.call_type === callType);
-                    if (hasCall) return null;
-
-                    return addingCall === callType ? (
-                      <div key={callType} className="flex items-center gap-2">
-                        <input
-                          type="datetime-local"
-                          value={callDate}
-                          onChange={(e) => setCallDate(e.target.value)}
-                          className="text-sm px-2 py-1 border border-input-border rounded"
-                        />
-                        <button
-                          onClick={() => handleScheduleCall(callType)}
-                          disabled={savingCall}
-                          className="p-1 text-success hover:bg-success/10 rounded"
-                        >
-                          {savingCall ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                        </button>
-                        <button
-                          onClick={() => { setAddingCall(null); setCallDate(''); }}
-                          className="p-1 text-foreground-muted hover:bg-background-secondary rounded"
-                        >
-                          <X className="w-4 h-4" />
-                        </button>
-                      </div>
-                    ) : (
-                      <button
-                        key={callType}
-                        onClick={() => setAddingCall(callType)}
-                        className="text-xs px-3 py-1.5 border border-teal text-teal rounded hover:bg-teal/5 transition-colors capitalize"
-                      >
-                        + {callType} Call
-                      </button>
-                    );
-                  })}
+                      {[0, 1, 2, 3, 4, 5].map((p) => (
+                        <option key={p} value={p}>Phase {p}</option>
+                      ))}
+                    </select>
+                  </div>
+                  <span className="text-2xl font-bold text-gold">{overallProgress}%</span>
                 </div>
               </div>
+              <div className="h-3 bg-background-secondary rounded-full overflow-hidden mb-4">
+                <div
+                  className="h-full bg-gold transition-all duration-500"
+                  style={{ width: `${overallProgress}%` }}
+                />
+              </div>
+              {/* Per-phase mini progress */}
+              <div className="flex gap-2">
+                {phases?.filter(p => p.phase_number > 0).map((phase) => {
+                  const percent = phase.totalCount > 0
+                    ? Math.round((phase.completedCount / phase.totalCount) * 100)
+                    : 0;
+                  const isCurrent = phase.phase_number === church.current_phase ||
+                    (church.current_phase === 0 && phase.phase_number === 1);
+
+                  return (
+                    <div key={phase.id} className="flex-1">
+                      <div className="h-1.5 bg-background-secondary rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all ${
+                            percent === 100 ? 'bg-success' : isCurrent ? 'bg-gold' : 'bg-gray-300'
+                          }`}
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                      <p className={`text-xs mt-1 text-center ${isCurrent ? 'text-gold font-medium' : 'text-foreground-muted'}`}>
+                        P{phase.phase_number}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
 
-        {/* Funnel Tab */}
-        {activeTab === 'funnel' && (
-          <div className="space-y-4">
-            {DOCUMENT_TYPES.map((docType) => {
-              const existingDoc = documents.find((d) => d.document_type === docType.type);
-              const isEditing = editingDoc === docType.type;
+            {/* Two Column Layout */}
+            <div className="grid md:grid-cols-2 gap-6">
+              {/* Scheduled Calls */}
+              <div className="card">
+                <h3 className="font-semibold text-navy mb-4 flex items-center gap-2">
+                  <Calendar className="w-5 h-5 text-teal" />
+                  Scheduled Calls
+                </h3>
+                <div className="space-y-3">
+                  {calls.length === 0 ? (
+                    <p className="text-sm text-foreground-muted">No calls scheduled yet</p>
+                  ) : (
+                    calls.map((call) => {
+                      const isUpcoming = !call.completed && new Date(call.scheduled_at) > new Date();
+                      return (
+                        <div
+                          key={call.id}
+                          className={`p-3 rounded-lg group ${call.completed ? 'bg-success/5' : 'bg-background-secondary'}`}
+                        >
+                          <div className="flex items-center justify-between mb-1">
+                            <span className="font-medium text-navy capitalize">{call.call_type} Call</span>
+                            <div className="flex items-center gap-2">
+                              {call.completed ? (
+                                <span className="text-xs text-success flex items-center gap-1">
+                                  <CheckCircle className="w-3 h-3" />
+                                  Completed
+                                </span>
+                              ) : (
+                                <button
+                                  onClick={() => handleCompleteCall(call.id)}
+                                  className="text-xs text-teal hover:text-teal-light"
+                                >
+                                  Mark Complete
+                                </button>
+                              )}
+                              <button
+                                onClick={() => handleDeleteCall(call.id)}
+                                className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:bg-red-50 rounded transition-opacity"
+                                title="Delete call"
+                              >
+                                <Trash2 className="w-3 h-3" />
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-sm text-foreground-muted">{formatDateTime(call.scheduled_at)}</p>
+                          {isUpcoming && call.meet_link && (
+                            <a
+                              href={call.meet_link}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-teal text-white text-xs font-medium rounded hover:bg-teal/90 transition-colors"
+                            >
+                              <Video className="w-3.5 h-3.5" />
+                              Join Google Meet
+                            </a>
+                          )}
+                          {call.notes && (
+                            <p className="text-sm mt-2 p-2 bg-white rounded border border-card-border">
+                              {call.notes}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    })
+                  )}
 
-              return (
-                <div key={docType.type} className="card">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <h3 className="font-semibold text-navy">{docType.label}</h3>
-                      <p className="text-sm text-foreground-muted">{docType.description}</p>
+                  {/* Add call buttons */}
+                  <div className="flex flex-wrap gap-2 mt-4">
+                    {['discovery', 'proposal', 'strategy', 'checkin'].map((callType) => {
+                      const existingCalls = calls.filter((c) => c.call_type === callType);
+                      // Allow multiple checkin calls, but only one of each other type
+                      if (callType !== 'checkin' && existingCalls.length > 0) return null;
 
-                      {/* File upload/display */}
+                      return addingCall === callType ? (
+                        <div key={callType} className="flex items-center gap-2">
+                          <input
+                            type="datetime-local"
+                            value={callDate}
+                            onChange={(e) => setCallDate(e.target.value)}
+                            className="text-sm px-2 py-1 border border-input-border rounded"
+                          />
+                          <button
+                            onClick={() => handleScheduleCall(callType)}
+                            disabled={savingCall}
+                            className="p-1 text-success hover:bg-success/10 rounded"
+                          >
+                            {savingCall ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                          </button>
+                          <button
+                            onClick={() => { setAddingCall(null); setCallDate(''); }}
+                            className="p-1 text-foreground-muted hover:bg-background-secondary rounded"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          key={callType}
+                          onClick={() => setAddingCall(callType)}
+                          className="text-xs px-3 py-1.5 border border-teal text-teal rounded hover:bg-teal/5 transition-colors capitalize"
+                        >
+                          + {callType === 'checkin' ? 'Check-in' : callType} Call
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              </div>
+
+              {/* Assessment Details */}
+              <div className="card">
+                <h3 className="font-semibold text-navy mb-4 flex items-center gap-2">
+                  <FileText className="w-5 h-5 text-gold" />
+                  Assessment Details
+                </h3>
+                {assessment ? (
+                  <div className="space-y-3 text-sm max-h-80 overflow-y-auto">
+                    <div>
+                      <p className="text-foreground-muted">Submitted</p>
+                      <p className="font-medium">{formatDate(assessment.submitted_at)}</p>
+                    </div>
+                    {assessment.congregation_size && (
+                      <div>
+                        <p className="text-foreground-muted">Congregation Size</p>
+                        <p className="font-medium">{assessment.congregation_size}</p>
+                      </div>
+                    )}
+                    {assessment.pastor_commitment_level && (
+                      <div>
+                        <p className="text-foreground-muted">Pastor Commitment</p>
+                        <p className="font-medium capitalize">{assessment.pastor_commitment_level.replace('_', ' ')}</p>
+                      </div>
+                    )}
+                    {assessment.identified_leaders && (
+                      <div>
+                        <p className="text-foreground-muted">Identified Leaders</p>
+                        <p className="font-medium">{assessment.identified_leaders}</p>
+                      </div>
+                    )}
+                    {assessment.desired_launch_timeline && (
+                      <div>
+                        <p className="text-foreground-muted">Desired Timeline</p>
+                        <p className="font-medium">{assessment.desired_launch_timeline}</p>
+                      </div>
+                    )}
+                    {assessment.why_interested && (
+                      <div>
+                        <p className="text-foreground-muted">Why DNA?</p>
+                        <p className="font-medium">{assessment.why_interested}</p>
+                      </div>
+                    )}
+                    {assessment.potential_barriers && (
+                      <div>
+                        <p className="text-foreground-muted">Potential Barriers</p>
+                        <p className="font-medium">{assessment.potential_barriers}</p>
+                      </div>
+                    )}
+                    {assessment.first_year_goals && (
+                      <div>
+                        <p className="text-foreground-muted">First Year Goals</p>
+                        <p className="font-medium">{assessment.first_year_goals}</p>
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <p className="text-sm text-foreground-muted">No assessment submitted yet.</p>
+                )}
+              </div>
+            </div>
+
+            {/* Documents Section */}
+            <div className="card">
+              <h3 className="font-semibold text-navy mb-4 flex items-center gap-2">
+                <FileText className="w-5 h-5 text-teal" />
+                Documents
+              </h3>
+              <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {DOCUMENT_TYPES.map((docType) => {
+                  const existingDoc = documents.find((d) => d.document_type === docType.type);
+                  const isEditing = editingDoc === docType.type;
+
+                  return (
+                    <div key={docType.type} className="p-4 bg-background-secondary rounded-lg">
+                      <h4 className="font-medium text-navy text-sm">{docType.label}</h4>
+                      <p className="text-xs text-foreground-muted mb-2">{docType.description}</p>
+
                       {existingDoc?.file_url ? (
                         <a
                           href={existingDoc.file_url}
                           target="_blank"
                           rel="noopener noreferrer"
-                          className="inline-flex items-center gap-2 mt-2 text-sm text-teal hover:text-teal-light"
+                          className="inline-flex items-center gap-1 text-xs text-teal hover:text-teal-light"
                         >
-                          <FileText className="w-4 h-4" />
+                          <FileText className="w-3 h-3" />
                           View Document
                           <ExternalLink className="w-3 h-3" />
                         </a>
                       ) : (
-                        <label className="inline-flex items-center gap-2 mt-2 text-sm text-teal hover:text-teal-light cursor-pointer">
+                        <label className="inline-flex items-center gap-1 text-xs text-teal hover:text-teal-light cursor-pointer">
                           {uploadingDoc === docType.type ? (
                             <>
-                              <Loader2 className="w-4 h-4 animate-spin" />
+                              <Loader2 className="w-3 h-3 animate-spin" />
                               Uploading...
                             </>
                           ) : (
                             <>
-                              <Upload className="w-4 h-4" />
+                              <Upload className="w-3 h-3" />
                               Upload PDF
                               <input
                                 type="file"
@@ -800,46 +864,45 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
                         </label>
                       )}
 
-                      {/* Notes section */}
                       {isEditing ? (
-                        <div className="mt-4">
+                        <div className="mt-2">
                           <textarea
                             value={docNotes}
                             onChange={(e) => setDocNotes(e.target.value)}
                             placeholder="Add notes..."
-                            className="w-full text-sm"
-                            rows={4}
+                            className="w-full text-xs p-2 border border-input-border rounded"
+                            rows={3}
                             autoFocus
                           />
-                          <div className="flex items-center gap-2 mt-2">
+                          <div className="flex items-center gap-2 mt-1">
                             <button
                               onClick={() => handleSaveDocNotes(docType.type)}
                               disabled={savingDoc}
-                              className="text-sm px-3 py-1.5 bg-gold text-white rounded hover:bg-gold-dark transition-colors flex items-center gap-1"
+                              className="text-xs px-2 py-1 bg-gold text-white rounded hover:bg-gold-dark flex items-center gap-1"
                             >
                               {savingDoc ? <Loader2 className="w-3 h-3 animate-spin" /> : <Save className="w-3 h-3" />}
                               Save
                             </button>
                             <button
                               onClick={() => { setEditingDoc(null); setDocNotes(''); }}
-                              className="text-sm px-3 py-1.5 text-foreground-muted hover:bg-background-secondary rounded"
+                              className="text-xs px-2 py-1 text-foreground-muted hover:bg-white rounded"
                             >
                               Cancel
                             </button>
                           </div>
                         </div>
                       ) : existingDoc?.notes ? (
-                        <div className="mt-4 p-3 bg-background-secondary rounded-lg">
-                          <p className="text-sm whitespace-pre-wrap">{existingDoc.notes}</p>
+                        <div className="mt-2 p-2 bg-white rounded text-xs">
+                          <p className="text-foreground-muted whitespace-pre-wrap">{existingDoc.notes}</p>
                           <button
                             onClick={() => {
                               setEditingDoc(docType.type);
                               setDocNotes(existingDoc.notes || '');
                             }}
-                            className="text-xs text-teal hover:text-teal-light mt-2 flex items-center gap-1"
+                            className="text-teal hover:text-teal-light mt-1 flex items-center gap-1"
                           >
                             <Pencil className="w-3 h-3" />
-                            Edit Notes
+                            Edit
                           </button>
                         </div>
                       ) : (
@@ -848,69 +911,86 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
                             setEditingDoc(docType.type);
                             setDocNotes('');
                           }}
-                          className="text-sm text-teal hover:text-teal-light mt-4 flex items-center gap-1"
+                          className="text-xs text-teal hover:text-teal-light mt-2 flex items-center gap-1"
                         >
-                          <MessageSquare className="w-4 h-4" />
+                          <MessageSquare className="w-3 h-3" />
                           Add Notes
                         </button>
                       )}
                     </div>
-                  </div>
-                </div>
-              );
-            })}
+                  );
+                })}
+              </div>
+            </div>
           </div>
         )}
 
-        {/* Dashboard Tab */}
-        {activeTab === 'dashboard' && (
-          <div className="space-y-4">
-            {phases && phases.length > 0 ? (
-              <>
-                {/* Progress Overview */}
-                <div className="card mb-6">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="font-semibold text-navy">Implementation Progress</h3>
-                    <span className="text-lg font-bold text-gold">
-                      Phase {church.current_phase} of 5
-                    </span>
-                  </div>
-                  {phases.filter(p => p.phase_number > 0).map((phase) => {
-                    const percent = phase.totalCount > 0
-                      ? Math.round((phase.completedCount / phase.totalCount) * 100)
-                      : 0;
-                    const isCurrent = phase.phase_number === church.current_phase;
-
-                    return (
-                      <div key={phase.id} className="flex items-center gap-3 mb-2">
-                        <span className="w-20 text-sm text-foreground-muted">Phase {phase.phase_number}</span>
-                        <div className="flex-1 h-2 bg-background-secondary rounded-full overflow-hidden">
-                          <div
-                            className={`h-full transition-all ${isCurrent ? 'bg-gold' : 'bg-success'}`}
-                            style={{ width: `${percent}%` }}
-                          />
-                        </div>
-                        <span className="w-12 text-sm text-right">{percent}%</span>
-                        {isCurrent && phase.completedCount === phase.totalCount && phase.totalCount > 0 && (
-                          <button
-                            onClick={() => handlePhaseComplete(phase.phase_number)}
-                            className="text-xs px-2 py-1 bg-success text-white rounded hover:bg-success/90"
-                          >
-                            Complete Phase
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
+        {/* DNA Journey Tab */}
+        {activeTab === 'journey' && (
+          <div className="space-y-6">
+            {/* Progress Overview with Per-Phase Bars */}
+            <div className="card">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-xl font-semibold text-navy">DNA Journey</h2>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setCompactView(!compactView)}
+                    className={`p-2 rounded-lg transition-colors ${compactView ? 'bg-gold/10 text-gold' : 'text-foreground-muted hover:bg-background-secondary'}`}
+                    title={compactView ? 'Expanded view' : 'Compact view'}
+                  >
+                    {compactView ? <LayoutList className="w-5 h-5" /> : <List className="w-5 h-5" />}
+                  </button>
+                  <span className="text-2xl font-bold text-gold">{overallProgress}%</span>
                 </div>
+              </div>
+              <div className="h-3 bg-background-secondary rounded-full overflow-hidden mb-4">
+                <div
+                  className="h-full bg-gold transition-all duration-500"
+                  style={{ width: `${overallProgress}%` }}
+                />
+              </div>
 
-                {/* Phases list - admin view with add/toggle capability */}
-                {phases.map((phase) => {
-                  const isExpanded = expandedPhases.has(phase.id);
-                  const isAddingToPhase = addingMilestone === phase.id;
+              {/* Per-phase mini progress */}
+              <div className="flex gap-2">
+                {phases?.filter(p => p.phase_number > 0).map((phase) => {
+                  const percent = phase.totalCount > 0
+                    ? Math.round((phase.completedCount / phase.totalCount) * 100)
+                    : 0;
+                  const isCurrent = phase.phase_number === church.current_phase ||
+                    (church.current_phase === 0 && phase.phase_number === 1);
 
                   return (
-                    <div key={phase.id} className="card">
+                    <div key={phase.id} className="flex-1">
+                      <div className="h-1.5 bg-background-secondary rounded-full overflow-hidden">
+                        <div
+                          className={`h-full transition-all ${
+                            percent === 100 ? 'bg-success' : isCurrent ? 'bg-gold' : 'bg-gray-300'
+                          }`}
+                          style={{ width: `${percent}%` }}
+                        />
+                      </div>
+                      <p className={`text-xs mt-1 text-center ${isCurrent ? 'text-gold font-medium' : 'text-foreground-muted'}`}>
+                        P{phase.phase_number}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Phases */}
+            <div className="space-y-4">
+              {phases && phases.length > 0 ? (
+                phases.map((phase) => {
+                  const isExpanded = expandedPhases.has(phase.id);
+                  const isAddingToPhase = addingMilestone === phase.id;
+                  const isCurrent = phase.phase_number === church.current_phase;
+
+                  return (
+                    <div
+                      key={phase.id}
+                      className={`card ${isCurrent ? 'ring-2 ring-gold/30' : ''}`}
+                    >
                       <button
                         onClick={() => {
                           const next = new Set(expandedPhases);
@@ -930,10 +1010,19 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
                             <ChevronRight className="w-5 h-5 text-gold" />
                           )}
                           <div className="text-left">
-                            <h4 className="font-semibold text-navy">
-                              {phase.phase_number === 0 ? phase.name : `Phase ${phase.phase_number}: ${phase.name}`}
-                            </h4>
-                            <p className="text-sm text-foreground-muted">{phase.description}</p>
+                            <div className="flex items-center gap-2">
+                              <h4 className="font-semibold text-navy">
+                                {phase.phase_number === 0 ? phase.name : `Phase ${phase.phase_number}: ${phase.name}`}
+                              </h4>
+                              {isCurrent && (
+                                <span className="text-xs bg-gold text-white px-2 py-0.5 rounded-full">
+                                  Current
+                                </span>
+                              )}
+                            </div>
+                            {!compactView && phase.description && (
+                              <p className="text-sm text-foreground-muted mt-1">{phase.description}</p>
+                            )}
                           </div>
                         </div>
                         <span className="text-sm font-medium">
@@ -946,87 +1035,86 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
                           {phase.milestones.map((milestone) => (
                             <div key={milestone.id} className="space-y-1">
                               <div
-                                className={`p-2 rounded flex items-center gap-3 group ${
+                                className={`p-3 rounded-lg flex items-start gap-3 group ${
                                   milestone.progress?.completed ? 'bg-success/5' : 'bg-background-secondary'
                                 }`}
                               >
                                 {togglingMilestone === milestone.id ? (
-                                  <Loader2 className="w-4 h-4 animate-spin text-gold flex-shrink-0" />
+                                  <Loader2 className="w-5 h-5 animate-spin text-gold flex-shrink-0 mt-0.5" />
                                 ) : (
                                   <button
                                     onClick={() => handleToggleMilestone(milestone.id, !!milestone.progress?.completed)}
-                                    className="flex-shrink-0 hover:scale-110 transition-transform"
+                                    className="flex-shrink-0 hover:scale-110 transition-transform mt-0.5"
                                   >
                                     {milestone.progress?.completed ? (
-                                      <CheckCircle className="w-4 h-4 text-success" />
+                                      <CheckCircle className="w-5 h-5 text-success" />
                                     ) : (
-                                      <div className="w-4 h-4 border-2 border-card-border rounded hover:border-gold" />
+                                      <div className="w-5 h-5 border-2 border-card-border rounded-full hover:border-gold" />
                                     )}
                                   </button>
                                 )}
-                                <span className={`text-sm flex-1 ${milestone.progress?.completed ? 'line-through text-foreground-muted' : ''}`}>
-                                  {milestone.title}
-                                </span>
-                                {milestone.is_key_milestone && (
-                                  <span className="text-xs bg-gold/10 text-gold px-2 py-0.5 rounded">Key</span>
-                                )}
-                                {milestone.is_custom && (
-                                  <span className="text-xs bg-teal/10 text-teal px-2 py-0.5 rounded">Custom</span>
-                                )}
-                                {milestone.resources && milestone.resources.length > 0 && (
-                                  <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded flex items-center gap-1">
-                                    <FileText className="w-3 h-3" />
-                                    {milestone.resources.length}
-                                  </span>
-                                )}
-                                {milestone.progress?.target_date && (
-                                  <span className="text-xs text-foreground-muted">
-                                    Target: {formatDate(milestone.progress.target_date)}
-                                  </span>
-                                )}
-                                {milestone.is_custom && (
-                                  <button
-                                    onClick={() => handleDeleteMilestone(milestone.id)}
-                                    className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:bg-red-50 rounded transition-opacity"
-                                    title="Delete custom milestone"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </button>
-                                )}
-                              </div>
-                              {/* Resources attached to this milestone */}
-                              {milestone.resources && milestone.resources.length > 0 && (
-                                <div className="ml-7 pl-3 border-l-2 border-purple-200 space-y-1">
-                                  {milestone.resources.map((resource) => (
-                                    <div
-                                      key={resource.id}
-                                      className="flex items-center gap-2 p-1.5 rounded text-xs hover:bg-purple-50 transition-colors"
-                                    >
-                                      {resource.resource_type === 'pdf' && <FileText className="w-3 h-3 text-red-500" />}
-                                      {resource.resource_type === 'worksheet' && <FileText className="w-3 h-3 text-blue-500" />}
-                                      {resource.resource_type === 'video' && <Video className="w-3 h-3 text-purple-500" />}
-                                      {resource.resource_type === 'guide' && <BookOpen className="w-3 h-3 text-teal" />}
-                                      {resource.resource_type === 'link' && <ExternalLink className="w-3 h-3 text-gray-500" />}
-                                      {!resource.resource_type && <File className="w-3 h-3 text-gray-400" />}
-                                      {resource.file_url ? (
-                                        <a
-                                          href={resource.file_url}
-                                          target="_blank"
-                                          rel="noopener noreferrer"
-                                          className="text-purple-700 hover:text-purple-900 hover:underline flex-1"
+                                <div className="flex-1 min-w-0">
+                                  <div className="flex items-start justify-between gap-2">
+                                    <p className={`font-medium ${milestone.progress?.completed ? 'line-through text-foreground-muted' : 'text-navy'}`}>
+                                      {milestone.title}
+                                    </p>
+                                    <div className="flex items-center gap-2 flex-shrink-0">
+                                      {milestone.is_key_milestone && (
+                                        <span className="text-xs bg-gold/10 text-gold px-2 py-0.5 rounded">Key</span>
+                                      )}
+                                      {milestone.is_custom && (
+                                        <span className="text-xs bg-teal/10 text-teal px-2 py-0.5 rounded">Custom</span>
+                                      )}
+                                      {milestone.is_custom && (
+                                        <button
+                                          onClick={() => handleDeleteMilestone(milestone.id)}
+                                          className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:bg-red-50 rounded transition-opacity"
+                                          title="Delete custom milestone"
                                         >
-                                          {resource.name}
-                                        </a>
-                                      ) : (
-                                        <span className="text-foreground-muted flex-1">
-                                          {resource.name}
-                                          <span className="text-orange-500 ml-1">(no file uploaded)</span>
-                                        </span>
+                                          <Trash2 className="w-3 h-3" />
+                                        </button>
                                       )}
                                     </div>
-                                  ))}
+                                  </div>
+                                  {!compactView && milestone.description && (
+                                    <p className="text-sm text-foreground-muted mt-1">{milestone.description}</p>
+                                  )}
+                                  {milestone.progress?.target_date && (
+                                    <p className="text-xs text-foreground-muted mt-1 flex items-center gap-1">
+                                      <Clock className="w-3 h-3" />
+                                      Target: {formatDate(milestone.progress.target_date)}
+                                    </p>
+                                  )}
+                                  {/* Resources */}
+                                  {!compactView && milestone.resources && milestone.resources.length > 0 && (
+                                    <div className="mt-2 space-y-1">
+                                      {milestone.resources.map((resource) => (
+                                        <div
+                                          key={resource.id}
+                                          className="flex items-center gap-2 text-xs bg-purple-50 px-2 py-1.5 rounded"
+                                        >
+                                          {resource.resource_type === 'pdf' && <FileText className="w-3 h-3 text-red-500" />}
+                                          {resource.resource_type === 'video' && <Video className="w-3 h-3 text-purple-500" />}
+                                          {resource.resource_type === 'guide' && <BookOpen className="w-3 h-3 text-teal" />}
+                                          {!resource.resource_type && <File className="w-3 h-3 text-gray-400" />}
+                                          {resource.file_url ? (
+                                            <a
+                                              href={resource.file_url}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="text-purple-700 hover:text-purple-900 hover:underline"
+                                            >
+                                              {resource.name}
+                                            </a>
+                                          ) : (
+                                            <span className="text-foreground-muted">{resource.name}</span>
+                                          )}
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
                                 </div>
-                              )}
+                              </div>
                             </div>
                           ))}
 
@@ -1104,23 +1192,20 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
                               className="flex items-center gap-2 p-2 text-sm text-teal hover:bg-teal/5 rounded transition-colors w-full"
                             >
                               <Plus className="w-4 h-4" />
-                              Add custom item
+                              Add custom milestone
                             </button>
                           )}
                         </div>
                       )}
                     </div>
                   );
-                })}
-              </>
-            ) : (
-              <div className="card text-center py-8">
-                <p className="text-foreground-muted mb-4">No implementation phases found in the database.</p>
-                <p className="text-sm text-foreground-muted">
-                  Run the database schema SQL to seed the phases and milestones.
-                </p>
-              </div>
-            )}
+                })
+              ) : (
+                <div className="card text-center py-8">
+                  <p className="text-foreground-muted mb-4">No implementation phases found.</p>
+                </div>
+              )}
+            </div>
           </div>
         )}
       </main>

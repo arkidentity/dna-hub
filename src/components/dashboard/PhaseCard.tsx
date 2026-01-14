@@ -48,7 +48,7 @@ function getMatchingCall(milestoneTitle: string, calls: ScheduledCall[]): Schedu
   if (title.includes('discovery call') || title.includes('discovery session')) {
     return calls.find(c => c.call_type === 'discovery');
   }
-  if (title.includes('proposal call') || title.includes('proposal session')) {
+  if (title.includes('proposal call') || title.includes('proposal session') || title.includes('agreement call') || title.includes('agreement session')) {
     return calls.find(c => c.call_type === 'proposal');
   }
   if (title.includes('kick-off') || title.includes('kickoff')) {
@@ -56,6 +56,12 @@ function getMatchingCall(milestoneTitle: string, calls: ScheduledCall[]): Schedu
   }
   if (title.includes('assessment call')) {
     return calls.find(c => c.call_type === 'assessment');
+  }
+  if (title.includes('onboarding call') || title.includes('onboarding session')) {
+    return calls.find(c => c.call_type === 'onboarding');
+  }
+  if (title.includes('check-in') || title.includes('checkin') || title.includes('check in')) {
+    return calls.find(c => c.call_type === 'checkin');
   }
   return undefined;
 }

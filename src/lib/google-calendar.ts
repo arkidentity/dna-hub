@@ -173,13 +173,15 @@ export async function disconnectGoogleCalendar(adminEmail: string) {
 // Detect call type from event title
 export function detectCallType(
   title: string
-): 'discovery' | 'proposal' | 'strategy' | 'kickoff' | 'assessment' | null {
+): 'discovery' | 'proposal' | 'strategy' | 'kickoff' | 'assessment' | 'onboarding' | 'checkin' | null {
   const lower = title.toLowerCase();
   if (lower.includes('discovery')) return 'discovery';
   if (lower.includes('proposal')) return 'proposal';
   if (lower.includes('strategy')) return 'strategy';
   if (lower.includes('kick-off') || lower.includes('kickoff') || lower.includes('kick off')) return 'kickoff';
   if (lower.includes('assessment')) return 'assessment';
+  if (lower.includes('onboarding')) return 'onboarding';
+  if (lower.includes('check-in') || lower.includes('checkin') || lower.includes('check in')) return 'checkin';
   if (lower.includes('dna')) return 'discovery'; // Default for DNA calls
   return null;
 }

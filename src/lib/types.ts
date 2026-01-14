@@ -59,7 +59,7 @@ export interface FunnelDocumentWithVersions extends FunnelDocument {
 export interface ScheduledCall {
   id: string;
   church_id: string;
-  call_type: 'discovery' | 'proposal' | 'strategy' | 'kickoff' | 'assessment';
+  call_type: 'discovery' | 'proposal' | 'strategy' | 'kickoff' | 'assessment' | 'onboarding' | 'checkin';
   scheduled_at: string;
   completed: boolean;
   notes?: string;
