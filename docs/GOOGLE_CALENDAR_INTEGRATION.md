@@ -1,161 +1,149 @@
-# Google Calendar Integration - Implementation Plan
+# Google Calendar Integration
 
-> This document tracks the Google Calendar API integration for DNA Hub.
+> Google Calendar API integration for DNA Hub - syncs calendar events to scheduled calls.
 
-## Overview
+## Status: Phase 1 Complete
 
-Integrate Google Calendar as the master calendar for all DNA calls. Calendar events automatically sync to `scheduled_calls` table, meeting notes get pulled in, and status changes create new calendar events.
-
----
-
-## Prerequisites (User Action Required)
-
-### Step 1: Create Google Cloud Project
-
-1. Go to [Google Cloud Console](https://console.cloud.google.com)
-2. Click "Select a project" → "New Project"
-3. Name it: `DNA Hub`
-4. Click "Create"
-
-### Step 2: Enable APIs
-
-1. Go to [API Library](https://console.cloud.google.com/apis/library)
-2. Search and enable these APIs:
-   - **Google Calendar API** (required)
-   - **Google Drive API** (for Meet recordings - optional Phase 2)
-
-### Step 3: Configure OAuth Consent Screen
-
-1. Go to [OAuth Consent Screen](https://console.cloud.google.com/apis/credentials/consent)
-2. Select "Internal" (if using Google Workspace) or "External"
-3. Fill in:
-   - App name: `DNA Hub`
-   - User support email: your email
-   - Developer contact: your email
-4. Click "Save and Continue"
-5. Add scopes:
-   - `https://www.googleapis.com/auth/calendar.readonly`
-   - `https://www.googleapis.com/auth/calendar.events`
-6. Click "Save and Continue" through the rest
-
-### Step 4: Create OAuth Credentials
-
-1. Go to [Credentials](https://console.cloud.google.com/apis/credentials)
-2. Click "Create Credentials" → "OAuth client ID"
-3. Application type: **Web application**
-4. Name: `DNA Hub Web Client`
-5. Authorized redirect URIs:
-   - `http://localhost:3000/api/auth/google/callback` (development)
-   - `https://dna.arkidentity.com/api/auth/google/callback` (production)
-6. Click "Create"
-7. Copy the **Client ID** and **Client Secret**
-
-### Step 5: Add Environment Variables
-
-Add to `.env.local` and Vercel:
-
-```bash
-GOOGLE_CLIENT_ID=your-client-id-here
-GOOGLE_CLIENT_SECRET=your-client-secret-here
-GOOGLE_REDIRECT_URI=https://dna.arkidentity.com/api/auth/google/callback
-```
+| Phase | Status |
+|-------|--------|
+| Phase 1: Calendar Sync | Complete |
+| Phase 2: Meeting Notes | Not Started |
+| Phase 3: Two-Way Sync | Not Started |
 
 ---
 
-## Implementation Phases
+## How It Works
 
-### Phase 1: Calendar Sync (Core) ⬜ NOT STARTED
+### What Gets Synced
 
-**Goal:** Sync Google Calendar events → `scheduled_calls` table
+The system pulls events from your Google Calendar and matches them to churches in DNA Hub.
 
-#### Database Changes
+**Keywords matched (case-insensitive):**
+- `Discovery` → discovery call
+- `Proposal` → proposal call
+- `Strategy` → strategy call
+- `Kick-Off` / `Kickoff` / `Kick Off` → kickoff call
+- `Assessment` → assessment call
+- `DNA` → defaults to discovery call
+
+**Matching logic:**
+1. **Primary:** Match by attendee email → if any attendee's email matches a church leader
+2. **Secondary:** Match by title → if event title contains a church name
+3. **Fallback:** Unmatched events are stored for manual review
+
+### Sync Schedule
+
+- **Automatic:** Daily at 8 AM UTC (Vercel Hobby plan limit)
+- **Manual:** Click "Sync Now" in Settings anytime
+- **Range:** 30 days past to 30 days future
+
+---
+
+## Files Created
+
+| File | Purpose |
+|------|---------|
+| `/src/lib/google-calendar.ts` | Calendar API client, OAuth, sync logic |
+| `/src/app/api/auth/google/route.ts` | Start OAuth flow |
+| `/src/app/api/auth/google/callback/route.ts` | Handle OAuth callback |
+| `/src/app/api/cron/calendar-sync/route.ts` | Daily cron sync job |
+| `/src/app/api/admin/calendar/status/route.ts` | Get connection status |
+| `/src/app/api/admin/calendar/sync/route.ts` | Manual sync trigger |
+| `/src/app/api/admin/calendar/disconnect/route.ts` | Disconnect calendar |
+| `/src/app/admin/settings/page.tsx` | Admin settings UI |
+| `/supabase-migration-google-calendar.sql` | Database tables |
+
+---
+
+## Database Tables
+
+### `google_oauth_tokens`
+Stores OAuth tokens for connected admin accounts.
 
 ```sql
--- Migration: supabase-migration-google-calendar.sql
-
--- Store Google OAuth tokens for admin
-CREATE TABLE IF NOT EXISTS google_oauth_tokens (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+CREATE TABLE google_oauth_tokens (
+  id UUID PRIMARY KEY,
   admin_email TEXT UNIQUE NOT NULL,
   access_token TEXT NOT NULL,
   refresh_token TEXT NOT NULL,
   token_expiry TIMESTAMPTZ NOT NULL,
   calendar_id TEXT DEFAULT 'primary',
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-  updated_at TIMESTAMPTZ DEFAULT NOW()
+  created_at TIMESTAMPTZ,
+  updated_at TIMESTAMPTZ
 );
-
--- Add google_event_id to scheduled_calls for sync tracking
-ALTER TABLE scheduled_calls
-ADD COLUMN IF NOT EXISTS google_event_id TEXT UNIQUE;
-
--- Add google_meet_link to scheduled_calls
-ALTER TABLE scheduled_calls
-ADD COLUMN IF NOT EXISTS meet_link TEXT;
-
--- Index for faster lookups
-CREATE INDEX IF NOT EXISTS idx_scheduled_calls_google_event_id
-ON scheduled_calls(google_event_id);
 ```
 
-#### Files to Create
+### `unmatched_calendar_events`
+Events that couldn't be matched to a church automatically.
 
-| File | Purpose |
-|------|---------|
-| `/src/lib/google-calendar.ts` | Google Calendar API client wrapper |
-| `/src/app/api/auth/google/route.ts` | Start OAuth flow |
-| `/src/app/api/auth/google/callback/route.ts` | Handle OAuth callback |
-| `/src/app/api/cron/calendar-sync/route.ts` | Periodic sync job |
-| `/src/app/admin/settings/page.tsx` | Admin settings with "Connect Google Calendar" button |
-
-#### Sync Logic
-
-```typescript
-// Pseudocode for calendar sync
-
-async function syncCalendarEvents() {
-  // 1. Get events from last 30 days and next 30 days
-  const events = await calendar.events.list({
-    calendarId: 'primary',
-    timeMin: thirtyDaysAgo,
-    timeMax: thirtyDaysFromNow,
-    singleEvents: true,
-  });
-
-  for (const event of events) {
-    // 2. Check if event title contains DNA-related keywords
-    const callType = detectCallType(event.summary);
-    if (!callType) continue;
-
-    // 3. Try to match to a church by attendee email or title
-    const church = await matchChurch(event);
-    if (!church) continue;
-
-    // 4. Upsert to scheduled_calls
-    await upsertScheduledCall({
-      google_event_id: event.id,
-      church_id: church.id,
-      call_type: callType,
-      scheduled_at: event.start.dateTime,
-      meet_link: event.hangoutLink,
-      completed: isPast(event.end.dateTime),
-    });
-  }
-}
-
-function detectCallType(title: string): 'discovery' | 'proposal' | 'strategy' | null {
-  const lower = title.toLowerCase();
-  if (lower.includes('discovery')) return 'discovery';
-  if (lower.includes('proposal')) return 'proposal';
-  if (lower.includes('strategy')) return 'strategy';
-  if (lower.includes('dna')) return 'discovery'; // Default for DNA calls
-  return null;
-}
+```sql
+CREATE TABLE unmatched_calendar_events (
+  id UUID PRIMARY KEY,
+  google_event_id TEXT UNIQUE NOT NULL,
+  event_title TEXT NOT NULL,
+  event_start TIMESTAMPTZ NOT NULL,
+  event_end TIMESTAMPTZ,
+  attendee_emails TEXT[],
+  meet_link TEXT,
+  matched_church_id UUID REFERENCES churches(id),
+  matched_at TIMESTAMPTZ,
+  matched_by TEXT,
+  created_at TIMESTAMPTZ
+);
 ```
 
-#### Cron Schedule
+### `calendar_sync_log`
+Tracks each sync run for debugging.
 
-Add to `vercel.json`:
+```sql
+CREATE TABLE calendar_sync_log (
+  id UUID PRIMARY KEY,
+  sync_started_at TIMESTAMPTZ,
+  sync_completed_at TIMESTAMPTZ,
+  events_processed INTEGER,
+  events_synced INTEGER,
+  events_unmatched INTEGER,
+  errors TEXT[],
+  success BOOLEAN
+);
+```
+
+### Modified: `scheduled_calls`
+Added columns:
+- `google_event_id TEXT UNIQUE` - Links to Google Calendar event
+- `meet_link TEXT` - Google Meet link if present
+
+---
+
+## Environment Variables
+
+Required in Vercel:
+
+```bash
+GOOGLE_CLIENT_ID=your-client-id
+GOOGLE_CLIENT_SECRET=your-client-secret
+GOOGLE_REDIRECT_URI=https://dna.arkidentity.com/api/auth/google/callback
+```
+
+---
+
+## Admin UI
+
+Access via: `/admin/settings` (gear icon in admin header)
+
+### Features:
+- **Connect/Disconnect** Google Calendar
+- **Sync Now** button for manual sync
+- **Last sync info** - timestamp, events processed/synced
+- **Unmatched events** - shows events that need manual review
+- **Sync settings** - displays current configuration
+
+---
+
+## Cron Configuration
+
+In `vercel.json`:
+
 ```json
 {
   "crons": [
@@ -165,137 +153,32 @@ Add to `vercel.json`:
     },
     {
       "path": "/api/cron/calendar-sync",
-      "schedule": "*/15 * * * *"
+      "schedule": "0 8 * * *"
     }
   ]
 }
 ```
 
-Syncs every 15 minutes.
+> Note: Vercel Hobby plan only allows daily cron jobs. Upgrade to Pro for more frequent syncs.
 
 ---
 
-### Phase 2: Meeting Notes Automation ⬜ NOT STARTED
+## Google Cloud Setup (Completed)
 
-**Goal:** Pull Google Meet summaries/transcripts into church records
+### Prerequisites (Already Done)
+1. Google Cloud project created
+2. Calendar API enabled
+3. OAuth consent screen configured
+4. OAuth 2.0 credentials created
+5. Redirect URI added: `https://dna.arkidentity.com/api/auth/google/callback`
+6. Environment variables set in Vercel
 
-#### Requirements
-- Google Meet recording enabled
-- Gemini note-taking enabled in Google Workspace
-- Google Drive API access
-
-#### Flow
-
-1. After meeting ends (detected via calendar sync)
-2. Check Google Drive for meeting recording/transcript
-3. If Gemini summary exists, pull it
-4. Save to `funnel_documents` as `discovery_notes` or `agreement_notes`
-
-#### Files to Create
-
-| File | Purpose |
-|------|---------|
-| `/src/lib/google-drive.ts` | Google Drive API for meeting files |
-| `/src/lib/google-meet.ts` | Helper to find meeting artifacts |
-
-#### Considerations
-
-- Google Meet transcripts are stored in Google Drive
-- Gemini summaries appear in Google Docs linked to the meeting
-- May need to parse/extract from these formats
-- Rate limits on Drive API
-
----
-
-### Phase 3: Two-Way Sync ⬜ NOT STARTED
-
-**Goal:** DNA Hub status changes → create Google Calendar events
-
-#### When to Create Events
-
-| Status Change | Action |
-|---------------|--------|
-| `pending_assessment` → `awaiting_discovery` | Create "Discovery Call - [Church]" event suggestion |
-| `awaiting_discovery` → `proposal_sent` | Create "Proposal Review - [Church]" event suggestion |
-| `awaiting_agreement` → `awaiting_strategy` | Create "Strategy Call - [Church]" event suggestion |
-
-#### Flow
-
-1. Admin changes church status
-2. System creates calendar event (or draft)
-3. Event includes:
-   - Church leader as attendee
-   - Google Meet link auto-generated
-   - Description with church context
-
-#### Files to Modify
-
-| File | Change |
-|------|--------|
-| `/src/app/api/admin/churches/route.ts` | Add calendar event creation on status change |
-| `/src/lib/google-calendar.ts` | Add `createEvent()` function |
-
----
-
-## Admin UI for Integration
-
-### Settings Page (`/admin/settings`)
-
-```
-┌─────────────────────────────────────────────────┐
-│  Google Calendar Integration                     │
-├─────────────────────────────────────────────────┤
-│                                                  │
-│  Status: ✅ Connected                            │
-│  Calendar: travis@arkidentity.com               │
-│  Last sync: 2 minutes ago                       │
-│                                                  │
-│  [Disconnect]  [Sync Now]                       │
-│                                                  │
-├─────────────────────────────────────────────────┤
-│  Sync Settings                                   │
-│                                                  │
-│  ☑ Auto-sync every 15 minutes                   │
-│  ☑ Create events on status change               │
-│  ☑ Pull meeting notes (requires Drive access)   │
-│                                                  │
-│  Keywords to match:                              │
-│  [DNA, Discovery, Proposal, Strategy, Church]   │
-│                                                  │
-└─────────────────────────────────────────────────┘
-```
-
----
-
-## Event Matching Strategy
-
-To match calendar events to churches:
-
-### Primary: Attendee Email Match
-```typescript
-// If event has attendee email that matches a church_leader
-const attendees = event.attendees || [];
-for (const attendee of attendees) {
-  const leader = await findLeaderByEmail(attendee.email);
-  if (leader) return leader.church_id;
-}
-```
-
-### Secondary: Title Match
-```typescript
-// If event title contains church name
-const churches = await getAllChurches();
-for (const church of churches) {
-  if (event.summary.toLowerCase().includes(church.name.toLowerCase())) {
-    return church.id;
-  }
-}
-```
-
-### Fallback: Manual Link
-- Show unmatched DNA events in admin UI
-- Admin can manually link to a church
-- Store the link for future events with same attendee
+### First-Time Connection
+1. Go to `/admin/settings`
+2. Click "Connect Google Calendar"
+3. Click "Advanced" → "Go to DNA Hub (unsafe)" (normal for unverified apps)
+4. Grant calendar permissions
+5. Redirects back with success message
 
 ---
 
@@ -304,103 +187,49 @@ for (const church of churches) {
 | Scenario | Handling |
 |----------|----------|
 | Token expired | Auto-refresh using refresh_token |
-| Refresh token invalid | Show "Reconnect Google Calendar" prompt |
-| API rate limit | Exponential backoff, retry in next cron run |
-| Event can't be matched | Log to `unmatched_calendar_events` table |
-| Duplicate event | Use google_event_id as unique key, upsert |
+| Refresh token invalid | Deletes tokens, shows "Reconnect" prompt |
+| API rate limit | Logged, retries on next sync |
+| Event can't be matched | Stored in `unmatched_calendar_events` |
+| Duplicate event | Uses `google_event_id` as unique key, upserts |
+| `invalid_client` error | Check env vars match Google Console exactly |
 
 ---
 
-## Security Considerations
+## Future Phases
 
-1. **Token Storage**: OAuth tokens stored encrypted in Supabase (consider using Supabase Vault)
-2. **Scope Limitation**: Only request calendar scopes needed
-3. **Admin Only**: Only admins can connect Google Calendar
-4. **Audit Log**: Log all calendar sync operations
+### Phase 2: Meeting Notes Automation
+- Pull Google Meet transcripts/Gemini summaries
+- Auto-save to church documents
+- Requires Google Drive API
 
----
-
-## Testing Plan
-
-### Phase 1 Testing
-- [ ] OAuth flow completes successfully
-- [ ] Tokens are stored and refreshed
-- [ ] Events with "DNA" in title are synced
-- [ ] Events are matched to correct churches
-- [ ] Duplicate events are handled (upsert)
-- [ ] Past events marked as completed
-
-### Phase 2 Testing
-- [ ] Meeting recordings are found in Drive
-- [ ] Gemini summaries are extracted
-- [ ] Notes are saved to correct church/document type
-
-### Phase 3 Testing
-- [ ] Status change creates calendar event
-- [ ] Event has correct attendee
-- [ ] Google Meet link is generated
-- [ ] Event shows in Google Calendar
+### Phase 3: Two-Way Sync
+- Status changes create calendar events
+- Auto-generate Google Meet links
+- Add church leader as attendee
 
 ---
 
-## Progress Tracking
+## Troubleshooting
 
-### Phase 1 Checklist
-- [ ] User: Create Google Cloud project
-- [ ] User: Enable Calendar API
-- [ ] User: Create OAuth credentials
-- [ ] User: Add env variables
-- [ ] Dev: Create database migration
-- [ ] Dev: Build `/src/lib/google-calendar.ts`
-- [ ] Dev: Build OAuth routes
-- [ ] Dev: Build cron sync job
-- [ ] Dev: Build admin settings page
-- [ ] Dev: Test end-to-end
+### "invalid_client" error
+- Verify `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in Vercel match Google Console exactly
+- No extra spaces or quotes
+- Redeploy after changing env vars
 
-### Phase 2 Checklist
-- [ ] User: Enable Drive API
-- [ ] Dev: Build Google Drive client
-- [ ] Dev: Build meeting notes extraction
-- [ ] Dev: Integrate into sync job
-- [ ] Dev: Test with real meeting
+### "Google hasn't verified this app" warning
+- Normal for internal/dev apps
+- Click "Advanced" → "Go to DNA Hub (unsafe)"
+- Safe since you own the app
 
-### Phase 3 Checklist
-- [ ] Dev: Add event creation to status change
-- [ ] Dev: Test calendar event creation
-- [ ] Dev: Handle attendee invites
+### Events not syncing
+- Check event title contains a keyword (Discovery, Proposal, etc.)
+- Verify church leader email matches an attendee
+- Check Vercel logs for errors
+
+### Settings page not loading
+- Run the database migration: `supabase-migration-google-calendar.sql`
+- Check `google_oauth_tokens` table exists
 
 ---
 
-## Dependencies
-
-```json
-// package.json additions
-{
-  "dependencies": {
-    "googleapis": "^128.0.0"
-  }
-}
-```
-
----
-
-## Estimated Effort
-
-| Phase | Effort |
-|-------|--------|
-| Phase 1: Calendar Sync | 6-8 hours |
-| Phase 2: Meeting Notes | 4-6 hours |
-| Phase 3: Two-Way Sync | 3-4 hours |
-| **Total** | **13-18 hours** |
-
----
-
-## Next Steps
-
-1. **User**: Complete Prerequisites (Steps 1-5 above)
-2. **User**: Share Client ID and Client Secret (via secure method)
-3. **Dev**: Begin Phase 1 implementation
-
----
-
-*Last updated: January 14, 2025*
+*Last updated: January 14, 2026*
