@@ -30,8 +30,10 @@ import {
   Phone,
   CheckCircle,
   ArrowRight,
+  List,
+  LayoutList,
 } from 'lucide-react';
-import { PhaseWithMilestones, MilestoneWithProgress, Church, ChurchLeader, FunnelDocument, ScheduledCall } from '@/lib/types';
+import { PhaseWithMilestones, MilestoneWithProgress, Church, ChurchLeader, FunnelDocument, ScheduledCall, GlobalResource } from '@/lib/types';
 
 interface DashboardData {
   church: Church;
@@ -39,6 +41,7 @@ interface DashboardData {
   phases: PhaseWithMilestones[];
   documents: FunnelDocument[];
   calls: ScheduledCall[];
+  globalResources: GlobalResource[];
   isAdmin: boolean;
 }
 
@@ -48,6 +51,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'journey'>('overview');
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
+  const [compactView, setCompactView] = useState(false);
   const [updatingMilestone, setUpdatingMilestone] = useState<string | null>(null);
 
   // Admin editing state
@@ -366,7 +370,7 @@ export default function DashboardPage() {
     );
   }
 
-  const { church, leader, phases, documents, calls, isAdmin } = data;
+  const { church, leader, phases, documents, calls, globalResources, isAdmin } = data;
 
   // Calculate overall progress (exclude Phase 0)
   const totalMilestones = phases.filter(p => p.phase_number > 0).reduce((sum, p) => sum + p.totalCount, 0);
@@ -503,63 +507,92 @@ export default function DashboardPage() {
 
             {/* Two Column Layout */}
             <div className="grid md:grid-cols-2 gap-6">
-              {/* Current Focus */}
+              {/* Current Focus - Show next incomplete milestones */}
               <div className="card">
                 <h3 className="font-semibold text-navy mb-4 flex items-center gap-2">
                   <CheckCircle className="w-5 h-5 text-gold" />
-                  Current Focus
+                  Next Steps
                 </h3>
-                {currentPhase && (
-                  <div className="space-y-3">
-                    <div className="p-3 bg-gold/5 rounded-lg border-l-4 border-gold">
-                      <p className="font-medium text-navy">
-                        Phase {currentPhase.phase_number}: {currentPhase.name}
-                      </p>
-                      {currentPhase.description && (
-                        <p className="text-sm text-foreground-muted mt-1">{currentPhase.description}</p>
-                      )}
-                      <p className="text-sm text-gold font-medium mt-2">
-                        {currentPhase.completedCount} of {currentPhase.totalCount} milestones completed
-                      </p>
+                {(() => {
+                  // Get incomplete milestones from onboarding (phase 0) and current phase
+                  const onboardingPhase = phases.find(p => p.phase_number === 0);
+                  const incompleteOnboarding = onboardingPhase?.milestones.filter(m => !m.progress?.completed) || [];
+                  const incompleteCurrent = currentPhase?.milestones.filter(m => !m.progress?.completed) || [];
+                  const nextSteps = [...incompleteOnboarding, ...incompleteCurrent].slice(0, 4);
+
+                  return nextSteps.length > 0 ? (
+                    <div className="space-y-2">
+                      {nextSteps.map((milestone) => (
+                        <div
+                          key={milestone.id}
+                          className="flex items-start gap-2 p-2 bg-background-secondary rounded-lg"
+                        >
+                          <div className="w-5 h-5 rounded border-2 border-gold/50 flex-shrink-0 mt-0.5" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium text-navy">{milestone.title}</p>
+                            {milestone.progress?.target_date && (
+                              <p className="text-xs text-foreground-muted mt-0.5">
+                                Target: {parseLocalDate(milestone.progress.target_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}
+                              </p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                      <button
+                        onClick={() => setActiveTab('journey')}
+                        className="w-full flex items-center justify-center gap-2 py-2 text-teal hover:text-teal-light transition-colors text-sm"
+                      >
+                        View all milestones
+                        <ArrowRight className="w-4 h-4" />
+                      </button>
                     </div>
-                    <button
-                      onClick={() => setActiveTab('journey')}
-                      className="w-full flex items-center justify-center gap-2 py-2 text-teal hover:text-teal-light transition-colors"
-                    >
-                      View milestones
-                      <ArrowRight className="w-4 h-4" />
-                    </button>
-                  </div>
-                )}
+                  ) : (
+                    <div className="text-center py-4">
+                      <CheckCircle className="w-8 h-8 text-success mx-auto mb-2" />
+                      <p className="text-success font-medium">All caught up!</p>
+                      <p className="text-sm text-foreground-muted">No pending tasks</p>
+                    </div>
+                  );
+                })()}
               </div>
 
-              {/* Upcoming Call / Schedule */}
+              {/* Schedule a Call */}
               <div className="card">
                 <h3 className="font-semibold text-navy mb-4 flex items-center gap-2">
                   <Calendar className="w-5 h-5 text-teal" />
-                  {upcomingCall ? 'Upcoming Call' : 'Schedule'}
+                  Schedule a Call
                 </h3>
-                {upcomingCall ? (
-                  <div className="p-3 bg-teal/5 rounded-lg border-l-4 border-teal">
-                    <p className="font-medium text-navy capitalize">
+                {upcomingCall && (
+                  <div className="p-3 bg-teal/5 rounded-lg border-l-4 border-teal mb-4">
+                    <p className="text-xs text-teal font-medium uppercase tracking-wide">Upcoming</p>
+                    <p className="font-medium text-navy capitalize mt-1">
                       {upcomingCall.call_type.replace('_', ' ')} Call
                     </p>
-                    <p className="text-sm text-foreground-muted mt-1">
+                    <p className="text-sm text-foreground-muted">
                       {formatCallDate(upcomingCall.scheduled_at)}
                     </p>
                   </div>
-                ) : (
-                  <p className="text-foreground-muted text-sm">No upcoming calls scheduled</p>
                 )}
-                <a
-                  href="https://calendly.com/arkidentity"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="mt-4 w-full flex items-center justify-center gap-2 py-2 bg-teal text-white rounded-lg hover:bg-teal/90 transition-colors"
-                >
-                  <Phone className="w-4 h-4" />
-                  Schedule Office Hours
-                </a>
+                <div className="space-y-2">
+                  <a
+                    href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ06-H6-Lu-ReUlLa7bTB0qgXj9c1DxocZWH7WxTLw__s9chlLMDflEtH_my63oqNrQAaV7oahqR?gv=true"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-2 py-3 bg-gold text-white rounded-lg hover:bg-gold/90 transition-colors font-medium"
+                  >
+                    <Phone className="w-4 h-4" />
+                    Book 60-Minute Strategy Call
+                  </a>
+                  <a
+                    href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ0LdUpKkvo_qoOrtiu6fQfPgkQJUZaG9RxPtYVieJrl1RAFnUmgTN9WATs6jAxSbkdo5M4-bpfI?gv=true"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full flex items-center justify-center gap-2 py-2 border border-teal text-teal rounded-lg hover:bg-teal/5 transition-colors text-sm"
+                  >
+                    <Calendar className="w-4 h-4" />
+                    Quick 15-Minute Check-In
+                  </a>
+                </div>
               </div>
             </div>
 
@@ -617,23 +650,56 @@ export default function DashboardPage() {
               </div>
             )}
 
+            {/* DNA Resources Section */}
+            {globalResources && globalResources.filter(r => r.file_url).length > 0 && (
+              <div className="card">
+                <h3 className="font-semibold text-navy mb-4 flex items-center gap-2">
+                  <BookOpen className="w-5 h-5 text-purple-600" />
+                  DNA Resources
+                </h3>
+                <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
+                  {globalResources.filter(r => r.file_url).map((resource) => (
+                    <a
+                      key={resource.id}
+                      href={resource.file_url!}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="flex items-center gap-3 p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+                    >
+                      {resource.resource_type === 'worksheet' && <FileText className="w-5 h-5 text-blue-500" />}
+                      {resource.resource_type === 'pdf' && <FileText className="w-5 h-5 text-red-500" />}
+                      {resource.resource_type === 'guide' && <BookOpen className="w-5 h-5 text-purple-600" />}
+                      {resource.resource_type === 'video' && <Video className="w-5 h-5 text-purple-500" />}
+                      {!resource.resource_type && <FileText className="w-5 h-5 text-gray-500" />}
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-navy text-sm truncate">{resource.name}</p>
+                        {resource.description && (
+                          <p className="text-xs text-foreground-muted truncate">{resource.description}</p>
+                        )}
+                      </div>
+                    </a>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Quick Stats */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <div className="card text-center">
-                <p className="text-3xl font-bold text-navy">{completedMilestones}</p>
-                <p className="text-sm text-foreground-muted">Completed</p>
+                <p className="text-3xl font-bold text-success">{completedMilestones}</p>
+                <p className="text-sm text-foreground-muted">Milestones Completed</p>
               </div>
               <div className="card text-center">
                 <p className="text-3xl font-bold text-gold">{totalMilestones - completedMilestones}</p>
-                <p className="text-sm text-foreground-muted">Remaining</p>
+                <p className="text-sm text-foreground-muted">Milestones Remaining</p>
               </div>
               <div className="card text-center">
-                <p className="text-3xl font-bold text-teal">{church.current_phase || 1}</p>
+                <p className="text-3xl font-bold text-navy">{church.current_phase || 1}</p>
                 <p className="text-sm text-foreground-muted">Current Phase</p>
               </div>
               <div className="card text-center">
-                <p className="text-3xl font-bold text-success">5</p>
-                <p className="text-sm text-foreground-muted">Total Phases</p>
+                <p className="text-3xl font-bold text-teal">{overallProgress}%</p>
+                <p className="text-sm text-foreground-muted">Overall Progress</p>
               </div>
             </div>
           </div>
@@ -646,7 +712,16 @@ export default function DashboardPage() {
             <div className="card">
               <div className="flex items-center justify-between mb-4">
                 <h2 className="text-xl font-semibold text-navy">Your DNA Journey</h2>
-                <span className="text-2xl font-bold text-gold">{overallProgress}%</span>
+                <div className="flex items-center gap-3">
+                  <button
+                    onClick={() => setCompactView(!compactView)}
+                    className={`p-2 rounded-lg transition-colors ${compactView ? 'bg-gold/10 text-gold' : 'text-foreground-muted hover:bg-background-secondary'}`}
+                    title={compactView ? 'Expanded view' : 'Compact view'}
+                  >
+                    {compactView ? <LayoutList className="w-5 h-5" /> : <List className="w-5 h-5" />}
+                  </button>
+                  <span className="text-2xl font-bold text-gold">{overallProgress}%</span>
+                </div>
               </div>
               <div className="h-3 bg-background-secondary rounded-full overflow-hidden mb-4">
                 <div
@@ -805,13 +880,19 @@ export default function DashboardPage() {
                               {/* Content */}
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-start justify-between gap-2">
-                                  <div>
+                                  <div className="flex-1">
                                     <p className={`font-medium ${isCompleted ? 'text-success line-through' : 'text-navy'}`}>
                                       {milestone.title}
                                     </p>
-                                    {milestone.description && (
+                                    {!compactView && milestone.description && (
                                       <p className="text-sm text-foreground-muted mt-1">
                                         {milestone.description}
+                                      </p>
+                                    )}
+                                    {/* Compact: show target date inline */}
+                                    {compactView && milestone.progress?.target_date && (
+                                      <p className={`text-xs mt-0.5 ${isOverdue(milestone.progress.target_date, isCompleted) ? 'text-error' : 'text-foreground-muted'}`}>
+                                        Target: {formatTargetDate(milestone.progress.target_date)}
                                       </p>
                                     )}
                                   </div>
@@ -827,6 +908,9 @@ export default function DashboardPage() {
                                   )}
                                 </div>
 
+                                {/* Expanded view content */}
+                                {!compactView && (
+                                  <>
                                 {/* Completion info */}
                                 {isCompleted && milestone.progress && (
                                   <p className="text-xs text-foreground-muted mt-2">
@@ -1071,6 +1155,8 @@ export default function DashboardPage() {
                                   <span className="inline-block text-xs text-gold bg-gold/10 px-2 py-0.5 rounded mt-2">
                                     Key Milestone
                                   </span>
+                                )}
+                                  </>
                                 )}
                               </div>
                             </div>

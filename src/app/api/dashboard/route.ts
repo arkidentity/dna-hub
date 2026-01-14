@@ -138,6 +138,13 @@ export async function GET() {
       .eq('church_id', church.id)
       .order('scheduled_at', { ascending: true });
 
+    // Get global resources (general resources for all churches)
+    const { data: globalResources } = await supabaseAdmin
+      .from('global_resources')
+      .select('*')
+      .eq('is_active', true)
+      .order('display_order', { ascending: true });
+
     // Build phases with milestones and progress
     const phasesWithMilestones: PhaseWithMilestones[] = phases.map(phase => {
       const phaseMilestones: MilestoneWithProgress[] = milestones
@@ -189,6 +196,7 @@ export async function GET() {
       phases: phasesWithMilestones,
       documents: documents || [],
       calls: calls || [],
+      globalResources: globalResources || [],
       isAdmin: isAdmin(leader.email),
     });
   } catch (error) {

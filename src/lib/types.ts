@@ -174,6 +174,19 @@ export interface MilestoneResource {
   resource_type?: string | null;
 }
 
+// Global resource (general resources for all churches)
+export interface GlobalResource {
+  id: string;
+  name: string;
+  description?: string | null;
+  file_url?: string | null;
+  resource_type?: string | null;
+  category?: string | null;
+  display_order: number;
+  is_active: boolean;
+  created_at: string;
+}
+
 // Extended types for UI
 export interface MilestoneWithProgress extends Milestone {
   progress?: ChurchProgress;
