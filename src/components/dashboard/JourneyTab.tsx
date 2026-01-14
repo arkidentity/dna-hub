@@ -1,12 +1,14 @@
 'use client';
 
-import { List, LayoutList } from 'lucide-react';
-import { PhaseWithMilestones, MilestoneWithProgress, Church } from '@/lib/types';
+import { List, LayoutList, Calendar, CheckCircle, Clock } from 'lucide-react';
+import { PhaseWithMilestones, MilestoneWithProgress, Church, ScheduledCall } from '@/lib/types';
 import PhaseCard from './PhaseCard';
+import { formatCallDate } from './utils';
 
 interface JourneyTabProps {
   phases: PhaseWithMilestones[];
   church: Church;
+  calls: ScheduledCall[];
   isAdmin: boolean;
   compactView: boolean;
   expandedPhases: Set<string>;
@@ -35,6 +37,7 @@ interface JourneyTabProps {
 export default function JourneyTab({
   phases,
   church,
+  calls,
   isAdmin,
   compactView,
   expandedPhases,
@@ -59,6 +62,10 @@ export default function JourneyTab({
   onDeleteAttachment,
   onExportCalendar,
 }: JourneyTabProps) {
+  // Get the strategy call for display
+  const strategyCall = calls.find(c => c.call_type === 'strategy');
+  const discoveryCall = calls.find(c => c.call_type === 'discovery');
+  const proposalCall = calls.find(c => c.call_type === 'proposal');
   const totalMilestones = phases.filter(p => p.phase_number > 0).reduce((sum, p) => sum + p.totalCount, 0);
   const completedMilestones = phases.filter(p => p.phase_number > 0).reduce((sum, p) => sum + p.completedCount, 0);
   const overallProgress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
@@ -114,6 +121,113 @@ export default function JourneyTab({
           })}
         </div>
       </div>
+
+      {/* Scheduled Calls Section */}
+      {calls.length > 0 && (
+        <div className="card">
+          <h3 className="font-semibold text-navy mb-4 flex items-center gap-2">
+            <Calendar className="w-5 h-5 text-teal" />
+            Your Scheduled Calls
+          </h3>
+          <div className="grid sm:grid-cols-3 gap-3">
+            {/* Discovery Call */}
+            <div className={`p-3 rounded-lg ${
+              discoveryCall
+                ? discoveryCall.completed
+                  ? 'bg-success/5 border border-success/20'
+                  : 'bg-teal/5 border border-teal/20'
+                : 'bg-background-secondary border border-card-border'
+            }`}>
+              <p className="text-xs font-medium uppercase tracking-wide text-foreground-muted mb-1">
+                Discovery Call
+              </p>
+              {discoveryCall ? (
+                <>
+                  <div className="flex items-center gap-1.5">
+                    {discoveryCall.completed ? (
+                      <CheckCircle className="w-4 h-4 text-success" />
+                    ) : (
+                      <Clock className="w-4 h-4 text-teal" />
+                    )}
+                    <span className={`text-sm font-medium ${discoveryCall.completed ? 'text-success' : 'text-navy'}`}>
+                      {discoveryCall.completed ? 'Completed' : 'Scheduled'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-foreground-muted mt-1">
+                    {formatCallDate(discoveryCall.scheduled_at)}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-foreground-muted">Not scheduled</p>
+              )}
+            </div>
+
+            {/* Proposal Call */}
+            <div className={`p-3 rounded-lg ${
+              proposalCall
+                ? proposalCall.completed
+                  ? 'bg-success/5 border border-success/20'
+                  : 'bg-teal/5 border border-teal/20'
+                : 'bg-background-secondary border border-card-border'
+            }`}>
+              <p className="text-xs font-medium uppercase tracking-wide text-foreground-muted mb-1">
+                Proposal Call
+              </p>
+              {proposalCall ? (
+                <>
+                  <div className="flex items-center gap-1.5">
+                    {proposalCall.completed ? (
+                      <CheckCircle className="w-4 h-4 text-success" />
+                    ) : (
+                      <Clock className="w-4 h-4 text-teal" />
+                    )}
+                    <span className={`text-sm font-medium ${proposalCall.completed ? 'text-success' : 'text-navy'}`}>
+                      {proposalCall.completed ? 'Completed' : 'Scheduled'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-foreground-muted mt-1">
+                    {formatCallDate(proposalCall.scheduled_at)}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-foreground-muted">Not scheduled</p>
+              )}
+            </div>
+
+            {/* Strategy Call */}
+            <div className={`p-3 rounded-lg ${
+              strategyCall
+                ? strategyCall.completed
+                  ? 'bg-success/5 border border-success/20'
+                  : 'bg-teal/5 border border-teal/20'
+                : 'bg-background-secondary border border-card-border'
+            }`}>
+              <p className="text-xs font-medium uppercase tracking-wide text-foreground-muted mb-1">
+                Strategy Call
+              </p>
+              {strategyCall ? (
+                <>
+                  <div className="flex items-center gap-1.5">
+                    {strategyCall.completed ? (
+                      <CheckCircle className="w-4 h-4 text-success" />
+                    ) : (
+                      <Clock className="w-4 h-4 text-teal" />
+                    )}
+                    <span className={`text-sm font-medium ${strategyCall.completed ? 'text-success' : 'text-navy'}`}>
+                      {strategyCall.completed ? 'Completed' : 'Scheduled'}
+                    </span>
+                  </div>
+                  <p className="text-xs text-foreground-muted mt-1">
+                    {formatCallDate(strategyCall.scheduled_at)}
+                  </p>
+                </>
+              ) : (
+                <p className="text-sm text-foreground-muted">Not scheduled</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Phases */}
       <div className="space-y-4">

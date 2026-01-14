@@ -313,6 +313,25 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  const handleDeleteCall = async (callId: string) => {
+    if (!confirm('Are you sure you want to delete this scheduled call?')) return;
+
+    try {
+      const response = await fetch(`/api/admin/church/${churchId}/calls?call_id=${callId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete call');
+      }
+
+      await fetchChurchData();
+    } catch (error) {
+      console.error('Delete call error:', error);
+      alert('Failed to delete call');
+    }
+  };
+
   const handleStatusChange = async (newStatus: string) => {
     try {
       const response = await fetch('/api/admin/churches', {
@@ -649,23 +668,32 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
                   calls.map((call) => (
                     <div
                       key={call.id}
-                      className={`p-3 rounded-lg ${call.completed ? 'bg-success/5' : 'bg-background-secondary'}`}
+                      className={`p-3 rounded-lg group ${call.completed ? 'bg-success/5' : 'bg-background-secondary'}`}
                     >
                       <div className="flex items-center justify-between mb-1">
                         <span className="font-medium text-navy capitalize">{call.call_type} Call</span>
-                        {call.completed ? (
-                          <span className="text-xs text-success flex items-center gap-1">
-                            <CheckCircle className="w-3 h-3" />
-                            Completed
-                          </span>
-                        ) : (
+                        <div className="flex items-center gap-2">
+                          {call.completed ? (
+                            <span className="text-xs text-success flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" />
+                              Completed
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleCompleteCall(call.id)}
+                              className="text-xs text-teal hover:text-teal-light"
+                            >
+                              Mark Complete
+                            </button>
+                          )}
                           <button
-                            onClick={() => handleCompleteCall(call.id)}
-                            className="text-xs text-teal hover:text-teal-light"
+                            onClick={() => handleDeleteCall(call.id)}
+                            className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:bg-red-50 rounded transition-opacity"
+                            title="Delete call"
                           >
-                            Mark Complete
+                            <Trash2 className="w-3 h-3" />
                           </button>
-                        )}
+                        </div>
                       </div>
                       <p className="text-sm text-foreground-muted">{formatDateTime(call.scheduled_at)}</p>
                       {call.notes && (

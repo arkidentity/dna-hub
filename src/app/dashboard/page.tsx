@@ -349,6 +349,7 @@ export default function DashboardPage() {
           <JourneyTab
             phases={phases}
             church={church}
+            calls={calls}
             isAdmin={isAdmin}
             compactView={compactView}
             expandedPhases={expandedPhases}
