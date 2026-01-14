@@ -470,6 +470,304 @@ export async function sendDashboardAccessEmail(
   });
 }
 
+// =====================================================
+// FOLLOW-UP / REMINDER EMAILS
+// =====================================================
+
+// Reminder: Book your discovery call (3 days after assessment)
+export async function sendBookDiscoveryReminder(
+  to: string,
+  firstName: string,
+  churchName: string,
+  churchId?: string
+) {
+  const discoveryCallUrl = DISCOVERY_CALL_URL;
+
+  const subject = `${firstName}, let's schedule your Discovery Call`;
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1A2332;">Hey ${firstName},</h2>
+
+      <p>A few days ago, you completed the DNA Church Assessment for ${churchName}. I noticed you haven't booked your Discovery Call yet.</p>
+
+      <p>This is a quick 15-minute conversation where we'll:</p>
+      <ul style="color: #5A6577;">
+        <li>Discuss your assessment results</li>
+        <li>Answer any questions you have about DNA</li>
+        <li>Explore if DNA is the right fit for ${churchName}</li>
+      </ul>
+
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${discoveryCallUrl}"
+           style="background: #D4A853; color: white; padding: 16px 32px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          Book Your Discovery Call (15 min)
+        </a>
+      </div>
+
+      <p style="color: #5A6577;">No pressure—just a friendly conversation to see if we're a good fit to partner together.</p>
+
+      <p style="margin-top: 32px;">Travis<br>
+      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    churchId,
+    notificationType: 'book_discovery_reminder'
+  });
+}
+
+// Reminder: Call in 24 hours
+export async function sendCallReminder24h(
+  to: string,
+  firstName: string,
+  churchName: string,
+  callType: 'discovery' | 'proposal' | 'strategy',
+  scheduledAt: Date,
+  churchId?: string
+) {
+  const callTypeNames = {
+    discovery: 'Discovery Call',
+    proposal: 'Proposal Review Call',
+    strategy: 'Strategy Call'
+  };
+
+  const callDurations = {
+    discovery: '15 minutes',
+    proposal: '30 minutes',
+    strategy: '60 minutes'
+  };
+
+  const callName = callTypeNames[callType];
+  const duration = callDurations[callType];
+
+  // Format the date nicely
+  const options: Intl.DateTimeFormatOptions = {
+    weekday: 'long',
+    month: 'long',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: '2-digit',
+    timeZoneName: 'short'
+  };
+  const formattedDate = scheduledAt.toLocaleDateString('en-US', options);
+
+  const subject = `Reminder: ${callName} Tomorrow - ${churchName}`;
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1A2332;">Hey ${firstName},</h2>
+
+      <p>Just a friendly reminder that we have a call scheduled!</p>
+
+      <div style="background: #F4E7D7; padding: 24px; border-radius: 8px; margin: 24px 0;">
+        <h3 style="color: #1A2332; margin: 0 0 12px 0;">${callName}</h3>
+        <p style="margin: 0 0 8px 0;"><strong>When:</strong> ${formattedDate}</p>
+        <p style="margin: 0 0 8px 0;"><strong>Duration:</strong> ${duration}</p>
+        <p style="margin: 0;"><strong>Church:</strong> ${churchName}</p>
+      </div>
+
+      <p>Looking forward to connecting with you!</p>
+
+      <p style="color: #5A6577; font-size: 14px; margin-top: 24px;">
+        Need to reschedule? Just reply to this email and we'll find a new time.
+      </p>
+
+      <p style="margin-top: 32px;">Travis<br>
+      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    churchId,
+    notificationType: 'call_reminder_24h'
+  });
+}
+
+// Notification: Missed call
+export async function sendCallMissedEmail(
+  to: string,
+  firstName: string,
+  churchName: string,
+  callType: 'discovery' | 'proposal' | 'strategy',
+  churchId?: string
+) {
+  const callTypeNames = {
+    discovery: 'Discovery Call',
+    proposal: 'Proposal Review Call',
+    strategy: 'Strategy Call'
+  };
+
+  const rescheduleUrls = {
+    discovery: DISCOVERY_CALL_URL,
+    proposal: PROPOSAL_CALL_URL,
+    strategy: STRATEGY_CALL_URL
+  };
+
+  const callName = callTypeNames[callType];
+  const rescheduleUrl = rescheduleUrls[callType];
+
+  const subject = `We missed you! Let's reschedule - ${churchName}`;
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1A2332;">Hey ${firstName},</h2>
+
+      <p>I noticed we weren't able to connect for our ${callName} yesterday. No worries—I know things come up!</p>
+
+      <p>Let's find a new time that works better for you:</p>
+
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${rescheduleUrl}"
+           style="background: #D4A853; color: white; padding: 16px 32px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          Reschedule ${callName}
+        </a>
+      </div>
+
+      <p style="color: #5A6577;">If your schedule has changed and you need more flexibility, just reply to this email and we'll work something out.</p>
+
+      <p style="margin-top: 32px;">Travis<br>
+      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    churchId,
+    notificationType: 'call_missed'
+  });
+}
+
+// Reminder: Proposal expiring (7 days after proposal sent)
+export async function sendProposalExpiringEmail(
+  to: string,
+  firstName: string,
+  churchName: string,
+  portalUrl: string,
+  churchId?: string
+) {
+  const proposalCallUrl = PROPOSAL_CALL_URL;
+
+  const subject = `Your DNA Proposal - Next Steps? - ${churchName}`;
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1A2332;">Hey ${firstName},</h2>
+
+      <p>I sent over the DNA implementation proposal for ${churchName} about a week ago. I wanted to check in and see if you've had a chance to review it.</p>
+
+      <div style="background: #F4E7D7; padding: 24px; border-radius: 8px; margin: 24px 0;">
+        <h3 style="color: #1A2332; margin: 0 0 12px 0;">Your Proposal is Waiting</h3>
+        <p style="margin: 0 0 16px 0;">View your customized proposal and all discovery notes in your portal:</p>
+        <a href="${portalUrl}"
+           style="background: #2D6A6A; color: white; padding: 12px 24px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          View Proposal
+        </a>
+      </div>
+
+      <p>Have questions? Let's hop on a quick call to walk through it together:</p>
+
+      <div style="text-align: center; margin: 24px 0;">
+        <a href="${proposalCallUrl}"
+           style="background: #D4A853; color: white; padding: 14px 28px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          Book Proposal Review Call (30 min)
+        </a>
+      </div>
+
+      <p style="color: #5A6577;">If DNA isn't the right fit right now, no worries at all. Just let me know and I'll keep you in the loop for future resources.</p>
+
+      <p style="margin-top: 32px;">Travis<br>
+      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    churchId,
+    notificationType: 'proposal_expiring'
+  });
+}
+
+// Reminder: Inactive church (14 days with no progress)
+export async function sendInactiveReminderEmail(
+  to: string,
+  firstName: string,
+  churchName: string,
+  currentPhase: number,
+  dashboardUrl: string,
+  churchId?: string
+) {
+  const phaseNames: Record<number, string> = {
+    0: 'Onboarding',
+    1: 'Church Partnership',
+    2: 'Leader Preparation',
+    3: 'DNA Foundation',
+    4: 'Practical Preparation',
+    5: 'Final Validation & Launch'
+  };
+
+  const phaseName = phaseNames[currentPhase] || `Phase ${currentPhase}`;
+
+  const subject = `Checking in on ${churchName}'s DNA Journey`;
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1A2332;">Hey ${firstName},</h2>
+
+      <p>I noticed it's been a couple weeks since we've seen activity on ${churchName}'s DNA dashboard. Just wanted to check in and see how things are going!</p>
+
+      <div style="background: #F4E7D7; padding: 24px; border-radius: 8px; margin: 24px 0;">
+        <h3 style="color: #1A2332; margin: 0 0 8px 0;">Current Status</h3>
+        <p style="margin: 0; color: #5A6577;">${churchName} is in <strong>${phaseName}</strong></p>
+      </div>
+
+      <p>Is there anything I can help with? Common reasons churches pause:</p>
+      <ul style="color: #5A6577;">
+        <li>Busy season at church (totally understandable!)</li>
+        <li>Questions about next steps</li>
+        <li>Need help with a specific milestone</li>
+        <li>Leadership transitions</li>
+      </ul>
+
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${dashboardUrl}"
+           style="background: #D4A853; color: white; padding: 16px 32px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          Continue Your Journey
+        </a>
+      </div>
+
+      <p>Just reply to this email if you'd like to hop on a quick call to troubleshoot or adjust your timeline.</p>
+
+      <p style="margin-top: 32px;">Travis<br>
+      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    churchId,
+    notificationType: 'inactive_reminder'
+  });
+}
+
 // 3 Steps resource email (sent after assessment)
 export async function send3StepsEmail(
   to: string,

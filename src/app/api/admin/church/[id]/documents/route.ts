@@ -1,6 +1,70 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, isAdmin, getSupabaseAdmin } from '@/lib/auth';
-import { logDocumentUpload, logAdminAction } from '@/lib/audit';
+import { logDocumentUpload } from '@/lib/audit';
+
+// GET - Get document version history
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: churchId } = await params;
+    const session = await getSession();
+
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Allow both admins and church leaders to view version history
+    const isAdminUser = await isAdmin(session.leader.email);
+    if (!isAdminUser && session.church?.id !== churchId) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const documentType = searchParams.get('document_type');
+
+    const supabase = getSupabaseAdmin();
+
+    // Get the document
+    let query = supabase
+      .from('funnel_documents')
+      .select('id, document_type, file_url, notes, current_version, uploaded_by, created_at, updated_at')
+      .eq('church_id', churchId);
+
+    if (documentType) {
+      query = query.eq('document_type', documentType);
+    }
+
+    const { data: documents, error: docError } = await query;
+
+    if (docError) {
+      console.error('[ADMIN DOCUMENTS] GET docs error:', docError);
+      return NextResponse.json({ error: 'Failed to fetch documents' }, { status: 500 });
+    }
+
+    // For each document, get version history
+    const documentsWithVersions = await Promise.all(
+      (documents || []).map(async (doc) => {
+        const { data: versions } = await supabase
+          .from('document_versions')
+          .select('id, version_number, file_url, file_name, file_size, uploaded_by, notes, created_at')
+          .eq('document_id', doc.id)
+          .order('version_number', { ascending: false });
+
+        return {
+          ...doc,
+          versions: versions || [],
+        };
+      })
+    );
+
+    return NextResponse.json({ documents: documentsWithVersions });
+  } catch (error) {
+    console.error('[ADMIN DOCUMENTS] GET error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
 
 // POST - Save document notes
 export async function POST(
@@ -134,11 +198,12 @@ export async function PUT(
     let documentId: string;
 
     if (existing) {
-      // Update existing
+      // Update existing - the database trigger will archive the old version
       await supabase
         .from('funnel_documents')
         .update({
           file_url: fileUrl,
+          uploaded_by: session.leader.email,
           updated_at: new Date().toISOString(),
         })
         .eq('id', existing.id);
@@ -151,6 +216,8 @@ export async function PUT(
           church_id: churchId,
           document_type: documentType,
           file_url: fileUrl,
+          uploaded_by: session.leader.email,
+          current_version: 1,
         })
         .select('id')
         .single();

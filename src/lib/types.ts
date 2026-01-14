@@ -31,8 +31,28 @@ export interface FunnelDocument {
   document_type: 'discovery_notes' | 'proposal_pdf' | 'agreement_notes' | 'agreement_pdf' | '3_steps_pdf' | 'implementation_plan';
   file_url?: string;
   notes?: string;
+  current_version?: number;
+  uploaded_by?: string;
   created_at: string;
   updated_at: string;
+}
+
+// Document version history
+export interface DocumentVersion {
+  id: string;
+  document_id: string;
+  version_number: number;
+  file_url: string;
+  file_name?: string;
+  file_size?: number;
+  uploaded_by?: string;
+  notes?: string;
+  created_at: string;
+}
+
+// Document with version history
+export interface FunnelDocumentWithVersions extends FunnelDocument {
+  versions: DocumentVersion[];
 }
 
 // Scheduled calls/appointments
