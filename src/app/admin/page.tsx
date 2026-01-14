@@ -431,6 +431,13 @@ export default function AdminPage() {
             <p className="font-semibold">Church Management</p>
           </div>
           <div className="flex items-center gap-4">
+            <Link
+              href="/admin/settings"
+              className="p-2 text-gray-300 hover:text-white transition-colors"
+              title="Settings"
+            >
+              <Settings className="w-5 h-5" />
+            </Link>
             <a
               href="/api/admin/export"
               download
