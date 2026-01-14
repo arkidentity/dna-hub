@@ -16,11 +16,12 @@ import {
   Trash2,
   File,
 } from 'lucide-react';
-import { MilestoneWithProgress } from '@/lib/types';
-import { formatTargetDate, isOverdue, formatFileSize } from './utils';
+import { MilestoneWithProgress, ScheduledCall } from '@/lib/types';
+import { formatTargetDate, isOverdue, formatFileSize, formatCallDate } from './utils';
 
 interface MilestoneItemProps {
   milestone: MilestoneWithProgress;
+  scheduledCall?: ScheduledCall;
   phaseStatus: string;
   isAdmin: boolean;
   compactView: boolean;
@@ -45,6 +46,7 @@ interface MilestoneItemProps {
 
 export default function MilestoneItem({
   milestone,
+  scheduledCall,
   phaseStatus,
   isAdmin,
   compactView,
@@ -163,6 +165,37 @@ export default function MilestoneItem({
                   year: 'numeric',
                 })}
               </p>
+            )}
+
+            {/* Scheduled Call info - linked from Google Calendar */}
+            {scheduledCall && (
+              <div className={`mt-3 p-3 rounded-lg border ${
+                scheduledCall.completed
+                  ? 'bg-success/5 border-success/20'
+                  : 'bg-teal/5 border-teal/20'
+              }`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <Calendar className="w-4 h-4 text-teal" />
+                  <span className="text-xs font-medium uppercase tracking-wide text-foreground-muted">
+                    {scheduledCall.completed ? 'Call Completed' : 'Scheduled Call'}
+                  </span>
+                </div>
+                <p className="text-sm font-medium text-navy">
+                  {formatCallDate(scheduledCall.scheduled_at)}
+                </p>
+                {/* Show Meet link for upcoming calls */}
+                {!scheduledCall.completed && scheduledCall.meet_link && new Date(scheduledCall.scheduled_at) > new Date() && (
+                  <a
+                    href={scheduledCall.meet_link}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal text-white text-sm font-medium rounded hover:bg-teal/90 transition-colors"
+                  >
+                    <Video className="w-4 h-4" />
+                    Join Google Meet
+                  </a>
+                )}
+              </div>
             )}
 
             {/* Target date display/edit */}

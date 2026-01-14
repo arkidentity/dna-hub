@@ -59,10 +59,12 @@ export interface FunnelDocumentWithVersions extends FunnelDocument {
 export interface ScheduledCall {
   id: string;
   church_id: string;
-  call_type: 'discovery' | 'proposal' | 'strategy';
+  call_type: 'discovery' | 'proposal' | 'strategy' | 'kickoff' | 'assessment';
   scheduled_at: string;
   completed: boolean;
   notes?: string;
+  google_event_id?: string;
+  meet_link?: string;
   created_at: string;
 }
 

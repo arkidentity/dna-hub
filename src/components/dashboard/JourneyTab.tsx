@@ -1,9 +1,59 @@
 'use client';
 
-import { List, LayoutList, Calendar, CheckCircle, Clock } from 'lucide-react';
+import { List, LayoutList, Calendar, CheckCircle, Clock, Video } from 'lucide-react';
 import { PhaseWithMilestones, MilestoneWithProgress, Church, ScheduledCall } from '@/lib/types';
 import PhaseCard from './PhaseCard';
 import { formatCallDate } from './utils';
+
+// Helper component for displaying a scheduled call
+function CallCard({ call, label }: { call?: ScheduledCall; label: string }) {
+  const isUpcoming = call && !call.completed && new Date(call.scheduled_at) > new Date();
+
+  return (
+    <div className={`p-3 rounded-lg ${
+      call
+        ? call.completed
+          ? 'bg-success/5 border border-success/20'
+          : 'bg-teal/5 border border-teal/20'
+        : 'bg-background-secondary border border-card-border'
+    }`}>
+      <p className="text-xs font-medium uppercase tracking-wide text-foreground-muted mb-1">
+        {label}
+      </p>
+      {call ? (
+        <>
+          <div className="flex items-center gap-1.5">
+            {call.completed ? (
+              <CheckCircle className="w-4 h-4 text-success" />
+            ) : (
+              <Clock className="w-4 h-4 text-teal" />
+            )}
+            <span className={`text-sm font-medium ${call.completed ? 'text-success' : 'text-navy'}`}>
+              {call.completed ? 'Completed' : 'Scheduled'}
+            </span>
+          </div>
+          <p className="text-xs text-foreground-muted mt-1">
+            {formatCallDate(call.scheduled_at)}
+          </p>
+          {/* Show Meet link for upcoming calls */}
+          {isUpcoming && call.meet_link && (
+            <a
+              href={call.meet_link}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-2 inline-flex items-center gap-1.5 px-2.5 py-1.5 bg-teal text-white text-xs font-medium rounded hover:bg-teal/90 transition-colors"
+            >
+              <Video className="w-3.5 h-3.5" />
+              Join Google Meet
+            </a>
+          )}
+        </>
+      ) : (
+        <p className="text-sm text-foreground-muted">Not scheduled</p>
+      )}
+    </div>
+  );
+}
 
 interface JourneyTabProps {
   phases: PhaseWithMilestones[];
@@ -131,100 +181,13 @@ export default function JourneyTab({
           </h3>
           <div className="grid sm:grid-cols-3 gap-3">
             {/* Discovery Call */}
-            <div className={`p-3 rounded-lg ${
-              discoveryCall
-                ? discoveryCall.completed
-                  ? 'bg-success/5 border border-success/20'
-                  : 'bg-teal/5 border border-teal/20'
-                : 'bg-background-secondary border border-card-border'
-            }`}>
-              <p className="text-xs font-medium uppercase tracking-wide text-foreground-muted mb-1">
-                Discovery Call
-              </p>
-              {discoveryCall ? (
-                <>
-                  <div className="flex items-center gap-1.5">
-                    {discoveryCall.completed ? (
-                      <CheckCircle className="w-4 h-4 text-success" />
-                    ) : (
-                      <Clock className="w-4 h-4 text-teal" />
-                    )}
-                    <span className={`text-sm font-medium ${discoveryCall.completed ? 'text-success' : 'text-navy'}`}>
-                      {discoveryCall.completed ? 'Completed' : 'Scheduled'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-foreground-muted mt-1">
-                    {formatCallDate(discoveryCall.scheduled_at)}
-                  </p>
-                </>
-              ) : (
-                <p className="text-sm text-foreground-muted">Not scheduled</p>
-              )}
-            </div>
+            <CallCard call={discoveryCall} label="Discovery Call" />
 
             {/* Proposal Call */}
-            <div className={`p-3 rounded-lg ${
-              proposalCall
-                ? proposalCall.completed
-                  ? 'bg-success/5 border border-success/20'
-                  : 'bg-teal/5 border border-teal/20'
-                : 'bg-background-secondary border border-card-border'
-            }`}>
-              <p className="text-xs font-medium uppercase tracking-wide text-foreground-muted mb-1">
-                Proposal Call
-              </p>
-              {proposalCall ? (
-                <>
-                  <div className="flex items-center gap-1.5">
-                    {proposalCall.completed ? (
-                      <CheckCircle className="w-4 h-4 text-success" />
-                    ) : (
-                      <Clock className="w-4 h-4 text-teal" />
-                    )}
-                    <span className={`text-sm font-medium ${proposalCall.completed ? 'text-success' : 'text-navy'}`}>
-                      {proposalCall.completed ? 'Completed' : 'Scheduled'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-foreground-muted mt-1">
-                    {formatCallDate(proposalCall.scheduled_at)}
-                  </p>
-                </>
-              ) : (
-                <p className="text-sm text-foreground-muted">Not scheduled</p>
-              )}
-            </div>
+            <CallCard call={proposalCall} label="Proposal Call" />
 
             {/* Strategy Call */}
-            <div className={`p-3 rounded-lg ${
-              strategyCall
-                ? strategyCall.completed
-                  ? 'bg-success/5 border border-success/20'
-                  : 'bg-teal/5 border border-teal/20'
-                : 'bg-background-secondary border border-card-border'
-            }`}>
-              <p className="text-xs font-medium uppercase tracking-wide text-foreground-muted mb-1">
-                Strategy Call
-              </p>
-              {strategyCall ? (
-                <>
-                  <div className="flex items-center gap-1.5">
-                    {strategyCall.completed ? (
-                      <CheckCircle className="w-4 h-4 text-success" />
-                    ) : (
-                      <Clock className="w-4 h-4 text-teal" />
-                    )}
-                    <span className={`text-sm font-medium ${strategyCall.completed ? 'text-success' : 'text-navy'}`}>
-                      {strategyCall.completed ? 'Completed' : 'Scheduled'}
-                    </span>
-                  </div>
-                  <p className="text-xs text-foreground-muted mt-1">
-                    {formatCallDate(strategyCall.scheduled_at)}
-                  </p>
-                </>
-              ) : (
-                <p className="text-sm text-foreground-muted">Not scheduled</p>
-              )}
-            </div>
+            <CallCard call={strategyCall} label="Strategy Call" />
           </div>
         </div>
       )}
@@ -236,6 +199,7 @@ export default function JourneyTab({
             key={phase.id}
             phase={phase}
             church={church}
+            calls={calls}
             isExpanded={expandedPhases.has(phase.id)}
             isAdmin={isAdmin}
             compactView={compactView}

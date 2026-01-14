@@ -7,13 +7,14 @@ import {
   Clock,
   Download,
 } from 'lucide-react';
-import { PhaseWithMilestones, MilestoneWithProgress, Church } from '@/lib/types';
+import { PhaseWithMilestones, MilestoneWithProgress, Church, ScheduledCall } from '@/lib/types';
 import { getPhaseDate } from './utils';
 import MilestoneItem from './MilestoneItem';
 
 interface PhaseCardProps {
   phase: PhaseWithMilestones;
   church: Church;
+  calls: ScheduledCall[];
   isExpanded: boolean;
   isAdmin: boolean;
   compactView: boolean;
@@ -38,9 +39,31 @@ interface PhaseCardProps {
   onExportCalendar: (phaseNumber: number) => void;
 }
 
+// Helper function to match milestone title to call type
+function getMatchingCall(milestoneTitle: string, calls: ScheduledCall[]): ScheduledCall | undefined {
+  const title = milestoneTitle.toLowerCase();
+  if (title.includes('strategy call') || title.includes('strategy session')) {
+    return calls.find(c => c.call_type === 'strategy');
+  }
+  if (title.includes('discovery call') || title.includes('discovery session')) {
+    return calls.find(c => c.call_type === 'discovery');
+  }
+  if (title.includes('proposal call') || title.includes('proposal session')) {
+    return calls.find(c => c.call_type === 'proposal');
+  }
+  if (title.includes('kick-off') || title.includes('kickoff')) {
+    return calls.find(c => c.call_type === 'kickoff');
+  }
+  if (title.includes('assessment call')) {
+    return calls.find(c => c.call_type === 'assessment');
+  }
+  return undefined;
+}
+
 export default function PhaseCard({
   phase,
   church,
+  calls,
   isExpanded,
   isAdmin,
   compactView,
@@ -150,6 +173,7 @@ export default function PhaseCard({
             <MilestoneItem
               key={milestone.id}
               milestone={milestone}
+              scheduledCall={getMatchingCall(milestone.title, calls)}
               phaseStatus={phase.status}
               isAdmin={isAdmin}
               compactView={compactView}
