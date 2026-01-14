@@ -5,12 +5,68 @@ import crypto from 'crypto';
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
 
-// Admin email addresses - these users get edit access to dates and notes
-const ADMIN_EMAILS = ['thearkidentity@gmail.com', 'travis@arkidentity.com'];
+// Fallback admin emails (used if database query fails)
+const FALLBACK_ADMIN_EMAILS = ['thearkidentity@gmail.com', 'travis@arkidentity.com'];
 
-// Check if an email is an admin
+// Cache for admin status to avoid repeated DB queries
+const adminCache = new Map<string, { isAdmin: boolean; role: string | null; timestamp: number }>();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minutes
+
+// Synchronous check (uses cache or fallback)
 export function isAdmin(email: string): boolean {
-  return ADMIN_EMAILS.includes(email.toLowerCase());
+  const normalizedEmail = email.toLowerCase();
+  const cached = adminCache.get(normalizedEmail);
+
+  // Return cached value if still valid
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.isAdmin;
+  }
+
+  // Fallback to hardcoded list (async check will update cache)
+  return FALLBACK_ADMIN_EMAILS.includes(normalizedEmail);
+}
+
+// Async check against database (updates cache)
+export async function checkAdminStatus(email: string): Promise<{ isAdmin: boolean; role: string | null }> {
+  const normalizedEmail = email.toLowerCase();
+
+  try {
+    const { data, error } = await getSupabaseAdmin()
+      .from('admin_users')
+      .select('role, is_active')
+      .eq('email', normalizedEmail)
+      .eq('is_active', true)
+      .single();
+
+    if (error || !data) {
+      // Check fallback list
+      const isFallbackAdmin = FALLBACK_ADMIN_EMAILS.includes(normalizedEmail);
+      adminCache.set(normalizedEmail, {
+        isAdmin: isFallbackAdmin,
+        role: isFallbackAdmin ? 'super_admin' : null,
+        timestamp: Date.now()
+      });
+      return { isAdmin: isFallbackAdmin, role: isFallbackAdmin ? 'super_admin' : null };
+    }
+
+    adminCache.set(normalizedEmail, {
+      isAdmin: true,
+      role: data.role,
+      timestamp: Date.now()
+    });
+    return { isAdmin: true, role: data.role };
+  } catch (err) {
+    console.error('Error checking admin status:', err);
+    // Fallback to hardcoded list
+    const isFallbackAdmin = FALLBACK_ADMIN_EMAILS.includes(normalizedEmail);
+    return { isAdmin: isFallbackAdmin, role: isFallbackAdmin ? 'super_admin' : null };
+  }
+}
+
+// Get admin role (for RBAC - future use)
+export async function getAdminRole(email: string): Promise<string | null> {
+  const { role } = await checkAdminStatus(email);
+  return role;
 }
 
 // Create client lazily to avoid build-time errors when env vars aren't set

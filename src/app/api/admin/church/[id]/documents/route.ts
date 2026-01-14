@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, isAdmin, getSupabaseAdmin } from '@/lib/auth';
+import { logDocumentUpload, logAdminAction } from '@/lib/audit';
 
 // POST - Save document notes
 export async function POST(
@@ -130,6 +131,8 @@ export async function PUT(
       .eq('document_type', documentType)
       .single();
 
+    let documentId: string;
+
     if (existing) {
       // Update existing
       await supabase
@@ -139,16 +142,29 @@ export async function PUT(
           updated_at: new Date().toISOString(),
         })
         .eq('id', existing.id);
+      documentId = existing.id;
     } else {
       // Create new
-      await supabase
+      const { data: newDoc } = await supabase
         .from('funnel_documents')
         .insert({
           church_id: churchId,
           document_type: documentType,
           file_url: fileUrl,
-        });
+        })
+        .select('id')
+        .single();
+      documentId = newDoc?.id || churchId;
     }
+
+    // Log the document upload
+    await logDocumentUpload(
+      session.leader.email,
+      documentId,
+      churchId,
+      documentType,
+      file.name
+    );
 
     return NextResponse.json({ success: true, file_url: fileUrl });
   } catch (error) {

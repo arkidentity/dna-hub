@@ -1,5 +1,18 @@
 // Database types for DNA Church Hub
 
+// Admin user roles
+export type AdminRole = 'super_admin' | 'admin' | 'readonly';
+
+export interface AdminUser {
+  id: string;
+  email: string;
+  name?: string;
+  role: AdminRole;
+  is_active: boolean;
+  created_at: string;
+  created_by?: string;
+}
+
 export type ChurchStatus =
   | 'pending_assessment'    // Just submitted assessment
   | 'awaiting_discovery'    // Assessment reviewed, waiting for discovery call

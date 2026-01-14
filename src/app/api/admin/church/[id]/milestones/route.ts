@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSession, isAdmin, getSupabaseAdmin } from '@/lib/auth';
+import { logAdminAction, logMilestoneToggle } from '@/lib/audit';
 
 // POST: Create a custom milestone for this church
 export async function POST(
@@ -82,6 +83,17 @@ export async function POST(
         target_date,
       });
     }
+
+    // Log the milestone creation
+    await logAdminAction(
+      session.leader.email,
+      'milestone_update',
+      'milestone',
+      milestone.id,
+      null,
+      { title, church_id: churchId, phase_id },
+      `Created custom milestone: ${title}`
+    );
 
     return NextResponse.json({ milestone });
   } catch (error) {
@@ -249,6 +261,25 @@ export async function PATCH(
           { status: 500 }
         );
       }
+    }
+
+    // Log the milestone update to audit trail
+    if (typeof completed === 'boolean') {
+      await logMilestoneToggle(
+        session.leader.email,
+        milestone_id,
+        churchId,
+        completed
+      );
+    } else if (target_date !== undefined || notes !== undefined) {
+      await logAdminAction(
+        session.leader.email,
+        target_date !== undefined ? 'date_update' : 'notes_update',
+        'milestone',
+        milestone_id,
+        existingProgress ? { target_date: existingProgress.target_date, notes: existingProgress.notes } : null,
+        { target_date, notes, church_id: churchId }
+      );
     }
 
     return NextResponse.json({ success: true });

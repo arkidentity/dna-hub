@@ -17,6 +17,7 @@ import {
   Video,
   ExternalLink,
   AlertCircle,
+  RefreshCw,
 } from 'lucide-react';
 
 interface PortalData {
@@ -211,7 +212,21 @@ export default function PortalPage() {
   if (!data) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <p className="text-foreground-muted">Failed to load portal</p>
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-error mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-navy mb-2">Failed to load portal</h2>
+          <p className="text-foreground-muted mb-4">Something went wrong. Please try again.</p>
+          <button
+            onClick={() => {
+              setLoading(true);
+              fetchPortalData();
+            }}
+            className="btn-primary inline-flex items-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Try Again
+          </button>
+        </div>
       </div>
     );
   }

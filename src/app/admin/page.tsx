@@ -26,6 +26,15 @@ import {
   Eye,
   Settings,
   Mail,
+  Download,
+  Square,
+  CheckSquare,
+  X,
+  BarChart3,
+  TrendingUp,
+  AlertTriangle,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react';
 
 interface ChurchSummary {
@@ -54,6 +63,30 @@ interface AdminStats {
   activeThisWeek: number;
 }
 
+interface AnalyticsData {
+  summary: {
+    total: number;
+    active: number;
+    completed: number;
+    inPipeline: number;
+    atRisk: number;
+    recentlyActive: number;
+    newThisMonth: number;
+  };
+  pipeline: Array<{ key: string; label: string; count: number }>;
+  conversions: Array<{ from: string; to: string; rate: number; count: number }>;
+  atRiskChurches: Array<{
+    id: string;
+    name: string;
+    status: string;
+    leader_name: string;
+    leader_email: string;
+    days_inactive: number;
+  }>;
+  phaseDistribution: Record<number, number>;
+  avgTenure: Record<string, number>;
+}
+
 const STATUS_LABELS: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   pending_assessment: { label: 'Pending Review', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
   awaiting_discovery: { label: 'Awaiting Discovery', color: 'bg-blue-100 text-blue-800', icon: Phone },
@@ -78,8 +111,12 @@ export default function AdminPage() {
   const [churches, setChurches] = useState<ChurchSummary[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
+  const [phaseFilter, setPhaseFilter] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<'name' | 'created' | 'updated' | 'phase'>('created');
+  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
   const [refreshing, setRefreshing] = useState(false);
 
   // Tier selection modal state
@@ -87,12 +124,32 @@ export default function AdminPage() {
   const [tierModalChurch, setTierModalChurch] = useState<ChurchSummary | null>(null);
   const [selectedTier, setSelectedTier] = useState('growth');
 
+  // Bulk selection state
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
+  const [bulkActionOpen, setBulkActionOpen] = useState(false);
+  const [bulkStatus, setBulkStatus] = useState('');
+  const [bulkSendEmail, setBulkSendEmail] = useState(false);
+  const [bulkProcessing, setBulkProcessing] = useState(false);
+
+  // Analytics state
+  const [showAnalytics, setShowAnalytics] = useState(false);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
+  const [analyticsLoading, setAnalyticsLoading] = useState(false);
+
   useEffect(() => {
     fetchAdminData();
   }, []);
 
+  useEffect(() => {
+    if (showAnalytics && !analytics) {
+      fetchAnalytics();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showAnalytics]);
+
   const fetchAdminData = async () => {
     try {
+      setError(false);
       const response = await fetch('/api/admin/churches');
 
       if (response.status === 401) {
@@ -114,8 +171,24 @@ export default function AdminPage() {
       setStats(data.stats);
     } catch (error) {
       console.error('Admin error:', error);
+      setError(true);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchAnalytics = async () => {
+    setAnalyticsLoading(true);
+    try {
+      const response = await fetch('/api/admin/analytics');
+      if (response.ok) {
+        const data = await response.json();
+        setAnalytics(data);
+      }
+    } catch (error) {
+      console.error('Analytics error:', error);
+    } finally {
+      setAnalyticsLoading(false);
     }
   };
 
@@ -184,13 +257,126 @@ export default function AdminPage() {
     }
   };
 
-  const filteredChurches = churches.filter(church => {
-    const matchesSearch = church.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      church.leader_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      church.leader_email.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || church.status === statusFilter;
-    return matchesSearch && matchesStatus;
-  });
+  // Bulk selection helpers
+  const toggleSelect = (id: string) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const selectAll = () => {
+    setSelectedIds(new Set(filteredChurches.map(c => c.id)));
+  };
+
+  const deselectAll = () => {
+    setSelectedIds(new Set());
+  };
+
+  const handleBulkAction = async () => {
+    if (!bulkStatus || selectedIds.size === 0) return;
+
+    setBulkProcessing(true);
+    try {
+      const response = await fetch('/api/admin/churches', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          bulk: true,
+          churchIds: Array.from(selectedIds),
+          action: 'status_change',
+          status: bulkStatus,
+          sendEmail: bulkSendEmail,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Bulk operation failed');
+      }
+
+      const data = await response.json();
+      alert(`Bulk update complete: ${data.results.success} succeeded, ${data.results.failed} failed`);
+
+      // Refresh data and clear selection
+      await fetchAdminData();
+      setSelectedIds(new Set());
+      setBulkActionOpen(false);
+      setBulkStatus('');
+      setBulkSendEmail(false);
+    } catch (error) {
+      console.error('Bulk action error:', error);
+      alert('Failed to perform bulk action');
+    } finally {
+      setBulkProcessing(false);
+    }
+  };
+
+  const handleBulkSendLogin = async () => {
+    if (selectedIds.size === 0) return;
+
+    const selectedChurches = churches.filter(c => selectedIds.has(c.id));
+    const confirmMsg = `Send login links to ${selectedChurches.length} church leaders?`;
+    if (!confirm(confirmMsg)) return;
+
+    setBulkProcessing(true);
+    let sent = 0;
+    let failed = 0;
+
+    for (const church of selectedChurches) {
+      try {
+        const response = await fetch('/api/auth/magic-link', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: church.leader_email }),
+        });
+
+        if (response.ok) {
+          sent++;
+        } else {
+          failed++;
+        }
+      } catch {
+        failed++;
+      }
+    }
+
+    alert(`Login links sent: ${sent} succeeded, ${failed} failed`);
+    setBulkProcessing(false);
+    setSelectedIds(new Set());
+  };
+
+  const filteredChurches = churches
+    .filter(church => {
+      const matchesSearch = church.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        church.leader_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        church.leader_email.toLowerCase().includes(searchQuery.toLowerCase());
+      const matchesStatus = statusFilter === 'all' || church.status === statusFilter;
+      const matchesPhase = phaseFilter === 'all' || church.current_phase === parseInt(phaseFilter);
+      return matchesSearch && matchesStatus && matchesPhase;
+    })
+    .sort((a, b) => {
+      let comparison = 0;
+      switch (sortBy) {
+        case 'name':
+          comparison = a.name.localeCompare(b.name);
+          break;
+        case 'created':
+          comparison = new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          break;
+        case 'updated':
+          comparison = new Date(a.updated_at).getTime() - new Date(b.updated_at).getTime();
+          break;
+        case 'phase':
+          comparison = a.current_phase - b.current_phase;
+          break;
+      }
+      return sortOrder === 'asc' ? comparison : -comparison;
+    });
 
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
@@ -213,6 +399,28 @@ export default function AdminPage() {
     );
   }
 
+  if (error) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="w-12 h-12 text-error mx-auto mb-4" />
+          <h2 className="text-xl font-semibold text-navy mb-2">Failed to load admin dashboard</h2>
+          <p className="text-foreground-muted mb-4">Something went wrong. Please try again.</p>
+          <button
+            onClick={() => {
+              setLoading(true);
+              fetchAdminData();
+            }}
+            className="btn-primary inline-flex items-center gap-2"
+          >
+            <RefreshCw className="w-4 h-4" />
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
@@ -223,6 +431,14 @@ export default function AdminPage() {
             <p className="font-semibold">Church Management</p>
           </div>
           <div className="flex items-center gap-4">
+            <a
+              href="/api/admin/export"
+              download
+              className="p-2 text-gray-300 hover:text-white transition-colors"
+              title="Export CSV"
+            >
+              <Download className="w-5 h-5" />
+            </a>
             <button
               onClick={handleRefresh}
               disabled={refreshing}
@@ -299,6 +515,141 @@ export default function AdminPage() {
           </div>
         )}
 
+        {/* Analytics Toggle */}
+        <button
+          onClick={() => setShowAnalytics(!showAnalytics)}
+          className="flex items-center gap-2 mb-6 text-teal hover:text-teal-light transition-colors"
+        >
+          <BarChart3 className="w-5 h-5" />
+          <span className="font-medium">Funnel Analytics</span>
+          {showAnalytics ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+        </button>
+
+        {/* Analytics Section */}
+        {showAnalytics && (
+          <div className="mb-8 space-y-6">
+            {analyticsLoading ? (
+              <div className="card flex items-center justify-center py-12">
+                <Loader2 className="w-8 h-8 text-gold animate-spin" />
+              </div>
+            ) : analytics ? (
+              <>
+                {/* Pipeline Funnel */}
+                <div className="card">
+                  <h3 className="font-semibold text-navy mb-4 flex items-center gap-2">
+                    <TrendingUp className="w-5 h-5 text-gold" />
+                    Pipeline Overview
+                  </h3>
+                  <div className="flex items-end justify-between gap-2 h-32">
+                    {analytics.pipeline.map((stage, index) => {
+                      const maxCount = Math.max(...analytics.pipeline.map(s => s.count));
+                      const height = maxCount > 0 ? (stage.count / maxCount) * 100 : 0;
+                      const colors = [
+                        'bg-yellow-400',
+                        'bg-blue-400',
+                        'bg-purple-400',
+                        'bg-indigo-400',
+                        'bg-teal-400',
+                        'bg-green-400',
+                        'bg-gray-400',
+                      ];
+                      return (
+                        <div key={stage.key} className="flex-1 flex flex-col items-center">
+                          <span className="text-sm font-bold text-navy mb-1">{stage.count}</span>
+                          <div
+                            className={`w-full ${colors[index]} rounded-t transition-all`}
+                            style={{ height: `${Math.max(height, 5)}%` }}
+                          />
+                          <span className="text-xs text-foreground-muted mt-2 text-center truncate w-full">
+                            {stage.label}
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Conversion Rates */}
+                <div className="card">
+                  <h3 className="font-semibold text-navy mb-4">Conversion Rates</h3>
+                  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
+                    {analytics.conversions.slice(0, 6).map((conv, index) => (
+                      <div key={index} className="text-center p-3 bg-background-secondary rounded-lg">
+                        <p className="text-2xl font-bold text-gold">{conv.rate}%</p>
+                        <p className="text-xs text-foreground-muted mt-1">
+                          {conv.from} → {conv.to}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* At Risk Churches */}
+                {analytics.atRiskChurches.length > 0 && (
+                  <div className="card border-l-4 border-error">
+                    <h3 className="font-semibold text-navy mb-4 flex items-center gap-2">
+                      <AlertTriangle className="w-5 h-5 text-error" />
+                      Churches at Risk ({analytics.atRiskChurches.length})
+                      <span className="text-xs text-foreground-muted font-normal">No activity in 14+ days</span>
+                    </h3>
+                    <div className="space-y-2">
+                      {analytics.atRiskChurches.slice(0, 5).map(church => (
+                        <div
+                          key={church.id}
+                          className="flex items-center justify-between p-3 bg-error/5 rounded-lg"
+                        >
+                          <div>
+                            <p className="font-medium text-navy">{church.name}</p>
+                            <p className="text-xs text-foreground-muted">
+                              {church.leader_name} • {STATUS_LABELS[church.status]?.label || church.status}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-3">
+                            <span className="text-sm text-error font-medium">
+                              {church.days_inactive} days inactive
+                            </span>
+                            <Link
+                              href={`/admin/church/${church.id}`}
+                              className="text-xs px-3 py-1 bg-navy text-white rounded hover:bg-navy/90"
+                            >
+                              View
+                            </Link>
+                          </div>
+                        </div>
+                      ))}
+                      {analytics.atRiskChurches.length > 5 && (
+                        <p className="text-sm text-foreground-muted text-center">
+                          +{analytics.atRiskChurches.length - 5} more
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Quick Stats */}
+                <div className="grid grid-cols-3 gap-4">
+                  <div className="card text-center">
+                    <p className="text-3xl font-bold text-success">{analytics.summary.newThisMonth}</p>
+                    <p className="text-xs text-foreground-muted">New This Month</p>
+                  </div>
+                  <div className="card text-center">
+                    <p className="text-3xl font-bold text-teal">{analytics.summary.recentlyActive}</p>
+                    <p className="text-xs text-foreground-muted">Active Last 7 Days</p>
+                  </div>
+                  <div className="card text-center">
+                    <p className="text-3xl font-bold text-gold">{analytics.summary.completed}</p>
+                    <p className="text-xs text-foreground-muted">Completed</p>
+                  </div>
+                </div>
+              </>
+            ) : (
+              <div className="card text-center py-8 text-foreground-muted">
+                Failed to load analytics
+              </div>
+            )}
+          </div>
+        )}
+
         {/* Filters */}
         <div className="card mb-6">
           <div className="flex flex-col md:flex-row gap-4">
@@ -317,7 +668,7 @@ export default function AdminPage() {
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value)}
-                className="min-w-[160px]"
+                className="min-w-[140px]"
               >
                 <option value="all">All Statuses</option>
                 <option value="pending_assessment">Pending Review</option>
@@ -330,7 +681,102 @@ export default function AdminPage() {
                 <option value="completed">Completed</option>
                 <option value="declined">Declined</option>
               </select>
+              <select
+                value={phaseFilter}
+                onChange={(e) => setPhaseFilter(e.target.value)}
+                className="min-w-[120px]"
+              >
+                <option value="all">All Phases</option>
+                <option value="0">Onboarding</option>
+                <option value="1">Phase 1</option>
+                <option value="2">Phase 2</option>
+                <option value="3">Phase 3</option>
+                <option value="4">Phase 4</option>
+                <option value="5">Phase 5</option>
+              </select>
+              <select
+                value={`${sortBy}-${sortOrder}`}
+                onChange={(e) => {
+                  const [field, order] = e.target.value.split('-') as ['name' | 'created' | 'updated' | 'phase', 'asc' | 'desc'];
+                  setSortBy(field);
+                  setSortOrder(order);
+                }}
+                className="min-w-[140px]"
+              >
+                <option value="created-desc">Newest First</option>
+                <option value="created-asc">Oldest First</option>
+                <option value="updated-desc">Recently Updated</option>
+                <option value="name-asc">Name A-Z</option>
+                <option value="name-desc">Name Z-A</option>
+                <option value="phase-asc">Phase (Low-High)</option>
+                <option value="phase-desc">Phase (High-Low)</option>
+              </select>
             </div>
+          </div>
+        </div>
+
+        {/* Bulk Action Bar */}
+        {selectedIds.size > 0 && (
+          <div className="card mb-6 bg-navy text-white">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <span className="font-medium">{selectedIds.size} selected</span>
+                <button
+                  onClick={deselectAll}
+                  className="text-sm text-gray-300 hover:text-white flex items-center gap-1"
+                >
+                  <X className="w-4 h-4" />
+                  Clear
+                </button>
+              </div>
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={handleBulkSendLogin}
+                  disabled={bulkProcessing}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-teal text-white rounded hover:bg-teal-light transition-colors text-sm"
+                >
+                  <Mail className="w-4 h-4" />
+                  Send Login Links
+                </button>
+                <button
+                  onClick={() => setBulkActionOpen(true)}
+                  disabled={bulkProcessing}
+                  className="flex items-center gap-2 px-3 py-1.5 bg-gold text-white rounded hover:bg-gold/90 transition-colors text-sm"
+                >
+                  Change Status
+                </button>
+                <a
+                  href={`/api/admin/export?ids=${Array.from(selectedIds).join(',')}`}
+                  download
+                  className="flex items-center gap-2 px-3 py-1.5 bg-white/10 text-white rounded hover:bg-white/20 transition-colors text-sm"
+                >
+                  <Download className="w-4 h-4" />
+                  Export Selected
+                </a>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Select All Controls */}
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => selectedIds.size === filteredChurches.length ? deselectAll() : selectAll()}
+              className="flex items-center gap-2 text-sm text-foreground-muted hover:text-navy transition-colors"
+            >
+              {selectedIds.size === filteredChurches.length && filteredChurches.length > 0 ? (
+                <CheckSquare className="w-4 h-4 text-gold" />
+              ) : (
+                <Square className="w-4 h-4" />
+              )}
+              {selectedIds.size === filteredChurches.length && filteredChurches.length > 0
+                ? 'Deselect All'
+                : 'Select All'}
+            </button>
+            <span className="text-sm text-foreground-muted">
+              {filteredChurches.length} churches
+            </span>
           </div>
         </div>
 
@@ -350,8 +796,20 @@ export default function AdminPage() {
                 : 0;
 
               return (
-                <div key={church.id} className="card hover:shadow-md transition-shadow">
+                <div key={church.id} className={`card hover:shadow-md transition-shadow ${selectedIds.has(church.id) ? 'ring-2 ring-gold' : ''}`}>
                   <div className="flex items-start gap-4">
+                    {/* Selection Checkbox */}
+                    <button
+                      onClick={() => toggleSelect(church.id)}
+                      className="flex-shrink-0 mt-1"
+                    >
+                      {selectedIds.has(church.id) ? (
+                        <CheckSquare className="w-5 h-5 text-gold" />
+                      ) : (
+                        <Square className="w-5 h-5 text-foreground-muted hover:text-navy" />
+                      )}
+                    </button>
+
                     {/* Church Info */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-3 mb-2">
@@ -568,6 +1026,73 @@ export default function AdminPage() {
                 className="flex-1 px-4 py-2 bg-gold text-white rounded-lg hover:bg-gold-dark transition-colors"
               >
                 Confirm Agreement
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Bulk Status Change Modal */}
+      {bulkActionOpen && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-navy mb-2">
+              Bulk Status Change
+            </h3>
+            <p className="text-foreground-muted text-sm mb-4">
+              Change status for {selectedIds.size} selected churches.
+            </p>
+
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-navy mb-2">New Status</label>
+              <select
+                value={bulkStatus}
+                onChange={(e) => setBulkStatus(e.target.value)}
+                className="w-full"
+              >
+                <option value="">Select status...</option>
+                <option value="pending_assessment">Pending Review</option>
+                <option value="awaiting_discovery">Awaiting Discovery</option>
+                <option value="proposal_sent">Proposal Sent</option>
+                <option value="awaiting_agreement">Awaiting Agreement</option>
+                <option value="awaiting_strategy">Awaiting Strategy</option>
+                <option value="active">Active</option>
+                <option value="paused">Paused</option>
+                <option value="completed">Completed</option>
+                <option value="declined">Declined</option>
+              </select>
+            </div>
+
+            <label className="flex items-center gap-2 mb-6 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={bulkSendEmail}
+                onChange={(e) => setBulkSendEmail(e.target.checked)}
+                className="accent-gold"
+              />
+              <span className="text-sm text-foreground-muted">
+                Send notification emails (for proposal_sent or active status)
+              </span>
+            </label>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => {
+                  setBulkActionOpen(false);
+                  setBulkStatus('');
+                  setBulkSendEmail(false);
+                }}
+                className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-background-secondary transition-colors"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleBulkAction}
+                disabled={!bulkStatus || bulkProcessing}
+                className="flex-1 px-4 py-2 bg-gold text-white rounded-lg hover:bg-gold-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+              >
+                {bulkProcessing && <Loader2 className="w-4 h-4 animate-spin" />}
+                Apply to {selectedIds.size} Churches
               </button>
             </div>
           </div>

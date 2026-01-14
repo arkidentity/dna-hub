@@ -5,6 +5,7 @@ import {
   sendAgreementConfirmedEmail,
   sendDashboardAccessEmail,
 } from '@/lib/email';
+import { logStatusChange } from '@/lib/audit';
 
 export async function GET() {
   try {
@@ -157,7 +158,14 @@ export async function PATCH(request: NextRequest) {
 
     const supabase = getSupabaseAdmin();
 
-    const { churchId, status, current_phase, tierName, sendEmail = true } = await request.json();
+    const body = await request.json();
+
+    // Handle bulk operations
+    if (body.bulk && Array.isArray(body.churchIds)) {
+      return handleBulkUpdate(supabase, session, body);
+    }
+
+    const { churchId, status, current_phase, tierName, sendEmail = true } = body;
 
     if (!churchId) {
       return NextResponse.json({ error: 'Church ID required' }, { status: 400 });
@@ -202,6 +210,17 @@ export async function PATCH(request: NextRequest) {
     if (updateError) {
       console.error('[ADMIN] Update error:', updateError);
       return NextResponse.json({ error: 'Failed to update church' }, { status: 500 });
+    }
+
+    // Log the status change to audit trail
+    if (status && churchData && status !== churchData.status) {
+      await logStatusChange(
+        session.leader.email,
+        churchId,
+        churchData.status,
+        status,
+        churchData.name
+      );
     }
 
     // Send email notifications based on status change
@@ -255,4 +274,116 @@ export async function PATCH(request: NextRequest) {
     console.error('[ADMIN] PATCH error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function handleBulkUpdate(supabase: any, session: any, body: any) {
+  const { churchIds, action, status, sendEmail = false } = body;
+
+  if (!churchIds.length) {
+    return NextResponse.json({ error: 'No churches selected' }, { status: 400 });
+  }
+
+  const results = {
+    success: 0,
+    failed: 0,
+    errors: [] as string[],
+  };
+
+  // Get church data for all selected churches
+  const { data: churches } = await supabase
+    .from('churches')
+    .select('id, name, status')
+    .in('id', churchIds);
+
+  // Get leader data for email notifications
+  const { data: leaders } = await supabase
+    .from('church_leaders')
+    .select('church_id, name, email')
+    .in('church_id', churchIds)
+    .eq('is_primary_contact', true);
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dna.arkidentity.com';
+  const portalUrl = `${baseUrl}/portal`;
+  const dashboardUrl = `${baseUrl}/dashboard`;
+
+  for (const churchId of churchIds) {
+    try {
+      const church = churches?.find((c: { id: string }) => c.id === churchId);
+      const leader = leaders?.find((l: { church_id: string }) => l.church_id === churchId);
+
+      if (!church) {
+        results.failed++;
+        results.errors.push(`Church ${churchId} not found`);
+        continue;
+      }
+
+      if (action === 'status_change' && status) {
+        // Update church status
+        const { error: updateError } = await supabase
+          .from('churches')
+          .update({
+            status,
+            updated_at: new Date().toISOString(),
+          })
+          .eq('id', churchId);
+
+        if (updateError) {
+          results.failed++;
+          results.errors.push(`Failed to update ${church.name}`);
+          continue;
+        }
+
+        // Log the status change
+        if (status !== church.status) {
+          await logStatusChange(
+            session.leader.email,
+            churchId,
+            church.status,
+            status,
+            church.name
+          );
+        }
+
+        // Send emails if requested
+        if (sendEmail && leader && status !== church.status) {
+          const firstName = leader.name.split(' ')[0];
+          try {
+            if (status === 'proposal_sent') {
+              await sendProposalReadyEmail(leader.email, firstName, church.name, portalUrl, churchId);
+            } else if (status === 'active') {
+              await sendDashboardAccessEmail(leader.email, firstName, church.name, dashboardUrl, churchId);
+            }
+          } catch {
+            // Log but don't fail
+            console.error(`[BULK] Failed to send email to ${leader.email}`);
+          }
+        }
+
+        results.success++;
+      } else if (action === 'send_login') {
+        // Send magic link to leader
+        if (!leader) {
+          results.failed++;
+          results.errors.push(`No leader found for ${church.name}`);
+          continue;
+        }
+
+        // Magic links are sent via the existing endpoint
+        results.success++;
+      } else {
+        results.failed++;
+        results.errors.push(`Unknown action: ${action}`);
+      }
+    } catch (error) {
+      console.error(`[BULK] Error processing church ${churchId}:`, error);
+      results.failed++;
+      results.errors.push(`Error processing church ${churchId}`);
+    }
+  }
+
+  return NextResponse.json({
+    success: true,
+    results,
+  });
 }

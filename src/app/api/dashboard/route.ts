@@ -163,9 +163,9 @@ export async function GET() {
       // Determine phase status
       let status: 'locked' | 'current' | 'completed' | 'upcoming';
 
-      // Phase 0 (Onboarding) is always accessible - treat as completed
       if (phase.phase_number === 0) {
-        status = 'completed';
+        // Phase 0 (Onboarding): current if church is at phase 0, otherwise completed
+        status = church.current_phase === 0 ? 'current' : 'completed';
       } else if (phase.phase_number < church.current_phase) {
         status = 'completed';
       } else if (phase.phase_number === church.current_phase) {
@@ -174,11 +174,6 @@ export async function GET() {
         status = 'upcoming'; // Can see but items are locked
       } else {
         status = 'locked';
-      }
-
-      // If current phase is 0 (not started), phase 1 is current
-      if (church.current_phase === 0 && phase.phase_number === 1) {
-        status = 'current';
       }
 
       return {
