@@ -30,6 +30,7 @@ import {
   Map,
   List,
   LayoutList,
+  Paperclip,
 } from 'lucide-react';
 
 interface ChurchDetail {
@@ -163,6 +164,14 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
   const [newMilestoneIsKey, setNewMilestoneIsKey] = useState(false);
   const [savingMilestone, setSavingMilestone] = useState(false);
   const [togglingMilestone, setTogglingMilestone] = useState<string | null>(null);
+
+  // Milestone editing state
+  const [editingDateId, setEditingDateId] = useState<string | null>(null);
+  const [editDateValue, setEditDateValue] = useState('');
+  const [editingNotesId, setEditingNotesId] = useState<string | null>(null);
+  const [editNotesValue, setEditNotesValue] = useState('');
+  const [updatingMilestone, setUpdatingMilestone] = useState<string | null>(null);
+  const [uploadingMilestone, setUploadingMilestone] = useState<string | null>(null);
 
   useEffect(() => {
     fetchChurchData();
@@ -463,6 +472,105 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
     } catch (error) {
       console.error('Delete milestone error:', error);
       alert('Failed to delete milestone');
+    }
+  };
+
+  const handleSaveTargetDate = async (milestoneId: string) => {
+    setUpdatingMilestone(milestoneId);
+    try {
+      const response = await fetch(`/api/admin/church/${churchId}/milestones`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          milestone_id: milestoneId,
+          target_date: editDateValue || null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save target date');
+      }
+
+      await fetchChurchData();
+      setEditingDateId(null);
+      setEditDateValue('');
+    } catch (error) {
+      console.error('Save target date error:', error);
+      alert('Failed to save target date');
+    } finally {
+      setUpdatingMilestone(null);
+    }
+  };
+
+  const handleSaveNotes = async (milestoneId: string) => {
+    setUpdatingMilestone(milestoneId);
+    try {
+      const response = await fetch(`/api/admin/church/${churchId}/milestones`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          milestone_id: milestoneId,
+          notes: editNotesValue || null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save notes');
+      }
+
+      await fetchChurchData();
+      setEditingNotesId(null);
+      setEditNotesValue('');
+    } catch (error) {
+      console.error('Save notes error:', error);
+      alert('Failed to save notes');
+    } finally {
+      setUpdatingMilestone(null);
+    }
+  };
+
+  const handleFileUpload = async (milestoneId: string, file: File) => {
+    setUploadingMilestone(milestoneId);
+    try {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('milestoneId', milestoneId);
+      formData.append('churchId', churchId);
+
+      const response = await fetch('/api/attachments', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to upload file');
+      }
+
+      await fetchChurchData();
+    } catch (error) {
+      console.error('File upload error:', error);
+      alert('Failed to upload file');
+    } finally {
+      setUploadingMilestone(null);
+    }
+  };
+
+  const handleDeleteAttachment = async (attachmentId: string) => {
+    if (!confirm('Delete this attachment?')) return;
+
+    try {
+      const response = await fetch(`/api/attachments?id=${attachmentId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to delete attachment');
+      }
+
+      await fetchChurchData();
+    } catch (error) {
+      console.error('Delete attachment error:', error);
+      alert('Failed to delete attachment');
     }
   };
 
@@ -1079,12 +1187,138 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
                                   {!compactView && milestone.description && (
                                     <p className="text-sm text-foreground-muted mt-1">{milestone.description}</p>
                                   )}
-                                  {milestone.progress?.target_date && (
-                                    <p className="text-xs text-foreground-muted mt-1 flex items-center gap-1">
-                                      <Clock className="w-3 h-3" />
-                                      Target: {formatDate(milestone.progress.target_date)}
-                                    </p>
+
+                                  {/* Target Date - Editable */}
+                                  {!compactView && (
+                                    editingDateId === milestone.id ? (
+                                      <div className="flex items-center gap-2 mt-2">
+                                        <Calendar className="w-3 h-3 text-foreground-muted" />
+                                        <input
+                                          type="date"
+                                          value={editDateValue}
+                                          onChange={(e) => setEditDateValue(e.target.value)}
+                                          className="text-xs px-2 py-1 border border-input-border rounded bg-white"
+                                          autoFocus
+                                        />
+                                        <button
+                                          onClick={() => handleSaveTargetDate(milestone.id)}
+                                          disabled={updatingMilestone === milestone.id}
+                                          className="p-1 text-success hover:bg-success/10 rounded"
+                                          title="Save"
+                                        >
+                                          {updatingMilestone === milestone.id ? (
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                          ) : (
+                                            <Save className="w-3 h-3" />
+                                          )}
+                                        </button>
+                                        <button
+                                          onClick={() => { setEditingDateId(null); setEditDateValue(''); }}
+                                          className="p-1 text-foreground-muted hover:bg-background-secondary rounded"
+                                          title="Cancel"
+                                        >
+                                          <X className="w-3 h-3" />
+                                        </button>
+                                      </div>
+                                    ) : milestone.progress?.target_date ? (
+                                      <div className="flex items-center gap-1 mt-2">
+                                        <p className="text-xs text-foreground-muted flex items-center gap-1">
+                                          <Calendar className="w-3 h-3" />
+                                          Target: {formatDate(milestone.progress.target_date)}
+                                        </p>
+                                        <button
+                                          onClick={() => {
+                                            setEditingDateId(milestone.id);
+                                            setEditDateValue(milestone.progress?.target_date || '');
+                                          }}
+                                          className="p-1 text-foreground-muted hover:text-teal hover:bg-teal/10 rounded ml-1"
+                                          title="Edit date"
+                                        >
+                                          <Pencil className="w-3 h-3" />
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <button
+                                        onClick={() => {
+                                          setEditingDateId(milestone.id);
+                                          setEditDateValue('');
+                                        }}
+                                        className="text-xs text-teal hover:text-teal-light flex items-center gap-1 mt-2"
+                                      >
+                                        <Calendar className="w-3 h-3" />
+                                        <span>Add target date</span>
+                                      </button>
+                                    )
                                   )}
+
+                                  {/* Notes - Editable */}
+                                  {!compactView && (
+                                    editingNotesId === milestone.id ? (
+                                      <div className="mt-3 space-y-2">
+                                        <textarea
+                                          value={editNotesValue}
+                                          onChange={(e) => setEditNotesValue(e.target.value)}
+                                          placeholder="Add a note (challenges, victories, updates...)"
+                                          className="w-full text-sm px-3 py-2 border border-input-border rounded bg-white resize-none"
+                                          rows={3}
+                                          autoFocus
+                                        />
+                                        <div className="flex items-center gap-2">
+                                          <button
+                                            onClick={() => handleSaveNotes(milestone.id)}
+                                            disabled={updatingMilestone === milestone.id}
+                                            className="text-xs px-3 py-1 bg-gold text-white rounded hover:bg-gold/90 flex items-center gap-1"
+                                          >
+                                            {updatingMilestone === milestone.id ? (
+                                              <Loader2 className="w-3 h-3 animate-spin" />
+                                            ) : (
+                                              <Save className="w-3 h-3" />
+                                            )}
+                                            Save
+                                          </button>
+                                          <button
+                                            onClick={() => { setEditingNotesId(null); setEditNotesValue(''); }}
+                                            className="text-xs px-3 py-1 text-foreground-muted hover:bg-background-secondary rounded"
+                                          >
+                                            Cancel
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : milestone.progress?.notes ? (
+                                      <div className="mt-3 p-2 bg-gold/5 border-l-2 border-gold/30 rounded-r">
+                                        <div className="flex items-start justify-between gap-2">
+                                          <div className="flex-1">
+                                            <p className="text-xs font-medium text-gold/80 mb-1">Note:</p>
+                                            <p className="text-sm text-foreground-muted italic whitespace-pre-wrap">
+                                              {milestone.progress.notes}
+                                            </p>
+                                          </div>
+                                          <button
+                                            onClick={() => {
+                                              setEditingNotesId(milestone.id);
+                                              setEditNotesValue(milestone.progress?.notes || '');
+                                            }}
+                                            className="p-1 text-foreground-muted hover:text-teal hover:bg-teal/10 rounded flex-shrink-0"
+                                            title="Edit note"
+                                          >
+                                            <Pencil className="w-3 h-3" />
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <button
+                                        onClick={() => {
+                                          setEditingNotesId(milestone.id);
+                                          setEditNotesValue('');
+                                        }}
+                                        className="text-xs text-teal hover:text-teal-light flex items-center gap-1 mt-2"
+                                      >
+                                        <MessageSquare className="w-3 h-3" />
+                                        <span>Add note</span>
+                                      </button>
+                                    )
+                                  )}
+
                                   {/* Resources */}
                                   {!compactView && milestone.resources && milestone.resources.length > 0 && (
                                     <div className="mt-2 space-y-1">
@@ -1111,6 +1345,71 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
                                           )}
                                         </div>
                                       ))}
+                                    </div>
+                                  )}
+
+                                  {/* Attachments - with upload */}
+                                  {!compactView && (
+                                    <div className="mt-3">
+                                      {milestone.attachments && milestone.attachments.length > 0 && (
+                                        <div className="space-y-1 mb-2">
+                                          {milestone.attachments.map((attachment) => (
+                                            <div
+                                              key={attachment.id}
+                                              className="flex items-center gap-2 text-xs bg-teal/5 px-2 py-1.5 rounded group"
+                                            >
+                                              <File className="w-3 h-3 text-teal" />
+                                              <a
+                                                href={attachment.file_url}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-teal hover:text-teal-light flex-1 truncate"
+                                                title={attachment.file_name}
+                                              >
+                                                {attachment.file_name}
+                                              </a>
+                                              {attachment.file_size && (
+                                                <span className="text-foreground-muted">
+                                                  {(attachment.file_size / 1024).toFixed(0)}KB
+                                                </span>
+                                              )}
+                                              <button
+                                                onClick={() => handleDeleteAttachment(attachment.id)}
+                                                className="p-1 text-foreground-muted hover:text-error opacity-0 group-hover:opacity-100 transition-opacity"
+                                                title="Delete attachment"
+                                              >
+                                                <Trash2 className="w-3 h-3" />
+                                              </button>
+                                            </div>
+                                          ))}
+                                        </div>
+                                      )}
+
+                                      <label className="text-xs text-teal hover:text-teal-light flex items-center gap-1 cursor-pointer">
+                                        {uploadingMilestone === milestone.id ? (
+                                          <>
+                                            <Loader2 className="w-3 h-3 animate-spin" />
+                                            <span>Uploading...</span>
+                                          </>
+                                        ) : (
+                                          <>
+                                            <Paperclip className="w-3 h-3" />
+                                            <span>Attach file</span>
+                                            <input
+                                              type="file"
+                                              className="hidden"
+                                              accept=".pdf,.png,.jpg,.jpeg,.gif,.doc,.docx"
+                                              onChange={(e) => {
+                                                const file = e.target.files?.[0];
+                                                if (file) {
+                                                  handleFileUpload(milestone.id, file);
+                                                  e.target.value = '';
+                                                }
+                                              }}
+                                            />
+                                          </>
+                                        )}
+                                      </label>
                                     </div>
                                   )}
                                 </div>

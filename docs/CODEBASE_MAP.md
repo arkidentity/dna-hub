@@ -43,9 +43,11 @@ dna-hub/
 │   │   │
 │   │   ├── admin/
 │   │   │   ├── page.tsx        # All churches list
+│   │   │   ├── settings/
+│   │   │   │   └── page.tsx    # Google Calendar settings
 │   │   │   └── church/
 │   │   │       └── [id]/
-│   │   │           └── page.tsx # Single church admin view
+│   │   │           └── page.tsx # Single church admin (Overview + DNA Journey tabs)
 │   │   │
 │   │   └── api/                # API Routes
 │   │       ├── auth/
@@ -67,13 +69,22 @@ dna-hub/
 │   │               └── [id]/
 │   │                   ├── route.ts      # Church CRUD
 │   │                   ├── calls/route.ts     # Manage calls
-│   │                   └── documents/route.ts # Funnel docs
+│   │                   ├── documents/route.ts # Funnel docs
+│   │                   └── milestones/route.ts # Milestone CRUD (admin)
 │   │
-│   ├── components/             # Reusable components (currently empty)
+│   ├── components/             # Reusable components
+│   │   └── dashboard/          # Dashboard UI components
+│   │       ├── JourneyTab.tsx         # DNA Journey phases view
+│   │       ├── MilestoneItem.tsx      # Individual milestone display
+│   │       ├── OverviewTab.tsx        # Dashboard overview/progress
+│   │       ├── PhaseCard.tsx          # Collapsible phase display
+│   │       ├── ScheduleCallCard.tsx   # Scheduled calls + booking links
+│   │       └── utils.ts               # Helper functions
 │   │
 │   └── lib/                    # Shared utilities
 │       ├── auth.ts             # getSession(), isAdmin()
 │       ├── email.ts            # Email templates & sending
+│       ├── google-calendar.ts  # Google Calendar API integration
 │       ├── supabase.ts         # Supabase client setup
 │       └── types.ts            # TypeScript interfaces
 │
@@ -95,7 +106,8 @@ dna-hub/
 │   ├── supabase-migration-resources.sql       # Global resources system
 │   ├── supabase-migration-admin-notes.sql     # Admin notes on progress
 │   ├── supabase-migration-kickoff-notes.sql   # Kick-off milestone
-│   └── supabase-migration-rename-milestones.sql  # Milestone title updates
+│   ├── supabase-migration-rename-milestones.sql  # Milestone title updates
+│   └── supabase-migration-google-calendar.sql    # Google Calendar integration
 │
 └── Configuration
     ├── package.json            # Dependencies & scripts
@@ -139,6 +151,25 @@ dna-hub/
 | `/src/app/globals.css` | CSS variables, base styles, components |
 | `/src/app/layout.tsx` | Font loading, root structure |
 
+### Dashboard Components
+| File | Purpose |
+|------|---------|
+| `/src/components/dashboard/OverviewTab.tsx` | Progress cards, quick actions, recent activity |
+| `/src/components/dashboard/JourneyTab.tsx` | DNA phases with scheduled calls section |
+| `/src/components/dashboard/PhaseCard.tsx` | Collapsible phase with milestones |
+| `/src/components/dashboard/MilestoneItem.tsx` | Milestone checkbox, notes, attachments, linked calls |
+| `/src/components/dashboard/ScheduleCallCard.tsx` | Scheduled calls list + booking links |
+| `/src/components/dashboard/utils.ts` | `formatCallDate()`, `formatTargetDate()`, etc. |
+
+### Google Calendar
+| File | Purpose |
+|------|---------|
+| `/src/lib/google-calendar.ts` | OAuth, calendar sync, call type detection |
+| `/src/app/api/auth/google/route.ts` | Start OAuth flow |
+| `/src/app/api/auth/google/callback/route.ts` | Handle OAuth callback |
+| `/src/app/api/cron/calendar-sync/route.ts` | Daily sync cron job |
+| `/src/app/api/admin/calendar/*/route.ts` | Status, sync, disconnect endpoints |
+
 ## Page Routes
 
 | Route | File | Purpose | Auth |
@@ -151,7 +182,8 @@ dna-hub/
 | `/portal` | `app/portal/page.tsx` | Pre-active church view | Session |
 | `/dashboard` | `app/dashboard/page.tsx` | Implementation tracker | Session |
 | `/admin` | `app/admin/page.tsx` | All churches list | Admin |
-| `/admin/church/[id]` | `app/admin/church/[id]/page.tsx` | Single church admin | Admin |
+| `/admin/church/[id]` | `app/admin/church/[id]/page.tsx` | Church detail (Overview + DNA Journey) | Admin |
+| `/admin/settings` | `app/admin/settings/page.tsx` | Google Calendar settings | Admin |
 
 ## API Routes
 
@@ -178,10 +210,23 @@ dna-hub/
 | `/api/admin/churches` | GET | List all churches |
 | `/api/admin/church/[id]` | GET | Church details |
 | `/api/admin/church/[id]` | POST | Update church |
-| `/api/admin/church/[id]/calls` | POST | Manage scheduled calls |
-| `/api/admin/church/[id]/documents` | POST | Manage funnel documents |
-| `/api/attachments` | POST | Upload file |
+| `/api/admin/church/[id]/calls` | POST/DELETE | Manage scheduled calls |
+| `/api/admin/church/[id]/documents` | POST | Manage documents |
+| `/api/admin/church/[id]/milestones` | POST | Add custom milestones |
+| `/api/admin/church/[id]/milestones` | PATCH | Update milestone (completion, target date, notes) |
+| `/api/admin/church/[id]/milestones` | DELETE | Delete custom milestones |
+| `/api/attachments` | POST | Upload file (supports churchId param for admin) |
 | `/api/attachments` | DELETE | Delete file |
+
+### Google Calendar Endpoints
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/auth/google` | GET | Start OAuth flow |
+| `/api/auth/google/callback` | GET | Handle OAuth callback |
+| `/api/admin/calendar/status` | GET | Get connection status |
+| `/api/admin/calendar/sync` | POST | Trigger manual sync |
+| `/api/admin/calendar/disconnect` | POST | Disconnect calendar |
+| `/api/cron/calendar-sync` | GET | Daily sync (Vercel cron) |
 
 ## Common Modifications
 

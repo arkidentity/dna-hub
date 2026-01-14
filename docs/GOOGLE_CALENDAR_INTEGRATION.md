@@ -20,10 +20,12 @@ The system pulls events from your Google Calendar and matches them to churches i
 
 **Keywords matched (case-insensitive):**
 - `Discovery` → discovery call
-- `Proposal` → proposal call
+- `Proposal` / `Agreement` → proposal call
 - `Strategy` → strategy call
 - `Kick-Off` / `Kickoff` / `Kick Off` → kickoff call
 - `Assessment` → assessment call
+- `Onboarding` → onboarding call
+- `Check-In` / `Checkin` / `Check In` → checkin call
 - `DNA` → defaults to discovery call
 
 **Matching logic:**
@@ -112,6 +114,55 @@ CREATE TABLE calendar_sync_log (
 Added columns:
 - `google_event_id TEXT UNIQUE` - Links to Google Calendar event
 - `meet_link TEXT` - Google Meet link if present
+
+**Call types supported:**
+```typescript
+call_type: 'discovery' | 'proposal' | 'strategy' | 'kickoff' | 'assessment' | 'onboarding' | 'checkin'
+```
+
+---
+
+## UI Integration
+
+### Where Scheduled Calls Appear
+
+**1. Church Dashboard - Overview Tab (`/dashboard`)**
+- `ScheduleCallCard` component shows all scheduled calls
+- Pending/upcoming calls display with Google Meet link button
+- Completed calls shown with checkmark
+
+**2. Church Dashboard - DNA Journey Tab**
+- `JourneyTab` shows "Your Scheduled Calls" section with Discovery, Proposal, Strategy calls
+- Each call displays scheduled time and Meet link for upcoming calls
+- Calls are linked to corresponding milestones in phases
+
+**3. Admin Church Detail Page (`/admin/church/[id]`)**
+- Overview tab shows scheduled calls with Meet links and delete option
+- DNA Journey tab mirrors church dashboard with full admin editing controls
+- Admins can manage any church's milestones (not just their own)
+
+### Milestone-to-Call Matching
+
+The system automatically links scheduled calls to relevant milestones based on title keywords:
+
+| Milestone Title Contains | Matches Call Type |
+|-------------------------|-------------------|
+| "Strategy Call/Session" | strategy |
+| "Discovery Call/Session" | discovery |
+| "Proposal Call/Session" or "Agreement Call/Session" | proposal |
+| "Kick-off/Kickoff" | kickoff |
+| "Assessment Call" | assessment |
+| "Onboarding Call/Session" | onboarding |
+| "Check-in/Checkin/Check in" | checkin |
+
+### Booking Links
+
+The dashboard provides quick booking links for churches:
+- **60-Minute Call** - Primary CTA (gold button)
+- **30-Minute Call** - Secondary option
+- **15-Minute Check-In** - Quick check-in option
+
+Links point to Google Calendar Appointment Scheduling.
 
 ---
 
@@ -229,6 +280,71 @@ In `vercel.json`:
 ### Settings page not loading
 - Run the database migration: `supabase-migration-google-calendar.sql`
 - Check `google_oauth_tokens` table exists
+
+---
+
+## Related Files
+
+### Dashboard Components
+| File | Purpose |
+|------|---------|
+| `/src/components/dashboard/ScheduleCallCard.tsx` | Shows scheduled calls + booking links on Overview |
+| `/src/components/dashboard/JourneyTab.tsx` | DNA Journey with scheduled calls section |
+| `/src/components/dashboard/PhaseCard.tsx` | Phase display with milestone-to-call matching |
+| `/src/components/dashboard/MilestoneItem.tsx` | Individual milestone with linked call display |
+| `/src/components/dashboard/utils.ts` | Helper functions including `formatCallDate()` |
+
+### Admin Pages
+| File | Purpose |
+|------|---------|
+| `/src/app/admin/church/[id]/page.tsx` | Admin church detail with Overview + DNA Journey tabs |
+| `/src/app/admin/settings/page.tsx` | Google Calendar connection settings |
+
+### Admin API
+| File | Purpose |
+|------|---------|
+| `/src/app/api/admin/church/[id]/milestones/route.ts` | CRUD for milestones (toggle, dates, notes) |
+| `/src/app/api/admin/church/[id]/calls/route.ts` | Manage scheduled calls |
+
+---
+
+## Admin Milestone Management
+
+Admins can fully manage any church's milestones from the admin dashboard, independent of being logged in as that church's leader.
+
+### Admin DNA Journey Features
+
+From `/admin/church/[id]` → DNA Journey tab:
+
+| Feature | Description |
+|---------|-------------|
+| Toggle completion | Click checkbox to mark milestones complete/incomplete |
+| Add target date | Click "Add target date" to set a due date |
+| Edit target date | Click pencil icon to modify existing dates |
+| Add notes | Click "Add note" for progress updates, challenges, victories |
+| Edit notes | Click pencil icon to modify existing notes |
+| Attach files | Click "Attach file" to upload PDFs, images, documents |
+| Delete attachments | Hover and click trash icon to remove files |
+| Add custom milestones | Click "Add custom milestone" at bottom of any phase |
+| Delete custom milestones | Click trash icon on custom milestones (not template ones) |
+
+### Data Sync
+
+All changes made from the admin dashboard write to the same database tables as the church dashboard:
+- `church_progress` - completion status, target dates, notes
+- `milestone_attachments` - uploaded files
+
+Changes appear immediately on the church leader's dashboard when they reload.
+
+### API Endpoints Used
+
+| Action | Endpoint | Method |
+|--------|----------|--------|
+| Toggle/update milestone | `/api/admin/church/[id]/milestones` | PATCH |
+| Add custom milestone | `/api/admin/church/[id]/milestones` | POST |
+| Delete custom milestone | `/api/admin/church/[id]/milestones` | DELETE |
+| Upload attachment | `/api/attachments` | POST (with churchId) |
+| Delete attachment | `/api/attachments` | DELETE |
 
 ---
 
