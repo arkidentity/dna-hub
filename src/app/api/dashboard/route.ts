@@ -91,6 +91,53 @@ export async function GET() {
       attachmentsMap.set(attachment.milestone_id, [...existing, attachment]);
     });
 
+    // Get global resources linked to milestones
+    const { data: milestoneResources } = await supabaseAdmin
+      .from('milestone_resources')
+      .select(`
+        milestone_id,
+        display_order,
+        resource:global_resources (
+          id,
+          name,
+          description,
+          file_url,
+          resource_type
+        )
+      `)
+      .order('display_order', { ascending: true });
+
+    // Create a map of milestone resources
+    type ResourceData = {
+      id: string;
+      name: string;
+      description: string | null;
+      file_url: string | null;
+      resource_type: string | null;
+    };
+    const resourcesMap = new Map<string, ResourceData[]>();
+    milestoneResources?.forEach(mr => {
+      const resource = mr.resource as unknown as ResourceData | null;
+      if (resource) {
+        const existing = resourcesMap.get(mr.milestone_id) || [];
+        resourcesMap.set(mr.milestone_id, [...existing, resource]);
+      }
+    });
+
+    // Get funnel documents for this church
+    const { data: documents } = await supabaseAdmin
+      .from('funnel_documents')
+      .select('*')
+      .eq('church_id', church.id)
+      .order('created_at', { ascending: true });
+
+    // Get scheduled calls for this church
+    const { data: calls } = await supabaseAdmin
+      .from('scheduled_calls')
+      .select('*')
+      .eq('church_id', church.id)
+      .order('scheduled_at', { ascending: true });
+
     // Build phases with milestones and progress
     const phasesWithMilestones: PhaseWithMilestones[] = phases.map(phase => {
       const phaseMilestones: MilestoneWithProgress[] = milestones
@@ -100,6 +147,7 @@ export async function GET() {
           progress: progressMap.get(milestone.id),
           completed_by_name: progressMap.get(milestone.id)?.completed_by_name,
           attachments: attachmentsMap.get(milestone.id) || [],
+          resources: resourcesMap.get(milestone.id) || [],
         }));
 
       const completedCount = phaseMilestones.filter(m => m.progress?.completed).length;
@@ -139,6 +187,8 @@ export async function GET() {
       church,
       leader,
       phases: phasesWithMilestones,
+      documents: documents || [],
+      calls: calls || [],
       isAdmin: isAdmin(leader.email),
     });
   } catch (error) {

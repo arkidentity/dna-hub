@@ -15,7 +15,7 @@ export type ChurchStatus =
 export interface FunnelDocument {
   id: string;
   church_id: string;
-  document_type: 'discovery_notes' | 'proposal_pdf' | 'agreement_notes' | 'agreement_pdf' | '3_steps_pdf';
+  document_type: 'discovery_notes' | 'proposal_pdf' | 'agreement_notes' | 'agreement_pdf' | '3_steps_pdf' | 'implementation_plan';
   file_url?: string;
   notes?: string;
   created_at: string;
@@ -165,11 +165,21 @@ export interface MilestoneAttachment {
   created_at: string;
 }
 
+// Global resource linked to a milestone
+export interface MilestoneResource {
+  id: string;
+  name: string;
+  description?: string | null;
+  file_url?: string | null;
+  resource_type?: string | null;
+}
+
 // Extended types for UI
 export interface MilestoneWithProgress extends Milestone {
   progress?: ChurchProgress;
   completed_by_name?: string;
   attachments?: MilestoneAttachment[];
+  resources?: MilestoneResource[];
 }
 
 export interface PhaseWithMilestones extends Phase {
