@@ -356,7 +356,7 @@ function SettingsContent() {
                 <ul className="space-y-3 text-sm text-foreground-muted">
                   <li className="flex items-start gap-3">
                     <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
-                    <span>Events with "DNA", "Discovery", "Proposal", or "Strategy" in the title</span>
+                    <span>Events with "DNA", "Discovery", "Proposal", "Strategy", "Kick-Off", or "Assessment" in the title</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
@@ -438,7 +438,7 @@ function SettingsContent() {
               </div>
               <div className="flex items-center justify-between py-2">
                 <span className="text-foreground-muted">Keywords matched</span>
-                <span className="font-medium text-navy">DNA, Discovery, Proposal, Strategy</span>
+                <span className="font-medium text-navy text-right">DNA, Discovery, Proposal, Strategy, Kick-Off, Assessment</span>
               </div>
             </div>
           </div>
