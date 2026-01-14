@@ -90,20 +90,13 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (milestone?.is_key_milestone) {
-        // Log notification
-        await supabaseAdmin.from('notification_log').insert({
-          church_id: church.id,
-          milestone_id: milestoneId,
-          notification_type: 'milestone_completed',
-          sent_to: 'thearkidentity@gmail.com',
-        });
-
-        // Send email notification
+        // Send email notification (also logs to notification_log via email.ts)
         await sendMilestoneNotification(
           church.name,
           milestone.title,
           milestone.phase?.name || 'Unknown Phase',
-          leader.name
+          leader.name,
+          church.id
         );
       }
 
@@ -150,18 +143,12 @@ export async function POST(request: NextRequest) {
               .update({ current_phase: currentPhase.phase_number + 1 })
               .eq('id', church.id);
 
-            // Log phase completion notification
-            await supabaseAdmin.from('notification_log').insert({
-              church_id: church.id,
-              notification_type: 'phase_completed',
-              sent_to: 'thearkidentity@gmail.com',
-            });
-
-            // Send phase completion email
+            // Send phase completion email (also logs to notification_log via email.ts)
             await sendPhaseCompletionNotification(
               church.name,
               currentPhase.phase_number,
-              phaseData?.name || `Phase ${currentPhase.phase_number}`
+              phaseData?.name || `Phase ${currentPhase.phase_number}`,
+              church.id
             );
           }
         }

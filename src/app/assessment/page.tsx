@@ -110,8 +110,9 @@ function calculateReadinessLevel(data: FormData): 'ready' | 'building' | 'explor
   if (data.discipleship_culture === 'active') score += 2;
   else if (data.discipleship_culture === 'inconsistent') score += 1;
 
-  if (score >= 12) return 'ready';
-  if (score >= 6) return 'building';
+  // Thresholds must match /src/app/api/assessment/route.ts
+  if (score >= 10) return 'ready';
+  if (score >= 5) return 'building';
   return 'exploring';
 }
 

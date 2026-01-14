@@ -48,6 +48,7 @@ export interface Church {
   name: string;
   logo_url?: string;
   status: ChurchStatus;
+  selected_tier?: string;  // The tier/package selected when signing agreement
   start_date?: string;
   phase_1_start?: string;
   phase_1_target?: string;

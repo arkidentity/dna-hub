@@ -189,6 +189,11 @@ export async function PATCH(request: NextRequest) {
       updates.current_phase = current_phase;
     }
 
+    // Store the selected tier when moving to awaiting_strategy
+    if (tierName && status === 'awaiting_strategy') {
+      updates.selected_tier = tierName;
+    }
+
     const { error: updateError } = await supabase
       .from('churches')
       .update(updates)
@@ -213,7 +218,8 @@ export async function PATCH(request: NextRequest) {
             leaderData.email,
             firstName,
             churchData.name,
-            portalUrl
+            portalUrl,
+            churchId
           );
           console.log('[ADMIN] Sent proposal ready email to', leaderData.email);
         } else if (status === 'awaiting_strategy' && churchData.status !== 'awaiting_strategy') {
@@ -223,7 +229,8 @@ export async function PATCH(request: NextRequest) {
             firstName,
             churchData.name,
             tierName || 'DNA Implementation',
-            portalUrl
+            portalUrl,
+            churchId
           );
           console.log('[ADMIN] Sent agreement confirmed email to', leaderData.email);
         } else if (status === 'active' && churchData.status !== 'active') {
@@ -232,7 +239,8 @@ export async function PATCH(request: NextRequest) {
             leaderData.email,
             firstName,
             churchData.name,
-            dashboardUrl
+            dashboardUrl,
+            churchId
           );
           console.log('[ADMIN] Sent dashboard access email to', leaderData.email);
         }

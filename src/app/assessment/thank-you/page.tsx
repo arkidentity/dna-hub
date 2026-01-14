@@ -15,8 +15,8 @@ const PDF_URLS = {
   dnaManual: process.env.NEXT_PUBLIC_DNA_MANUAL_URL || '#',
 };
 
-// Google Calendar embed URL for Discovery Call (15 min)
-const DISCOVERY_CALENDAR_EMBED = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ0LdUpKkvo_qoOrtiu6fQfPgkQJUZaG9RxPtYVieJrl1RAFnUmgTN9WATs6jAxSbkdo5M4-bpfI?gv=true';
+// Google Calendar embed URL for Discovery Call (15 min) - configured in .env.local
+const DISCOVERY_CALENDAR_EMBED = process.env.NEXT_PUBLIC_DISCOVERY_CALENDAR_URL || 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ0LdUpKkvo_qoOrtiu6fQfPgkQJUZaG9RxPtYVieJrl1RAFnUmgTN9WATs6jAxSbkdo5M4-bpfI?gv=true';
 
 interface TieredContent {
   readinessHeadline: string;

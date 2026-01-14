@@ -89,11 +89,12 @@ export async function POST(request: NextRequest) {
       is_primary_contact: true,
     });
 
-    // Send notification email to Travis
+    // Send notification email to Travis (with churchId for logging)
     await sendAssessmentNotification(
       data.church_name,
       contactName,
-      data.contact_email
+      data.contact_email,
+      church.id
     );
 
     // Calculate readiness level for 3 Steps email
@@ -118,23 +119,26 @@ export async function POST(request: NextRequest) {
     if (data.read_dna_manual === 'yes_fully') readinessScore += 2;
     else if (data.read_dna_manual === 'yes_partially') readinessScore += 1;
 
-    // Leaders identified
-    const leaderCount = parseLeaderCount(data.potential_leaders_count);
-    if (leaderCount >= 5) readinessScore += 2;
-    else if (leaderCount >= 2) readinessScore += 1;
+    // Leaders identified (matches frontend: 6_plus = 2pts, 3_5 = 1pt)
+    if (data.potential_leaders_count === '6_plus') readinessScore += 2;
+    else if (data.potential_leaders_count === '3_5') readinessScore += 1;
 
-    // Timeline
-    if (data.launch_timeline === '1_3_months') readinessScore += 2;
+    // Timeline (matches frontend: within_3_months = 2pts, 3_6_months = 1pt)
+    if (data.launch_timeline === 'within_3_months') readinessScore += 2;
     else if (data.launch_timeline === '3_6_months') readinessScore += 1;
 
-    // Determine readiness level
+    // Discipleship culture (matches frontend)
+    if (data.discipleship_culture === 'active') readinessScore += 2;
+    else if (data.discipleship_culture === 'inconsistent') readinessScore += 1;
+
+    // Determine readiness level (thresholds must match /src/app/assessment/page.tsx)
     let readinessLevel: 'ready' | 'building' | 'exploring' = 'exploring';
     if (readinessScore >= 10) readinessLevel = 'ready';
     else if (readinessScore >= 5) readinessLevel = 'building';
 
-    // Send 3 Steps email to the church contact
+    // Send 3 Steps email to the church contact (with churchId for logging)
     const firstName = data.your_name.split(' ')[0].trim();
-    await send3StepsEmail(data.contact_email, firstName, readinessLevel);
+    await send3StepsEmail(data.contact_email, firstName, readinessLevel, church.id);
 
     return NextResponse.json({
       success: true,

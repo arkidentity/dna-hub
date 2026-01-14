@@ -1,7 +1,13 @@
 import { Resend } from 'resend';
+import { getSupabaseAdmin } from './auth';
 
 const FROM_EMAIL = 'DNA Church Hub <notifications@mail.arkidentity.com>';
 const TRAVIS_EMAIL = 'thearkidentity@gmail.com';
+
+// Calendar URLs - configured in .env.local
+const DISCOVERY_CALL_URL = process.env.DISCOVERY_CALENDAR_URL || 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ0LdUpKkvo_qoOrtiu6fQfPgkQJUZaG9RxPtYVieJrl1RAFnUmgTN9WATs6jAxSbkdo5M4-bpfI?gv=true';
+const PROPOSAL_CALL_URL = process.env.PROPOSAL_CALENDAR_URL || 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ1E8bA8sb4SP7QBJw45-6zKwxVNFu6x7w4YMBABJ1qdiE9ALT7hGvOlJ2RUGcfV9LwopqFiGPGe?gv=true';
+const STRATEGY_CALL_URL = process.env.STRATEGY_CALENDAR_URL || 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ06-H6-Lu-ReUlLa7bTB0qgXj9c1DxocZWH7WxTLw__s9chlLMDflEtH_my63oqNrQAaV7oahqR?gv=true';
 
 // Create Resend client lazily
 let _resend: Resend | null = null;
@@ -19,9 +25,12 @@ interface EmailOptions {
   to: string;
   subject: string;
   html: string;
+  // Optional: for logging to notification_log
+  churchId?: string;
+  notificationType?: string;
 }
 
-async function sendEmail({ to, subject, html }: EmailOptions) {
+async function sendEmail({ to, subject, html, churchId, notificationType }: EmailOptions) {
   const resend = getResend();
 
   if (!resend) {
@@ -46,6 +55,24 @@ async function sendEmail({ to, subject, html }: EmailOptions) {
     }
 
     console.log('[EMAIL] Successfully sent, ID:', data?.id);
+
+    // Log to notification_log for audit trail
+    if (notificationType) {
+      try {
+        const supabaseAdmin = getSupabaseAdmin();
+        await supabaseAdmin.from('notification_log').insert({
+          church_id: churchId || null,
+          notification_type: notificationType,
+          sent_to: to,
+          subject: subject,
+          sent_at: new Date().toISOString(),
+        });
+      } catch (logError) {
+        console.error('[EMAIL] Failed to log notification:', logError);
+        // Don't fail the email send if logging fails
+      }
+    }
+
     return { success: true, emailId: data?.id };
   } catch (error) {
     console.error('[EMAIL] Exception during send:', error);
@@ -57,7 +84,8 @@ async function sendEmail({ to, subject, html }: EmailOptions) {
 export async function sendAssessmentNotification(
   churchName: string,
   contactName: string,
-  contactEmail: string
+  contactEmail: string,
+  churchId?: string
 ) {
   const subject = `New DNA Assessment: ${churchName}`;
   const html = `
@@ -78,7 +106,13 @@ export async function sendAssessmentNotification(
     </div>
   `;
 
-  return sendEmail({ to: TRAVIS_EMAIL, subject, html });
+  return sendEmail({
+    to: TRAVIS_EMAIL,
+    subject,
+    html,
+    churchId,
+    notificationType: 'assessment_notification'
+  });
 }
 
 // Notification: Key milestone completed
@@ -86,7 +120,8 @@ export async function sendMilestoneNotification(
   churchName: string,
   milestoneName: string,
   phaseName: string,
-  completedBy: string
+  completedBy: string,
+  churchId?: string
 ) {
   const subject = `🎉 ${churchName} - Milestone Completed`;
   const html = `
@@ -108,14 +143,21 @@ export async function sendMilestoneNotification(
     </div>
   `;
 
-  return sendEmail({ to: TRAVIS_EMAIL, subject, html });
+  return sendEmail({
+    to: TRAVIS_EMAIL,
+    subject,
+    html,
+    churchId,
+    notificationType: 'milestone_completed'
+  });
 }
 
 // Notification: Phase completed
 export async function sendPhaseCompletionNotification(
   churchName: string,
   phaseNumber: number,
-  phaseName: string
+  phaseName: string,
+  churchId?: string
 ) {
   const subject = `🏆 ${churchName} - Phase ${phaseNumber} Complete!`;
   const html = `
@@ -137,7 +179,13 @@ export async function sendPhaseCompletionNotification(
     </div>
   `;
 
-  return sendEmail({ to: TRAVIS_EMAIL, subject, html });
+  return sendEmail({
+    to: TRAVIS_EMAIL,
+    subject,
+    html,
+    churchId,
+    notificationType: 'phase_completed'
+  });
 }
 
 // Magic link email
@@ -244,10 +292,11 @@ export async function sendProposalReadyEmail(
   to: string,
   firstName: string,
   churchName: string,
-  portalUrl: string
+  portalUrl: string,
+  churchId?: string
 ) {
-  // Proposal Review Call (30 min)
-  const proposalCallUrl = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ1E8bA8sb4SP7QBJw45-6zKwxVNFu6x7w4YMBABJ1qdiE9ALT7hGvOlJ2RUGcfV9LwopqFiGPGe?gv=true';
+  // Proposal Review Call (30 min) - uses env var defined at top of file
+  const proposalCallUrl = PROPOSAL_CALL_URL;
 
   const subject = `Your DNA Proposal is Ready - ${churchName}`;
   const html = `
@@ -284,7 +333,13 @@ export async function sendProposalReadyEmail(
     </div>
   `;
 
-  return sendEmail({ to, subject, html });
+  return sendEmail({
+    to,
+    subject,
+    html,
+    churchId,
+    notificationType: 'proposal_ready'
+  });
 }
 
 // Sent when admin moves church to 'awaiting_strategy' - after agreement
@@ -293,10 +348,11 @@ export async function sendAgreementConfirmedEmail(
   firstName: string,
   churchName: string,
   tierName: string,
-  portalUrl: string
+  portalUrl: string,
+  churchId?: string
 ) {
-  // Strategy Call (60 min)
-  const strategyCallUrl = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ06-H6-Lu-ReUlLa7bTB0qgXj9c1DxocZWH7WxTLw__s9chlLMDflEtH_my63oqNrQAaV7oahqR?gv=true';
+  // Strategy Call (60 min) - uses env var defined at top of file
+  const strategyCallUrl = STRATEGY_CALL_URL;
 
   const subject = `Welcome to DNA! - ${churchName}`;
   const html = `
@@ -347,7 +403,13 @@ export async function sendAgreementConfirmedEmail(
     </div>
   `;
 
-  return sendEmail({ to, subject, html });
+  return sendEmail({
+    to,
+    subject,
+    html,
+    churchId,
+    notificationType: 'agreement_confirmed'
+  });
 }
 
 // Sent when admin moves church to 'active' - after strategy call, full dashboard access
@@ -355,7 +417,8 @@ export async function sendDashboardAccessEmail(
   to: string,
   firstName: string,
   churchName: string,
-  dashboardUrl: string
+  dashboardUrl: string,
+  churchId?: string
 ) {
   const subject = `Your DNA Dashboard is Live! - ${churchName}`;
   const html = `
@@ -398,14 +461,21 @@ export async function sendDashboardAccessEmail(
     </div>
   `;
 
-  return sendEmail({ to, subject, html });
+  return sendEmail({
+    to,
+    subject,
+    html,
+    churchId,
+    notificationType: 'dashboard_access'
+  });
 }
 
 // 3 Steps resource email (sent after assessment)
 export async function send3StepsEmail(
   to: string,
   firstName: string,
-  readinessLevel: 'ready' | 'building' | 'exploring'
+  readinessLevel: 'ready' | 'building' | 'exploring',
+  churchId?: string
 ) {
   // PDF URLs - different version for each readiness level
   const threeStepsPdfUrls = {
@@ -419,8 +489,8 @@ export async function send3StepsEmail(
   const dnaManualUrl = process.env.DNA_MANUAL_URL || 'https://arkidentity.com/dna-manual.pdf';
   const eightWeekToolkitUrl = process.env.EIGHT_WEEK_TOOLKIT_URL || 'https://arkidentity.com/8-week-toolkit.pdf';
 
-  // Discovery call booking URL
-  const discoveryCallUrl = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ0LdUpKkvo_qoOrtiu6fQfPgkQJUZaG9RxPtYVieJrl1RAFnUmgTN9WATs6jAxSbkdo5M4-bpfI?gv=true';
+  // Discovery call booking URL - uses env var defined at top of file
+  const discoveryCallUrl = DISCOVERY_CALL_URL;
 
   const threeStepsUrl = threeStepsPdfUrls[readinessLevel];
 
@@ -515,5 +585,11 @@ export async function send3StepsEmail(
     </div>
   `;
 
-  return sendEmail({ to, subject, html });
+  return sendEmail({
+    to,
+    subject,
+    html,
+    churchId,
+    notificationType: '3_steps_email'
+  });
 }
