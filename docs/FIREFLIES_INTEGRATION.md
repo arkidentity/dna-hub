@@ -21,12 +21,14 @@ Phase 2 adds automatic meeting transcription using Fireflies.ai. When you invite
 
 ### What Gets Captured
 
-- **Full transcript** with speaker identification and timestamps
+**NOTE: We do NOT store full transcripts - only AI-generated summaries and highlights**
+
 - **AI summary** highlighting key points and decisions
 - **Action items** automatically extracted
 - **Keywords** identified by AI
 - **Key moments** with timestamps
-- **Audio/video URLs** for reference
+- **Link to Fireflies** if you need to view the full transcript there
+- Meeting metadata (title, date, duration, participants)
 
 ---
 

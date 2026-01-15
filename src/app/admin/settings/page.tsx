@@ -726,11 +726,10 @@ function SettingsContent() {
               {/* Features List */}
               <div className="border-t border-border mt-8 pt-6">
                 <h4 className="font-medium text-navy mb-4">What you'll get</h4>
+                <p className="text-xs text-foreground-muted mb-4 bg-blue-50 border border-blue-200 rounded p-2">
+                  <strong>Note:</strong> We only store AI summaries and highlights - not full transcripts. Full transcripts remain on Fireflies.
+                </p>
                 <ul className="space-y-3 text-sm text-foreground-muted">
-                  <li className="flex items-start gap-3">
-                    <Check className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
-                    <span>Full meeting transcripts with speaker identification and timestamps</span>
-                  </li>
                   <li className="flex items-start gap-3">
                     <Check className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
                     <span>AI-generated summaries highlighting key points and decisions</span>
@@ -742,6 +741,10 @@ function SettingsContent() {
                   <li className="flex items-start gap-3">
                     <Check className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
                     <span>Keywords and key moments identified by AI</span>
+                  </li>
+                  <li className="flex items-start gap-3">
+                    <Check className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
+                    <span>Link to view full transcript on Fireflies if needed</span>
                   </li>
                   <li className="flex items-start gap-3">
                     <Check className="w-4 h-4 text-purple-600 mt-0.5 flex-shrink-0" />
