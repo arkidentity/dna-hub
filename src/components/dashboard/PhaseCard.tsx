@@ -24,6 +24,8 @@ interface PhaseCardProps {
   editDateValue: string;
   editNotesValue: string;
   uploadingMilestone: string | null;
+  editingChurchNotesId: string | null;
+  editChurchNotesValue: string;
   onTogglePhase: (phaseId: string) => void;
   onToggleMilestone: (milestone: MilestoneWithProgress, phaseStatus: string) => void;
   onStartEditingDate: (milestoneId: string, currentDate?: string) => void;
@@ -37,6 +39,10 @@ interface PhaseCardProps {
   onFileUpload: (milestoneId: string, file: File) => void;
   onDeleteAttachment: (attachmentId: string) => void;
   onExportCalendar: (phaseNumber: number) => void;
+  onStartEditingChurchNotes: (milestoneId: string, currentNotes?: string) => void;
+  onSaveChurchNotes: (milestoneId: string) => void;
+  onCancelEditChurchNotes: () => void;
+  onEditChurchNotesChange: (value: string) => void;
 }
 
 // Helper function to match milestone title to call type
@@ -79,6 +85,8 @@ export default function PhaseCard({
   editDateValue,
   editNotesValue,
   uploadingMilestone,
+  editingChurchNotesId,
+  editChurchNotesValue,
   onTogglePhase,
   onToggleMilestone,
   onStartEditingDate,
@@ -92,6 +100,10 @@ export default function PhaseCard({
   onFileUpload,
   onDeleteAttachment,
   onExportCalendar,
+  onStartEditingChurchNotes,
+  onSaveChurchNotes,
+  onCancelEditChurchNotes,
+  onEditChurchNotesChange,
 }: PhaseCardProps) {
   const isAccessible = phase.status === 'current' || phase.status === 'completed';
   const isUpcoming = phase.status === 'upcoming';
@@ -189,6 +201,8 @@ export default function PhaseCard({
               editDateValue={editDateValue}
               editNotesValue={editNotesValue}
               uploadingMilestone={uploadingMilestone}
+              editingChurchNotesId={editingChurchNotesId}
+              editChurchNotesValue={editChurchNotesValue}
               onToggle={onToggleMilestone}
               onStartEditingDate={onStartEditingDate}
               onStartEditingNotes={onStartEditingNotes}
@@ -200,6 +214,10 @@ export default function PhaseCard({
               onEditNotesChange={onEditNotesChange}
               onFileUpload={onFileUpload}
               onDeleteAttachment={onDeleteAttachment}
+              onStartEditingChurchNotes={onStartEditingChurchNotes}
+              onSaveChurchNotes={onSaveChurchNotes}
+              onCancelEditChurchNotes={onCancelEditChurchNotes}
+              onEditChurchNotesChange={onEditChurchNotesChange}
             />
           ))}
         </div>

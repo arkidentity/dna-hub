@@ -68,6 +68,8 @@ interface JourneyTabProps {
   editDateValue: string;
   editNotesValue: string;
   uploadingMilestone: string | null;
+  editingChurchNotesId: string | null;
+  editChurchNotesValue: string;
   onToggleCompactView: () => void;
   onTogglePhase: (phaseId: string) => void;
   onToggleMilestone: (milestone: MilestoneWithProgress, phaseStatus: string) => void;
@@ -82,6 +84,10 @@ interface JourneyTabProps {
   onFileUpload: (milestoneId: string, file: File) => void;
   onDeleteAttachment: (attachmentId: string) => void;
   onExportCalendar: (phaseNumber?: number) => void;
+  onStartEditingChurchNotes: (milestoneId: string, currentNotes?: string) => void;
+  onSaveChurchNotes: (milestoneId: string) => void;
+  onCancelEditChurchNotes: () => void;
+  onEditChurchNotesChange: (value: string) => void;
 }
 
 export default function JourneyTab({
@@ -97,6 +103,8 @@ export default function JourneyTab({
   editDateValue,
   editNotesValue,
   uploadingMilestone,
+  editingChurchNotesId,
+  editChurchNotesValue,
   onToggleCompactView,
   onTogglePhase,
   onToggleMilestone,
@@ -111,6 +119,10 @@ export default function JourneyTab({
   onFileUpload,
   onDeleteAttachment,
   onExportCalendar,
+  onStartEditingChurchNotes,
+  onSaveChurchNotes,
+  onCancelEditChurchNotes,
+  onEditChurchNotesChange,
 }: JourneyTabProps) {
   // Get the strategy call for display
   const strategyCall = calls.find(c => c.call_type === 'strategy');
@@ -209,6 +221,8 @@ export default function JourneyTab({
             editDateValue={editDateValue}
             editNotesValue={editNotesValue}
             uploadingMilestone={uploadingMilestone}
+            editingChurchNotesId={editingChurchNotesId}
+            editChurchNotesValue={editChurchNotesValue}
             onTogglePhase={onTogglePhase}
             onToggleMilestone={onToggleMilestone}
             onStartEditingDate={onStartEditingDate}
@@ -222,6 +236,10 @@ export default function JourneyTab({
             onFileUpload={onFileUpload}
             onDeleteAttachment={onDeleteAttachment}
             onExportCalendar={onExportCalendar}
+            onStartEditingChurchNotes={onStartEditingChurchNotes}
+            onSaveChurchNotes={onSaveChurchNotes}
+            onCancelEditChurchNotes={onCancelEditChurchNotes}
+            onEditChurchNotesChange={onEditChurchNotesChange}
           />
         ))}
       </div>

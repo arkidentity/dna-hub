@@ -47,6 +47,10 @@ export default function DashboardPage() {
   const [editNotesValue, setEditNotesValue] = useState<string>('');
   const [uploadingMilestone, setUploadingMilestone] = useState<string | null>(null);
 
+  // Church notes editing state
+  const [editingChurchNotesId, setEditingChurchNotesId] = useState<string | null>(null);
+  const [editChurchNotesValue, setEditChurchNotesValue] = useState<string>('');
+
   useEffect(() => {
     fetchDashboard();
   }, []);
@@ -206,6 +210,39 @@ export default function DashboardPage() {
     setEditingDateId(null);
   };
 
+  // Church notes handlers
+  const startEditingChurchNotes = (milestoneId: string, currentNotes?: string) => {
+    setEditingChurchNotesId(milestoneId);
+    setEditChurchNotesValue(currentNotes || '');
+  };
+
+  const saveChurchNotes = async (milestoneId: string) => {
+    setUpdatingMilestone(milestoneId);
+    try {
+      const response = await fetch('/api/church/progress/notes', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          milestoneId,
+          churchNotes: editChurchNotesValue,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update church notes');
+      }
+
+      await fetchDashboard();
+      setEditingChurchNotesId(null);
+      setEditChurchNotesValue('');
+    } catch (error) {
+      console.error('Church notes update error:', error);
+      alert('Failed to save notes. Please try again.');
+    } finally {
+      setUpdatingMilestone(null);
+    }
+  };
+
   const handleFileUpload = async (milestoneId: string, file: File) => {
     setUploadingMilestone(milestoneId);
     try {
@@ -359,6 +396,8 @@ export default function DashboardPage() {
             editDateValue={editDateValue}
             editNotesValue={editNotesValue}
             uploadingMilestone={uploadingMilestone}
+            editingChurchNotesId={editingChurchNotesId}
+            editChurchNotesValue={editChurchNotesValue}
             onToggleCompactView={() => setCompactView(!compactView)}
             onTogglePhase={togglePhase}
             onToggleMilestone={toggleMilestone}
@@ -373,6 +412,10 @@ export default function DashboardPage() {
             onFileUpload={handleFileUpload}
             onDeleteAttachment={handleDeleteAttachment}
             onExportCalendar={exportCalendar}
+            onStartEditingChurchNotes={startEditingChurchNotes}
+            onSaveChurchNotes={saveChurchNotes}
+            onCancelEditChurchNotes={() => { setEditingChurchNotesId(null); setEditChurchNotesValue(''); }}
+            onEditChurchNotesChange={setEditChurchNotesValue}
           />
         )}
 
