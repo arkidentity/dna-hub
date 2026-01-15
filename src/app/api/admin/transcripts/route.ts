@@ -20,7 +20,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 export async function GET(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !(await isAdmin(session.user.email))) {
+    if (!session || !isAdmin(session.leader.email)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !(await isAdmin(session.user.email))) {
+    if (!session || !isAdmin(session.leader.email)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 

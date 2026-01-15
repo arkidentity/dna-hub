@@ -27,7 +27,7 @@ const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !(await isAdmin(session.user.email))) {
+    if (!session || !isAdmin(session.leader.email)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -123,7 +123,7 @@ export async function POST(request: NextRequest) {
         matched_church_id: church_id,
         matched_call_id: finalCallId,
         matched_at: new Date().toISOString(),
-        matched_by: session.user.email,
+        matched_by: session.leader.email,
       })
       .eq('id', unmatched_meeting_id);
 

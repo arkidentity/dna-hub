@@ -19,7 +19,7 @@ import {
 export async function GET() {
   try {
     const session = await getSession();
-    if (!session || !(await isAdmin(session.user.email))) {
+    if (!session || !isAdmin(session.leader.email)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -60,7 +60,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getSession();
-    if (!session || !(await isAdmin(session.user.email))) {
+    if (!session || !isAdmin(session.leader.email)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await saveFirefliesApiKey(
-      session.user.email,
+      session.leader.email,
       api_key,
       webhook_secret
     );
@@ -107,11 +107,11 @@ export async function POST(request: NextRequest) {
 export async function DELETE() {
   try {
     const session = await getSession();
-    if (!session || !(await isAdmin(session.user.email))) {
+    if (!session || !isAdmin(session.leader.email)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const result = await disconnectFireflies(session.user.email);
+    const result = await disconnectFireflies(session.leader.email);
 
     if (!result.success) {
       return NextResponse.json(
