@@ -15,7 +15,12 @@ import {
   Paperclip,
   Trash2,
   File,
+  ChevronDown,
+  ChevronRight,
+  Mic,
+  ListChecks,
 } from 'lucide-react';
+import { useState } from 'react';
 import { MilestoneWithProgress, ScheduledCall } from '@/lib/types';
 import { formatTargetDate, isOverdue, formatFileSize, formatCallDate } from './utils';
 
@@ -28,18 +33,24 @@ interface MilestoneItemProps {
   updatingMilestone: string | null;
   editingDateId: string | null;
   editingNotesId: string | null;
+  editingChurchNotesId: string | null;
   editDateValue: string;
   editNotesValue: string;
+  editChurchNotesValue: string;
   uploadingMilestone: string | null;
   onToggle: (milestone: MilestoneWithProgress, phaseStatus: string) => void;
   onStartEditingDate: (milestoneId: string, currentDate?: string) => void;
   onStartEditingNotes: (milestoneId: string, currentNotes?: string) => void;
+  onStartEditingChurchNotes: (milestoneId: string, currentNotes?: string) => void;
   onSaveDate: (milestoneId: string) => void;
   onSaveNotes: (milestoneId: string) => void;
+  onSaveChurchNotes: (milestoneId: string) => void;
   onCancelEditDate: () => void;
   onCancelEditNotes: () => void;
+  onCancelEditChurchNotes: () => void;
   onEditDateChange: (value: string) => void;
   onEditNotesChange: (value: string) => void;
+  onEditChurchNotesChange: (value: string) => void;
   onFileUpload: (milestoneId: string, file: File) => void;
   onDeleteAttachment: (attachmentId: string) => void;
 }
@@ -53,18 +64,24 @@ export default function MilestoneItem({
   updatingMilestone,
   editingDateId,
   editingNotesId,
+  editingChurchNotesId,
   editDateValue,
   editNotesValue,
+  editChurchNotesValue,
   uploadingMilestone,
   onToggle,
   onStartEditingDate,
   onStartEditingNotes,
+  onStartEditingChurchNotes,
   onSaveDate,
   onSaveNotes,
+  onSaveChurchNotes,
   onCancelEditDate,
   onCancelEditNotes,
+  onCancelEditChurchNotes,
   onEditDateChange,
   onEditNotesChange,
+  onEditChurchNotesChange,
   onFileUpload,
   onDeleteAttachment,
 }: MilestoneItemProps) {
@@ -169,33 +186,45 @@ export default function MilestoneItem({
 
             {/* Scheduled Call info - linked from Google Calendar */}
             {scheduledCall && (
-              <div className={`mt-3 p-3 rounded-lg border ${
-                scheduledCall.completed
-                  ? 'bg-success/5 border-success/20'
-                  : 'bg-teal/5 border-teal/20'
-              }`}>
-                <div className="flex items-center gap-2 mb-1">
-                  <Calendar className="w-4 h-4 text-teal" />
-                  <span className="text-xs font-medium uppercase tracking-wide text-foreground-muted">
-                    {scheduledCall.completed ? 'Call Completed' : 'Scheduled Call'}
-                  </span>
+              <>
+                <div className={`mt-3 p-3 rounded-lg border ${
+                  scheduledCall.completed
+                    ? 'bg-success/5 border-success/20'
+                    : 'bg-teal/5 border-teal/20'
+                }`}>
+                  <div className="flex items-center gap-2 mb-1">
+                    <Calendar className="w-4 h-4 text-teal" />
+                    <span className="text-xs font-medium uppercase tracking-wide text-foreground-muted">
+                      {scheduledCall.completed ? 'Call Completed' : 'Scheduled Call'}
+                    </span>
+                  </div>
+                  <p className="text-sm font-medium text-navy">
+                    {formatCallDate(scheduledCall.scheduled_at)}
+                  </p>
+                  {/* Show Meet link for upcoming calls */}
+                  {!scheduledCall.completed && scheduledCall.meet_link && new Date(scheduledCall.scheduled_at) > new Date() && (
+                    <a
+                      href={scheduledCall.meet_link}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal text-white text-sm font-medium rounded hover:bg-teal/90 transition-colors"
+                    >
+                      <Video className="w-4 h-4" />
+                      Join Google Meet
+                    </a>
+                  )}
                 </div>
-                <p className="text-sm font-medium text-navy">
-                  {formatCallDate(scheduledCall.scheduled_at)}
-                </p>
-                {/* Show Meet link for upcoming calls */}
-                {!scheduledCall.completed && scheduledCall.meet_link && new Date(scheduledCall.scheduled_at) > new Date() && (
-                  <a
-                    href={scheduledCall.meet_link}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="mt-2 inline-flex items-center gap-1.5 px-3 py-1.5 bg-teal text-white text-sm font-medium rounded hover:bg-teal/90 transition-colors"
-                  >
-                    <Video className="w-4 h-4" />
-                    Join Google Meet
-                  </a>
+
+                {/* AI Meeting Notes from Fireflies */}
+                {scheduledCall.ai_summary && scheduledCall.visible_to_church && (
+                  <AIMeetingNotes
+                    summary={scheduledCall.ai_summary}
+                    actionItems={scheduledCall.action_items}
+                    keywords={scheduledCall.keywords}
+                    transcriptUrl={scheduledCall.transcript_url}
+                  />
                 )}
-              </div>
+              </>
             )}
 
             {/* Target date display/edit */}
@@ -324,6 +353,70 @@ export default function MilestoneItem({
               </button>
             ) : null}
 
+            {/* Church Notes section (for non-admin users) */}
+            {!isAdmin && (
+              <>
+                {editingChurchNotesId === milestone.id ? (
+                  <div className="mt-3 space-y-2">
+                    <textarea
+                      value={editChurchNotesValue}
+                      onChange={(e) => onEditChurchNotesChange(e.target.value)}
+                      placeholder="Add your notes (challenges, victories, questions...)"
+                      className="w-full text-sm px-3 py-2 border border-input-border rounded bg-white resize-none"
+                      rows={3}
+                      autoFocus
+                    />
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() => onSaveChurchNotes(milestone.id)}
+                        disabled={updatingMilestone === milestone.id}
+                        className="text-xs px-3 py-1 bg-gold text-white rounded hover:bg-gold/90 flex items-center gap-1"
+                      >
+                        {updatingMilestone === milestone.id ? (
+                          <Loader2 className="w-3 h-3 animate-spin" />
+                        ) : (
+                          <Save className="w-3 h-3" />
+                        )}
+                        Save
+                      </button>
+                      <button
+                        onClick={onCancelEditChurchNotes}
+                        className="text-xs px-3 py-1 text-foreground-muted hover:bg-background-secondary rounded"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </div>
+                ) : milestone.progress?.church_notes ? (
+                  <div className="mt-3 p-2 bg-blue-50 border-l-2 border-blue-300 rounded-r">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="flex-1">
+                        <p className="text-xs font-medium text-blue-700 mb-1">Your Notes:</p>
+                        <p className="text-sm text-foreground-muted italic whitespace-pre-wrap">
+                          {milestone.progress.church_notes}
+                        </p>
+                      </div>
+                      <button
+                        onClick={() => onStartEditingChurchNotes(milestone.id, milestone.progress?.church_notes)}
+                        className="p-1 text-foreground-muted hover:text-blue-600 hover:bg-blue-100 rounded flex-shrink-0"
+                        title="Edit your note"
+                      >
+                        <Pencil className="w-3 h-3" />
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => onStartEditingChurchNotes(milestone.id)}
+                    className="text-xs text-blue-600 hover:text-blue-700 flex items-center gap-1 mt-2"
+                  >
+                    <MessageSquare className="w-3 h-3" />
+                    <span>Add your notes</span>
+                  </button>
+                )}
+              </>
+            )}
+
             {/* Global Resources section */}
             {milestone.resources && milestone.resources.length > 0 && (
               <div className="mt-3 space-y-1">
@@ -434,6 +527,100 @@ export default function MilestoneItem({
           </>
         )}
       </div>
+    </div>
+  );
+}
+
+// AI Meeting Notes Component (collapsed by default)
+interface AIMeetingNotesProps {
+  summary?: string;
+  actionItems?: string[];
+  keywords?: string[];
+  transcriptUrl?: string | null;
+}
+
+function AIMeetingNotes({ summary, actionItems, keywords, transcriptUrl }: AIMeetingNotesProps) {
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  if (!summary) return null;
+
+  return (
+    <div className="mt-3 border border-purple-200 rounded-lg overflow-hidden">
+      {/* Header - Always visible, clickable to expand/collapse */}
+      <button
+        onClick={() => setIsExpanded(!isExpanded)}
+        className="w-full flex items-center justify-between gap-2 p-3 bg-purple-50 hover:bg-purple-100 transition-colors"
+      >
+        <div className="flex items-center gap-2">
+          <Mic className="w-4 h-4 text-purple-600" />
+          <span className="text-xs font-medium uppercase tracking-wide text-purple-700">
+            Meeting Notes
+          </span>
+        </div>
+        {isExpanded ? (
+          <ChevronDown className="w-4 h-4 text-purple-600" />
+        ) : (
+          <ChevronRight className="w-4 h-4 text-purple-600" />
+        )}
+      </button>
+
+      {/* Expanded Content */}
+      {isExpanded && (
+        <div className="p-3 space-y-3 bg-white">
+          {/* AI Summary */}
+          <div>
+            <p className="text-xs font-medium text-purple-700 mb-1">Summary:</p>
+            <p className="text-sm text-foreground-muted whitespace-pre-wrap">
+              {summary}
+            </p>
+          </div>
+
+          {/* Action Items */}
+          {actionItems && actionItems.length > 0 && (
+            <div>
+              <div className="flex items-center gap-1 mb-1">
+                <ListChecks className="w-3 h-3 text-purple-600" />
+                <p className="text-xs font-medium text-purple-700">Next Steps:</p>
+              </div>
+              <ul className="space-y-1 text-sm text-foreground-muted">
+                {actionItems.map((item, index) => (
+                  <li key={index} className="flex gap-2">
+                    <span className="text-purple-400 flex-shrink-0">•</span>
+                    <span>{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+
+          {/* Keywords */}
+          {keywords && keywords.length > 0 && (
+            <div className="flex flex-wrap gap-1">
+              {keywords.map((keyword, index) => (
+                <span
+                  key={index}
+                  className="inline-block text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded"
+                >
+                  {keyword}
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Link to full transcript on Fireflies */}
+          {transcriptUrl && (
+            <a
+              href={transcriptUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-purple-600 hover:text-purple-800 hover:underline"
+            >
+              <ExternalLink className="w-3 h-3" />
+              View full transcript on Fireflies
+            </a>
+          )}
+        </div>
+      )}
     </div>
   );
 }

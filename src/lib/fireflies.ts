@@ -259,17 +259,23 @@ export function verifyWebhookSignature(
 // ============================================================================
 
 /**
- * Match a Fireflies meeting to a church and scheduled call
+ * Match a Fireflies meeting to a church, scheduled call, and milestone
  * Matching strategies:
  * 1. Match by participant email (church leader email)
  * 2. Match by meeting title (contains church name)
- * 3. Match by call type keywords in title
+ * PRIMARY: Match by meeting date (within 24 hours)
+ * BACKUP: Match by call type keywords in title
  */
 export async function matchMeetingToChurch(
   meetingTitle: string,
   participants: string[],
   meetingDate: string
-): Promise<{ churchId: string | null; callId: string | null; callType: string | null }> {
+): Promise<{
+  churchId: string | null;
+  callId: string | null;
+  callType: string | null;
+  milestoneId: string | null;
+}> {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
   // Strategy 1: Match by participant email
@@ -282,22 +288,50 @@ export async function matchMeetingToChurch(
     if (leaders && leaders.length > 0) {
       const churchId = leaders[0].church_id;
 
-      // Try to find a matching scheduled call near this date
+      // PRIMARY: Try to match by date first (any call within 24 hours)
+      const { data: callByDate } = await supabase
+        .from('scheduled_calls')
+        .select('id, call_type')
+        .eq('church_id', churchId)
+        .gte('scheduled_at', new Date(new Date(meetingDate).getTime() - 24 * 60 * 60 * 1000).toISOString()) // 1 day before
+        .lte('scheduled_at', new Date(new Date(meetingDate).getTime() + 24 * 60 * 60 * 1000).toISOString()) // 1 day after
+        .is('fireflies_meeting_id', null)
+        .order('scheduled_at', { ascending: true })
+        .limit(1)
+        .single();
+
+      if (callByDate) {
+        // Matched by date! Use the call's type
+        const milestoneId = await matchCallTypeToMilestone(callByDate.call_type, churchId);
+
+        return {
+          churchId,
+          callId: callByDate.id,
+          callType: callByDate.call_type,
+          milestoneId,
+        };
+      }
+
+      // BACKUP: If no date match, try matching by call type keywords
       const callType = detectCallType(meetingTitle);
-      const { data: call } = await supabase
+      const { data: callByType } = await supabase
         .from('scheduled_calls')
         .select('id')
         .eq('church_id', churchId)
         .eq('call_type', callType)
-        .gte('scheduled_at', new Date(new Date(meetingDate).getTime() - 24 * 60 * 60 * 1000).toISOString()) // 1 day before
-        .lte('scheduled_at', new Date(new Date(meetingDate).getTime() + 24 * 60 * 60 * 1000).toISOString()) // 1 day after
         .is('fireflies_meeting_id', null)
+        .order('scheduled_at', { ascending: false })
+        .limit(1)
         .single();
+
+      // Match to milestone based on detected call type
+      const milestoneId = await matchCallTypeToMilestone(callType, churchId);
 
       return {
         churchId,
-        callId: call?.id || null,
+        callId: callByType?.id || null,
         callType,
+        milestoneId,
       };
     }
   }
@@ -310,23 +344,51 @@ export async function matchMeetingToChurch(
   if (churches) {
     for (const church of churches) {
       if (meetingTitle.toLowerCase().includes(church.name.toLowerCase())) {
-        const callType = detectCallType(meetingTitle);
 
-        // Try to find a matching scheduled call
-        const { data: call } = await supabase
+        // PRIMARY: Try to match by date first
+        const { data: callByDate } = await supabase
+          .from('scheduled_calls')
+          .select('id, call_type')
+          .eq('church_id', church.id)
+          .gte('scheduled_at', new Date(new Date(meetingDate).getTime() - 24 * 60 * 60 * 1000).toISOString())
+          .lte('scheduled_at', new Date(new Date(meetingDate).getTime() + 24 * 60 * 60 * 1000).toISOString())
+          .is('fireflies_meeting_id', null)
+          .order('scheduled_at', { ascending: true })
+          .limit(1)
+          .single();
+
+        if (callByDate) {
+          // Matched by date! Use the call's type
+          const milestoneId = await matchCallTypeToMilestone(callByDate.call_type, church.id);
+
+          return {
+            churchId: church.id,
+            callId: callByDate.id,
+            callType: callByDate.call_type,
+            milestoneId,
+          };
+        }
+
+        // BACKUP: If no date match, try matching by call type keywords
+        const callType = detectCallType(meetingTitle);
+        const { data: callByType } = await supabase
           .from('scheduled_calls')
           .select('id')
           .eq('church_id', church.id)
           .eq('call_type', callType)
-          .gte('scheduled_at', new Date(new Date(meetingDate).getTime() - 24 * 60 * 60 * 1000).toISOString())
-          .lte('scheduled_at', new Date(new Date(meetingDate).getTime() + 24 * 60 * 60 * 1000).toISOString())
           .is('fireflies_meeting_id', null)
+          .order('scheduled_at', { ascending: false })
+          .limit(1)
           .single();
+
+        // Match to milestone based on detected call type
+        const milestoneId = await matchCallTypeToMilestone(callType, church.id);
 
         return {
           churchId: church.id,
-          callId: call?.id || null,
+          callId: callByType?.id || null,
           callType,
+          milestoneId,
         };
       }
     }
@@ -337,6 +399,7 @@ export async function matchMeetingToChurch(
     churchId: null,
     callId: null,
     callType: detectCallType(meetingTitle),
+    milestoneId: null,
   };
 }
 
@@ -358,48 +421,85 @@ function detectCallType(title: string): string {
   return 'checkin'; // Default fallback
 }
 
+/**
+ * Match call type to appropriate milestone
+ * Maps common call types to their corresponding DNA Journey milestones
+ */
+async function matchCallTypeToMilestone(
+  callType: string,
+  churchId: string
+): Promise<string | null> {
+  const supabase = createClient(supabaseUrl, supabaseServiceKey);
+
+  // Map call types to milestone titles (fuzzy matching)
+  const milestoneMapping: Record<string, string[]> = {
+    'discovery': ['Vision Alignment Meeting', 'Initial Discovery'],
+    'proposal': ['Review Partnership Agreement', 'Proposal'],
+    'strategy': ['Set Implementation Timeline', 'Strategy'],
+    'kickoff': ['Kick-off Meeting', 'Launch', 'Begin'],
+    'assessment': ['Complete Dam Assessment', 'Assessment'],
+    'onboarding': ['Onboarding', 'Getting Started'],
+    'checkin': ['Check-in', 'Follow-up', 'Review'],
+  };
+
+  const searchTerms = milestoneMapping[callType] || [];
+
+  if (searchTerms.length === 0) {
+    return null;
+  }
+
+  // Get church's current phase to narrow down milestone search
+  const { data: church } = await supabase
+    .from('churches')
+    .select('current_phase')
+    .eq('id', churchId)
+    .single();
+
+  if (!church) {
+    return null;
+  }
+
+  // Get phases for the church's current phase (and adjacent phases for flexibility)
+  const phaseNumbers = [
+    church.current_phase - 1,
+    church.current_phase,
+    church.current_phase + 1,
+  ].filter(p => p >= 0 && p <= 5);
+
+  const { data: phases } = await supabase
+    .from('phases')
+    .select('id')
+    .in('phase_number', phaseNumbers);
+
+  if (!phases || phases.length === 0) {
+    return null;
+  }
+
+  const phaseIds = phases.map(p => p.id);
+
+  // Search for milestones matching the call type within relevant phases
+  for (const searchTerm of searchTerms) {
+    const { data: milestone } = await supabase
+      .from('milestones')
+      .select('id')
+      .in('phase_id', phaseIds)
+      .ilike('title', `%${searchTerm}%`)
+      .order('display_order', { ascending: true })
+      .limit(1)
+      .single();
+
+    if (milestone) {
+      return milestone.id;
+    }
+  }
+
+  return null;
+}
+
 // ============================================================================
 // Database Operations
 // ============================================================================
 
-/**
- * Save meeting transcript to database
- */
-export async function saveTranscript(
-  transcript: MeetingTranscript,
-  scheduledCallId?: string
-): Promise<{ success: boolean; transcriptId?: string; error?: string }> {
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-  const { data, error } = await supabase
-    .from('meeting_transcripts')
-    .insert({
-      scheduled_call_id: scheduledCallId,
-      fireflies_meeting_id: transcript.fireflies_meeting_id,
-      title: transcript.title,
-      duration: transcript.duration,
-      meeting_date: transcript.meeting_date,
-      participants: transcript.participants,
-      full_transcript: transcript.full_transcript,
-      sentences: transcript.sentences as unknown as Record<string, unknown>,
-      ai_summary: transcript.ai_summary,
-      action_items: transcript.action_items,
-      keywords: transcript.keywords,
-      key_moments: transcript.key_moments as unknown as Record<string, unknown>,
-      transcript_url: transcript.transcript_url,
-      audio_url: transcript.audio_url,
-      video_url: transcript.video_url,
-    })
-    .select('id')
-    .single();
-
-  if (error) {
-    console.error('Failed to save transcript:', error);
-    return { success: false, error: error.message };
-  }
-
-  return { success: true, transcriptId: data.id };
-}
 
 /**
  * Update scheduled_calls table with transcript info
@@ -410,7 +510,8 @@ export async function linkTranscriptToCall(
   transcriptUrl: string,
   aiSummary?: string,
   actionItems?: string[],
-  keywords?: string[]
+  keywords?: string[],
+  milestoneId?: string | null
 ): Promise<{ success: boolean; error?: string }> {
   const supabase = createClient(supabaseUrl, supabaseServiceKey);
 
@@ -422,6 +523,7 @@ export async function linkTranscriptToCall(
       ai_summary: aiSummary,
       action_items: actionItems,
       keywords: keywords,
+      milestone_id: milestoneId,
       transcript_processed_at: new Date().toISOString(),
       visible_to_church: false, // Admin must approve before visible
     })
@@ -435,33 +537,3 @@ export async function linkTranscriptToCall(
   return { success: true };
 }
 
-/**
- * Save unmatched meeting for manual review
- */
-export async function saveUnmatchedMeeting(
-  transcript: MeetingTranscript
-): Promise<{ success: boolean; error?: string }> {
-  const supabase = createClient(supabaseUrl, supabaseServiceKey);
-
-  const { error } = await supabase
-    .from('unmatched_fireflies_meetings')
-    .insert({
-      fireflies_meeting_id: transcript.fireflies_meeting_id,
-      title: transcript.title,
-      meeting_date: transcript.meeting_date,
-      participants: transcript.participants,
-      duration: transcript.duration,
-      ai_summary: transcript.ai_summary,
-      transcript_url: transcript.transcript_url,
-      match_attempted: true,
-      match_attempt_count: 1,
-      last_match_attempt: new Date().toISOString(),
-    });
-
-  if (error) {
-    console.error('Failed to save unmatched meeting:', error);
-    return { success: false, error: error.message };
-  }
-
-  return { success: true };
-}

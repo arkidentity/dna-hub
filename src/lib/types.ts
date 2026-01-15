@@ -72,6 +72,7 @@ export interface ScheduledCall {
   keywords?: string[];
   transcript_processed_at?: string;
   visible_to_church?: boolean;
+  milestone_id?: string;
   created_at: string;
 }
 
@@ -190,7 +191,8 @@ export interface ChurchProgress {
   completed: boolean;
   completed_at?: string;
   completed_by?: string;
-  notes?: string;
+  notes?: string; // Admin notes
+  church_notes?: string; // Church-written notes (separate from admin notes)
   target_date?: string;
   created_at: string;
   updated_at: string;

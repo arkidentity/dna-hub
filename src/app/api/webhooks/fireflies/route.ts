@@ -6,9 +6,7 @@ import { createClient } from '@supabase/supabase-js';
 import {
   fetchTranscript,
   matchMeetingToChurch,
-  saveTranscript,
   linkTranscriptToCall,
-  saveUnmatchedMeeting,
   getFirefliesSettings,
   verifyWebhookSignature,
 } from '@/lib/fireflies';
@@ -16,6 +14,32 @@ import type { FirefliesWebhookPayload } from '@/lib/types';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
+
+/**
+ * Check if meeting title contains DNA-related keywords
+ * Only process meetings that are likely related to DNA implementation
+ */
+function isDNAMeeting(title: string): boolean {
+  const lowerTitle = title.toLowerCase();
+
+  // DNA-specific keywords
+  const dnaKeywords = [
+    'dna',
+    'discovery',
+    'proposal',
+    'strategy',
+    'assessment',
+    'onboarding',
+    'kickoff',
+    'kick-off',
+    'discipleship',
+    'implementation',
+    'church partnership',
+    'leader preparation',
+  ];
+
+  return dnaKeywords.some(keyword => lowerTitle.includes(keyword));
+}
 
 /**
  * POST /api/webhooks/fireflies
@@ -115,9 +139,36 @@ export async function POST(request: NextRequest) {
 
     console.log('Transcript fetched:', transcript.title);
 
-    // Match to church and scheduled call (if auto-matching enabled)
+    // Filter: Only process DNA-related meetings
+    const isDNARelated = isDNAMeeting(transcript.title);
+
+    if (!isDNARelated) {
+      console.log('Skipping non-DNA meeting:', transcript.title);
+
+      // Mark webhook as processed but skipped
+      if (logId) {
+        await supabase
+          .from('fireflies_webhook_log')
+          .update({
+            processed: true,
+            error_message: 'Skipped: Not a DNA-related meeting',
+            processed_at: new Date().toISOString(),
+          })
+          .eq('id', logId);
+      }
+
+      return NextResponse.json({
+        success: true,
+        skipped: true,
+        reason: 'Not a DNA-related meeting',
+        title: transcript.title,
+      });
+    }
+
+    // Match to church, scheduled call, and milestone (if auto-matching enabled)
     let churchId: string | null = null;
     let callId: string | null = null;
+    let milestoneId: string | null = null;
 
     if (settings?.auto_match_enabled) {
       const match = await matchMeetingToChurch(
@@ -128,37 +179,12 @@ export async function POST(request: NextRequest) {
 
       churchId = match.churchId;
       callId = match.callId;
+      milestoneId = match.milestoneId;
 
-      console.log('Match result:', { churchId, callId, callType: match.callType });
+      console.log('Match result:', { churchId, callId, milestoneId, callType: match.callType });
     }
 
-    // Save transcript to meeting_transcripts table
-    const { success: saveSuccess, transcriptId, error: saveError } = await saveTranscript(
-      transcript,
-      callId || undefined
-    );
-
-    if (!saveSuccess) {
-      const errorMsg = `Failed to save transcript: ${saveError}`;
-      console.error(errorMsg);
-
-      if (logId) {
-        await supabase
-          .from('fireflies_webhook_log')
-          .update({
-            processed: false,
-            error_message: errorMsg,
-            processed_at: new Date().toISOString(),
-          })
-          .eq('id', logId);
-      }
-
-      return NextResponse.json({ error: errorMsg }, { status: 500 });
-    }
-
-    console.log('Transcript saved:', transcriptId);
-
-    // If matched to a call, link it
+    // If matched to a call, save AI notes directly to scheduled_calls
     if (callId) {
       await linkTranscriptToCall(
         callId,
@@ -166,14 +192,18 @@ export async function POST(request: NextRequest) {
         transcript.transcript_url || '',
         transcript.ai_summary,
         transcript.action_items,
-        transcript.keywords
+        transcript.keywords,
+        milestoneId
       );
 
-      console.log('Transcript linked to call:', callId);
+      console.log('AI notes linked to call:', callId);
     } else {
-      // No match found - save to unmatched_fireflies_meetings
-      await saveUnmatchedMeeting(transcript);
-      console.log('Saved as unmatched meeting');
+      // No match found - log warning but don't fail
+      console.warn('Meeting not matched to any call:', {
+        title: transcript.title,
+        participants: transcript.participants,
+        date: transcript.meeting_date,
+      });
     }
 
     // Update webhook log as processed
@@ -184,6 +214,7 @@ export async function POST(request: NextRequest) {
           processed: true,
           matched_church_id: churchId,
           matched_call_id: callId,
+          matched_milestone_id: milestoneId,
           processed_at: new Date().toISOString(),
         })
         .eq('id', logId);
@@ -191,10 +222,10 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      transcriptId,
       matched: !!callId,
       churchId,
       callId,
+      milestoneId,
     });
 
   } catch (error) {
