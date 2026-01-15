@@ -65,6 +65,13 @@ export interface ScheduledCall {
   notes?: string;
   google_event_id?: string;
   meet_link?: string;
+  fireflies_meeting_id?: string;
+  transcript_url?: string;
+  ai_summary?: string;
+  action_items?: string[];
+  keywords?: string[];
+  transcript_processed_at?: string;
+  visible_to_church?: boolean;
   created_at: string;
 }
 
@@ -277,4 +284,154 @@ export interface AssessmentFormData {
   // Additional
   how_heard_about_us: string;
   additional_questions: string;
+}
+
+// ============================================================================
+// Fireflies.ai Integration Types (Phase 2)
+// ============================================================================
+
+// Transcript sentence with speaker and timing
+export interface TranscriptSentence {
+  text: string;
+  speaker_id: string;
+  speaker_name?: string;
+  start_time: number; // seconds from start
+  end_time?: number;
+}
+
+// Key moment identified by AI
+export interface KeyMoment {
+  title: string;
+  description?: string;
+  start_time: number;
+  end_time?: number;
+  importance?: 'high' | 'medium' | 'low';
+}
+
+// Full meeting transcript data
+export interface MeetingTranscript {
+  id: string;
+  scheduled_call_id?: string;
+  fireflies_meeting_id: string;
+
+  // Meeting metadata
+  title: string;
+  duration?: number; // in seconds
+  meeting_date?: string;
+  participants?: string[];
+
+  // Transcript data
+  full_transcript?: string;
+  sentences?: TranscriptSentence[];
+
+  // AI-generated content
+  ai_summary?: string;
+  action_items?: string[];
+  keywords?: string[];
+  key_moments?: KeyMoment[];
+
+  // URLs and files
+  transcript_url?: string;
+  audio_url?: string;
+  video_url?: string;
+
+  // Timestamps
+  processed_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Fireflies webhook payload
+export interface FirefliesWebhookPayload {
+  meetingId: string;
+  eventType: 'transcription_completed' | 'audio_uploaded';
+  clientReferenceId?: string;
+  timestamp?: string;
+}
+
+// Fireflies webhook log entry
+export interface FirefliesWebhookLog {
+  id: string;
+  fireflies_meeting_id?: string;
+  event_type?: string;
+  client_reference_id?: string;
+  payload: Record<string, unknown>;
+  processed: boolean;
+  matched_church_id?: string;
+  matched_call_id?: string;
+  error_message?: string;
+  received_at: string;
+  processed_at?: string;
+}
+
+// Fireflies API settings
+export interface FirefliesSettings {
+  id: string;
+  api_key: string;
+  webhook_secret?: string;
+  admin_email: string;
+  auto_process_enabled: boolean;
+  auto_match_enabled: boolean;
+  auto_share_with_churches: boolean;
+  connected_at: string;
+  last_webhook_received_at?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Unmatched Fireflies meeting
+export interface UnmatchedFirefliesMeeting {
+  id: string;
+  fireflies_meeting_id: string;
+  title: string;
+  meeting_date?: string;
+  participants?: string[];
+  duration?: number;
+  ai_summary?: string;
+  transcript_url?: string;
+  match_attempted: boolean;
+  match_attempt_count: number;
+  last_match_attempt?: string;
+  matched_church_id?: string;
+  matched_call_id?: string;
+  matched_at?: string;
+  matched_by?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Fireflies GraphQL API response types
+export interface FirefliesTranscriptResponse {
+  data: {
+    transcript: {
+      id: string;
+      title: string;
+      date: string;
+      duration: number;
+      participants: Array<{
+        name: string;
+        email?: string;
+      }>;
+      transcript_url: string;
+      audio_url?: string;
+      video_url?: string;
+      sentences: Array<{
+        text: string;
+        speaker_id: string;
+        speaker_name?: string;
+        start_time: number;
+        end_time?: number;
+      }>;
+      summary?: {
+        overview?: string;
+        action_items?: string[];
+        keywords?: string[];
+        key_moments?: Array<{
+          title: string;
+          description?: string;
+          start_time: number;
+        }>;
+      };
+    };
+  };
 }
