@@ -8,7 +8,7 @@
 |------|-------|
 | **Stack** | Next.js 16 + React 19 + TypeScript + Supabase + Tailwind 4 |
 | **Auth** | Magic link email (no passwords) via `/src/lib/auth.ts` |
-| **Database** | Supabase (PostgreSQL) - schemas in `/supabase-*.sql` |
+| **Database** | Supabase (PostgreSQL) - migrations in `/database/` |
 | **API Routes** | `/src/app/api/` |
 | **Types** | `/src/lib/types.ts` |
 | **Styles** | Tailwind + `/src/app/globals.css` |
@@ -114,9 +114,9 @@ RESEND_API_KEY=
 3. Follow existing page patterns
 
 ### Modify database
-1. Update `/supabase-schema.sql` for reference
-2. Create migration file: `supabase-migration-[feature].sql`
-3. Run in Supabase SQL editor
+1. Create migration file: `/database/NNN_feature-name.sql` (next number in sequence)
+2. Run in Supabase SQL editor
+3. Update `/database/README.md` with the new migration
 
 ## Admin Emails (Hardcoded)
 - thearkidentity@gmail.com
@@ -132,8 +132,9 @@ npm run lint     # Run ESLint
 ## Documentation
 
 See `/docs/` for:
-- Architecture details: `ARCHITECTURE.md`
-- File map: `CODEBASE_MAP.md`
-- Conventions: `CONVENTIONS.md`
-- Data models: `DATA_MODELS.md`
-- Business docs: `DNA Church Implementation Roadmap.md`, etc.
+- Architecture details: `technical/ARCHITECTURE.md`
+- File map: `technical/CODEBASE_MAP.md`
+- Conventions: `technical/CONVENTIONS.md`
+- Data models: `technical/DATA_MODELS.md`
+- Integrations: `integrations/FIREFLIES.md`, `integrations/GOOGLE_CALENDAR.md`
+- Business docs: `business/DNA-IMPLEMENTATION-ROADMAP.md`, etc.
