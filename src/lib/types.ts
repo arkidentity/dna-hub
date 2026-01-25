@@ -437,3 +437,198 @@ export interface FirefliesTranscriptResponse {
     };
   };
 }
+
+// ============================================================================
+// DNA Groups System Types (Roadmap 2)
+// ============================================================================
+
+// DNA Leader - leads discipleship groups
+export interface DNALeader {
+  id: string;
+  email: string;
+  name: string;
+  phone?: string;
+  church_id?: string; // null = independent
+  invited_by?: string;
+  invited_by_type?: 'church_admin' | 'super_admin';
+  invited_at: string;
+  activated_at?: string;
+  signup_token?: string;
+  signup_token_expires_at?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// DNA Group phases
+export type DNAGroupPhase =
+  | 'pre-launch'      // Planning/inviting stage
+  | 'invitation'      // Week 0-1: Invitations sent, group forming
+  | 'foundation'      // Week 1-4: Building foundation
+  | 'growth'          // Week 5-8: Group maturing
+  | 'multiplication'; // Week 8+: Preparing to multiply
+
+// DNA Group - a discipleship group
+export interface DNAGroup {
+  id: string;
+  group_name: string;
+  leader_id: string;
+  co_leader_id?: string;
+  church_id?: string; // null = independent
+  current_phase: DNAGroupPhase;
+  start_date: string;
+  multiplication_target_date?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Disciple - group participant (no login)
+export interface Disciple {
+  id: string;
+  email: string;
+  name: string;
+  phone?: string;
+  promoted_to_leader_id?: string;
+  promoted_at?: string;
+  created_at: string;
+}
+
+// Disciple membership status in a group
+export type DiscipleStatus = 'active' | 'completed' | 'dropped';
+
+// Group-Disciple relationship
+export interface GroupDisciple {
+  id: string;
+  group_id: string;
+  disciple_id: string;
+  joined_date: string;
+  current_status: DiscipleStatus;
+  created_at: string;
+}
+
+// Life Assessment (Week 1 and Week 8)
+export interface LifeAssessment {
+  id: string;
+  disciple_id: string;
+  group_id: string;
+  assessment_week: 1 | 8;
+  token: string;
+  token_expires_at?: string;
+  responses: Record<string, unknown>; // JSONB - flexible structure
+  sent_at?: string;
+  started_at?: string;
+  completed_at?: string;
+  last_reminder_sent_at?: string;
+  reminder_count: number;
+  ip_address?: string;
+  user_agent?: string;
+  created_at: string;
+}
+
+// Leader Note - private notes on disciples
+export interface LeaderNote {
+  id: string;
+  group_id: string;
+  disciple_id: string;
+  leader_id: string;
+  note_text: string;
+  created_at: string;
+}
+
+// Prayer Request
+export interface PrayerRequest {
+  id: string;
+  group_id: string;
+  disciple_id: string;
+  request_text: string;
+  answered: boolean;
+  answered_at?: string;
+  answer_note?: string;
+  created_at: string;
+}
+
+// Leader Health Check-in status
+export type HealthCheckinStatus = 'healthy' | 'caution' | 'needs_attention';
+
+// Flag area with level
+export interface HealthFlagArea {
+  area: string; // e.g., 'burnout', 'isolation', 'community'
+  level: 'green' | 'yellow' | 'red';
+}
+
+// Leader Health Check-in (6-month assessment)
+export interface LeaderHealthCheckin {
+  id: string;
+  leader_id: string;
+  church_id?: string; // snapshot at time of checkin
+  responses: Record<string, unknown>; // JSONB - full responses (leader only)
+  overall_score?: number; // e.g., 3.75 out of 5
+  status: HealthCheckinStatus;
+  flag_areas: HealthFlagArea[];
+  due_date: string;
+  reminder_sent_at?: string;
+  reminder_count: number;
+  sent_at?: string;
+  started_at?: string;
+  completed_at?: string;
+  token?: string;
+  token_expires_at?: string;
+  created_at: string;
+}
+
+// ============================================================================
+// DNA Groups Extended Types (for UI)
+// ============================================================================
+
+// Disciple with their group membership info
+export interface DiscipleWithMembership extends Disciple {
+  membership: GroupDisciple;
+  assessments?: LifeAssessment[];
+}
+
+// DNA Group with related data
+export interface DNAGroupWithDetails extends DNAGroup {
+  leader?: DNALeader;
+  co_leader?: DNALeader;
+  church?: Church;
+  disciples?: DiscipleWithMembership[];
+  disciple_count?: number;
+}
+
+// DNA Leader with their groups
+export interface DNALeaderWithGroups extends DNALeader {
+  church?: Church;
+  groups?: DNAGroup[];
+  group_count?: number;
+}
+
+// Health checkin summary (for church admin view - no full responses)
+export interface HealthCheckinSummary {
+  id: string;
+  leader_id: string;
+  leader_name: string;
+  overall_score?: number;
+  status: HealthCheckinStatus;
+  flag_areas: HealthFlagArea[];
+  due_date: string;
+  completed_at?: string;
+}
+
+// Life Assessment comparison (Week 1 vs Week 8)
+export interface AssessmentComparison {
+  disciple: Disciple;
+  group: DNAGroup;
+  week1: LifeAssessment;
+  week8: LifeAssessment;
+  category_scores: {
+    category: string;
+    week1_score: number;
+    week8_score: number;
+    change: number;
+    change_level: 'growth' | 'slight_growth' | 'no_change' | 'decline';
+  }[];
+  overall_change: number;
+  strengths: string[];
+  focus_areas: string[];
+}

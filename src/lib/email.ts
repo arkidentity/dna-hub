@@ -768,6 +768,123 @@ export async function sendInactiveReminderEmail(
   });
 }
 
+// =====================================================
+// DNA GROUPS SYSTEM EMAILS
+// =====================================================
+
+// DNA Leader Magic Link Email (for re-authentication)
+export async function sendDNALeaderMagicLinkEmail(
+  to: string,
+  leaderName: string,
+  magicLink: string
+) {
+  const subject = 'Your DNA Groups Login Link';
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1A2332;">Hi ${leaderName},</h2>
+
+      <p>Click the button below to access your DNA Groups Dashboard:</p>
+
+      <div style="text-align: center; margin: 30px 0;">
+        <a href="${magicLink}"
+           style="background: #D4A853; color: white; padding: 16px 32px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          Access DNA Groups
+        </a>
+      </div>
+
+      <p style="color: #5A6577; font-size: 14px;">
+        This link expires in 7 days. If you didn't request this, you can safely ignore this email.
+      </p>
+
+      <p style="color: #5A6577; font-size: 14px;">
+        Or copy this link: <br>
+        <a href="${magicLink}" style="color: #2D6A6A;">${magicLink}</a>
+      </p>
+
+      <p style="color: #5A6577; font-size: 14px; margin-top: 30px;">
+        — DNA Groups
+      </p>
+    </div>
+  `;
+
+  return sendEmail({ to, subject, html });
+}
+
+// DNA Leader Invitation Email
+export async function sendDNALeaderInvitationEmail(
+  to: string,
+  leaderName: string,
+  signupUrl: string,
+  churchName: string | null,
+  inviterName: string,
+  personalMessage?: string
+) {
+  const isChurchAffiliated = !!churchName;
+
+  const subject = isChurchAffiliated
+    ? `You've been invited to lead DNA groups at ${churchName}`
+    : `You've been invited to lead DNA groups`;
+
+  const introText = isChurchAffiliated
+    ? `${inviterName} from ${churchName} has invited you to become a DNA leader!`
+    : `${inviterName} has invited you to become a DNA leader with ARK Identity!`;
+
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1A2332;">Hi ${leaderName},</h2>
+
+      <p>${introText}</p>
+
+      ${personalMessage ? `
+      <div style="background: #F8F9FA; padding: 16px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2D6A6A;">
+        <p style="margin: 0; color: #5A6577; font-style: italic;">"${personalMessage}"</p>
+        <p style="margin: 8px 0 0 0; color: #1A2332; font-weight: 500;">— ${inviterName}</p>
+      </div>
+      ` : ''}
+
+      <p>As a DNA leader, you'll guide small groups through an 8-week discipleship journey that transforms lives and multiplies disciples.</p>
+
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${signupUrl}"
+           style="background: #D4A853; color: white; padding: 16px 32px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          Accept Invitation
+        </a>
+      </div>
+
+      <p style="color: #5A6577; font-size: 14px;">
+        This invitation expires in 7 days. If you didn't expect this invitation, you can safely ignore this email.
+      </p>
+
+      <p style="color: #5A6577; font-size: 14px;">
+        Or copy this link: <br>
+        <a href="${signupUrl}" style="color: #2D6A6A;">${signupUrl}</a>
+      </p>
+
+      <hr style="border: none; border-top: 1px solid #E8DDD0; margin: 32px 0;" />
+
+      <p style="color: #5A6577; font-size: 14px;">
+        Making disciples who make disciples,<br>
+        <strong>ARK Identity Team</strong>
+      </p>
+
+      <p style="color: #5A6577; font-size: 14px;">
+        Questions? Reply to this email or visit <a href="https://dna.arkidentity.com/help" style="color: #2D6A6A;">dna.arkidentity.com/help</a>
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    notificationType: 'dna_leader_invitation'
+  });
+}
+
 // 3 Steps resource email (sent after assessment)
 export async function send3StepsEmail(
   to: string,

@@ -232,3 +232,156 @@ export async function getLeaderByEmail(email: string) {
   console.log('[AUTH] Found leader:', data?.name, '| Church:', data?.church?.name);
   return data;
 }
+
+// ============================================================================
+// DNA LEADER SESSION MANAGEMENT
+// ============================================================================
+
+const DNA_LEADER_SESSION_COOKIE_NAME = 'dna_leader_session';
+
+// Create session for DNA leader
+export async function createDNALeaderSession(leaderId: string, churchId: string | null) {
+  const sessionToken = generateToken();
+
+  const cookieStore = await cookies();
+  cookieStore.set(DNA_LEADER_SESSION_COOKIE_NAME, JSON.stringify({
+    token: sessionToken,
+    leaderId,
+    churchId,
+    createdAt: Date.now(),
+  }), {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    maxAge: 60 * 60 * 24 * 30, // 30 days
+    path: '/',
+  });
+
+  return sessionToken;
+}
+
+// Get DNA leader session
+export async function getDNALeaderSession() {
+  try {
+    const cookieStore = await cookies();
+    const sessionCookie = cookieStore.get(DNA_LEADER_SESSION_COOKIE_NAME);
+
+    if (!sessionCookie) {
+      return null;
+    }
+
+    const session = JSON.parse(sessionCookie.value);
+
+    // Verify the DNA leader still exists and is active
+    const { data: leader } = await supabaseAdmin
+      .from('dna_leaders')
+      .select(`
+        *,
+        church:churches(id, name, logo_url)
+      `)
+      .eq('id', session.leaderId)
+      .eq('is_active', true)
+      .single();
+
+    if (!leader || !leader.activated_at) {
+      return null;
+    }
+
+    return {
+      leader,
+      church: leader.church,
+    };
+  } catch {
+    return null;
+  }
+}
+
+// Clear DNA leader session
+export async function clearDNALeaderSession() {
+  const cookieStore = await cookies();
+  cookieStore.delete(DNA_LEADER_SESSION_COOKIE_NAME);
+}
+
+// Get DNA leader by email
+export async function getDNALeaderByEmail(email: string) {
+  const { data, error } = await supabaseAdmin
+    .from('dna_leaders')
+    .select(`
+      *,
+      church:churches(id, name, logo_url)
+    `)
+    .eq('email', email.toLowerCase())
+    .eq('is_active', true)
+    .single();
+
+  if (error) {
+    return null;
+  }
+
+  return data;
+}
+
+// Create magic link token for DNA leader (for re-authentication)
+export async function createDNALeaderMagicLinkToken(leaderId: string): Promise<string | null> {
+  const token = generateToken();
+  const expiresAt = new Date();
+  expiresAt.setDate(expiresAt.getDate() + 7); // 7-day expiry
+
+  // Store in dna_leaders table temporarily using signup_token field
+  // (We could create a separate magic_link_tokens table for DNA leaders later)
+  const { error } = await supabaseAdmin
+    .from('dna_leaders')
+    .update({
+      signup_token: token,
+      signup_token_expires_at: expiresAt.toISOString(),
+    })
+    .eq('id', leaderId);
+
+  if (error) {
+    console.error('Failed to create DNA leader magic link token:', error);
+    return null;
+  }
+
+  return token;
+}
+
+// Verify DNA leader magic link token
+export async function verifyDNALeaderMagicLinkToken(token: string) {
+  const { data: leader, error } = await supabaseAdmin
+    .from('dna_leaders')
+    .select(`
+      *,
+      church:churches(id, name, logo_url)
+    `)
+    .eq('signup_token', token)
+    .eq('is_active', true)
+    .single();
+
+  if (error || !leader) {
+    return { valid: false, error: 'Invalid or expired token' };
+  }
+
+  // Check if activated (must have activated_at to log in)
+  if (!leader.activated_at) {
+    return { valid: false, error: 'Account not activated' };
+  }
+
+  // Check expiration
+  if (leader.signup_token_expires_at && new Date(leader.signup_token_expires_at) < new Date()) {
+    return { valid: false, error: 'Token has expired' };
+  }
+
+  // Clear the token after use
+  await supabaseAdmin
+    .from('dna_leaders')
+    .update({
+      signup_token: null,
+      signup_token_expires_at: null,
+    })
+    .eq('id', leader.id);
+
+  return {
+    valid: true,
+    leader,
+  };
+}
