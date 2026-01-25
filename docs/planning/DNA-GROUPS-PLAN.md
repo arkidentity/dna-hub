@@ -89,11 +89,18 @@
 - [x] DNA leaders list with health status indicators
 - [x] Groups display with phase badges and disciple counts
 
+#### Admin DNA Leaders Section
+- [x] DNA Leaders tab in main admin page (`/admin` → DNA Leaders tab)
+- [x] `GET /api/admin/dna-leaders` - List all DNA leaders with stats
+- [x] `DNALeadersTab` component with filtering and invite modal
+- [x] Invite independent DNA leaders (not tied to any church)
+- [x] Filter by type (independent/church-affiliated) and status (active/pending)
+- [x] Stats display (active leaders, pending invites, total groups, total disciples)
+
 ### In Progress
 
 #### Phase 1: Foundation
 - [ ] RLS policies for all tables
-- [ ] Independent DNA leaders admin section (for Travis to invite leaders not tied to churches)
 
 ### Not Started
 

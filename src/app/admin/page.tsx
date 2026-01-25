@@ -35,7 +35,9 @@ import {
   AlertTriangle,
   ChevronDown,
   ChevronUp,
+  UserCheck,
 } from 'lucide-react';
+import { DNALeadersTab } from '@/components/admin';
 
 interface ChurchSummary {
   id: string;
@@ -108,6 +110,7 @@ const TIER_OPTIONS = [
 
 export default function AdminPage() {
   const router = useRouter();
+  const [activeTab, setActiveTab] = useState<'churches' | 'dna-leaders'>('churches');
   const [churches, setChurches] = useState<ChurchSummary[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -465,7 +468,38 @@ export default function AdminPage() {
         </div>
       </header>
 
+      {/* Tab Navigation */}
+      <div className="bg-white border-b border-card-border">
+        <div className="max-w-6xl mx-auto px-6">
+          <div className="flex gap-6">
+            {[
+              { id: 'churches', label: 'Churches', icon: Building2 },
+              { id: 'dna-leaders', label: 'DNA Leaders', icon: UserCheck },
+            ].map((tab) => (
+              <button
+                key={tab.id}
+                onClick={() => setActiveTab(tab.id as typeof activeTab)}
+                className={`flex items-center gap-2 py-4 border-b-2 transition-colors ${
+                  activeTab === tab.id
+                    ? 'border-gold text-navy font-medium'
+                    : 'border-transparent text-foreground-muted hover:text-navy'
+                }`}
+              >
+                <tab.icon className="w-5 h-5" />
+                {tab.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+
       <main className="max-w-6xl mx-auto px-6 py-8">
+        {/* DNA Leaders Tab */}
+        {activeTab === 'dna-leaders' && <DNALeadersTab />}
+
+        {/* Churches Tab */}
+        {activeTab === 'churches' && (
+          <>
         {/* Stats Overview */}
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
@@ -982,6 +1016,8 @@ export default function AdminPage() {
             })
           )}
         </div>
+          </>
+        )}
       </main>
 
       {/* Tier Selection Modal */}
