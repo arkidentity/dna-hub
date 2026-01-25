@@ -186,13 +186,22 @@ export function detectCallType(
   return null;
 }
 
-// Match event to a church by attendee email or title
+// Match event to a church by attendee email, title, or aliases
 export async function matchEventToChurch(
   event: calendar_v3.Schema$Event
 ): Promise<{ churchId: string; churchName: string } | null> {
   const supabase = getSupabaseAdmin();
+  const title = (event.summary || '').toLowerCase();
 
-  // Try matching by attendee email
+  // Get all churches with their aliases
+  const { data: churches } = await supabase.from('churches').select('id, name, aliases');
+
+  if (!churches) {
+    console.log('[GOOGLE] No churches found in database');
+    return null;
+  }
+
+  // Priority 1: Try matching by attendee email (most reliable)
   const attendees = event.attendees || [];
   for (const attendee of attendees) {
     if (!attendee.email) continue;
@@ -205,31 +214,73 @@ export async function matchEventToChurch(
       .single();
 
     if (leader) {
-      const { data: church } = await supabase
-        .from('churches')
-        .select('id, name')
-        .eq('id', leader.church_id)
-        .single();
-
+      const church = churches.find((c) => c.id === leader.church_id);
       if (church) {
+        console.log(`[GOOGLE] Matched by attendee email: ${attendee.email} → ${church.name}`);
         return { churchId: church.id, churchName: church.name };
       }
     }
   }
 
-  // Try matching by title
-  const title = event.summary || '';
-  const { data: churches } = await supabase.from('churches').select('id, name');
-
-  if (churches) {
-    for (const church of churches) {
-      if (title.toLowerCase().includes(church.name.toLowerCase())) {
+  // Priority 2: Try matching by church aliases (e.g., "BLVD" → Boulevard Church)
+  for (const church of churches) {
+    const aliases = church.aliases || [];
+    for (const alias of aliases) {
+      if (alias && title.includes(alias.toLowerCase())) {
+        console.log(`[GOOGLE] Matched by alias: "${alias}" → ${church.name}`);
         return { churchId: church.id, churchName: church.name };
       }
     }
   }
 
+  // Priority 3: Try matching by full church name in title
+  for (const church of churches) {
+    if (title.includes(church.name.toLowerCase())) {
+      console.log(`[GOOGLE] Matched by name in title: "${church.name}"`);
+      return { churchId: church.id, churchName: church.name };
+    }
+  }
+
+  console.log(`[GOOGLE] No match found for event: "${event.summary}"`);
   return null;
+}
+
+// Check if a call type should be blocked due to existing completed call
+async function shouldBlockDuplicateCall(
+  churchId: string,
+  callType: string,
+  googleEventId?: string
+): Promise<boolean> {
+  // Only block duplicates for discovery, proposal, and kickoff
+  if (!['discovery', 'proposal', 'kickoff'].includes(callType)) {
+    return false;
+  }
+
+  const supabase = getSupabaseAdmin();
+
+  // Check for existing completed calls of this type
+  let query = supabase
+    .from('scheduled_calls')
+    .select('id')
+    .eq('church_id', churchId)
+    .eq('call_type', callType)
+    .eq('completed', true);
+
+  // Exclude the current event if it's an update
+  if (googleEventId) {
+    query = query.neq('google_event_id', googleEventId);
+  }
+
+  const { data: existingCalls } = await query;
+
+  if (existingCalls && existingCalls.length > 0) {
+    console.log(
+      `[GOOGLE] Blocking duplicate ${callType} call for church ${churchId} - completed call already exists`
+    );
+    return true;
+  }
+
+  return false;
 }
 
 // Sync calendar events to scheduled_calls
@@ -300,11 +351,21 @@ export async function syncCalendarEvents(adminEmail: string) {
             event_end: event.end?.dateTime || event.end?.date,
             attendee_emails: attendeeEmails,
             meet_link: event.hangoutLink,
+            detected_call_type: callType,
           },
           { onConflict: 'google_event_id' }
         );
 
         eventsUnmatched++;
+        continue;
+      }
+
+      // Check for duplicate completed calls (only for discovery, proposal, kickoff)
+      const shouldBlock = await shouldBlockDuplicateCall(match.churchId, callType, event.id!);
+      if (shouldBlock) {
+        errors.push(
+          `Skipped duplicate ${callType} call for ${match.churchName} - a completed ${callType} call already exists`
+        );
         continue;
       }
 

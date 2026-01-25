@@ -52,6 +52,42 @@
                           │                  │
                           │ Junction table   │
                           └──────────────────┘
+
+DNA GROUPS SYSTEM (Roadmap 2)
+=============================
+
+┌─────────────────┐       ┌──────────────────┐
+│   dna_leaders   │──1:N──│    dna_groups    │
+│                 │       │                  │
+│ Group leaders   │       │ Discipleship     │
+│ (may have       │       │ groups (5 phases)│
+│  church_id)     │       └────────┬─────────┘
+└─────────────────┘                │
+                                   │ 1:N (via group_disciples)
+                                   ▼
+                          ┌──────────────────┐
+                          │    disciples     │
+                          │                  │
+                          │ Group members    │
+                          │ (no login)       │
+                          └────────┬─────────┘
+                                   │
+         ┌─────────────────────────┼─────────────────────────┐
+         │                         │                         │
+         ▼                         ▼                         ▼
+┌──────────────────┐    ┌──────────────────┐    ┌──────────────────┐
+│ life_assessments │    │  leader_notes    │    │ prayer_requests  │
+│                  │    │                  │    │                  │
+│ Week 1/8 surveys │    │ Private notes    │    │ Prayer tracking  │
+│ (token-based)    │    │ (leader only)    │    │ (leader only)    │
+└──────────────────┘    └──────────────────┘    └──────────────────┘
+
+┌─────────────────────┐
+│leader_health_checkins│
+│                     │
+│ 6-month leader      │
+│ assessments         │
+└─────────────────────┘
 ```
 
 ## Core Tables
@@ -394,4 +430,185 @@ WHERE m.phase_id = $2;
 SELECT * FROM churches
 WHERE status = $1
 ORDER BY updated_at DESC;
+```
+
+---
+
+## DNA Groups Tables (Roadmap 2)
+
+> Migration file: `database/019_dna-groups.sql`
+
+### dna_leaders
+
+DNA group leaders - separate from church_leaders. Can be affiliated with a church or independent.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `email` | text | Login identifier (unique) |
+| `name` | text | Full name |
+| `phone` | text | Contact number |
+| `church_id` | uuid | FK → churches.id (nullable - NULL = independent) |
+| `invited_by` | uuid | Who invited them |
+| `invited_by_type` | text | 'church_admin' or 'super_admin' |
+| `invited_at` | timestamptz | Invitation time |
+| `activated_at` | timestamptz | When they completed signup |
+| `signup_token` | text | Token for signup link |
+| `signup_token_expires_at` | timestamptz | Token expiry |
+| `is_active` | boolean | Active status |
+| `created_at` | timestamptz | Record creation |
+| `updated_at` | timestamptz | Last modification |
+
+---
+
+### dna_groups
+
+Discipleship groups led by DNA leaders.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `group_name` | text | Group name |
+| `leader_id` | uuid | FK → dna_leaders.id |
+| `co_leader_id` | uuid | FK → dna_leaders.id (optional) |
+| `church_id` | uuid | FK → churches.id (nullable) |
+| `current_phase` | text | See phases below |
+| `start_date` | date | Group start date |
+| `multiplication_target_date` | date | When to multiply |
+| `created_at` | timestamptz | Record creation |
+| `updated_at` | timestamptz | Last modification |
+
+**Phase Enum:**
+```
+pre-launch     → Planning/inviting stage
+invitation     → Week 0-1: Group forming
+foundation     → Week 1-4: Building foundation
+growth         → Week 5-8: Group maturing
+multiplication → Week 8+: Preparing to multiply
+```
+
+---
+
+### disciples
+
+Group participants. No login - they use token-based links for assessments.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `email` | text | Email (unique) |
+| `name` | text | Full name |
+| `phone` | text | Contact number |
+| `promoted_to_leader_id` | uuid | FK → dna_leaders.id (if promoted) |
+| `promoted_at` | timestamptz | Promotion time |
+| `created_at` | timestamptz | Record creation |
+
+---
+
+### group_disciples
+
+Join table linking disciples to groups.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `group_id` | uuid | FK → dna_groups.id |
+| `disciple_id` | uuid | FK → disciples.id |
+| `joined_date` | date | When joined |
+| `current_status` | text | 'active', 'completed', 'dropped' |
+| `is_active` | boolean | Active in group |
+| `created_at` | timestamptz | Record creation |
+
+**Constraints:** Unique on (`group_id`, `disciple_id`)
+
+---
+
+### life_assessments
+
+Week 1 and Week 8 assessments for disciples. Token-based access (no login required).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `disciple_id` | uuid | FK → disciples.id |
+| `group_id` | uuid | FK → dna_groups.id |
+| `assessment_week` | integer | 1 or 8 |
+| `token` | text | Unique access token |
+| `responses` | jsonb | All answers |
+| `started_at` | timestamptz | When started |
+| `completed_at` | timestamptz | When completed |
+| `ip_address` | text | For tracking |
+| `user_agent` | text | Browser info |
+| `created_at` | timestamptz | Record creation |
+
+---
+
+### leader_notes
+
+Private notes from leaders about disciples. NOT visible to church admins.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `group_id` | uuid | FK → dna_groups.id |
+| `disciple_id` | uuid | FK → disciples.id |
+| `leader_id` | uuid | FK → dna_leaders.id |
+| `note_text` | text | Note content |
+| `created_at` | timestamptz | Record creation |
+
+---
+
+### prayer_requests
+
+Prayer tracking per disciple. NOT visible to church admins.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `group_id` | uuid | FK → dna_groups.id |
+| `disciple_id` | uuid | FK → disciples.id |
+| `request_text` | text | Prayer request |
+| `answered` | boolean | Is it answered? |
+| `answered_at` | timestamptz | When answered |
+| `answer_note` | text | How it was answered |
+| `created_at` | timestamptz | Record creation |
+
+---
+
+### leader_health_checkins
+
+6-month health assessments for DNA leaders. Church admins see summary (status + flags), not full responses.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `leader_id` | uuid | FK → dna_leaders.id |
+| `church_id` | uuid | FK → churches.id (nullable) |
+| `responses` | jsonb | Full assessment answers |
+| `overall_score` | integer | Calculated score |
+| `status` | text | 'healthy', 'caution', 'needs_attention' |
+| `flag_areas` | jsonb | Areas of concern |
+| `due_date` | date | When due |
+| `reminder_sent_at` | timestamptz | When reminder sent |
+| `completed_at` | timestamptz | When completed |
+| `created_at` | timestamptz | Record creation |
+| `updated_at` | timestamptz | Last modification |
+
+---
+
+## DNA Groups Indexes
+
+```sql
+CREATE INDEX idx_dna_leaders_email ON dna_leaders(email);
+CREATE INDEX idx_dna_leaders_church_id ON dna_leaders(church_id);
+CREATE INDEX idx_dna_groups_leader_id ON dna_groups(leader_id);
+CREATE INDEX idx_dna_groups_church_id ON dna_groups(church_id);
+CREATE INDEX idx_disciples_email ON disciples(email);
+CREATE INDEX idx_group_disciples_group_id ON group_disciples(group_id);
+CREATE INDEX idx_group_disciples_disciple_id ON group_disciples(disciple_id);
+CREATE INDEX idx_life_assessments_token ON life_assessments(token);
+CREATE INDEX idx_life_assessments_disciple_id ON life_assessments(disciple_id);
+CREATE INDEX idx_leader_notes_group_id ON leader_notes(group_id);
+CREATE INDEX idx_prayer_requests_group_id ON prayer_requests(group_id);
+CREATE INDEX idx_leader_health_checkins_leader_id ON leader_health_checkins(leader_id);
 ```

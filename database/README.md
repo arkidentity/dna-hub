@@ -27,12 +27,14 @@ Files are numbered in the order they should be run:
 | 016 | `fireflies-simplify.sql` | Simplified Fireflies (AI summaries only) |
 | 017 | `rename-milestones.sql` | Milestone title cleanup |
 | 018 | `kickoff-notes.sql` | Kick-off notes milestone |
+| 019 | `dna-groups.sql` | DNA Groups (Roadmap 2) tables |
+| 020 | `calendar-sync-improvements.sql` | Calendar sync: aliases, call types, duplicate prevention |
 
 ## Running Migrations
 
 ### New Installation
 
-Run all migrations in order (000 → 018) in the Supabase SQL Editor.
+Run all migrations in order (000 → 020) in the Supabase SQL Editor.
 
 ### Existing Installation
 

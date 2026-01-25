@@ -165,7 +165,7 @@ export async function PATCH(request: NextRequest) {
       return handleBulkUpdate(supabase, session, body);
     }
 
-    const { churchId, status, current_phase, tierName, sendEmail = true } = body;
+    const { churchId, status, current_phase, tierName, aliases, sendEmail = true } = body;
 
     if (!churchId) {
       return NextResponse.json({ error: 'Church ID required' }, { status: 400 });
@@ -200,6 +200,11 @@ export async function PATCH(request: NextRequest) {
     // Store the selected tier when moving to awaiting_strategy
     if (tierName && status === 'awaiting_strategy') {
       updates.selected_tier = tierName;
+    }
+
+    // Update church aliases for calendar matching
+    if (aliases !== undefined) {
+      updates.aliases = aliases;
     }
 
     const { error: updateError } = await supabase

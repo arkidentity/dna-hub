@@ -47,7 +47,16 @@ dna-hub/
 │   │   │   │   └── page.tsx    # Google Calendar settings
 │   │   │   └── church/
 │   │   │       └── [id]/
-│   │   │           └── page.tsx # Single church admin (Overview + DNA Journey tabs)
+│   │   │           └── page.tsx # Single church admin (Overview + DNA Journey + DNA Groups tabs)
+│   │   │
+│   │   ├── groups/             # DNA Groups Dashboard (Roadmap 2)
+│   │   │   ├── page.tsx        # DNA Leader dashboard landing
+│   │   │   ├── new/
+│   │   │   │   └── page.tsx    # Create new group form
+│   │   │   ├── signup/
+│   │   │   │   └── page.tsx    # DNA Leader activation (from invite)
+│   │   │   └── [id]/
+│   │   │       └── page.tsx    # Group detail with disciples
 │   │   │
 │   │   └── api/                # API Routes
 │   │       ├── auth/
@@ -63,14 +72,30 @@ dna-hub/
 │   │       ├── attachments/route.ts      # File upload/delete
 │   │       ├── portal/route.ts           # Pre-active data
 │   │       │
-│   │       └── admin/
-│   │           ├── churches/route.ts     # List all churches
-│   │           └── church/
-│   │               └── [id]/
-│   │                   ├── route.ts      # Church CRUD
-│   │                   ├── calls/route.ts     # Manage calls
-│   │                   ├── documents/route.ts # Funnel docs
-│   │                   └── milestones/route.ts # Milestone CRUD (admin)
+│   │       ├── admin/
+│   │       │   ├── churches/route.ts     # List all churches
+│   │       │   └── church/
+│   │       │       └── [id]/
+│   │       │           ├── route.ts      # Church CRUD
+│   │       │           ├── calls/route.ts     # Manage calls
+│   │       │           ├── documents/route.ts # Funnel docs
+│   │       │           └── milestones/route.ts # Milestone CRUD (admin)
+│   │       │
+│   │       ├── dna-leaders/              # DNA Leader management
+│   │       │   ├── invite/route.ts       # POST: Invite, GET: List invites
+│   │       │   ├── verify-token/route.ts # GET: Validate signup token
+│   │       │   └── activate/route.ts     # POST: Complete signup
+│   │       │
+│   │       ├── groups/                   # DNA Groups management
+│   │       │   ├── route.ts              # POST: Create, GET: List groups
+│   │       │   ├── dashboard/route.ts    # GET: Dashboard data
+│   │       │   └── [id]/
+│   │       │       ├── route.ts          # GET/PATCH: Group details
+│   │       │       └── disciples/route.ts # POST/GET: Manage disciples
+│   │       │
+│   │       └── churches/
+│   │           └── [churchId]/
+│   │               └── dna-groups/route.ts # GET: Church's DNA leaders/groups
 │   │
 │   ├── components/             # Reusable components
 │   │   └── dashboard/          # Dashboard UI components
@@ -79,6 +104,7 @@ dna-hub/
 │   │       ├── OverviewTab.tsx        # Dashboard overview/progress
 │   │       ├── PhaseCard.tsx          # Collapsible phase display
 │   │       ├── ScheduleCallCard.tsx   # Scheduled calls + booking links
+│   │       ├── GroupsTab.tsx          # DNA Groups tab (shared church/admin)
 │   │       └── utils.ts               # Helper functions
 │   │
 │   └── lib/                    # Shared utilities
@@ -180,10 +206,14 @@ dna-hub/
 | `/login` | `app/login/page.tsx` | Magic link login | Public |
 | `/onboarding` | `app/onboarding/page.tsx` | First-time welcome | Session |
 | `/portal` | `app/portal/page.tsx` | Pre-active church view | Session |
-| `/dashboard` | `app/dashboard/page.tsx` | Implementation tracker | Session |
+| `/dashboard` | `app/dashboard/page.tsx` | Implementation tracker (Overview + DNA Journey + DNA Groups tabs) | Session |
 | `/admin` | `app/admin/page.tsx` | All churches list | Admin |
-| `/admin/church/[id]` | `app/admin/church/[id]/page.tsx` | Church detail (Overview + DNA Journey) | Admin |
+| `/admin/church/[id]` | `app/admin/church/[id]/page.tsx` | Church detail (Overview + DNA Journey + DNA Groups tabs) | Admin |
 | `/admin/settings` | `app/admin/settings/page.tsx` | Google Calendar settings | Admin |
+| `/groups` | `app/groups/page.tsx` | DNA Leader dashboard | DNA Leader |
+| `/groups/new` | `app/groups/new/page.tsx` | Create new group | DNA Leader |
+| `/groups/[id]` | `app/groups/[id]/page.tsx` | Group detail with disciples | DNA Leader |
+| `/groups/signup` | `app/groups/signup/page.tsx` | DNA Leader signup (from invite) | Public (token) |
 
 ## API Routes
 
@@ -227,6 +257,24 @@ dna-hub/
 | `/api/admin/calendar/sync` | POST | Trigger manual sync |
 | `/api/admin/calendar/disconnect` | POST | Disconnect calendar |
 | `/api/cron/calendar-sync` | GET | Daily sync (Vercel cron) |
+
+### DNA Groups Endpoints (Roadmap 2)
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/dna-leaders/invite` | POST | Invite DNA leader |
+| `/api/dna-leaders/invite` | GET | List pending invitations |
+| `/api/dna-leaders/verify-token` | GET | Validate signup token |
+| `/api/dna-leaders/activate` | POST | Complete DNA leader signup |
+| `/api/auth/verify-dna-leader` | GET | Verify DNA leader magic link |
+| `/api/auth/logout-dna-leader` | POST | End DNA leader session |
+| `/api/groups` | POST | Create new group |
+| `/api/groups` | GET | List DNA leader's groups |
+| `/api/groups/dashboard` | GET | DNA leader dashboard data |
+| `/api/groups/[id]` | GET | Get group with disciples |
+| `/api/groups/[id]` | PATCH | Update group details |
+| `/api/groups/[id]/disciples` | POST | Add disciple to group |
+| `/api/groups/[id]/disciples` | GET | List disciples in group |
+| `/api/churches/[churchId]/dna-groups` | GET | Church's DNA leaders and groups |
 
 ## Common Modifications
 

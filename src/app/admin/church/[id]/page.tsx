@@ -32,6 +32,7 @@ import {
   List,
   LayoutList,
   Paperclip,
+  Tag,
 } from 'lucide-react';
 import { GroupsTab } from '@/components/dashboard';
 
@@ -53,6 +54,7 @@ interface ChurchDetail {
     phase_4_target?: string;
     phase_5_start?: string;
     phase_5_target?: string;
+    aliases?: string[];
   };
   leader: {
     id: string;
@@ -174,6 +176,11 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
   const [editNotesValue, setEditNotesValue] = useState('');
   const [updatingMilestone, setUpdatingMilestone] = useState<string | null>(null);
   const [uploadingMilestone, setUploadingMilestone] = useState<string | null>(null);
+
+  // Alias editing state
+  const [editingAliases, setEditingAliases] = useState(false);
+  const [aliasInput, setAliasInput] = useState('');
+  const [savingAliases, setSavingAliases] = useState(false);
 
   useEffect(() => {
     fetchChurchData();
@@ -576,6 +583,35 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  const handleSaveAliases = async () => {
+    setSavingAliases(true);
+    try {
+      // Parse comma-separated aliases
+      const aliases = aliasInput
+        .split(',')
+        .map((a) => a.trim())
+        .filter((a) => a.length > 0);
+
+      const response = await fetch('/api/admin/churches', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ churchId, aliases }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to save aliases');
+      }
+
+      await fetchChurchData();
+      setEditingAliases(false);
+    } catch (error) {
+      console.error('Save aliases error:', error);
+      alert('Failed to save aliases');
+    } finally {
+      setSavingAliases(false);
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
       month: 'short',
@@ -638,6 +674,59 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
                 <a href={`mailto:${leader.email}`} className="text-gold hover:text-gold-light">
                   {leader.email}
                 </a>
+              </div>
+              {/* Calendar Aliases */}
+              <div className="flex items-center gap-2 mt-2">
+                <Tag className="w-3 h-3 text-gray-400" />
+                {editingAliases ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="text"
+                      value={aliasInput}
+                      onChange={(e) => setAliasInput(e.target.value)}
+                      placeholder="e.g., BLVD, Boulevard"
+                      className="text-xs px-2 py-1 bg-white/10 border border-gray-500 rounded text-white placeholder-gray-400 w-48"
+                      autoFocus
+                    />
+                    <button
+                      onClick={handleSaveAliases}
+                      disabled={savingAliases}
+                      className="p-1 text-green-400 hover:bg-white/10 rounded"
+                    >
+                      {savingAliases ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                    </button>
+                    <button
+                      onClick={() => {
+                        setEditingAliases(false);
+                        setAliasInput(church.aliases?.join(', ') || '');
+                      }}
+                      className="p-1 text-gray-400 hover:bg-white/10 rounded"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setAliasInput(church.aliases?.join(', ') || '');
+                      setEditingAliases(true);
+                    }}
+                    className="text-xs text-gray-400 hover:text-white flex items-center gap-1"
+                    title="Calendar aliases for matching events"
+                  >
+                    {church.aliases && church.aliases.length > 0 ? (
+                      <>
+                        <span>Aliases: {church.aliases.join(', ')}</span>
+                        <Pencil className="w-3 h-3" />
+                      </>
+                    ) : (
+                      <>
+                        <span className="italic">Add calendar aliases</span>
+                        <Plus className="w-3 h-3" />
+                      </>
+                    )}
+                  </button>
+                )}
               </div>
             </div>
             <div className="flex items-center gap-3">

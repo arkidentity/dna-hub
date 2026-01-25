@@ -15,11 +15,22 @@
 
 ## Project Purpose
 
-DNA Hub manages the **DNA Discipleship Framework** implementation at churches. It tracks churches through a 5-phase onboarding process with ~35 milestones.
+DNA Hub manages the **DNA Discipleship Framework** implementation at churches. It has two main systems:
+
+**Roadmap 1: Church Implementation Dashboard** (existing)
+- Tracks churches through a 5-phase onboarding process with ~35 milestones
+- Users: Church Leaders, Admins
+
+**Roadmap 2: DNA Groups Dashboard** (new - `/groups`)
+- DNA Leaders manage discipleship groups and disciples
+- Separate auth system (`dna_leader_session` cookie)
+- Church leaders can view their church's groups (read-only)
 
 **User Types:**
-- **Church Leaders** - Track their church's implementation progress
-- **Admins** - Manage all churches, update statuses, upload resources
+- **Church Leaders** - Track their church's implementation progress, invite DNA leaders, view DNA groups
+- **DNA Leaders** - Manage discipleship groups and disciples (separate dashboard at `/groups`)
+- **Disciples** - Group participants (no login, token-based assessment links)
+- **Admins** - Manage all churches, all DNA leaders, full access to everything
 
 ## Key Concepts
 
@@ -49,13 +60,26 @@ awaiting_agreement → awaiting_strategy → active → completed
 - **Landing**: `/src/app/page.tsx`
 - **Assessment form**: `/src/app/assessment/page.tsx`
 - **Login**: `/src/app/login/page.tsx`
-- **Dashboard**: `/src/app/dashboard/page.tsx`
+- **Dashboard**: `/src/app/dashboard/page.tsx` (has Overview, DNA Journey, DNA Groups tabs)
 - **Admin**: `/src/app/admin/page.tsx`
+- **Admin Church View**: `/src/app/admin/church/[id]/page.tsx` (has Overview, DNA Journey, DNA Groups tabs)
+
+### DNA Groups Pages (Roadmap 2)
+- **DNA Leader Dashboard**: `/src/app/groups/page.tsx`
+- **Create Group**: `/src/app/groups/new/page.tsx`
+- **Group Detail**: `/src/app/groups/[id]/page.tsx`
+- **DNA Leader Signup**: `/src/app/groups/signup/page.tsx`
 
 ### API Routes
 - **Auth**: `/api/auth/magic-link`, `/api/auth/verify`, `/api/auth/logout`
 - **Data**: `/api/dashboard`, `/api/progress`, `/api/assessment`
 - **Admin**: `/api/admin/churches`, `/api/admin/church/[id]`
+
+### DNA Groups API Routes
+- **DNA Leaders**: `/api/dna-leaders/invite`, `/api/dna-leaders/verify-token`, `/api/dna-leaders/activate`
+- **Groups**: `/api/groups`, `/api/groups/[id]`, `/api/groups/[id]/disciples`, `/api/groups/dashboard`
+- **Church DNA Data**: `/api/churches/[churchId]/dna-groups`
+- **DNA Leader Auth**: `/api/auth/verify-dna-leader`, `/api/auth/logout-dna-leader`
 
 ## Coding Conventions
 
@@ -84,8 +108,15 @@ return NextResponse.json({ error: 'Message' }, { status: 400 })
 
 ### Auth Check Pattern
 ```typescript
+// Church leader auth
 const session = await getSession()
 if (!session) {
+  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+}
+
+// DNA leader auth
+const dnaSession = await getDNALeaderSession()
+if (!dnaSession) {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 }
 ```
@@ -138,3 +169,17 @@ See `/docs/` for:
 - Data models: `technical/DATA_MODELS.md`
 - Integrations: `integrations/FIREFLIES.md`, `integrations/GOOGLE_CALENDAR.md`
 - Business docs: `business/DNA-IMPLEMENTATION-ROADMAP.md`, etc.
+- **DNA Groups Plan**: `planning/DNA-GROUPS-PLAN.md` - Complete implementation plan for Roadmap 2
+
+## DNA Groups Database Tables (Migration: `019_dna-groups.sql`)
+
+| Table | Purpose |
+|-------|---------|
+| `dna_leaders` | DNA group leaders (separate from church_leaders) |
+| `dna_groups` | Discipleship groups with 5 phases |
+| `disciples` | Group participants (no login) |
+| `group_disciples` | Join table for group membership |
+| `life_assessments` | Week 1/8 assessment responses |
+| `leader_notes` | Private leader notes on disciples |
+| `prayer_requests` | Prayer tracking per disciple |
+| `leader_health_checkins` | 6-month leader health assessments |
