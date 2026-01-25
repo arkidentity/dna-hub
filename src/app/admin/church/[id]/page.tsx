@@ -28,10 +28,12 @@ import {
   Star,
   LayoutDashboard,
   Map,
+  Users,
   List,
   LayoutList,
   Paperclip,
 } from 'lucide-react';
+import { GroupsTab } from '@/components/dashboard';
 
 interface ChurchDetail {
   church: {
@@ -141,7 +143,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
   const router = useRouter();
   const [data, setData] = useState<ChurchDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'journey'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'groups'>('overview');
 
   // Document editing
   const [editingDoc, setEditingDoc] = useState<string | null>(null);
@@ -674,6 +676,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
             {[
               { id: 'overview', label: 'Overview', icon: LayoutDashboard },
               { id: 'journey', label: 'DNA Journey', icon: Map },
+              { id: 'groups', label: 'DNA Groups', icon: Users },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -1506,6 +1509,15 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
               )}
             </div>
           </div>
+        )}
+
+        {/* DNA Groups Tab */}
+        {activeTab === 'groups' && (
+          <GroupsTab
+            churchId={churchId}
+            churchName={church.name}
+            isAdmin={true}
+          />
         )}
       </main>
     </div>

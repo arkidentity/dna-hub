@@ -6,6 +6,7 @@ import {
   Loader2,
   LayoutDashboard,
   Map,
+  Users,
   AlertCircle,
   RefreshCw,
 } from 'lucide-react';
@@ -14,6 +15,7 @@ import {
   DashboardHeader,
   OverviewTab,
   JourneyTab,
+  GroupsTab,
 } from '@/components/dashboard';
 
 interface DashboardData {
@@ -30,7 +32,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'journey'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'groups'>('overview');
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [compactView, setCompactView] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -352,6 +354,7 @@ export default function DashboardPage() {
             {[
               { id: 'overview', label: 'Overview', icon: LayoutDashboard },
               { id: 'journey', label: 'DNA Journey', icon: Map },
+              { id: 'groups', label: 'DNA Groups', icon: Users },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -416,6 +419,14 @@ export default function DashboardPage() {
             onSaveChurchNotes={saveChurchNotes}
             onCancelEditChurchNotes={() => { setEditingChurchNotesId(null); setEditChurchNotesValue(''); }}
             onEditChurchNotesChange={setEditChurchNotesValue}
+          />
+        )}
+
+        {activeTab === 'groups' && (
+          <GroupsTab
+            churchId={church.id}
+            churchName={church.name}
+            isAdmin={isAdmin}
           />
         )}
 

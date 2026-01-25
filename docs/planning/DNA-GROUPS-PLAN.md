@@ -1,8 +1,128 @@
 # DNA Groups Dashboard - Complete Implementation Plan
 
-**Version:** 1.0
+**Version:** 1.1
 **Last Updated:** 2026-01-24
-**Status:** Planning Phase
+**Status:** Phase 1 In Progress
+
+---
+
+## Implementation Progress
+
+### Completed
+
+#### Database Schema (Migration: `019_dna-groups.sql`)
+- [x] `dna_leaders` table - DNA group leaders
+- [x] `dna_groups` table - Discipleship groups
+- [x] `disciples` table - Group participants
+- [x] `group_disciples` table - Join table
+- [x] `life_assessments` table - Week 1/8 assessments
+- [x] `leader_notes` table - Private notes
+- [x] `prayer_requests` table - Prayer tracking
+- [x] `leader_health_checkins` table - 6-month leader health assessments
+- [x] All indexes created
+- [x] RLS enabled (policies pending)
+- [x] Updated triggers for `updated_at`
+
+#### TypeScript Types (`/src/lib/types.ts`)
+- [x] `DNALeader` interface
+- [x] `DNAGroup` interface
+- [x] `DNAGroupPhase` type
+- [x] `Disciple` interface
+- [x] `GroupDisciple` interface
+- [x] `LifeAssessment` interface
+- [x] `LeaderNote` interface
+- [x] `PrayerRequest` interface
+- [x] `LeaderHealthCheckin` interface
+- [x] `HealthCheckinStatus` type
+- [x] `HealthFlagArea` interface
+- [x] Extended types for UI (with details, membership, etc.)
+
+#### Authentication (`/src/lib/auth.ts`)
+- [x] `createDNALeaderSession()` - Create session cookie
+- [x] `getDNALeaderSession()` - Get current session
+- [x] `clearDNALeaderSession()` - Log out
+- [x] `getDNALeaderByEmail()` - Find leader by email
+- [x] `createDNALeaderMagicLinkToken()` - For re-authentication
+- [x] `verifyDNALeaderMagicLinkToken()` - Verify magic link
+
+#### DNA Leader Invitation System
+- [x] `POST /api/dna-leaders/invite` - Invite DNA leader (church admin or super admin)
+- [x] `GET /api/dna-leaders/invite` - List pending invitations
+- [x] `GET /api/dna-leaders/verify-token` - Validate signup token
+- [x] `POST /api/dna-leaders/activate` - Complete signup, create session
+- [x] `/groups/signup` page - DNA leader activation form
+
+#### Email Templates (`/src/lib/email.ts`)
+- [x] `sendDNALeaderInvitationEmail()` - Initial invitation
+- [x] `sendDNALeaderMagicLinkEmail()` - Re-authentication
+
+#### Authentication Flow
+- [x] `POST /api/auth/magic-link` - Updated to support both user types
+- [x] `GET /api/auth/verify-dna-leader` - Magic link verification for DNA leaders
+- [x] `POST /api/auth/logout-dna-leader` - Log out DNA leader
+- [x] `/login` page - Updated to work for both church leaders and DNA leaders
+
+#### DNA Leader Dashboard
+- [x] `/groups` page - Dashboard landing (shows groups, stats)
+- [x] `GET /api/groups/dashboard` - Dashboard data API
+
+#### Group Management
+- [x] `/groups/new` page - Create new group form
+- [x] `POST /api/groups` - Create group
+- [x] `GET /api/groups` - List groups for current leader
+- [x] `/groups/[id]` page - Group detail view with disciples
+- [x] `GET /api/groups/[id]` - Get group with disciples
+- [x] `PATCH /api/groups/[id]` - Update group details
+
+#### Disciple Management
+- [x] `POST /api/groups/[id]/disciples` - Add disciple to group
+- [x] `GET /api/groups/[id]/disciples` - List disciples in group
+- [x] Add disciple modal in group detail page
+
+#### Church Integration (DNA Groups Tab)
+- [x] Church Dashboard DNA Groups tab (`/dashboard` → DNA Groups)
+- [x] Admin Church View DNA Groups tab (`/admin/church/[id]` → DNA Groups)
+- [x] `GET /api/churches/[churchId]/dna-groups` - Fetch DNA leaders and groups for a church
+- [x] `GroupsTab` component (shared between church and admin views)
+- [x] Invite DNA leader modal (from DNA Groups tab)
+- [x] Stats display (active leaders, groups, disciples, pending invites)
+- [x] DNA leaders list with health status indicators
+- [x] Groups display with phase badges and disciple counts
+
+### In Progress
+
+#### Phase 1: Foundation
+- [ ] RLS policies for all tables
+- [ ] Independent DNA leaders admin section (for Travis to invite leaders not tied to churches)
+
+### Not Started
+
+#### Phase 2: Group Management
+- [ ] Leader notes CRUD
+- [ ] Prayer requests CRUD
+- [ ] Disciple profile page
+- [ ] Edit group modal
+- [ ] Phase change confirmation
+
+#### Phase 3: Life Assessment Tool
+- [ ] Assessment form (42 questions)
+- [ ] Auto-save functionality
+- [ ] PDF generation
+- [ ] Results display
+- [ ] Week 1 vs Week 8 comparison
+- [ ] Send assessment to disciples
+
+#### Phase 4: Additional Church Features
+- [ ] Read-only group detail view for church admins
+- [ ] Advanced stats and filtering
+
+#### Phase 5: Polish & Launch
+- [ ] Leader health check-in system
+- [ ] Mobile responsive testing
+- [ ] Error handling
+- [ ] Documentation
+
+---
 
 ---
 
