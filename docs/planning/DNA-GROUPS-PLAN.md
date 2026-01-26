@@ -1,8 +1,8 @@
 # DNA Groups Dashboard - Complete Implementation Plan
 
-**Version:** 1.2
-**Last Updated:** 2026-01-25
-**Status:** Phase 1 Nearly Complete
+**Version:** 1.3
+**Last Updated:** 2026-01-26
+**Status:** Phase 1 Nearly Complete | Disciple Profile Design In Progress
 
 ---
 
@@ -107,9 +107,43 @@
 #### Phase 2: Group Management
 - [ ] Leader notes CRUD
 - [ ] Prayer requests CRUD
-- [ ] Disciple profile page
+- [ ] **Disciple profile page (DESIGN IN PROGRESS)**
 - [ ] Edit group modal
 - [ ] Phase change confirmation
+
+**IMPORTANT DESIGN DECISIONS (Jan 26, 2026):**
+
+The disciple profile page is undergoing significant redesign to align with the DNA Launch Guide framework:
+
+**Terminology Changes:**
+- Disciple phases → **Disciple Milestones** (to differentiate from Church Phases and DNA Launch Guide Phases)
+- Checkpoints → Specific trackable items within milestones
+- Status values: `active`, `multiplied`, `dropped_out`
+
+**5 Disciple Milestones (Draft):**
+1. **Milestone 1: Foundation** - 8-week DNA group journey + initial growth (Week 1-8)
+2. **Milestone 2: Application** - Spiritual disciplines becoming habits (Month 3 target)
+3. **Milestone 3: Growth** - Spiritual maturity and leadership capacity (Month 6 target)
+4. **Milestone 4: Multiplication Prep** - Preparing to co-lead (Month 9-12 target)
+5. **Milestone 5: Leading** - Co-leading a DNA group (becomes DNA Leader when complete)
+
+**Key Design Principles:**
+- NO fixed week counts (6-12 month journey, flexible pacing)
+- Gateway criteria for advancing between milestones (leader approval + checkpoints)
+- Integrated "Discipleship Journey" accordion (all-in-one view)
+- Combined Leader Notes + Prayer Requests (single chronological log with date stamps)
+- Assessment comparison as downloadable PDF (side-by-side Week 1 vs Week 8)
+- Custom checkpoints (leaders can add ad-hoc events)
+- Mission trip required at some milestone (TBD which one)
+
+**Still To Be Decided:**
+- [ ] Finalize Milestone 2-4 checkpoint lists (using DNA Launch Guide checklists as base)
+- [ ] Define Week 1-8 tool/topic names for Milestone 1 checkpoints
+- [ ] Determine where Mission Trip checkpoint belongs (M2, M3, or M4?)
+- [ ] Gateway mechanics: auto-unlock vs manual leader approval?
+- [ ] Alumni tracking: how to display "Multiplied" disciples who became DNA Leaders?
+- [ ] Complete Life Assessment structure (42 questions) before building comparison feature
+- [ ] Custom checkpoint UX: free-form text vs templates vs both?
 
 #### Phase 3: Life Assessment Tool
 - [ ] Assessment form (42 questions)
@@ -128,6 +162,365 @@
 - [ ] Mobile responsive testing
 - [ ] Error handling
 - [ ] Documentation
+
+---
+
+## Disciple Milestones Design (In Progress)
+
+**Last Updated:** 2026-01-26
+
+### Overview
+
+Disciples progress through 5 developmental milestones (NOT fixed week counts) with specific accomplishments, character development, and gateway criteria for advancement. Timeline is flexible (6-12+ months total) based on individual growth.
+
+### Terminology Clarification
+
+| Church Implementation | DNA Group Launch (Leaders) | Discipleship (Individuals) |
+|----------------------|----------------------------|---------------------------|
+| **Phases** (5) | **Phases** (from Launch Guide) | **Milestones** (5) |
+| Church Partnership, Leader Prep, etc. | Pre-Launch, Foundation, Growth, Multiplication, Sustain | Foundation, Application, Growth, Multiplication Prep, Leading |
+
+**Within Discipleship Milestones:**
+- **Checkpoints** = Specific trackable items (e.g., "Week 1 Assessment", "Mission Trip", "Led Devotional")
+- **Notes** = Leader observations attached to checkpoints (combined with prayer requests)
+
+### Milestone 1: Foundation
+
+**Purpose:** Complete initial DNA group journey and establish spiritual basics
+
+**Checkpoints:**
+- ☐ Week 1: Introduction & Week 1 Assessment
+- ☐ Week 2: [Tool Name - TBD]
+- ☐ Week 3: [Tool Name - TBD]
+- ☐ Week 4: [Tool Name - TBD]
+- ☐ Week 5: [Tool Name - TBD]
+- ☐ Week 6: [Tool Name - TBD]
+- ☐ Week 7: [Tool Name - TBD]
+- ☐ Week 8: Conclusion & Week 8 Assessment
+- ☐ Attendance: 80%+ (6/8 sessions minimum)
+- [+ Add Custom Checkpoint] - Leaders can add ad-hoc events
+
+**Accomplishments:**
+- Complete Week 1 Life Assessment (baseline)
+- Participate actively in DNA group sessions
+- Complete Week 8 Life Assessment (growth measurement)
+- Demonstrate basic understanding of core biblical principles
+
+**Character/Skills Development:**
+- Consistent attendance and engagement
+- Openness to learning
+- Willingness to share and be vulnerable
+- Basic prayer habits
+
+**Gateway to Milestone 2:**
+- All 8 weeks completed
+- Both assessments completed (Week 1 + Week 8)
+- Leader observes consistent participation
+- Leader approves readiness
+
+**Assessment Comparison:**
+- When Week 8 is complete, system auto-generates comparison PDF
+- PDF shows side-by-side questions/answers (Week 1 | Week 8)
+- Scored sections show numeric growth
+- Written sections show full text responses
+- Leader can download, share with disciple, or add to notes
+
+---
+
+### Milestone 2: Application (Month 3 Target)
+
+**Purpose:** Move from learning to living out faith daily
+
+**Checkpoints (from DNA Launch Guide "Foundation Checklist"):**
+- ☐ Consistent attendance (80%+)
+- ☐ Active in group communication
+- ☐ Demonstrates vulnerability and trust
+- ☐ Teachable and receives correction well
+- ☐ Practicing spiritual disciplines independently
+- ☐ Addressed at least one major stronghold/lie
+- ☐ Led or served in some capacity
+- [+ Add Custom Checkpoint]
+
+**Accomplishments (DRAFT - needs refinement):**
+- Demonstrate regular personal Bible study/prayer
+- Share testimony with the group
+- Serve in some capacity (church, community, group)
+- Begin inviting others to explore faith
+
+**Character/Skills Development:**
+- Self-discipline in spiritual practices
+- Growing biblical literacy
+- Servant-heartedness
+- Evangelistic awareness
+
+**Gateway to Milestone 3:**
+- Majority of checkpoints observed
+- Leader approves readiness
+
+**OPEN QUESTIONS:**
+- Should we use DNA Launch Guide checklist verbatim or create new checkpoints?
+- What specific accomplishments should unlock this milestone?
+
+---
+
+### Milestone 3: Growth (Month 6 Target)
+
+**Purpose:** Develop spiritual maturity and leadership capacity
+
+**Checkpoints (from DNA Launch Guide "Growth Checklist"):**
+- ☐ Leading devotionals confidently
+- ☐ Initiating spiritual conversations
+- ☐ Hearing from God and sharing insights
+- ☐ Showing emotional/spiritual maturity
+- ☐ Handling correction well
+- ☐ Demonstrating fruit of the Spirit
+- ☐ Expressing desire to disciple others
+- ☐ Consistent in spiritual disciplines
+- ☐ **Mission Trip participation** *(required - TBD if this is the right milestone)*
+- [+ Add Custom Checkpoint]
+
+**Accomplishments (DRAFT - needs refinement):**
+- Demonstrate regular personal Bible study/prayer
+- Share faith story with non-believer
+- Co-facilitate group discussion (1-2 times)
+- Complete "Disciplemaker Training" module (?)
+
+**Character/Skills Development:**
+- Leadership initiative
+- Teachability + ability to teach
+- Heart for the lost
+- Relational investment in others
+
+**Gateway to Milestone 4:**
+- All checkpoints demonstrated
+- Mission trip completed (if required here)
+- Leader approves readiness
+
+**OPEN QUESTIONS:**
+- Is Mission Trip better in Milestone 2, 3, or 4?
+- What is "Disciplemaker Training" and does it exist?
+
+---
+
+### Milestone 4: Multiplication Prep (Month 9-12 Target)
+
+**Purpose:** Prepare to co-lead a DNA group
+
+**Checkpoints (from DNA Launch Guide "Multiplication Readiness"):**
+- ☐ Articulates the gospel clearly
+- ☐ Leads self spiritually (consistent devotion)
+- ☐ Handles correction with humility
+- ☐ Initiates spiritual conversations regularly
+- ☐ Demonstrates fruit of the Spirit consistently
+- ☐ Has identified 2-3 people to disciple
+- ☐ Co-facilitated group discussions (3+ times)
+- ☐ Shows faithfulness in small things
+- ☐ **6-Month Leader Health Check-in completed**
+- [+ Add Custom Checkpoint]
+
+**Accomplishments (DRAFT - needs refinement):**
+- Identify 2-3 potential disciples to invest in
+- Co-facilitate group sessions regularly
+- Share faith story with non-believer
+- Complete 6-Month Leader Health Check-in
+
+**Character/Skills Development:**
+- Facilitator skills (asking good questions, guiding discussion)
+- Pastoral care (listening, praying for others, following up)
+- Spiritual authority (teaching with confidence)
+- Humility (receiving feedback from lead leader)
+
+**Gateway to Milestone 5:**
+- All checkpoints demonstrated
+- Health check-in shows spiritual/emotional health
+- Has 2-3 committed disciples ready to start a group
+- Leader approves readiness
+
+**OPEN QUESTIONS:**
+- What exactly is the 6-Month Leader Health Check-in? Same as leader_health_checkins table?
+- Is this check-in for the disciple or for the DNA Leader?
+
+---
+
+### Milestone 5: Leading (Active Co-Leader)
+
+**Purpose:** Co-lead full DNA group cycle
+
+**Checkpoints:**
+- ☐ Co-leading DNA group (Week 1)
+- ☐ Co-leading DNA group (Week 2)
+- ☐ Co-leading DNA group (Week 3)
+- ☐ Co-leading DNA group (Week 4)
+- ☐ Co-leading DNA group (Week 5)
+- ☐ Co-leading DNA group (Week 6)
+- ☐ Co-leading DNA group (Week 7)
+- ☐ Co-leading DNA group (Week 8)
+- ☐ Shepherding 2-3 disciples personally
+- ☐ Complete second full cycle as lead DNA leader
+- [+ Add Custom Checkpoint]
+
+**Accomplishments:**
+- Co-facilitate full DNA group cycle (8 weeks)
+- Lead prayer/discussion regularly
+- Shepherd 2-3 disciples personally
+- Successfully complete second cycle as lead DNA leader
+
+**Character/Skills Development:**
+- Facilitator skills (asking good questions, guiding discussion)
+- Pastoral care (listening, praying for others, following up)
+- Spiritual authority (teaching with confidence)
+- Multiplication mindset (raising up next generation)
+
+**Gateway to "Multiplied" Status:**
+- Successfully co-led full 8-week cycle
+- Ready to lead own group independently
+- **Status auto-updates to "Multiplied"**
+- Disciple now becomes a **DNA Leader** in the system
+
+**OPEN QUESTIONS:**
+- Does the disciple profile stay in the original group as "Alumni"?
+- Or do they disappear from the disciple list entirely?
+- Should there be a separate "Alumni" tab in the group view?
+
+---
+
+### Disciple Status Values
+
+- **Active** - Currently in the discipleship journey
+- **Multiplied** - Now leading their own group (auto-set when Milestone 5 complete)
+- **Dropped Out** - Left the group
+
+*(Removed: "Completed" - redundant with "Multiplied")*
+
+---
+
+### UI Design Principles
+
+**Single Fluid "Discipleship Journey" Accordion:**
+- All milestones displayed in one expandable view (similar to Church DNA Journey)
+- Each milestone expands to show checkpoints
+- Checkpoints can be checked off by leader
+- Each checkpoint has [+ Add Note] button
+- Leader Notes + Prayer Requests combined into single chronological log with date stamps
+- Answered prayers marked inline: "✅ ANSWERED [date]"
+- Assessment sending directly in Milestone 1 checkpoint
+- Gateway approval button appears when all checkpoints complete
+- Custom checkpoints can be added to any milestone
+
+**NO Separate "Quick Actions" Box:**
+- All actions integrated inline with relevant milestones/checkpoints
+- Keeps UI streamlined and focused on the journey
+
+**Assessment Comparison:**
+- Downloadable PDF (side-by-side Week 1 vs Week 8)
+- Shows actual answers, not just scores
+- Highlights growth areas
+- Can be shared with disciple or added to notes
+- Interactive comparison view deferred (focus on PDF first)
+
+---
+
+### Database Schema Additions Needed
+
+**New Tables:**
+```sql
+-- Disciple milestones (like church phases, but for individuals)
+CREATE TABLE disciple_milestones_tracking (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  disciple_id UUID REFERENCES disciples(id) ON DELETE CASCADE,
+  milestone_number INT NOT NULL, -- 1-5
+  status TEXT DEFAULT 'locked', -- 'locked', 'current', 'completed'
+  started_at TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Checkpoints within milestones (flexible, not hardcoded)
+CREATE TABLE disciple_checkpoints (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  disciple_id UUID REFERENCES disciples(id) ON DELETE CASCADE,
+  milestone_number INT NOT NULL,
+  checkpoint_type TEXT NOT NULL, -- 'assessment', 'attendance', 'custom', etc.
+  title TEXT NOT NULL,
+  description TEXT,
+  completed BOOLEAN DEFAULT FALSE,
+  completed_at TIMESTAMPTZ,
+  metadata JSONB, -- Store flexible data (assessment_id, note_id, etc.)
+  created_at TIMESTAMPTZ DEFAULT NOW()
+);
+
+-- Assessment tracking (links to life_assessments table)
+CREATE TABLE assessment_sends (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  disciple_id UUID REFERENCES disciples(id) ON DELETE CASCADE,
+  assessment_type TEXT NOT NULL, -- 'week_1', 'week_8', 'health_checkin'
+  sent_at TIMESTAMPTZ DEFAULT NOW(),
+  opened_at TIMESTAMPTZ,
+  completed_at TIMESTAMPTZ,
+  token TEXT UNIQUE NOT NULL,
+  created_by UUID REFERENCES dna_leaders(id)
+);
+
+-- Update existing tables
+ALTER TABLE leader_notes
+  ADD COLUMN milestone_number INT,
+  ADD COLUMN checkpoint_id UUID REFERENCES disciple_checkpoints(id);
+
+ALTER TABLE prayer_requests
+  ADD COLUMN milestone_number INT,
+  ADD COLUMN checkpoint_id UUID REFERENCES disciple_checkpoints(id);
+
+ALTER TABLE disciples
+  ADD COLUMN status TEXT DEFAULT 'active', -- 'active', 'multiplied', 'dropped_out'
+  ADD COLUMN current_milestone INT DEFAULT 1;
+```
+
+**NOTE:** Schema changes on hold until design finalized.
+
+---
+
+### Open Questions & Decisions Needed
+
+**Critical Design Questions:**
+1. **Week 1-8 Tool Names:** What are the actual curriculum topics for each week in Milestone 1?
+2. **Mission Trip Placement:** Which milestone should require Mission Trip? (M2, M3, or M4?)
+3. **Gateway Mechanics:** Should milestones auto-unlock when checkpoints complete, or require manual leader approval, or both?
+4. **Alumni Tracking:** When someone reaches Milestone 5 (Multiplied), do they:
+   - Disappear from original group's disciple list?
+   - Stay visible but marked "Multiplied - Now Leading"?
+   - Move to a separate "Alumni" tab in the group view?
+5. **Custom Checkpoints UX:** Should these be:
+   - Free-form text entry?
+   - Pre-populated templates to choose from?
+   - Both?
+6. **Life Assessment Structure:** Need complete 42-question breakdown before building comparison feature
+
+**Co-Leader Health Check-ins:**
+- DNA Leaders (co-leading groups) complete 6-month health check-ins
+- Visible to: Their co-leader (mutual transparency) + Church leaders (oversight dashboard)
+- NOT for disciples, only for DNA Leaders
+- Already exists in `leader_health_checkins` table (migration 019)
+- Question: Should this integrate into disciple profile when disciple becomes leader?
+
+**Frequency of Check-ins:**
+- UI should allow adding checkpoints anytime (flexible)
+- No need to suggest specific schedule (monthly, bi-weekly)
+- Leaders manage pacing based on disciple readiness
+
+---
+
+### Next Steps (Design Phase Only)
+
+**DO NOT BUILD YET - Design first:**
+
+1. **Finalize Milestone 2-4 Checkpoints** (use DNA Launch Guide as base, refine with user input)
+2. **Define Week 1-8 Curriculum Topics** (needed for Milestone 1 checkpoint labels)
+3. **Complete Life Assessment Structure** (42 questions, format, scoring) - foundational to everything
+4. **Design Assessment Comparison PDF** (what to show, how to calculate growth)
+5. **Finalize Gateway Mechanics** (auto vs manual phase transitions)
+6. **Design Alumni/Multiplied Tracking** (how to view disciples who became leaders)
+
+**THEN:** Build database schema, API routes, UI components.
 
 ---
 
