@@ -29,6 +29,8 @@ Files are numbered in the order they should be run:
 | 018 | `kickoff-notes.sql` | Kick-off notes milestone |
 | 019 | `dna-groups.sql` | DNA Groups (Roadmap 2) tables |
 | 020 | `calendar-sync-improvements.sql` | Calendar sync: aliases, call types, duplicate prevention |
+| 021 | `spiritual-gifts-assessment.sql` | Spiritual Gifts Assessment system |
+| 022 | `dna-training-system.sql` | DNA Training platform (Flow Assessment, Manual, progressive unlocking) |
 
 ## Running Migrations
 
