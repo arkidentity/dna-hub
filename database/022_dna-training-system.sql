@@ -288,17 +288,70 @@ CREATE POLICY "Users can update own unlocks"
   USING (auth.uid() = user_id);
 
 -- =====================================================
+-- TABLE: user_roles
+-- =====================================================
+-- Tracks user roles for access control (public SaaS model)
+-- Roles: dna_trainee, dna_leader, church_leader, admin
+
+CREATE TABLE IF NOT EXISTS user_roles (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+
+  -- Role type
+  role TEXT NOT NULL,
+  -- Options: 'dna_trainee', 'dna_leader', 'church_leader', 'admin'
+
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+
+  -- One role per user (but users can have multiple roles)
+  UNIQUE(user_id, role)
+);
+
+-- Indexes
+CREATE INDEX idx_user_roles_user_id ON user_roles(user_id);
+CREATE INDEX idx_user_roles_role ON user_roles(role);
+
+-- RLS Policies
+ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can view own roles"
+  ON user_roles FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can view all roles"
+  ON user_roles FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      WHERE ur.user_id = auth.uid()
+      AND ur.role = 'admin'
+    )
+  );
+
+CREATE POLICY "System can insert roles"
+  ON user_roles FOR INSERT
+  WITH CHECK (true); -- Service role only
+
+COMMENT ON TABLE user_roles IS 'User role assignments for access control';
+COMMENT ON COLUMN user_roles.role IS 'Role: dna_trainee, dna_leader, church_leader, admin';
+
+-- =====================================================
 -- FUNCTIONS
 -- =====================================================
 
--- Function: Initialize DNA Leader Journey for new user
-CREATE OR REPLACE FUNCTION initialize_dna_journey()
+-- Function: Initialize training user on signup (public signup flow)
+CREATE OR REPLACE FUNCTION initialize_training_user()
 RETURNS TRIGGER AS $$
 BEGIN
+  -- Assign dna_trainee role
+  INSERT INTO user_roles (user_id, role)
+  VALUES (NEW.id, 'dna_trainee')
+  ON CONFLICT (user_id, role) DO NOTHING;
+
   -- Create journey record
   INSERT INTO dna_leader_journeys (user_id, current_stage, milestones)
   VALUES (
-    NEW.user_id,
+    NEW.id,
     'onboarding',
     '{
       "flow_assessment_complete": {"completed": false},
@@ -309,14 +362,14 @@ BEGIN
   )
   ON CONFLICT (user_id) DO NOTHING;
 
-  -- Unlock Flow Assessment by default (first step)
+  -- Unlock Flow Assessment by default
   INSERT INTO dna_content_unlocks (user_id, content_type, unlocked, unlocked_at, unlock_trigger)
   VALUES (
-    NEW.user_id,
+    NEW.id,
     'flow_assessment',
     TRUE,
     NOW(),
-    'initial_onboarding'
+    'initial_signup'
   )
   ON CONFLICT (user_id, content_type) DO NOTHING;
 
@@ -324,11 +377,40 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
--- Trigger: Auto-initialize journey when DNA leader is created
-CREATE TRIGGER init_dna_journey_on_leader_create
-  AFTER INSERT ON dna_leaders
+-- Trigger: Auto-initialize training user on signup
+CREATE TRIGGER init_training_user_on_signup
+  AFTER INSERT ON auth.users
   FOR EACH ROW
-  EXECUTE FUNCTION initialize_dna_journey();
+  EXECUTE FUNCTION initialize_training_user();
+
+-- Function: Promote user to DNA Leader when they create first group
+CREATE OR REPLACE FUNCTION promote_to_dna_leader()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Add dna_leader role (in addition to dna_trainee)
+  INSERT INTO user_roles (user_id, role)
+  VALUES (NEW.leader_id, 'dna_leader')
+  ON CONFLICT (user_id, role) DO NOTHING;
+
+  -- Update milestone in journey
+  UPDATE dna_leader_journeys
+  SET milestones = jsonb_set(
+        milestones,
+        '{first_group_created}',
+        '{"completed": true, "completed_at": "' || NOW()::text || '"}'::jsonb
+      ),
+      updated_at = NOW()
+  WHERE user_id = NEW.leader_id;
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger: Auto-promote to DNA Leader when first group is created
+CREATE TRIGGER promote_on_first_group_create
+  AFTER INSERT ON dna_groups
+  FOR EACH ROW
+  EXECUTE FUNCTION promote_to_dna_leader();
 
 -- Function: Update journey stage based on milestones
 CREATE OR REPLACE FUNCTION update_dna_journey_stage()
