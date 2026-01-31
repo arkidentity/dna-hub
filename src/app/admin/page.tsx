@@ -6,7 +6,6 @@ import Link from 'next/link';
 import {
   Building2,
   Loader2,
-  LogOut,
   RefreshCw,
   AlertCircle,
   Settings,
@@ -90,11 +89,6 @@ export default function AdminPage() {
     setRefreshing(false);
   };
 
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/login');
-  };
-
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -127,8 +121,8 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="bg-navy text-white py-4 px-6">
+      {/* Page Title */}
+      <div className="bg-navy text-white py-4 px-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div>
             <p className="text-gold font-medium text-sm tracking-wide">DNA ADMIN</p>
@@ -158,16 +152,9 @@ export default function AdminPage() {
             >
               <RefreshCw className={`w-5 h-5 ${refreshing ? 'animate-spin' : ''}`} />
             </button>
-            <button
-              onClick={handleLogout}
-              className="text-gray-300 hover:text-white transition-colors"
-              title="Logout"
-            >
-              <LogOut className="w-5 h-5" />
-            </button>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Tab Navigation */}
       <div className="bg-white border-b border-card-border">

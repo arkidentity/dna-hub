@@ -50,7 +50,7 @@ function DNALeaderDashboardContent() {
         const response = await fetch('/api/groups/dashboard');
 
         if (response.status === 401) {
-          router.push('/login?type=dna-leader');
+          router.push('/login');
           return;
         }
 
@@ -130,8 +130,8 @@ function DNALeaderDashboardContent() {
 
   return (
     <div className="min-h-screen bg-cream">
-      {/* Header */}
-      <header className="bg-navy text-white">
+      {/* Page Title */}
+      <div className="bg-navy text-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
@@ -143,26 +143,15 @@ function DNALeaderDashboardContent() {
                 )}
               </p>
             </div>
-            <div className="flex items-center gap-4">
-              <Link
-                href="/groups/new"
-                className="bg-gold hover:bg-gold/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-              >
-                + New Group
-              </Link>
-              <button
-                onClick={async () => {
-                  await fetch('/api/auth/logout-dna-leader', { method: 'POST' });
-                  router.push('/login');
-                }}
-                className="text-white/70 hover:text-white text-sm"
-              >
-                Log out
-              </button>
-            </div>
+            <Link
+              href="/groups/new"
+              className="bg-gold hover:bg-gold/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+            >
+              + New Group
+            </Link>
           </div>
         </div>
-      </header>
+      </div>
 
       {/* Welcome banner (first time) */}
       {showWelcome && (

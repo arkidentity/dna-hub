@@ -48,7 +48,7 @@ export default function TrainingDashboard() {
         const response = await fetch('/api/training/dashboard');
 
         if (response.status === 401) {
-          router.push('/training/login');
+          router.push('/login');
           return;
         }
 
@@ -86,7 +86,7 @@ export default function TrainingDashboard() {
         <div className="error-container">
           <h1>Oops!</h1>
           <p>{error || 'Something went wrong loading your dashboard.'}</p>
-          <Link href="/training/login" className="btn-primary">
+          <Link href="/login" className="btn-primary">
             Log In Again
           </Link>
         </div>
@@ -100,25 +100,12 @@ export default function TrainingDashboard() {
 
   return (
     <div className="training-page">
-      {/* Header */}
-      <header className="dashboard-header">
+      {/* Page Title */}
+      <div className="dashboard-header">
         <div className="header-content">
-          <div className="header-left">
-            <h1>DNA Training</h1>
-          </div>
-          <div className="header-right">
-            <button
-              onClick={async () => {
-                await fetch('/api/training/logout', { method: 'POST' });
-                router.push('/training/login');
-              }}
-              className="logout-btn"
-            >
-              Log Out
-            </button>
-          </div>
+          <h1>DNA Training</h1>
         </div>
-      </header>
+      </div>
 
       {/* Main Content */}
       <main className="dashboard-main">
@@ -350,45 +337,23 @@ const styles = `
     text-decoration: none;
   }
 
-  /* Header */
+  /* Page Title Header */
   .dashboard-header {
     background: #242D3D;
     border-bottom: 1px solid #3D4A5C;
     padding: 16px 24px;
-    position: sticky;
-    top: 0;
-    z-index: 100;
   }
 
   .header-content {
     max-width: 1200px;
     margin: 0 auto;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
   }
 
-  .header-left h1 {
+  .header-content h1 {
     color: #D4A853;
     font-size: 20px;
     font-weight: 700;
     margin: 0;
-  }
-
-  .logout-btn {
-    background: transparent;
-    border: 1px solid #3D4A5C;
-    color: #A0AEC0;
-    padding: 8px 16px;
-    border-radius: 6px;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.2s;
-  }
-
-  .logout-btn:hover {
-    border-color: #D4A853;
-    color: #D4A853;
   }
 
   /* Main */

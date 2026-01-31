@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import {
   Loader2,
   LayoutDashboard,
@@ -12,7 +13,6 @@ import {
 } from 'lucide-react';
 import { PhaseWithMilestones, MilestoneWithProgress, Church, ChurchLeader, FunnelDocument, ScheduledCall, GlobalResource } from '@/lib/types';
 import {
-  DashboardHeader,
   OverviewTab,
   JourneyTab,
   GroupsTab,
@@ -293,11 +293,6 @@ export default function DashboardPage() {
     }
   };
 
-  const handleLogout = async () => {
-    await fetch('/api/auth/logout', { method: 'POST' });
-    router.push('/login');
-  };
-
   const exportCalendar = (phaseNumber?: number) => {
     const url = phaseNumber
       ? `/api/calendar?phase=${phaseNumber}`
@@ -339,13 +334,24 @@ export default function DashboardPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <DashboardHeader
-        church={church}
-        leader={leader}
-        isAdmin={isAdmin}
-        onLogout={handleLogout}
-      />
+      {/* Page Title with Church Info */}
+      <div className="bg-navy text-white py-4 px-6">
+        <div className="max-w-5xl mx-auto flex items-center gap-4">
+          {church.logo_url && (
+            <Image
+              src={church.logo_url}
+              alt={church.name}
+              width={40}
+              height={40}
+              className="rounded-full"
+            />
+          )}
+          <div>
+            <p className="text-gold font-medium text-sm tracking-wide">DNA ROADMAP</p>
+            <p className="font-semibold">{church.name}</p>
+          </div>
+        </div>
+      </div>
 
       {/* Tab Navigation */}
       <div className="bg-white border-b border-card-border">
