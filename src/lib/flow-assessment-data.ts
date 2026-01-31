@@ -320,10 +320,10 @@ export const roadblocks: Roadblock[] = [
 ];
 
 export const assessmentIntro = {
-  title: 'DNA Flow Assessment',
+  title: 'The Flow Assessment',
   subtitle: 'Identify Your Internal Roadblocks to Multiplication',
   description: 'This assessment helps you identify the internal obstacles that might be blocking the flow of discipleship in your life. We call them "roadblocks" because they dam up the river of God\'s work through you.',
-  timeEstimate: '30-45 minutes',
+  timeEstimate: '25-30 minutes',
   instructions: [
     'Find a quiet place where you can be honest with yourself and God.',
     'Rate each roadblock on a scale of 1-5 based on how much it impacts you.',

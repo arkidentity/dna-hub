@@ -247,11 +247,6 @@ export default function FlowAssessmentPage() {
         {/* INTRO VIEW */}
         {view === 'intro' && (
           <div className="assessment-intro">
-            <div className="intro-icon">
-              <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-              </svg>
-            </div>
             <h1>{assessmentIntro.title}</h1>
             <p className="intro-subtitle">{assessmentIntro.subtitle}</p>
 
@@ -699,17 +694,11 @@ const styles = `
     text-align: center;
   }
 
-  .intro-icon {
-    width: 80px;
-    height: 80px;
-    margin: 0 auto 24px;
-    color: #D4A853;
-  }
-
   .assessment-intro h1 {
     font-size: 28px;
     font-weight: 700;
     margin: 0 0 8px 0;
+    color: #FFFFFF;
   }
 
   .intro-subtitle {
@@ -871,6 +860,7 @@ const styles = `
     font-size: 24px;
     font-weight: 700;
     margin: 0;
+    color: #FFFFFF;
   }
 
   /* Sections */
@@ -1234,6 +1224,7 @@ const styles = `
     font-weight: 700;
     text-align: center;
     margin: 0 0 24px 0;
+    color: #FFFFFF;
   }
 
   .chart-section h3 {
@@ -1514,6 +1505,7 @@ const styles = `
     font-size: 28px;
     font-weight: 700;
     margin: 0 0 12px 0;
+    color: #FFFFFF;
   }
 
   .completion-view > p {
