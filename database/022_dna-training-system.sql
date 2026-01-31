@@ -193,6 +193,33 @@ CREATE INDEX idx_dna_content_unlocks_user_id ON dna_content_unlocks(user_id);
 CREATE INDEX idx_dna_content_unlocks_unlocked ON dna_content_unlocks(unlocked);
 
 -- =====================================================
+-- TABLE: user_roles
+-- =====================================================
+-- Tracks user roles for access control (public SaaS model)
+-- Roles: dna_trainee, dna_leader, church_leader, admin
+
+CREATE TABLE IF NOT EXISTS user_roles (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+
+  -- Role type
+  role TEXT NOT NULL,
+  -- Options: 'dna_trainee', 'dna_leader', 'church_leader', 'admin'
+
+  created_at TIMESTAMPTZ DEFAULT NOW(),
+
+  -- One role per user (but users can have multiple roles)
+  UNIQUE(user_id, role)
+);
+
+-- Indexes
+CREATE INDEX idx_user_roles_user_id ON user_roles(user_id);
+CREATE INDEX idx_user_roles_role ON user_roles(role);
+
+COMMENT ON TABLE user_roles IS 'User role assignments for access control';
+COMMENT ON COLUMN user_roles.role IS 'Role: dna_trainee, dna_leader, church_leader, admin';
+
+-- =====================================================
 -- RLS POLICIES
 -- =====================================================
 
@@ -201,6 +228,26 @@ ALTER TABLE dna_leader_journeys ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dna_training_modules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dna_flow_assessments ENABLE ROW LEVEL SECURITY;
 ALTER TABLE dna_content_unlocks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
+
+-- user_roles policies (must come first as other policies reference it)
+CREATE POLICY "Users can view own roles"
+  ON user_roles FOR SELECT
+  USING (auth.uid() = user_id);
+
+CREATE POLICY "Admins can view all roles"
+  ON user_roles FOR SELECT
+  USING (
+    EXISTS (
+      SELECT 1 FROM user_roles ur
+      WHERE ur.user_id = auth.uid()
+      AND ur.role = 'admin'
+    )
+  );
+
+CREATE POLICY "System can insert roles"
+  ON user_roles FOR INSERT
+  WITH CHECK (true); -- Service role only
 
 -- dna_leader_journeys policies
 CREATE POLICY "Users can view own journey"
@@ -286,54 +333,6 @@ CREATE POLICY "Users can insert own unlocks"
 CREATE POLICY "Users can update own unlocks"
   ON dna_content_unlocks FOR UPDATE
   USING (auth.uid() = user_id);
-
--- =====================================================
--- TABLE: user_roles
--- =====================================================
--- Tracks user roles for access control (public SaaS model)
--- Roles: dna_trainee, dna_leader, church_leader, admin
-
-CREATE TABLE IF NOT EXISTS user_roles (
-  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-  user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
-
-  -- Role type
-  role TEXT NOT NULL,
-  -- Options: 'dna_trainee', 'dna_leader', 'church_leader', 'admin'
-
-  created_at TIMESTAMPTZ DEFAULT NOW(),
-
-  -- One role per user (but users can have multiple roles)
-  UNIQUE(user_id, role)
-);
-
--- Indexes
-CREATE INDEX idx_user_roles_user_id ON user_roles(user_id);
-CREATE INDEX idx_user_roles_role ON user_roles(role);
-
--- RLS Policies
-ALTER TABLE user_roles ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can view own roles"
-  ON user_roles FOR SELECT
-  USING (auth.uid() = user_id);
-
-CREATE POLICY "Admins can view all roles"
-  ON user_roles FOR SELECT
-  USING (
-    EXISTS (
-      SELECT 1 FROM user_roles ur
-      WHERE ur.user_id = auth.uid()
-      AND ur.role = 'admin'
-    )
-  );
-
-CREATE POLICY "System can insert roles"
-  ON user_roles FOR INSERT
-  WITH CHECK (true); -- Service role only
-
-COMMENT ON TABLE user_roles IS 'User role assignments for access control';
-COMMENT ON COLUMN user_roles.role IS 'Role: dna_trainee, dna_leader, church_leader, admin';
 
 -- =====================================================
 -- FUNCTIONS
