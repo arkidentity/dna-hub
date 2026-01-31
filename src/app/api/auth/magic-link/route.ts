@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
 
       if (churchLeader.church?.status && validStatuses.includes(churchLeader.church.status)) {
         // Create magic link token for church leader
-        const token = await createMagicLinkToken(churchLeader.id);
+        const token = await createMagicLinkToken(churchLeader.id, normalizedEmail);
 
         if (!token) {
           return NextResponse.json(

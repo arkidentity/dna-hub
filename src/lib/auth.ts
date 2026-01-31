@@ -93,13 +93,28 @@ export function generateToken(): string {
 }
 
 // Create a magic link token for a leader
-export async function createMagicLinkToken(leaderId: string): Promise<string | null> {
+export async function createMagicLinkToken(leaderId: string, email?: string): Promise<string | null> {
   const token = generateToken();
   const expiresAt = new Date();
   expiresAt.setDate(expiresAt.getDate() + 7); // 7-day expiry
 
+  // If email not provided, look it up from leader_id
+  let leaderEmail = email;
+  if (!leaderEmail) {
+    const { data: leader } = await supabaseAdmin
+      .from('church_leaders')
+      .select('email')
+      .eq('id', leaderId)
+      .single();
+
+    if (leader) {
+      leaderEmail = leader.email;
+    }
+  }
+
   const { error } = await supabaseAdmin.from('magic_link_tokens').insert({
     leader_id: leaderId,
+    email: leaderEmail,
     token,
     expires_at: expiresAt.toISOString(),
   });
