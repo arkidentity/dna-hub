@@ -1,14 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDNALeaderSession, getSupabaseAdmin } from '@/lib/auth';
+import { getSupabaseAdmin } from '@/lib/auth';
+import { getUnifiedSession, hasRole } from '@/lib/unified-auth';
 
 // POST /api/groups
 // Create a new DNA group
 export async function POST(request: NextRequest) {
   try {
-    const session = await getDNALeaderSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    // Check if user is a DNA leader
+    if (!hasRole(session, 'dna_leader')) {
+      return NextResponse.json(
+        { error: 'Forbidden - DNA leader access required' },
+        { status: 403 }
+      );
     }
 
     const body = await request.json();
@@ -31,13 +40,27 @@ export async function POST(request: NextRequest) {
 
     const supabase = getSupabaseAdmin();
 
+    // Get DNA leader record
+    const { data: dnaLeader } = await supabase
+      .from('dna_leaders')
+      .select('id, church_id')
+      .eq('email', session.email)
+      .single();
+
+    if (!dnaLeader) {
+      return NextResponse.json(
+        { error: 'DNA leader not found' },
+        { status: 404 }
+      );
+    }
+
     // Create the group
     const { data: newGroup, error: insertError } = await supabase
       .from('dna_groups')
       .insert({
         group_name: group_name.trim(),
-        leader_id: session.leader.id,
-        church_id: session.leader.church_id || null,
+        leader_id: dnaLeader.id,
+        church_id: dnaLeader.church_id || null,
         start_date,
         multiplication_target_date: multiplication_target_date || null,
         current_phase: 'pre-launch',
@@ -72,14 +95,37 @@ export async function POST(request: NextRequest) {
 // List all groups for the current DNA leader
 export async function GET() {
   try {
-    const session = await getDNALeaderSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Check if user is a DNA leader
+    if (!hasRole(session, 'dna_leader')) {
+      return NextResponse.json(
+        { error: 'Forbidden - DNA leader access required' },
+        { status: 403 }
+      );
+    }
+
     const supabase = getSupabaseAdmin();
-    const leaderId = session.leader.id;
+
+    // Get DNA leader record
+    const { data: dnaLeader } = await supabase
+      .from('dna_leaders')
+      .select('id')
+      .eq('email', session.email)
+      .single();
+
+    if (!dnaLeader) {
+      return NextResponse.json(
+        { error: 'DNA leader not found' },
+        { status: 404 }
+      );
+    }
+
+    const leaderId = dnaLeader.id;
 
     // Get all groups where this person is leader or co-leader
     const { data: groups, error } = await supabase

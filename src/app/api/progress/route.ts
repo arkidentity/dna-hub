@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, supabaseAdmin, isAdmin } from '@/lib/auth';
+import { supabaseAdmin } from '@/lib/auth';
+import { getUnifiedSession, isAdmin, hasRole } from '@/lib/unified-auth';
 import { sendMilestoneNotification, sendPhaseCompletionNotification } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json(
@@ -13,9 +14,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Check if user is a church leader or admin
+    if (!hasRole(session, 'church_leader') && !isAdmin(session)) {
+      return NextResponse.json(
+        { error: 'Forbidden - Church leader access required' },
+        { status: 403 }
+      );
+    }
+
     const { milestoneId, completed, notes, targetDate } = await request.json();
-    const { church, leader } = session;
-    const userIsAdmin = isAdmin(leader.email);
+    const userIsAdmin = isAdmin(session);
+
+    // Get church_leader record to find church_id
+    const { data: churchLeader, error: leaderError } = await supabaseAdmin
+      .from('church_leaders')
+      .select(`
+        *,
+        church:churches(*)
+      `)
+      .eq('email', session.email)
+      .single();
+
+    if (leaderError || !churchLeader) {
+      return NextResponse.json(
+        { error: 'Church leader not found' },
+        { status: 404 }
+      );
+    }
+
+    const church = churchLeader.church;
+    const leader = churchLeader;
 
     // Only admins can update notes and target dates
     if ((notes !== undefined || targetDate !== undefined) && !userIsAdmin) {

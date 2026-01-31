@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getSession, supabaseAdmin, isAdmin } from '@/lib/auth';
+import { supabaseAdmin } from '@/lib/auth';
+import { getUnifiedSession, isAdmin, hasRole } from '@/lib/unified-auth';
 import { PhaseWithMilestones, MilestoneWithProgress } from '@/lib/types';
 
 export async function GET() {
   try {
-    const session = await getSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json(
@@ -13,10 +14,36 @@ export async function GET() {
       );
     }
 
-    const { church, leader } = session;
+    // Check if user is a church leader
+    if (!hasRole(session, 'church_leader') && !isAdmin(session)) {
+      return NextResponse.json(
+        { error: 'Forbidden - Church leader access required' },
+        { status: 403 }
+      );
+    }
+
+    // Get church_leader record to find church_id
+    const { data: churchLeader, error: leaderError } = await supabaseAdmin
+      .from('church_leaders')
+      .select(`
+        *,
+        church:churches(*)
+      `)
+      .eq('email', session.email)
+      .single();
+
+    if (leaderError || !churchLeader) {
+      return NextResponse.json(
+        { error: 'Church leader not found' },
+        { status: 404 }
+      );
+    }
+
+    const church = churchLeader.church;
+    const leader = churchLeader;
 
     // If church is not active, redirect to portal (unless admin)
-    const adminUser = isAdmin(leader.email);
+    const adminUser = isAdmin(session);
     if (!adminUser && church.status !== 'active' && church.status !== 'completed') {
       return NextResponse.json(
         { redirect: '/portal' },
@@ -192,7 +219,7 @@ export async function GET() {
       documents: documents || [],
       calls: calls || [],
       globalResources: globalResources || [],
-      isAdmin: isAdmin(leader.email),
+      isAdmin: adminUser,
     });
   } catch (error) {
     console.error('Dashboard fetch error:', error);
