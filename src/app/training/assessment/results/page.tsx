@@ -35,7 +35,7 @@ export default function AssessmentResultsPage() {
         const response = await fetch('/api/training/assessment/results');
 
         if (response.status === 401) {
-          router.push('/training/login');
+          router.push('/login');
           return;
         }
 

@@ -78,7 +78,7 @@ function GroupDetailContent() {
         const response = await fetch(`/api/groups/${groupId}`);
 
         if (response.status === 401) {
-          router.push('/login?type=dna-leader');
+          router.push('/login');
           return;
         }
 

@@ -56,7 +56,7 @@ export default function SignupPage() {
               Click the link in the email to access your training dashboard and begin the Flow Assessment.
             </p>
             <div className="success-note">
-              <p>Didn&apos;t receive it? Check your spam folder or <Link href="/training/login">request a new link</Link>.</p>
+              <p>Didn&apos;t receive it? Check your spam folder or <Link href="/login">request a new link</Link>.</p>
             </div>
           </div>
         </div>
@@ -212,7 +212,7 @@ export default function SignupPage() {
             <span>Already have an account?</span>
           </div>
 
-          <Link href="/training/login" className="login-link">
+          <Link href="/login" className="login-link">
             Log In
           </Link>
         </div>

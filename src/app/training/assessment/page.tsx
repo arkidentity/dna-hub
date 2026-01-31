@@ -42,7 +42,7 @@ export default function FlowAssessmentPage() {
         const response = await fetch('/api/training/assessment');
 
         if (response.status === 401) {
-          router.push('/training/login');
+          router.push('/login');
           return;
         }
 

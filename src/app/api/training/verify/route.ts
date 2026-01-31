@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
 
     if (!token) {
       // Redirect to login with error
-      return NextResponse.redirect(new URL('/training/login?error=missing', request.url));
+      return NextResponse.redirect(new URL('/login?error=missing', request.url));
     }
 
     // Verify the magic link token
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
 
     if (!result.success || !result.user) {
       // Redirect to login with error
-      return NextResponse.redirect(new URL('/training/login?error=invalid', request.url));
+      return NextResponse.redirect(new URL('/login?error=invalid', request.url));
     }
 
     // Session is created inside verifyMagicLink
@@ -25,6 +25,6 @@ export async function GET(request: NextRequest) {
 
   } catch (error) {
     console.error('[Training Verify] Error:', error);
-    return NextResponse.redirect(new URL('/training/login?error=unknown', request.url));
+    return NextResponse.redirect(new URL('/login?error=unknown', request.url));
   }
 }
