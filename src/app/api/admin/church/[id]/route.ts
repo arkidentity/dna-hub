@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, isAdmin, getSupabaseAdmin } from '@/lib/auth';
+import { getSupabaseAdmin } from '@/lib/auth';
+import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
 
 export async function GET(
   request: NextRequest,
@@ -7,13 +8,13 @@ export async function GET(
 ) {
   try {
     const { id: churchId } = await params;
-    const session = await getSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!isAdmin(session.leader.email)) {
+    if (!isAdmin(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 

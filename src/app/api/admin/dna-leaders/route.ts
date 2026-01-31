@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getSession, isAdmin } from '@/lib/auth';
+import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
 
 // GET: List all DNA leaders (admin only)
 export async function GET(request: NextRequest) {
-  const session = await getSession();
+  const session = await getUnifiedSession();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (!isAdmin(session.leader.email)) {
+  if (!isAdmin(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

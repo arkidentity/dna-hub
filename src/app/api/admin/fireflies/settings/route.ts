@@ -4,7 +4,7 @@
 // DELETE - Disconnect Fireflies
 
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, isAdmin } from '@/lib/auth';
+import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
 import {
   getFirefliesSettings,
   saveFirefliesApiKey,
@@ -18,8 +18,8 @@ import {
  */
 export async function GET() {
   try {
-    const session = await getSession();
-    if (!session || !isAdmin(session.leader.email)) {
+    const session = await getUnifiedSession();
+    if (!session || !isAdmin(session)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -59,8 +59,8 @@ export async function GET() {
  */
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
-    if (!session || !isAdmin(session.leader.email)) {
+    const session = await getUnifiedSession();
+    if (!session || !isAdmin(session)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     const result = await saveFirefliesApiKey(
-      session.leader.email,
+      session.email,
       api_key,
       webhook_secret
     );
@@ -106,12 +106,12 @@ export async function POST(request: NextRequest) {
  */
 export async function DELETE() {
   try {
-    const session = await getSession();
-    if (!session || !isAdmin(session.leader.email)) {
+    const session = await getUnifiedSession();
+    if (!session || !isAdmin(session)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const result = await disconnectFireflies(session.leader.email);
+    const result = await disconnectFireflies(session.email);
 
     if (!result.success) {
       return NextResponse.json(

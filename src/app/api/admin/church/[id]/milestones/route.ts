@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, isAdmin, getSupabaseAdmin } from '@/lib/auth';
+import { getSupabaseAdmin } from '@/lib/auth';
+import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
 import { logAdminAction, logMilestoneToggle } from '@/lib/audit';
 
 // POST: Create a custom milestone for this church
@@ -9,13 +10,13 @@ export async function POST(
 ) {
   try {
     const { id: churchId } = await params;
-    const session = await getSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!isAdmin(session.leader.email)) {
+    if (!isAdmin(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -86,7 +87,7 @@ export async function POST(
 
     // Log the milestone creation
     await logAdminAction(
-      session.leader.email,
+      session.email,
       'milestone_update',
       'milestone',
       milestone.id,
@@ -109,13 +110,13 @@ export async function DELETE(
 ) {
   try {
     const { id: churchId } = await params;
-    const session = await getSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!isAdmin(session.leader.email)) {
+    if (!isAdmin(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -184,13 +185,13 @@ export async function PATCH(
 ) {
   try {
     const { id: churchId } = await params;
-    const session = await getSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!isAdmin(session.leader.email)) {
+    if (!isAdmin(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -266,14 +267,14 @@ export async function PATCH(
     // Log the milestone update to audit trail
     if (typeof completed === 'boolean') {
       await logMilestoneToggle(
-        session.leader.email,
+        session.email,
         milestone_id,
         churchId,
         completed
       );
     } else if (target_date !== undefined || notes !== undefined) {
       await logAdminAction(
-        session.leader.email,
+        session.email,
         target_date !== undefined ? 'date_update' : 'notes_update',
         'milestone',
         milestone_id,

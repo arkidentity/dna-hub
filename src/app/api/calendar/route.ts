@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, supabaseAdmin } from '@/lib/auth';
+import { supabaseAdmin } from '@/lib/auth';
+import { getUnifiedSession } from '@/lib/unified-auth';
 
 // Generate ICS file content
 function generateICS(events: Array<{
@@ -47,7 +48,7 @@ function escapeICS(text: string): string {
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json(
@@ -56,9 +57,25 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const { church } = session;
+    const churchId = session.churchId;
+    if (!churchId) {
+      return NextResponse.json(
+        { error: 'No church associated with session' },
+        { status: 400 }
+      );
+    }
+
     const { searchParams } = new URL(request.url);
     const phaseNumber = searchParams.get('phase');
+
+    // Get church name
+    const { data: church } = await supabaseAdmin
+      .from('churches')
+      .select('name')
+      .eq('id', churchId)
+      .single();
+
+    const churchName = church?.name || 'Unknown Church';
 
     // Build query for milestones with target dates
     let query = supabaseAdmin
@@ -72,7 +89,7 @@ export async function GET(request: NextRequest) {
           phase:phases(phase_number, name)
         )
       `)
-      .eq('church_id', church.id)
+      .eq('church_id', churchId)
       .not('target_date', 'is', null);
 
     const { data: progressData, error: progressError } = await query;
@@ -109,7 +126,7 @@ export async function GET(request: NextRequest) {
         title: `DNA: ${milestone.title}`,
         description: milestone.description || '',
         date: p.target_date as string,
-        churchName: church.name,
+        churchName: churchName,
       };
     });
 

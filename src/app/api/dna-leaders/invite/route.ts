@@ -1,18 +1,18 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, getSupabaseAdmin, generateToken, checkAdminStatus } from '@/lib/auth';
+import { getSupabaseAdmin, generateToken } from '@/lib/auth';
+import { getUnifiedSession, isAdmin as checkIsAdmin } from '@/lib/unified-auth';
 import { sendDNALeaderInvitationEmail } from '@/lib/email';
 
 // POST /api/dna-leaders/invite
 // Invite a new DNA leader (church admin or super admin only)
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getUnifiedSession();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { isAdmin, role } = await checkAdminStatus(session.leader.email);
-    const isSuperAdmin = isAdmin && (role === 'super_admin' || role === 'admin');
+    const isSuperAdmin = checkIsAdmin(session);
     const isChurchAdmin = !isSuperAdmin; // Regular church leader
 
     const body = await request.json();
@@ -62,7 +62,8 @@ export async function POST(request: NextRequest) {
     // Determine church affiliation
     let finalChurchId: string | null = null;
     let churchName: string | null = null;
-    let inviterName = session.leader.name;
+    let inviterName = session.name;
+    let inviterId = session.userId || session.leaderId;
 
     if (isSuperAdmin) {
       // Super admin can invite to any church or as independent
@@ -86,8 +87,21 @@ export async function POST(request: NextRequest) {
       // If church_id is 'independent' or not provided, finalChurchId stays null
     } else {
       // Church admin can only invite to their own church
-      finalChurchId = session.church.id;
-      churchName = session.church.name;
+      if (!session.churchId) {
+        return NextResponse.json(
+          { error: 'Church leader must be associated with a church' },
+          { status: 400 }
+        );
+      }
+      finalChurchId = session.churchId;
+
+      // Get church name
+      const { data: church } = await supabase
+        .from('churches')
+        .select('name')
+        .eq('id', finalChurchId)
+        .single();
+      churchName = church?.name || null;
     }
 
     // Generate signup token
@@ -102,7 +116,7 @@ export async function POST(request: NextRequest) {
         email: normalizedEmail,
         name: name.trim(),
         church_id: finalChurchId,
-        invited_by: session.leader.id,
+        invited_by: inviterId,
         invited_by_type: isSuperAdmin ? 'super_admin' : 'church_admin',
         signup_token: signupToken,
         signup_token_expires_at: tokenExpiresAt.toISOString(),
@@ -160,13 +174,12 @@ export async function POST(request: NextRequest) {
 // List pending invitations (for admin view)
 export async function GET(request: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getUnifiedSession();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { isAdmin, role } = await checkAdminStatus(session.leader.email);
-    const isSuperAdmin = isAdmin && (role === 'super_admin' || role === 'admin');
+    const isSuperAdmin = checkIsAdmin(session);
 
     const supabase = getSupabaseAdmin();
 
@@ -186,8 +199,8 @@ export async function GET(request: NextRequest) {
       .order('invited_at', { ascending: false });
 
     // Church admins only see their church's invitations
-    if (!isSuperAdmin) {
-      query = query.eq('church_id', session.church.id);
+    if (!isSuperAdmin && session.churchId) {
+      query = query.eq('church_id', session.churchId);
     }
 
     const { data, error } = await query;

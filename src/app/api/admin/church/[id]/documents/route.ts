@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, isAdmin, getSupabaseAdmin } from '@/lib/auth';
+import { getSupabaseAdmin } from '@/lib/auth';
+import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
 import { logDocumentUpload } from '@/lib/audit';
 
 // GET - Get document version history
@@ -9,15 +10,15 @@ export async function GET(
 ) {
   try {
     const { id: churchId } = await params;
-    const session = await getSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Allow both admins and church leaders to view version history
-    const isAdminUser = await isAdmin(session.leader.email);
-    if (!isAdminUser && session.church?.id !== churchId) {
+    const isAdminUser = isAdmin(session);
+    if (!isAdminUser && session.churchId !== churchId) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -79,7 +80,7 @@ export async function POST(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!isAdmin(session.leader.email)) {
+    if (!isAdmin(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -139,7 +140,7 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!isAdmin(session.leader.email)) {
+    if (!isAdmin(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -203,7 +204,7 @@ export async function PUT(
         .from('funnel_documents')
         .update({
           file_url: fileUrl,
-          uploaded_by: session.leader.email,
+          uploaded_by: session.email,
           updated_at: new Date().toISOString(),
         })
         .eq('id', existing.id);
@@ -216,7 +217,7 @@ export async function PUT(
           church_id: churchId,
           document_type: documentType,
           file_url: fileUrl,
-          uploaded_by: session.leader.email,
+          uploaded_by: session.email,
           current_version: 1,
         })
         .select('id')
@@ -226,7 +227,7 @@ export async function PUT(
 
     // Log the document upload
     await logDocumentUpload(
-      session.leader.email,
+      session.email,
       documentId,
       churchId,
       documentType,

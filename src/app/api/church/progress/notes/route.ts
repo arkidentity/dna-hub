@@ -3,7 +3,7 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getSession } from '@/lib/auth';
+import { getUnifiedSession } from '@/lib/unified-auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -24,7 +24,7 @@ export async function POST(request: NextRequest) {
 
   try {
     // Get session
-    const session = await getSession();
+    const session = await getUnifiedSession();
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get church ID from session
-    const churchId = session.church?.id;
+    const churchId = session.churchId;
     if (!churchId) {
       return NextResponse.json({ error: 'Church not found' }, { status: 404 });
     }

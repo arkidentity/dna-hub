@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, supabaseAdmin, isAdmin, getSupabaseAdmin } from '@/lib/auth';
+import { supabaseAdmin, getSupabaseAdmin } from '@/lib/auth';
+import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
 
 // POST - Upload a file attachment
 export async function POST(request: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json(
@@ -13,10 +14,18 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const { leader, church } = session;
+    const churchId = session.churchId;
+    const leaderId = session.leaderId || session.userId;
+
+    if (!churchId) {
+      return NextResponse.json(
+        { error: 'No church associated with session' },
+        { status: 400 }
+      );
+    }
 
     // Only admins can upload attachments
-    if (!isAdmin(leader.email)) {
+    if (!isAdmin(session)) {
       return NextResponse.json(
         { error: 'Only admins can upload attachments' },
         { status: 403 }
@@ -63,7 +72,7 @@ export async function POST(request: NextRequest) {
     const fileExt = file.name.split('.').pop();
     const timestamp = Date.now();
     const sanitizedName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-    const filePath = `${church.id}/${milestoneId}/${timestamp}-${sanitizedName}`;
+    const filePath = `${churchId}/${milestoneId}/${timestamp}-${sanitizedName}`;
 
     // Upload to Supabase Storage
     const supabase = getSupabaseAdmin();
@@ -93,13 +102,13 @@ export async function POST(request: NextRequest) {
     const { data: attachment, error: dbError } = await supabaseAdmin
       .from('milestone_attachments')
       .insert({
-        church_id: church.id,
+        church_id: churchId,
         milestone_id: milestoneId,
         file_name: file.name,
         file_url: urlData.publicUrl,
         file_type: file.type,
         file_size: file.size,
-        uploaded_by: leader.id,
+        uploaded_by: leaderId,
       })
       .select()
       .single();
@@ -127,7 +136,7 @@ export async function POST(request: NextRequest) {
 // DELETE - Remove a file attachment
 export async function DELETE(request: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json(
@@ -136,10 +145,17 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const { leader, church } = session;
+    const churchId = session.churchId;
+
+    if (!churchId) {
+      return NextResponse.json(
+        { error: 'No church associated with session' },
+        { status: 400 }
+      );
+    }
 
     // Only admins can delete attachments
-    if (!isAdmin(leader.email)) {
+    if (!isAdmin(session)) {
       return NextResponse.json(
         { error: 'Only admins can delete attachments' },
         { status: 403 }
@@ -161,7 +177,7 @@ export async function DELETE(request: NextRequest) {
       .from('milestone_attachments')
       .select('*')
       .eq('id', attachmentId)
-      .eq('church_id', church.id)
+      .eq('church_id', churchId)
       .single();
 
     if (fetchError || !attachment) {

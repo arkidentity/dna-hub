@@ -2,7 +2,9 @@
 
 ## ✅ Completed
 
-The unified authentication system has been implemented! Users can now log in once and access multiple dashboards based on their roles.
+The unified authentication system has been **fully implemented**! Users can now log in once and access multiple dashboards based on their roles.
+
+**Latest Update:** All API routes have been migrated to use the unified auth system (`getUnifiedSession()` and `isAdmin()` from `/lib/unified-auth.ts`).
 
 ---
 
@@ -72,6 +74,30 @@ The unified authentication system has been implemented! Users can now log in onc
 **Root Layout (`/src/app/layout.tsx`):**
 - Includes TopNav component
 - TopNav automatically shows/hides based on auth status
+
+### 5. Complete API Routes Migration
+
+**All API routes have been migrated** from old auth system to unified auth:
+
+**Changes Made:**
+- **Import Updates:** `getSession()` → `getUnifiedSession()`
+- **Admin Check:** `isAdmin(session.leader.email)` → `isAdmin(session)`
+- **Session Structure:**
+  - `session.leader.email` → `session.email`
+  - `session.leader.id` → `session.leaderId` or `session.userId`
+  - `session.church.id` → `session.churchId`
+
+**Routes Migrated (20+ routes):**
+- Admin church management routes (`/api/admin/church/[id]/*`)
+- Admin calendar integration (`/api/admin/calendar/*`)
+- Admin transcripts, analytics, export (`/api/admin/*`)
+- DNA groups and leaders (`/api/groups/*`, `/api/dna-leaders/*`)
+- Church dashboard and progress (`/api/dashboard`, `/api/progress`, `/api/portal`)
+- Church-specific endpoints (`/api/churches/[churchId]/dna-groups`)
+- File attachments (`/api/attachments`)
+- Google OAuth (`/api/auth/google`)
+
+**Verification:** Zero old auth imports remain in `/src/app/api` directory.
 
 ---
 
@@ -330,6 +356,20 @@ Potential improvements for later:
 - `/src/app/layout.tsx` - Added TopNav component
 - `/src/app/api/auth/verify/route.ts` - Updated to use unified session
 - `/src/app/api/auth/logout/route.ts` - Updated to clear unified cookie
+
+**All API Routes (20+ routes migrated):**
+- `/src/app/api/admin/*` - All admin routes (church management, calendar, analytics, export, etc.)
+- `/src/app/api/dashboard/route.ts` - Dashboard data
+- `/src/app/api/progress/route.ts` - Progress tracking
+- `/src/app/api/groups/route.ts` - DNA groups management
+- `/src/app/api/churches/[churchId]/dna-groups/route.ts` - Church DNA groups data
+- `/src/app/api/portal/route.ts` - Church portal
+- `/src/app/api/calendar/route.ts` - Calendar export
+- `/src/app/api/church/progress/notes/route.ts` - Church notes
+- `/src/app/api/transcripts/route.ts` - Transcript viewing
+- `/src/app/api/dna-leaders/invite/route.ts` - DNA leader invitations
+- `/src/app/api/attachments/route.ts` - File attachments
+- `/src/app/api/auth/google/route.ts` - Google OAuth
 
 ---
 

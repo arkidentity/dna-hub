@@ -1,22 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getSession, isAdmin } from '@/lib/auth';
+import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
 
 // GET: Fetch DNA leaders and groups for a church
 export async function GET(
   request: NextRequest,
   { params }: { params: Promise<{ churchId: string }> }
 ) {
-  const session = await getSession();
+  const session = await getUnifiedSession();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   const { churchId } = await params;
-  const admin = isAdmin(session.leader.email);
+  const admin = isAdmin(session);
 
   // Non-admins can only view their own church
-  if (!admin && session.church?.id !== churchId) {
+  if (!admin && session.churchId !== churchId) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

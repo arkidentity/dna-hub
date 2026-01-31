@@ -1,22 +1,21 @@
 import { NextResponse } from 'next/server';
-import { getSession, isAdmin } from '@/lib/auth';
+import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
 import { syncCalendarEvents } from '@/lib/google-calendar';
 
 export async function POST() {
   try {
-    const session = await getSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const adminCheck = await isAdmin(session.leader.email);
-    if (!adminCheck) {
+    if (!isAdmin(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Run calendar sync
-    const result = await syncCalendarEvents(session.leader.email);
+    const result = await syncCalendarEvents(session.email);
 
     return NextResponse.json(result);
   } catch (error) {

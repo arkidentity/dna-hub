@@ -1,22 +1,22 @@
 import { NextResponse } from 'next/server';
-import { getSession, isAdmin, getSupabaseAdmin } from '@/lib/auth';
+import { getSupabaseAdmin } from '@/lib/auth';
+import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
 import { getGoogleCalendarStatus } from '@/lib/google-calendar';
 
 export async function GET() {
   try {
-    const session = await getSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const adminCheck = await isAdmin(session.leader.email);
-    if (!adminCheck) {
+    if (!isAdmin(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     // Get calendar connection status
-    const status = await getGoogleCalendarStatus(session.leader.email);
+    const status = await getGoogleCalendarStatus(session.email);
 
     // Get unmatched events if connected
     let unmatchedEvents: unknown[] = [];

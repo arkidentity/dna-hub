@@ -1,23 +1,22 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, isAdmin } from '@/lib/auth';
+import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
 import { getAuthUrl } from '@/lib/google-calendar';
 
 // GET - Start Google OAuth flow
 export async function GET(request: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const adminCheck = await isAdmin(session.leader.email);
-    if (!adminCheck) {
+    if (!isAdmin(session)) {
       return NextResponse.json({ error: 'Forbidden - Admin only' }, { status: 403 });
     }
 
     // Generate OAuth URL with admin email in state
-    const authUrl = getAuthUrl(session.leader.email);
+    const authUrl = getAuthUrl(session.email);
 
     return NextResponse.json({ authUrl });
   } catch (error) {
