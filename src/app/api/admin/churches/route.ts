@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSession, isAdmin, getSupabaseAdmin } from '@/lib/auth';
+import { getSupabaseAdmin } from '@/lib/auth';
+import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
 import {
   sendProposalReadyEmail,
   sendAgreementConfirmedEmail,
@@ -9,13 +10,13 @@ import { logStatusChange } from '@/lib/audit';
 
 export async function GET() {
   try {
-    const session = await getSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!isAdmin(session.leader.email)) {
+    if (!isAdmin(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -146,13 +147,13 @@ export async function GET() {
 
 export async function PATCH(request: NextRequest) {
   try {
-    const session = await getSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!isAdmin(session.leader.email)) {
+    if (!isAdmin(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -220,7 +221,7 @@ export async function PATCH(request: NextRequest) {
     // Log the status change to audit trail
     if (status && churchData && status !== churchData.status) {
       await logStatusChange(
-        session.leader.email,
+        session.email,
         churchId,
         churchData.status,
         status,
@@ -342,7 +343,7 @@ async function handleBulkUpdate(supabase: any, session: any, body: any) {
         // Log the status change
         if (status !== church.status) {
           await logStatusChange(
-            session.leader.email,
+            session.email,
             churchId,
             church.status,
             status,

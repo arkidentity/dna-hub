@@ -1,7 +1,7 @@
-import { NextResponse } from 'next/server';
+import { NextResponse, NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
 
-export async function POST() {
+export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
 
   // Clear all session cookies (unified + legacy)
@@ -10,5 +10,6 @@ export async function POST() {
   cookieStore.delete('dna_leader_session');
   cookieStore.delete('training_session');
 
-  return NextResponse.json({ success: true });
+  // Redirect to login page
+  return NextResponse.redirect(new URL('/login', request.url));
 }

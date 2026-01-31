@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDNALeaderSession, getSupabaseAdmin } from '@/lib/auth';
+import { getSupabaseAdmin } from '@/lib/auth';
+import { getUnifiedSession, hasRole } from '@/lib/unified-auth';
 
 // POST /api/groups/[id]/disciples
 // Add a disciple to a group
@@ -8,15 +9,38 @@ export async function POST(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getDNALeaderSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Check if user is a DNA leader
+    if (!hasRole(session, 'dna_leader')) {
+      return NextResponse.json(
+        { error: 'Forbidden - DNA leader access required' },
+        { status: 403 }
+      );
+    }
+
     const { id: groupId } = await params;
     const supabase = getSupabaseAdmin();
-    const leaderId = session.leader.id;
+
+    // Get DNA leader record
+    const { data: dnaLeader } = await supabase
+      .from('dna_leaders')
+      .select('id')
+      .eq('email', session.email)
+      .single();
+
+    if (!dnaLeader) {
+      return NextResponse.json(
+        { error: 'DNA leader not found' },
+        { status: 404 }
+      );
+    }
+
+    const leaderId = dnaLeader.id;
 
     // Verify ownership of the group
     const { data: group, error: groupError } = await supabase
@@ -140,15 +164,38 @@ export async function GET(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const session = await getDNALeaderSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    // Check if user is a DNA leader
+    if (!hasRole(session, 'dna_leader')) {
+      return NextResponse.json(
+        { error: 'Forbidden - DNA leader access required' },
+        { status: 403 }
+      );
+    }
+
     const { id: groupId } = await params;
     const supabase = getSupabaseAdmin();
-    const leaderId = session.leader.id;
+
+    // Get DNA leader record
+    const { data: dnaLeader } = await supabase
+      .from('dna_leaders')
+      .select('id')
+      .eq('email', session.email)
+      .single();
+
+    if (!dnaLeader) {
+      return NextResponse.json(
+        { error: 'DNA leader not found' },
+        { status: 404 }
+      );
+    }
+
+    const leaderId = dnaLeader.id;
 
     // Verify ownership
     const { data: group } = await supabase
