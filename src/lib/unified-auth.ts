@@ -1,0 +1,184 @@
+/**
+ * Unified Authentication System
+ *
+ * This module provides a single authentication system that supports multiple user roles:
+ * - church_leader: Access to church implementation dashboard
+ * - dna_leader: Access to DNA groups management
+ * - training_participant: Access to DNA training
+ * - admin: Full system access
+ *
+ * Users can have multiple roles and access multiple dashboards with one login.
+ */
+
+import { cookies } from 'next/headers'
+import { supabase } from './supabase'
+
+export interface UserRole {
+  role: 'church_leader' | 'dna_leader' | 'training_participant' | 'admin'
+  churchId: string | null
+}
+
+export interface UserSession {
+  userId: string
+  email: string
+  name: string | null
+  roles: UserRole[]
+}
+
+/**
+ * Get the current user session from the unified session cookie
+ * @returns UserSession or null if not authenticated
+ */
+export async function getUnifiedSession(): Promise<UserSession | null> {
+  const cookieStore = await cookies()
+  const sessionToken = cookieStore.get('user_session')?.value
+
+  if (!sessionToken) {
+    return null
+  }
+
+  // Use server-side Supabase client
+
+  // Verify token is valid and used
+  const { data: tokenData, error: tokenError } = await supabase
+    .from('magic_link_tokens')
+    .select('email, expires_at, used')
+    .eq('token', sessionToken)
+    .single()
+
+  if (tokenError || !tokenData || !tokenData.used) {
+    return null
+  }
+
+  // Check if token is expired
+  if (new Date(tokenData.expires_at) < new Date()) {
+    return null
+  }
+
+  // Get user and roles
+  const { data: user, error: userError } = await supabase
+    .from('users')
+    .select(`
+      id,
+      email,
+      name,
+      user_roles (
+        role,
+        church_id
+      )
+    `)
+    .eq('email', tokenData.email)
+    .single()
+
+  if (userError || !user) {
+    return null
+  }
+
+  return {
+    userId: user.id,
+    email: user.email,
+    name: user.name,
+    roles: user.user_roles.map((r: any) => ({
+      role: r.role,
+      churchId: r.church_id
+    }))
+  }
+}
+
+/**
+ * Check if the user has a specific role
+ * @param session - The user session
+ * @param role - The role to check for
+ * @param churchId - Optional church ID to check for (role must be for this specific church)
+ * @returns true if user has the role
+ */
+export function hasRole(
+  session: UserSession | null,
+  role: string,
+  churchId?: string
+): boolean {
+  if (!session) return false
+
+  return session.roles.some(r => {
+    if (r.role !== role) return false
+    if (churchId && r.churchId !== churchId) return false
+    return true
+  })
+}
+
+/**
+ * Check if the user is an admin
+ * @param session - The user session
+ * @returns true if user is an admin
+ */
+export function isAdmin(session: UserSession | null): boolean {
+  return hasRole(session, 'admin')
+}
+
+/**
+ * Get all church IDs the user has access to
+ * @param session - The user session
+ * @returns Array of church IDs
+ */
+export function getUserChurches(session: UserSession | null): string[] {
+  if (!session) return []
+
+  return session.roles
+    .filter(r => r.churchId !== null)
+    .map(r => r.churchId as string)
+}
+
+/**
+ * Check if user is a church leader for a specific church
+ * @param session - The user session
+ * @param churchId - The church ID to check
+ * @returns true if user is a church leader for this church
+ */
+export function isChurchLeader(session: UserSession | null, churchId: string): boolean {
+  return hasRole(session, 'church_leader', churchId)
+}
+
+/**
+ * Check if user is a DNA leader
+ * @param session - The user session
+ * @param churchId - Optional church ID to check for
+ * @returns true if user is a DNA leader
+ */
+export function isDNALeader(session: UserSession | null, churchId?: string): boolean {
+  return hasRole(session, 'dna_leader', churchId)
+}
+
+/**
+ * Check if user is a training participant
+ * @param session - The user session
+ * @returns true if user is a training participant
+ */
+export function isTrainingParticipant(session: UserSession | null): boolean {
+  return hasRole(session, 'training_participant')
+}
+
+/**
+ * Get the user's primary church (first church they're associated with)
+ * Useful for users who are only at one church
+ * @param session - The user session
+ * @returns Church ID or null
+ */
+export function getPrimaryChurch(session: UserSession | null): string | null {
+  if (!session) return null
+
+  const churchRole = session.roles.find(r => r.churchId !== null)
+  return churchRole?.churchId || null
+}
+
+/**
+ * Get all DNA leader churches (churches where user is a DNA leader)
+ * @param session - The user session
+ * @returns Array of church IDs
+ */
+export function getDNALeaderChurches(session: UserSession | null): string[] {
+  if (!session) return []
+
+  return session.roles
+    .filter(r => r.role === 'dna_leader' && r.churchId !== null)
+    .map(r => r.churchId as string)
+}

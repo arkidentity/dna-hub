@@ -32,6 +32,8 @@ Files are numbered in the order they should be run:
 | 021 | `spiritual-gifts-assessment.sql` | Spiritual Gifts Assessment system |
 | 022 | `dna-training-system.sql` | DNA Training platform (Flow Assessment, Manual, progressive unlocking) |
 | 023 | `assign-admin-roles.sql` | Assign admin roles to existing admin users |
+| 024 | `training-magic-links.sql` | Magic link authentication for training participants |
+| 025 | `unified-users.sql` | Unified user authentication system with role-based access |
 
 ## Running Migrations
 
