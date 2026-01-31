@@ -157,7 +157,7 @@ Discipleship is not a solo mission. I have found that they work best in groups o
 
 *And let us consider how we may spur one another on toward love and good deeds, not giving up meeting together, as some are in the habit of doing, but encouraging one another—and all the more as you see the Day approaching.* **\- Hebrews 10:24-25 NASB**
 
-In this model, you will spend 12 months with the same group (minimum 6 months in some situations). The leader will raise up the co-leader to be a confident disciple maker and the apprentices will become future co-leads. We must communicate this so people aren't surprised when it's time to multiply. They expect it and look forward to it.   
+In this model, you will spend 12 months (minimum 6 months in some situations) with the same group. The leader will raise up the co-leader to be a confident disciple maker and the apprentices will become future co-leads. We must communicate this so people aren’t surprised when it’s time to multiply. They expect it and look forward to it.   
 Yes, we multiply in groups but the relationship is not over. It just looks a little different as we step into the call of exponential growth. I have discipled many people and I still keep in contact with many of them. They still ask for help in their journey of discipling others. The goal is not to abandon people but to release them for success.  
 Someone who has effectively been discipled should be able to repeat the process. This does not mean every disciple relationship looks the same but they are united by **“the mission of multiplication”**. The purpose is to the seed of Jesus. This will include laying doctrinal foundations and moving in supernatural living.
 
@@ -409,19 +409,19 @@ Let’s be clear. We are not looking for common American Christians. We are look
 
 **Here’s an example of healthy weekly commitments.**
 
-* Corporate Edification Gathering (Fellowship of the Saints) 2 hours  
-* Weekly ARK Trainings (Theology and Experience) 2 hours  
+* Corporate Edification Gathering (Fellowship of the Saints) 1.5 hours  
+* Weekly ARK Trainings (Theology and Experience) 1.5 hours  
 * DNA Group (Life on Life Discipleship) \- 1-2 hours  
 * Prayer Call (Via Conference Call) \- 30 mins (Once a week)  
-* Personal Devotion (30 mins daily)  
+* Prayer, BIble, Journal (20 \- 30 mins daily)  
 * Serving People (Charity of time) \- 1-2 hours
 
 Some disciples may look at this and say, “I’m out.” It’s too much all at once. We need to find a way to make healthy steps towards a life devoted to Jesus.
 
 **Discussion**  
 Does this seem doable for a devoted follower of Christ? Or is this asking too much in our culture? Why do you feel this way?  
-**How often should you gather?**
-Ideally, groups should meet consistently at the same time each week. But this is not always feasible. We suggest meeting for 90 minutes (minimum 60 minutes if needed). This can take place in person, over the phone or through Zoom. I like a mixture of in-person and Video calls because it enables groups to continue meeting even when people are traveling. Groups do not break seasonally. We may take a week or two off for Holidays or special occasions but they continue year round as the leaders and students do life together no matter what.  
+**How often should you gather?**  
+Ideally, groups should meet consistently at the same time each week. But this is not always feasible. We suggest for 90 minutes (minimum 60 minutes if needed). This can take place in person, over the phone or through Zoom. I like a mixture of in-person and Video calls because it enables groups to continue meeting even when people are traveling. Groups do not break seasonally. We may take a week or two off for Holidays or special occasions but they continue year round as the leaders and students do life together no matter what.  
 In addition to the weekly meetings, we should find opportunities to share life together on a regular basis. Maybe it’s a child’s birthday or sporting event. Maybe plan an outreach opportunity to serve others or evangelize. We need to keep it fresh with different ways to engage. If I am invested in discipling people, I am hosting dinners at my house, scheduling worship nights, and creating opportunities for evangelism.  
 As you may be thinking, discipleship requires a certain level of care for your people. Utilize a chat group where you can leave encouraging words, prayer requests are heard and testimonies are shared. You may spend time in prayer each day for your people and God may speak to you about them as they need guidance. God often prompts me to call people and see how they are doing, only to find out they needed a call at that exact moment.
 
@@ -432,32 +432,49 @@ Will you welcome your disciples into your life so they can see how you handle fa
 *Behold, how good and how pleasant it is*  
 *For brothers to live together in unity\!* **\- Psalm 133:1 NASB**
 
-# **The DNA Toolkit**
+## **PB\&J. It’s That Simple**
+
+Before we talk about weekly DNA meetings, we need to establish something critical: DNA discipleship only works if disciples commit to a daily rhythm with God. We call it PB\&J: Prayer, Bible, and Journal. It's a simple 20-30 minute daily practice: 10 minutes of prayer using the 4D Prayer rhythm and 10 minutes Bible and Journaling using the 3D Journal method. That's it. No seminary degree required. Just simple tools and 20-30 minutes daily.  
+Here's the truth: If disciples won't commit to 20-30 minutes with God daily, they're not ready for a DNA group. This isn't harsh—it's honest. Without daily PBJ, weekly meetings become information transfer, not transformation. Disciples remain consumers, not contributors. But with daily PB\&J, disciples hear God's voice consistently, growth happens between meetings, and multiplication becomes natural.
+
+**Your Job as a DNA Leader**  
+Model it first. You can't lead disciples into a rhythm you don't practice yourself. Before you invite anyone to join a DNA group, make sure you're doing daily PBJ for at least 30 days. When you invite someone, be crystal clear: "DNA requires a daily commitment of 20-30 minutes: Prayer, Bible, and Journal. If you can't commit to that, this isn't the right season for you."
+
+**Check on it weekly.**
+
+"How many days this week did you do PBJ?"  
+"What's blocking you on the days you don't?"  
+"What did God say to you this week through Scripture?"
+
+When disciples struggle with consistency, don't shame them—help them problem-solve. Is it a time issue? A "don't know what to do" issue? Or a motivation issue that signals they may not be ready yet?
+
+**It’s Built Into The Toolkit**  
+You don't have to figure out how to teach PBJ—it's built into the 90-Day Toolkit. Week 1 sets the expectation. Week 2 teaches the 3D Journal method. Week 3 teaches the 4D Prayer rhythm. Week 4 onward, you check in weekly and celebrate consistency. By Week 4, disciples should have the full PB\&J rhythm established.  
+**The Bottom Line:** Before you start Phase 0, ask yourself: Am I doing daily PB\&J myself? Am I willing to set this as a non-negotiable expectation? If yes, you're ready. If not, spend the next 30 days building your own devotional rhythm first. You can't give what you don't have.
+
+# **Your Discipleship Toolkit**
 
 There are many different tools we can use to create a well-rounded discipleship experience. As leaders you should be using a variety of tools to fully equip your disciples.
 
 **Life Assessment**   
 These assessments consist of heart provoking questions that help pinpoint areas of a disciples life that need to be worked on. As leaders we can tell a lot about a person by the way they answer certain questions about God and life. We can also measure someone’s growth by the way their answers change over the course of a year.
 
-**Devotional Time**  
+**3D Journal**  
 Pick a chapter of the Bible and meditate on the scripture. We encourage people to use the **3D Journal** method of processing scripture and revelation: **HEAD** (understanding), **HEART** (application), and **HANDS** (action). Everyone then gets the opportunity to deliver the revelation they received to the group and give each other feedback. This is a powerful way to activate the gift of teaching in your disciples.
 
-**Listening Prayer Circle**  
+**4D Prayer**  
+A four-dimensional prayer rhythm designed to deepen your relationship with God, moving you from distraction to intimacy. It begins by **Revering** God through worship and focusing on His character, then moves to **Reflect** on His goodness with specific gratitude. Next, you **Request** by bringing your needs and intercessions to Him. Finally, you **Rest** in His presence, practicing stillness to listen and receive His peace. This consistent practice builds faith through celebrating the prayers God Answers.
+
+**Creed Cards**  
+An interactive collection of foundational pieces of truth that will help your students understand and wrestle with the core beliefs of the Christian Faith. These truths are rooted in the essential creeds that are non negotiables for our faith. If we say we believe then we must agree on these things. Dealing with doctrinal distortions can be the difference between a productive group and one that is stagnant.
+
+**Listening Prayer**  
 This activity involves everyone circling up and praying for the person clockwise to them. Everyone takes a few minutes to listen to what God might be saying for their assigned person. Then each of you takes time to share what you sensed and receive feedback. This helps develop a culture of hearing God for one another in your DNA group and can be a powerful tool to bring encouragement, insight, and loving correction to those you are discipling.
-
-**Trainings (Weekly and Experiences)**  
-The ARK Identity training is a powerful weekly gathering where you are able to work through theology and experience God together. Often we see things exposed in the training that would have gone unnoticed without this resource. These trainings also make it easier to teach people the gospel even if you are still learning how to express it yourself. 
-
-**Prayer Calls (30 mins)**  
-Prayer call over the phone or online. This is key for uniting the hearts of everyone in the group. Nothing brings people together like encountering God’s presence corporately and releasing what God is saying. When you first start discipling someone they may be too shy to pray out loud. That’s ok. These calls are designed so everyone gets an opportunity to pray and grow in their voice.
-
-**Foundation doctrines (Creed Cards)**  
-This collection of bite size pieces of truth will help your students lay a firm foundation. These truths are rooted in the essential creeds that are non negotiable for our faith. Dealing with doctrinal distortions can be the difference between a productive group and one that is stagnant.
 
 **Testimony Time**  
 This should be done often. Disciples need to bring back good news to the group. The stories of Jesus in and through our lives are the life force to our ministry. Not only do we need to hear them but people need to declare them. Make time for this when God shows up in someone’s life. This could be a specific time of testimony or included in other gatherings. 
 
-**Q and A**  
+**Q and A Discussions**  
 Question and answer sessions can be a great way to open up theological discussions on many topics. Your disciples have burning questions about God that they never felt safe to ask. If you open up the conversation you will be surprised what comes up. This can also reveal a lot about who they are and maybe some lies they believe about God, the Church or the Bible.
 
 **Simple Fellowship**  
@@ -465,6 +482,12 @@ Sometimes we simply need time to get to know each other. Hanging out on a friend
 
 **Outing \- outreach or mission**  
 No permission slips needed\! A well placed field trip works well to shake up the group and get them out of routine. Think of something exciting and maybe a little dangerous. You could include homeless ministry, street evangelism, serving somewhere as a group or maybe worshiping at a park. But it doesn’t have to be a ministry activity. It could be hiking, sports, or something creative. This will stretch your students' ability to see God in every activity of life.
+
+**Activations (Weekly and Experiences)**  
+We have designed powerful weekly activations that help people experience freedom through Biblical truth and God encounters. Often we see things exposed in these activations that would have gone unnoticed without this resource. These activities can be the difference between complete freedom and lies that continue to linger in a disciples life. 
+
+**Prayer Calls Online (30 mins)**  
+Weekly prayer call over the phone or online. Don’t underestimate this tool. Prayer calls are key for uniting the hearts of everyone in the group. Nothing brings people together like encountering God’s presence corporately and releasing what God is saying. When you first start discipling someone they may be too shy to pray out loud. That’s ok. These calls are designed so everyone gets an opportunity to pray and grow in their voice, even if it is short and to the point at first. 
 
 # 
 
@@ -598,7 +621,7 @@ What area of your life still needs pruning before you're ready to lead others?
 ## **Are You Ready to Lead?**
 
 Jesus said 'count the cost' before building a tower (Luke 14:28). Before you jump out and start discipling others, you need to be honest with yourself. This isn't about perfection—it's about preparation.We have carefully created a few assessments leading up to your DNA launch along with spiritual health check-ins throughout your disciple making journey.   
-The first is called the Personal Dam Assessment (some of you have already taken this before going through this manual) The Dam  Assessment addresses 7 dams that could hold back the river of God from flowing properly in your life.  
+The first is called the Personal Flow Assessment (some of you have already taken this before going through this manual) The Flow Assessment addresses 7 roadblocks that could hold back the river of God from flowing properly in your life.  
 The next is the DNA Readiness Quiz. This assessment includes a variety of questions in 4 categories. This is the final test to get released as a DNA leader. Here are some examples of what you will find in this quiz.
 
 **Spiritual Maturity**
@@ -607,7 +630,7 @@ The next is the DNA Readiness Quiz. This assessment includes a variety of questi
 
 **Life Stability**
 
-* Is your life stable enough to commit for 6-12 months?
+* Is your life stable enough to commit for 12 months?
 
 **Leadership Readiness**
 
@@ -615,7 +638,7 @@ The next is the DNA Readiness Quiz. This assessment includes a variety of questi
 
 **DNA Competencies**
 
-* Do you know the 5 phases of DNA?
+* Do you know the 3 phases of DNA?
 
 If you're not ready yet, that's okay. Being honest about it now saves you and your disciples from pain later. Keep growing. Your time will come.
 
@@ -696,13 +719,21 @@ You've completed the heart training. Now it's time for launch training. The DNA 
 
 **The 90-Day Toolkit:** 
 
-You'll also get the 90-Day Toolkit—a week-by-week plan for your first 12 meetings using the DNA tools (3D Journal, 4D Prayer, Creed cards Listening Prayer, Creed Cards, etc.)"
+You'll also get the 90-Day Toolkit—a week-by-week plan for your first 12 meetings using the DNA tools (3D Journal, 4D Prayer, Creed cards Listening Prayer, Creed Cards, etc.)
 
 **Your Assignment:**
 
 Go to [app.arkidentity.com/\#dna](http://app.arkidentity.com/#dna) 
 
-Here you will find all of the DNA resources. DNA Launch Guide, 90-Day Toolkit, and other useful resources. Read Phase 0 of the DNA Launch Guide this week. Begin the self-assessment and prayer strategy. Don't wait until you feel 'ready'—you'll never feel fully ready. Just start.
+All the DNA resources:
+
+DNA Launch Guide, 90-Day Toolkit, and other useful resources. 
+
+Read Phase 0 of the DNA Launch Guide this week. 
+
+Begin the self-assessment and prayer strategy. 
+
+Don't wait until you feel 'ready'—you'll never feel fully ready. Just start.
 
 ## 
 

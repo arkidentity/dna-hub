@@ -16,7 +16,7 @@
 
 *A discipleship resource from ARK Identity*
 
-***app.arkidentity.com***
+***dnadiscipleship.com***
 
 ## **What Is the 90-Day Toolkit?**
 
@@ -155,7 +155,7 @@
 
 * ## Read the upcoming week's lesson plan 2-3 days before your meeting
 
-* ## Gather any materials needed (ARK app access, printouts, etc.)
+* ## Gather any materials needed (DNA Dashboard, printouts, etc.)
 
 * ## Pray for each disciple by name
 

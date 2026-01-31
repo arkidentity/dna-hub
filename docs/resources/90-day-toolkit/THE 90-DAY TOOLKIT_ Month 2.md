@@ -14,7 +14,7 @@
 
 *A discipleship resource from ARK Identity*
 
-***app.arkidentity.com***
+***dnadiscipleship.com***
 
 ## **From Foundation to Action**
 

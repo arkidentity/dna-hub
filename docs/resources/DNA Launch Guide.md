@@ -12,7 +12,7 @@
 
 *A discipleship resource from ARK Identity*
 
-***app.arkidentity.com***
+***dnadiscipleship.com***
 
 ## 
 
@@ -24,9 +24,15 @@ This guide is your practical roadmap from “I want to make disciples" to "I'm a
 
 **Remember**: Discipleship is both flow and structure. This guide provides the structure, but the Holy Spirit provides the life. Stay flexible, stay prayerful, stay dependent on God.
 
-# 
+## **Key Reminders**
 
-# 
+**Connection before correction** — Build trust before addressing hard things.
+
+**Don't rush multiplication** — Extend phases if disciples aren't ready.
+
+**Stay prayerful** — Discipleship begins in prayer, not in planning.
+
+**Expect mess** — People will disappoint you. That's okay. Keep going.
 
 # **Quick Start Summary**
 
@@ -35,7 +41,7 @@ This guide is your practical roadmap from “I want to make disciples" to "I'm a
 | Phase | Duration | Focus | Key Milestone |
 | :---- | :---- | :---- | :---- |
 | **Phase 0: Pre-Launch** | Weeks \-6 to 0 | Leader training & group formation | Co-leader secured, disciples invited, first meeting scheduled |
-| **Phase 1: Foundation** | Months 1-3 (Weeks 1-12) | Learning tools, building trust | Disciples master DNA tools, show vulnerability and teachability |
+| **Phase 1: Foundation** | Months 1-3 | Learning tools, building trust | Disciples master DNA tools, show vulnerability and teachability |
 | **Phase 2: Growth** | Months 4-6 | Practicing tools, co-facilitating | Disciples leading regularly, taking ownership |
 | **Phase 3: Multiplication** | Months 7-12 | Preparing to multiply | New DNA groups launched |
 
@@ -67,9 +73,9 @@ You don’t need to master this entire guide before you begin. Focus only on the
 * Engaging in group chat and communication  
 * Demonstrating vulnerability and trust  
 * Teachable and receiving correction well  
-* Practicing spiritual disciplines independently (3D Journal, 4D Prayer)  
+* Practicing PB\&J independently (3D Journal, 4D Prayer)  
 * Addressed at least one major stronghold or lie  
-* Mastered DNA tools (3D Journal, 4D Prayer, Listening Prayer Circle, Creed Cards)  
+* Experienced DNA tools (3D Journal, 4D Prayer, Creed Cards, Listening Prayer, Outreach, )  
 * Expressing readiness to lead or facilitate
 
 ---
@@ -99,31 +105,12 @@ A disciple is ready to multiply when they can:
 * Initiate spiritual conversations  
 * Demonstrate fruit of the Spirit  
 * Express desire to disciple others  
-* Complete a full cycle (6-12 months)  
+* Complete a full cycle (12 months recommended)  
 * Show faithfulness in small things
 
 ---
 
-## 
-
-## **Weekly Meeting Flow (60-90 minutes)**
-
-| Segment | Time | Description |
-| :---- | :---- | :---- |
-| Check-In | 15 min | Highs and lows from the week |
-| Teaching/Tool | 30 min | 3D Journal, Prophetic Roundtable, or Creed Cards |
-| Application | 30 min | Discussion and processing |
-| Prayer | 15 min | Pray for specific needs |
-
-## **Key Reminders**
-
-**Connection before correction** — Build trust before addressing hard things.
-
-**Don't rush multiplication** — Extend phases if disciples aren't ready.
-
-**Stay prayerful** — Discipleship begins in prayer, not in planning.
-
-**Expect mess** — People will disappoint you. That's okay. Keep going.
+# 
 
 # 
 
@@ -224,7 +211,7 @@ In rare cases, you may start without one—but actively keep looking. Pray for G
 **Weekly Meeting Time**
 
 * What day/time works for you AND your co-leader consistently?  
-* Where will you meet? (Home, coffee shop, church building, online?)
+* Where will you meet? (Home, coffee shop, church building, online?)  
 * How long will meetings last? (We recommend 90 minutes)
 
 **Communication Plan**
@@ -240,7 +227,7 @@ In rare cases, you may start without one—but actively keep looking. Pray for G
 
 **Duration Commitment**
 
-* How long is this DNA group committed to meeting? (12 months is the standard expectation)
+* How long is this DNA group committed to meeting? (12 months recommended)  
 * When will you multiply? (Set a tentative date so everyone expects it)
 
 ### **Create a DNA Group Agreement** 
@@ -318,7 +305,9 @@ Before inviting disciples, make sure you've completed:
 
 # **The Invitation** 
 
-# **(Weeks 1-6 of Pre-Launch)**
+# **(Weeks 1 \- 6 of Pre-Launch)**
+
+## 
 
 ## **Testing the Soil and Planting Seeds**
 
@@ -424,8 +413,6 @@ I don't know if this is something you're interested in, but I wanted to ask: Wou
 
 **Let them respond.**
 
-**Possible Responses:**
-
 **1\. "Yes\! I've been wanting something like this."**  
  Great\! Move forward with expectations conversation (see next section).
 
@@ -443,18 +430,26 @@ I don't know if this is something you're interested in, but I wanted to ask: Wou
 
 ### **Setting Expectations Together**
 
-**If they say yes or want more details, have THIS conversation:**
+**Daily Commitment:** Prayer, Bible, and Journal (PB\&J): 20 minutes daily
+
+* 4D Prayer \- 10 minutes  
+* Daily Scripture reading  
+* 3D Journal \- Head, Heart and Hands (10 minutes)
+
+**This isn't optional.** Before inviting someone, ask: 'Are you willing to commit to 20-30 minutes with God every day for 12 months?' If they can't commit to this, they're not ready for a DNA group.
 
 **Time Commitment:**
 
 * "We meet weekly for 90 minutes. We also have a group chat for encouragement and prayer throughout the week."
-* "We'll do meals or hangouts at least once a month—it's not just formal meetings."
-* "We're committing to 12 months. At the end, we multiply—meaning you'll be ready to start your own group."
+
+* "We'll do meals or hangouts at least once a month
+
+* "We're committing to \[12 months\]. At the end, we multiply—meaning you'll be ready to start your own group."
 
 **What We'll Do:**
 
 * "We'll study Scripture together, pray for each other, work through life issues, and learn to hear God's voice."  
-* "We'll use tools like prophetic roundtables, devotional times, and outreach activities."  
+* "We'll use tools like listening prayer, devotional times, and outreach activities."  
 * "This is a safe place to be real—no performance, no judgment."
 
 **What We Expect:**
@@ -499,8 +494,6 @@ Before moving to Phase 1, make sure you've completed ALL of these:
 
 **(1 for you, 1 for co-leader), you're ready for Phase 1\.**
 
----
-
 # 
 
 # 
@@ -517,13 +510,21 @@ The first 3 months (12 weeks) are critical. You're laying foundation, building t
 
 **Use the 90-Day Toolkit for this phase.** The Toolkit provides week-by-week guidance for all 12 weeks, introducing DNA tools systematically:
 
-* Weeks 1-4: Foundation (Life Assessment, 3D Journal, 4D Prayer, Creed Cards)
+* **Weeks 1-4: Foundation** 
 
-* Weeks 5-8: Deepening (Testimony, Q\&A, Listening Prayer, Outreach)
+  (Life Assessment, 3D Journal, 4D Prayer, Creed Cards)
 
-* Weeks 9-12: Breakthrough (Strongholds, Identity, Spiritual Gifts, Assessment Revisited)
+* **Weeks 5-8: Deepening**
+
+  (Testimony, Q\&A, Listening Prayer, Outreach)
+
+* **Weeks 9-12: Breakthrough** 
+
+  (Strongholds, Identity, Spiritual Gifts, Assessment Revisited)
 
 ---
+
+## 
 
 ## **Month 1: Connection & Assessment**
 
@@ -608,12 +609,29 @@ Pray for each other's specific needs
 
 **Follow the 90-Day Toolkit** for detailed week-by-week guidance:
 
-* Week 5: Q\&A Deep Dive
-* Week 6: Listening Prayer Circle
-* Week 7: Outreach/Mission Activity
-* Week 8: Testimony Time + Outreach Debrief
+* Week 5: Testimony Time  
+* Week 6: Q\&A Deep Dive  
+* Week 7: Listening Prayer  
+* Week 8: Outreach/Mission Activity
 
-### **Week 5: Q\&A Deep Dive**
+### **Week 5: Testimony Time**
+
+**Goal**: Build faith by sharing God's faithfulness.
+
+**Structure:**
+
+* Each person shares a testimony of God  in their life (10 mins each)  
+* Ask follow-up questions  
+* Celebrate God's goodness together  
+* Close in worship or thanksgiving prayer
+
+**What you're listening for:**
+
+* Can they recognize God's activity in their life?  
+* Are they growing in gratitude?  
+* Do they give God credit or take credit themselves?
+
+### **Week 6: Q\&A Deep Dive**
 
 **Goal**: Address doubts, questions, and theological confusion.
 
@@ -626,59 +644,7 @@ Pray for each other's specific needs
 
 **This builds trust**: They see you're not pretending to have all the answers.
 
-### **Week 6: Listening Prayer Circle**
-
-**Goal**: Learn to hear God for others.
-
-**Structure:**
-
-* Brief teaching on hearing God's voice
-* Practice listening prayer in groups
-* Share what God reveals with each person
-* Encourage and build up one another
-
-**What you're listening for:**
-
-* Are disciples willing to step out in faith?
-* Are they growing in confidence hearing from God?
-* Are the words they share encouraging and aligned with Scripture?
-
-### **Week 7: Outreach/Mission Activity**
-
-**Goal**: Apply faith in the real world.
-
-**Structure:**
-
-* Go out as a group to serve, evangelize, or pray for others
-* Options: prayer walk, serve at shelter, street evangelism, visit nursing home
-* Debrief briefly after the activity
-
-**What you're watching for:**
-
-* Willingness to step outside comfort zones
-* Boldness in sharing faith
-* Evidence of Holy Spirit activity
-
-### **Week 8: Testimony Time + Outreach Debrief**
-
-**Goal**: Process the outreach experience and build powerful testimonies.
-
-**Structure:**
-
-* Debrief the Week 7 outreach (15 min): "What did you see God do?"
-* Teach the STORY Framework for building testimonies (15 min)
-* Workshop testimonies in pairs with feedback (30 min)
-* Challenge disciples to share testimonies outside the group
-
-**What you're listening for:**
-
-* Can they recognize and articulate God's activity?
-* Are they giving God credit (not themselves)?
-* Are testimonies specific, compelling, and God-centered?
-
----
-
-### **Weeks 9-12: Addressing Strongholds & Empowerment**
+### **Week 7-8: Addressing Strongholds**
 
 **Goal**: Begin addressing patterns, lies, and strongholds.
 
@@ -979,12 +945,12 @@ Use the **DNA Multiplication Readiness Checklist**:
 **A disciple is ready to multiply when they can:**
 
 * \[ \] Articulate the gospel clearly  
-* \[ \] Lead themselves spiritually (consistent devotion)  
+* \[ \] Lead themselves spiritually (PB\&J)  
 * \[ \] Handle correction with humility  
 * \[ \] Initiate spiritual conversations  
 * \[ \] Demonstrate fruit of the Spirit  
 * \[ \] Express desire to disciple others  
-* \[ \] Complete a full cycle (6-12 months)  
+* \[ \] Complete a full cycle (12 months)  
 * \[ \] Show faithfulness in small things
 
 **If they check most of these boxes, they're ready.**
@@ -1138,7 +1104,7 @@ We commit to becoming fully formed, living copies of Jesus through intentional d
 * Day: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_  
 * Time: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_  
 * Location: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_  
-* Duration: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ (typically 60-90 minutes)
+* Duration: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_ (typically 90 minutes)
 
 **Attendance:**
 
@@ -1191,7 +1157,7 @@ We commit to becoming fully formed, living copies of Jesus through intentional d
 
 * Maintain personal devotional time with God  
 * Apply what we're learning in real life  
-* Practice spiritual disciplines (prayer, Scripture, worship, service)
+* Practice spiritual disciplines (PB\&J)
 
 **Teachability:**
 
@@ -1236,6 +1202,7 @@ We commit to becoming fully formed, living copies of Jesus through intentional d
 * Show up consistently and on time  
 * Be honest about struggles and victories  
 * Pursue leaders, not just wait to be pursued  
+* Daily PB\&J practice  
 * Complete assignments and come prepared  
 * Grow in spiritual disciplines outside the group  
 * Receive correction with humility  
@@ -1365,7 +1332,7 @@ Disciple 2 Signature
 **GROW UP**
 
 * Be teachable and correctable  
-* Maintain personal devotional life  
+* Committing to daily PB\&J practice  
 * Apply what we're learning in real life
 
 **LIFT UP**
@@ -1427,7 +1394,7 @@ Our DNA group consists of:
 * Every \_\_\_\_\_\_\_\_\_\_\_\_\_ (day of week)  
 * At \_\_\_\_\_\_\_\_\_\_\_\_\_ (time)  
 * Location/Platform: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_  
-* For 12 months (ending approximately \_\_\_\_\_\_\_\_\_\_\_\_\_)
+* For \_\_\_\_\_\_\_\_ months (ending approximately \_\_\_\_\_\_\_\_\_\_\_\_\_)
 
 ## 
 
@@ -1447,7 +1414,7 @@ Our DNA group consists of:
 
 **I will grow up by:**
 
-* Spending time with God \_\_\_\_\_\_ times per week  
+* Committing to daily PB\&J practice  
 * Completing assignments and preparation  
 * Receiving correction with humility
 

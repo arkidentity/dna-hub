@@ -16,9 +16,13 @@
 
 *A discipleship resource from ARK Identity*
 
-# ***app.arkidentity.com***
+# ***dnadiscipleship.com***
 
 ## **First 30 Days\!**
+
+**The Foundation: Daily PB\&J (Prayer, Bible and Journal)**
+
+Everything in the 90-Day Toolkit builds on one simple daily rhythm: Over the first few weeks 
 
 You're about to begin the most transformational 4 weeks of your disciples' lives. This month lays the foundation for everything that follows—not just in the next 12 weeks, but for a lifetime of discipleship.
 
@@ -27,13 +31,12 @@ You're about to begin the most transformational 4 weeks of your disciples' lives
 * **Trust** between you and your disciples  
 * **Core DNA tools** that they'll use daily for the rest of their lives  
 * **Safety** to be vulnerable without judgment  
-* **Rhythms** of consistent spiritual habits
+* **Rhythms** of consistent spiritual habits (Prayer, Bible and Journal)
 
 By the end of Week 4, your disciples should:
 
 * ✅ Know where they're starting from (Life Assessment)  
-* ✅ Be practicing 3D Journal daily  
-* ✅ Be practicing 4D Prayer daily  
+* ✅ Be practicing Prayer, Bible and Journal daily  
 * ✅ Understand core theological foundations (Creed Cards)  
 * ✅ Feel safe to be real and vulnerable
 
@@ -44,7 +47,7 @@ By the end of Week 4, your disciples should:
 | **Week 1** | **Life Assessment** | Understanding where we are | 90 min meeting |
 | **Week 2** | **3D Journal** | Hearing God through Scripture | 90 min meeting \+ 10 min daily |
 | **Week 3** | **4D Prayer Rhythm** | Establishing daily prayer | 90 min meeting \+ 10 min daily |
-| **Week 4** | **Creed Cards** | Building theological foundation | 90 min meeting \+ daily review |
+| **Week 4** | **Creed Cards** | Building theological foundation | 90 min meeting \+ review |
 
 **Total Daily Time Commitment (Weeks 2-4):** **3D Journal:** 10-15 minutes **4D Prayer:** 10-15 minutes
 
@@ -1031,4 +1034,4 @@ Before moving to Month 2, evaluate each disciple:
 
 ### **Questions? Need Support?**
 
-Contact ARK Identity: [info@arkidentity.com](mailto:info@arkidentity.com)              Visit [app.arkidentity.com](http://app.arkidentity.com/) for tools and resources
+Contact ARK Identity: [info@arkidentity.com](mailto:info@arkidentity.com)            Visit dnadiscipleship.com for tools and resources
