@@ -885,6 +885,189 @@ export async function sendDNALeaderInvitationEmail(
   });
 }
 
+// =====================================================
+// TRAINING PLATFORM EMAILS
+// =====================================================
+
+// Training Platform: Welcome email after signup
+export async function sendTrainingWelcomeEmail(
+  to: string,
+  name: string,
+  loginLink: string
+) {
+  const subject = 'Welcome to DNA Training - Your Journey Begins';
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; background: #1A2332; color: #FFFFFF;">
+      <div style="padding: 40px 32px; text-align: center;">
+        <h1 style="color: #D4A853; margin: 0 0 8px 0; font-size: 28px;">Welcome to DNA Training</h1>
+        <p style="color: #A0AEC0; margin: 0; font-size: 16px;">Your journey to becoming a DNA leader starts here</p>
+      </div>
+
+      <div style="background: #FFFBF5; padding: 32px; color: #1A2332;">
+        <h2 style="margin: 0 0 16px 0; color: #1A2332;">Hey ${name},</h2>
+
+        <p style="color: #5A6577; line-height: 1.6;">Welcome to DNA Discipleship! You've taken the first step toward becoming a leader who makes disciples who make disciples.</p>
+
+        <div style="background: #F4E7D7; padding: 20px; border-radius: 8px; margin: 24px 0;">
+          <h3 style="color: #1A2332; margin: 0 0 12px 0;">Your First Step: Flow Assessment</h3>
+          <p style="color: #5A6577; margin: 0 0 8px 0; font-size: 14px;">Before you start leading others, we'll help you identify the internal roadblocks that could hinder your effectiveness. This 30-45 minute assessment will give you clarity on where God wants to grow you.</p>
+        </div>
+
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${loginLink}"
+             style="background: #D4A853; color: #1A2332; padding: 16px 32px;
+                    border-radius: 8px; text-decoration: none; font-weight: 600;
+                    display: inline-block; font-size: 16px;">
+            Start Your Journey
+          </a>
+        </div>
+
+        <h3 style="color: #1A2332; margin: 24px 0 12px 0;">What's Ahead:</h3>
+        <ol style="color: #5A6577; margin: 0; padding-left: 20px; line-height: 1.8;">
+          <li><strong>Flow Assessment</strong> - Identify your roadblocks (30-45 min)</li>
+          <li><strong>DNA Manual</strong> - Learn the heart of discipleship (6 sessions)</li>
+          <li><strong>Launch Guide</strong> - Prepare to lead your first group (5 phases)</li>
+          <li><strong>Create Your DNA Group</strong> - Start making disciples!</li>
+        </ol>
+
+        <p style="color: #5A6577; margin-top: 24px; font-size: 14px;">
+          This link expires in 24 hours. You can always request a new link from the login page.
+        </p>
+
+        <hr style="border: none; border-top: 1px solid #E8DDD0; margin: 32px 0;" />
+
+        <p style="color: #5A6577; margin: 0;">
+          Making disciples who make disciples,<br>
+          <strong style="color: #1A2332;">The DNA Team</strong>
+        </p>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    notificationType: 'training_welcome'
+  });
+}
+
+// Training Platform: Magic link login email
+export async function sendTrainingLoginEmail(
+  to: string,
+  name: string,
+  loginLink: string
+) {
+  const subject = 'Your DNA Training Login Link';
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; background: #1A2332; color: #FFFFFF;">
+      <div style="padding: 32px; text-align: center;">
+        <h1 style="color: #D4A853; margin: 0; font-size: 24px;">DNA Training</h1>
+      </div>
+
+      <div style="background: #FFFBF5; padding: 32px; color: #1A2332;">
+        <h2 style="margin: 0 0 16px 0; color: #1A2332;">Hey ${name},</h2>
+
+        <p style="color: #5A6577; line-height: 1.6;">Click the button below to access your DNA Training dashboard:</p>
+
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${loginLink}"
+             style="background: #D4A853; color: #1A2332; padding: 16px 32px;
+                    border-radius: 8px; text-decoration: none; font-weight: 600;
+                    display: inline-block; font-size: 16px;">
+            Access Training Dashboard
+          </a>
+        </div>
+
+        <p style="color: #5A6577; font-size: 14px;">
+          This link expires in 24 hours. If you didn't request this, you can safely ignore this email.
+        </p>
+
+        <p style="color: #5A6577; font-size: 14px;">
+          Or copy this link:<br>
+          <a href="${loginLink}" style="color: #2D6A6A; word-break: break-all;">${loginLink}</a>
+        </p>
+
+        <hr style="border: none; border-top: 1px solid #E8DDD0; margin: 32px 0;" />
+
+        <p style="color: #5A6577; margin: 0; font-size: 14px;">
+          — DNA Training
+        </p>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({ to, subject, html });
+}
+
+// Training Platform: Assessment complete email (DNA Manual unlocked)
+export async function sendAssessmentCompleteEmail(
+  to: string,
+  name: string,
+  dashboardLink: string,
+  topRoadblocks: string[]
+) {
+  const roadblockList = topRoadblocks.length > 0
+    ? topRoadblocks.map(r => `<li>${r.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}</li>`).join('')
+    : '<li>No significant roadblocks identified</li>';
+
+  const subject = 'Flow Assessment Complete - DNA Manual Unlocked!';
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; background: #1A2332; color: #FFFFFF;">
+      <div style="padding: 32px; text-align: center;">
+        <h1 style="color: #D4A853; margin: 0; font-size: 24px;">Assessment Complete!</h1>
+        <p style="color: #4A9E7F; margin: 8px 0 0 0; font-size: 16px;">✓ DNA Manual Now Unlocked</p>
+      </div>
+
+      <div style="background: #FFFBF5; padding: 32px; color: #1A2332;">
+        <h2 style="margin: 0 0 16px 0; color: #1A2332;">Well done, ${name}!</h2>
+
+        <p style="color: #5A6577; line-height: 1.6;">You've completed the Flow Assessment - an important step in preparing to lead others well. Awareness is the first step to breakthrough.</p>
+
+        <div style="background: #F4E7D7; padding: 20px; border-radius: 8px; margin: 24px 0;">
+          <h3 style="color: #1A2332; margin: 0 0 12px 0;">Your Top Roadblocks:</h3>
+          <ul style="color: #5A6577; margin: 0; padding-left: 20px;">
+            ${roadblockList}
+          </ul>
+          <p style="color: #5A6577; font-size: 14px; margin: 12px 0 0 0;">
+            Don't forget to work through your action plan and connect with your accountability partner.
+          </p>
+        </div>
+
+        <div style="background: #1A2332; padding: 20px; border-radius: 8px; margin: 24px 0;">
+          <h3 style="color: #D4A853; margin: 0 0 8px 0;">What's Next: DNA Manual</h3>
+          <p style="color: #E8E8E8; margin: 0; font-size: 14px;">
+            6 sessions covering the heart and theology of multiplication discipleship. This will equip you with the "why" before the "how."
+          </p>
+        </div>
+
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${dashboardLink}"
+             style="background: #D4A853; color: #1A2332; padding: 16px 32px;
+                    border-radius: 8px; text-decoration: none; font-weight: 600;
+                    display: inline-block; font-size: 16px;">
+            Continue to DNA Manual
+          </a>
+        </div>
+
+        <hr style="border: none; border-top: 1px solid #E8DDD0; margin: 32px 0;" />
+
+        <p style="color: #5A6577; margin: 0;">
+          Keep going! You're on the path to becoming a multiplying disciple-maker.<br><br>
+          — DNA Training
+        </p>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    notificationType: 'assessment_complete'
+  });
+}
+
 // 3 Steps resource email (sent after assessment)
 export async function send3StepsEmail(
   to: string,
