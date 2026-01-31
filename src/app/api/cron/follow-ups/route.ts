@@ -33,7 +33,7 @@ export async function GET(request: NextRequest) {
 
   const supabaseAdmin = getSupabaseAdmin();
   const results: FollowUpResult[] = [];
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dna.arkidentity.com';
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dnadiscipleship.com';
 
   try {
     // =====================================================

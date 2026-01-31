@@ -119,7 +119,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send invitation email
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dna.arkidentity.com';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dnadiscipleship.com';
     const signupUrl = `${baseUrl}/groups/signup?token=${signupToken}`;
 
     const emailResult = await sendDNALeaderInvitationEmail(

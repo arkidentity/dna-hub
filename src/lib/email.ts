@@ -234,7 +234,7 @@ export async function sendDNAManualEmail(to: string, firstName: string) {
   const manualUrl = process.env.DNA_MANUAL_URL || 'https://arkidentity.com/dna-manual.pdf';
   const assessmentUrl = process.env.NEXT_PUBLIC_APP_URL
     ? `${process.env.NEXT_PUBLIC_APP_URL}/assessment`
-    : 'https://dna.arkidentity.com/assessment';
+    : 'https://dnadiscipleship.com/assessment';
 
   const subject = 'Your DNA Manual is here';
   const html = `
@@ -872,7 +872,7 @@ export async function sendDNALeaderInvitationEmail(
       </p>
 
       <p style="color: #5A6577; font-size: 14px;">
-        Questions? Reply to this email or visit <a href="https://dna.arkidentity.com/help" style="color: #2D6A6A;">dna.arkidentity.com/help</a>
+        Questions? Reply to this email or visit <a href="https://dnadiscipleship.com/help" style="color: #2D6A6A;">dnadiscipleship.com/help</a>
       </p>
     </div>
   `;

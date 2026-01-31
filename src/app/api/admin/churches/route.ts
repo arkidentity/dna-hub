@@ -230,7 +230,7 @@ export async function PATCH(request: NextRequest) {
 
     // Send email notifications based on status change
     if (sendEmail && status && leaderData && churchData) {
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dna.arkidentity.com';
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dnadiscipleship.com';
       const portalUrl = `${baseUrl}/portal`;
       const dashboardUrl = `${baseUrl}/dashboard`;
       const firstName = leaderData.name.split(' ')[0];
@@ -308,7 +308,7 @@ async function handleBulkUpdate(supabase: any, session: any, body: any) {
     .in('church_id', churchIds)
     .eq('is_primary_contact', true);
 
-  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dna.arkidentity.com';
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dnadiscipleship.com';
   const portalUrl = `${baseUrl}/portal`;
   const dashboardUrl = `${baseUrl}/dashboard`;
 
