@@ -80,13 +80,75 @@ export async function POST(request: NextRequest) {
       .update({ status: 'awaiting_discovery' })
       .eq('id', church.id);
 
+    // Create user in unified auth system
+    const normalizedEmail = data.contact_email.toLowerCase().trim();
+
+    // Check if user already exists
+    const { data: existingUser } = await supabaseAdmin
+      .from('users')
+      .select('id')
+      .eq('email', normalizedEmail)
+      .single();
+
+    let userId: string;
+
+    if (existingUser) {
+      userId = existingUser.id;
+    } else {
+      // Create new user
+      const { data: newUser, error: userError } = await supabaseAdmin
+        .from('users')
+        .insert({
+          email: normalizedEmail,
+          name: data.your_name,
+        })
+        .select('id')
+        .single();
+
+      if (userError) {
+        console.error('User insert error:', userError);
+        // Continue without user - they can be added later
+        userId = '';
+      } else {
+        userId = newUser.id;
+      }
+    }
+
+    // Add roles for the user (church_leader + dna_leader)
+    if (userId) {
+      // Add church_leader role (ignore if already exists)
+      await supabaseAdmin.from('user_roles').upsert({
+        user_id: userId,
+        role: 'church_leader',
+        church_id: church.id,
+      }, { onConflict: 'user_id,role,church_id', ignoreDuplicates: true });
+
+      // Add dna_leader role (all church leaders are also DNA leaders)
+      await supabaseAdmin.from('user_roles').upsert({
+        user_id: userId,
+        role: 'dna_leader',
+        church_id: church.id,
+      }, { onConflict: 'user_id,role,church_id', ignoreDuplicates: true });
+
+      // Create dna_leaders record (ignore if already exists)
+      await supabaseAdmin.from('dna_leaders').upsert({
+        email: normalizedEmail,
+        name: data.your_name,
+        church_id: church.id,
+        user_id: userId,
+        is_active: true,
+        activated_at: new Date().toISOString(),
+      }, { onConflict: 'email', ignoreDuplicates: true });
+    }
+
     // Create primary leader record
     await supabaseAdmin.from('church_leaders').insert({
       church_id: church.id,
-      email: data.contact_email,
+      email: normalizedEmail,
       name: data.your_name,
       role: data.your_role || null,
       is_primary_contact: true,
+      user_id: userId || null,
     });
 
     // Send notification email to Travis (with churchId for logging)
