@@ -31,6 +31,7 @@ Files are numbered in the order they should be run:
 | 020 | `calendar-sync-improvements.sql` | Calendar sync: aliases, call types, duplicate prevention |
 | 021 | `spiritual-gifts-assessment.sql` | Spiritual Gifts Assessment system |
 | 022 | `dna-training-system.sql` | DNA Training platform (Flow Assessment, Manual, progressive unlocking) |
+| 023 | `assign-admin-roles.sql` | Assign admin roles to existing admin users |
 
 ## Running Migrations
 

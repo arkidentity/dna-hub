@@ -220,9 +220,9 @@ CREATE POLICY "Admins can view all journeys"
   ON dna_leader_journeys FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM church_leaders
-      WHERE church_leaders.user_id = auth.uid()
-      AND church_leaders.email IN ('thearkidentity@gmail.com', 'travis@arkidentity.com')
+      SELECT 1 FROM user_roles
+      WHERE user_roles.user_id = auth.uid()
+      AND user_roles.role = 'admin'
     )
   );
 
@@ -244,9 +244,9 @@ CREATE POLICY "Admins can view all modules"
   ON dna_training_modules FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM church_leaders
-      WHERE church_leaders.user_id = auth.uid()
-      AND church_leaders.email IN ('thearkidentity@gmail.com', 'travis@arkidentity.com')
+      SELECT 1 FROM user_roles
+      WHERE user_roles.user_id = auth.uid()
+      AND user_roles.role = 'admin'
     )
   );
 
@@ -268,9 +268,9 @@ CREATE POLICY "Admins can view all assessments"
   ON dna_flow_assessments FOR SELECT
   USING (
     EXISTS (
-      SELECT 1 FROM church_leaders
-      WHERE church_leaders.user_id = auth.uid()
-      AND church_leaders.email IN ('thearkidentity@gmail.com', 'travis@arkidentity.com')
+      SELECT 1 FROM user_roles
+      WHERE user_roles.user_id = auth.uid()
+      AND user_roles.role = 'admin'
     )
   );
 
