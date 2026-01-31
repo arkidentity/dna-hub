@@ -26,12 +26,19 @@ The system pulls events from your Google Calendar and matches them to churches i
 - `Assessment` → assessment call
 - `Onboarding` → onboarding call
 - `Check-In` / `Checkin` / `Check In` → checkin call
-- `DNA` → defaults to discovery call
+- `DNA Discovery` / `DNA Call` / `DNA Intro` / `DNA Meeting` → discovery call
 
 **Matching logic:**
-1. **Primary:** Match by attendee email → if any attendee's email matches a church leader
-2. **Secondary:** Match by title → if event title contains a church name
-3. **Fallback:** Unmatched events are stored for manual review
+1. **Primary (Most Reliable):** Match by attendee email → if any attendee's email matches a church leader
+2. **Secondary:** Match by church alias (e.g., "BLVD") → **ONLY if** title contains an explicit call type keyword
+3. **Tertiary:** Match by full church name → **ONLY if** title contains an explicit call type keyword
+4. **Fallback:** Unmatched events are stored for manual review
+
+**Important:** The stricter matching prevents false positives. For example:
+- ✅ "BLVD - Discovery Call" → matches BLVD Church (has explicit "Discovery")
+- ✅ "Strategy Session - BLVD Church" → matches BLVD Church (has explicit "Strategy")
+- ❌ "DNA Training - BLVD example" → NOT matched (no explicit call type, only generic "DNA")
+- ❌ "Team Meeting @ BLVD" → NOT matched (no call type keyword)
 
 ### Sync Schedule
 

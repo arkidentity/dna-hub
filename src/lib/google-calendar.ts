@@ -182,7 +182,18 @@ export function detectCallType(
   if (lower.includes('assessment')) return 'assessment';
   if (lower.includes('onboarding')) return 'onboarding';
   if (lower.includes('check-in') || lower.includes('checkin') || lower.includes('check in')) return 'checkin';
-  if (lower.includes('dna')) return 'discovery'; // Default for DNA calls
+
+  // Only match "DNA" if it's specifically "DNA Discovery", "DNA Call", or similar church-specific patterns
+  // This prevents generic DNA-related meetings from being auto-classified as discovery calls
+  if (
+    lower.includes('dna discovery') ||
+    lower.includes('dna call') ||
+    lower.includes('dna intro') ||
+    lower.includes('dna meeting')
+  ) {
+    return 'discovery';
+  }
+
   return null;
 }
 
@@ -223,21 +234,67 @@ export async function matchEventToChurch(
   }
 
   // Priority 2: Try matching by church aliases (e.g., "BLVD" → Boulevard Church)
+  // IMPORTANT: Only match if the title contains an explicit call type keyword
+  // This prevents false matches like "DNA Training - BLVD example"
   for (const church of churches) {
     const aliases = church.aliases || [];
     for (const alias of aliases) {
-      if (alias && title.includes(alias.toLowerCase())) {
-        console.log(`[GOOGLE] Matched by alias: "${alias}" → ${church.name}`);
-        return { churchId: church.id, churchName: church.name };
+      if (!alias) continue;
+
+      // Check if title contains this alias
+      if (title.includes(alias.toLowerCase())) {
+        // STRICT CHECK: Alias match only counts if the title also contains
+        // an explicit call type keyword (not just "DNA")
+        const hasExplicitCallType =
+          title.includes('discovery') ||
+          title.includes('proposal') ||
+          title.includes('agreement') ||
+          title.includes('strategy') ||
+          title.includes('kick-off') ||
+          title.includes('kickoff') ||
+          title.includes('assessment') ||
+          title.includes('onboarding') ||
+          title.includes('check-in') ||
+          title.includes('checkin');
+
+        if (hasExplicitCallType) {
+          console.log(`[GOOGLE] Matched by alias with explicit call type: "${alias}" → ${church.name}`);
+          return { churchId: church.id, churchName: church.name };
+        } else {
+          console.log(
+            `[GOOGLE] Skipping alias match for "${alias}" - no explicit call type in title: "${event.summary}"`
+          );
+        }
       }
     }
   }
 
   // Priority 3: Try matching by full church name in title
+  // IMPORTANT: Only match if the title contains an explicit call type keyword
   for (const church of churches) {
     if (title.includes(church.name.toLowerCase())) {
-      console.log(`[GOOGLE] Matched by name in title: "${church.name}"`);
-      return { churchId: church.id, churchName: church.name };
+      // STRICT CHECK: Name match only counts if the title also contains
+      // an explicit call type keyword (not just "DNA")
+      const hasExplicitCallType =
+        title.includes('discovery') ||
+        title.includes('proposal') ||
+        title.includes('agreement') ||
+        title.includes('strategy') ||
+        title.includes('kick-off') ||
+        title.includes('kickoff') ||
+        title.includes('assessment') ||
+        title.includes('onboarding') ||
+        title.includes('check-in') ||
+        title.includes('checkin');
+
+      if (hasExplicitCallType) {
+        console.log(`[GOOGLE] Matched by name with explicit call type: "${church.name}"`);
+        return { churchId: church.id, churchName: church.name };
+      } else {
+        console.log(
+          `[GOOGLE] Skipping name match for "${church.name}" - no explicit call type in title: "${event.summary}"`
+        );
+      }
     }
   }
 

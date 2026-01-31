@@ -16,9 +16,9 @@ This meant users needed **multiple logins** for different dashboards. Now they h
 
 ## ✅ What's Complete
 
-### 1. Database Migration (`025_unified-users-NUCLEAR.sql`)
+### 1. Database Migration (`025_unified-users.sql`)
 
-**Location:** `/database/025_unified-users-NUCLEAR.sql`
+**Location:** `/database/025_unified-users.sql`
 
 **What it does:**
 - Creates `users` table (unified user accounts)
@@ -157,8 +157,8 @@ See `/docs/planning/TESTING-UNIFIED-AUTH.md` for comprehensive test plan
   - Missing `church_id` column in `user_roles`
   - Orphaned user_roles records
   - Wrong order of operations
-- **Final working migration:** `025_unified-users-NUCLEAR.sql`
-  - This is the "nuclear option" that drops and recreates everything cleanly
+- **Final working migration:** `025_unified-users.sql`
+  - Drops and recreates tables cleanly to avoid orphaned data
 
 ---
 
@@ -180,7 +180,7 @@ See `/docs/planning/TESTING-UNIFIED-AUTH.md` for comprehensive test plan
 - `/src/app/api/auth/logout/route.ts` - Logout endpoint
 
 ### Database
-- `/database/025_unified-users-NUCLEAR.sql` - Final working migration
+- `/database/025_unified-users.sql` - Database migration
 - `/database/README.md` - Updated with migration 025
 
 ---
@@ -382,7 +382,7 @@ If you encounter issues or have questions:
 
 1. Check `/docs/planning/TESTING-UNIFIED-AUTH.md` for test procedures
 2. Check `/docs/planning/UNIFIED-AUTH-IMPLEMENTATION-SUMMARY.md` for detailed implementation notes
-3. Review database migration `/database/025_unified-users-NUCLEAR.sql`
+3. Review database migration `/database/025_unified-users.sql`
 4. Check build logs for TypeScript errors
 
 ---
