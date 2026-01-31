@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin, isChurchLeader } from '@/lib/unified-auth';
 
 // GET: Fetch DNA leaders and groups for a church
 export async function GET(
@@ -16,7 +16,7 @@ export async function GET(
   const admin = isAdmin(session);
 
   // Non-admins can only view their own church
-  if (!admin && session.churchId !== churchId) {
+  if (!admin && !isChurchLeader(session, churchId)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

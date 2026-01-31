@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin, isChurchLeader } from '@/lib/unified-auth';
 import { logDocumentUpload } from '@/lib/audit';
 
 // GET - Get document version history
@@ -18,7 +18,7 @@ export async function GET(
 
     // Allow both admins and church leaders to view version history
     const isAdminUser = isAdmin(session);
-    if (!isAdminUser && session.churchId !== churchId) {
+    if (!isAdminUser && !isChurchLeader(session, churchId)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -74,7 +74,7 @@ export async function POST(
 ) {
   try {
     const { id: churchId } = await params;
-    const session = await getSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -134,7 +134,7 @@ export async function PUT(
 ) {
   try {
     const { id: churchId } = await params;
-    const session = await getSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

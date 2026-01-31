@@ -3,7 +3,7 @@
 
 import { NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUnifiedSession } from '@/lib/unified-auth';
+import { getUnifiedSession, getPrimaryChurch } from '@/lib/unified-auth';
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!;
 const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!;
@@ -21,7 +21,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const churchId = session.churchId;
+    const churchId = getPrimaryChurch(session);
     if (!churchId) {
       return NextResponse.json({ error: 'No church associated with session' }, { status: 400 });
     }

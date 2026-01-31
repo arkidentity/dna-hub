@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin, getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin, getPrimaryChurch } from '@/lib/unified-auth';
 
 // POST - Upload a file attachment
 export async function POST(request: NextRequest) {
@@ -14,8 +14,8 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const churchId = session.churchId;
-    const leaderId = session.leaderId || session.userId;
+    const churchId = getPrimaryChurch(session);
+    const leaderId = session.userId;
 
     if (!churchId) {
       return NextResponse.json(
@@ -145,7 +145,7 @@ export async function DELETE(request: NextRequest) {
       );
     }
 
-    const churchId = session.churchId;
+    const churchId = getPrimaryChurch(session);
 
     if (!churchId) {
       return NextResponse.json(

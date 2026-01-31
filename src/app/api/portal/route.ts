@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession } from '@/lib/unified-auth';
+import { getUnifiedSession, getPrimaryChurch } from '@/lib/unified-auth';
 
 export async function GET() {
   try {
@@ -10,7 +10,7 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const churchId = session.churchId;
+    const churchId = getPrimaryChurch(session);
     if (!churchId) {
       return NextResponse.json({ error: 'No church associated with session' }, { status: 400 });
     }

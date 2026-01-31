@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { supabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession } from '@/lib/unified-auth';
+import { getUnifiedSession, getPrimaryChurch } from '@/lib/unified-auth';
 
 // Generate ICS file content
 function generateICS(events: Array<{
@@ -57,7 +57,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    const churchId = session.churchId;
+    const churchId = getPrimaryChurch(session);
     if (!churchId) {
       return NextResponse.json(
         { error: 'No church associated with session' },

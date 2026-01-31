@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, generateToken } from '@/lib/auth';
-import { getUnifiedSession, isAdmin as checkIsAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin as checkIsAdmin, getPrimaryChurch } from '@/lib/unified-auth';
 import { sendDNALeaderInvitationEmail } from '@/lib/email';
 
 // POST /api/dna-leaders/invite
@@ -62,8 +62,8 @@ export async function POST(request: NextRequest) {
     // Determine church affiliation
     let finalChurchId: string | null = null;
     let churchName: string | null = null;
-    let inviterName = session.name;
-    let inviterId = session.userId || session.leaderId;
+    const inviterName = session.name || 'DNA Hub Admin';
+    const inviterId = session.userId;
 
     if (isSuperAdmin) {
       // Super admin can invite to any church or as independent
@@ -87,13 +87,14 @@ export async function POST(request: NextRequest) {
       // If church_id is 'independent' or not provided, finalChurchId stays null
     } else {
       // Church admin can only invite to their own church
-      if (!session.churchId) {
+      const sessionChurchId = getPrimaryChurch(session);
+      if (!sessionChurchId) {
         return NextResponse.json(
           { error: 'Church leader must be associated with a church' },
           { status: 400 }
         );
       }
-      finalChurchId = session.churchId;
+      finalChurchId = sessionChurchId;
 
       // Get church name
       const { data: church } = await supabase
@@ -199,8 +200,9 @@ export async function GET(request: NextRequest) {
       .order('invited_at', { ascending: false });
 
     // Church admins only see their church's invitations
-    if (!isSuperAdmin && session.churchId) {
-      query = query.eq('church_id', session.churchId);
+    const sessionChurchId = getPrimaryChurch(session);
+    if (!isSuperAdmin && sessionChurchId) {
+      query = query.eq('church_id', sessionChurchId);
     }
 
     const { data, error } = await query;
