@@ -7,7 +7,7 @@
 | What | Where |
 |------|-------|
 | **Stack** | Next.js 16 + React 19 + TypeScript + Supabase + Tailwind 4 |
-| **Auth** | Magic link email (no passwords) via `/src/lib/auth.ts` |
+| **Auth** | Unified auth via `/src/lib/unified-auth.ts` (magic link, role-based) |
 | **Database** | Supabase (PostgreSQL) - migrations in `/database/` |
 | **API Routes** | `/src/app/api/` |
 | **Types** | `/src/lib/types.ts` |
@@ -15,22 +15,28 @@
 
 ## Project Purpose
 
-DNA Hub manages the **DNA Discipleship Framework** implementation at churches. It has two main systems:
+DNA Hub manages the **DNA Discipleship Framework** implementation at churches. It has three main systems:
 
-**Roadmap 1: Church Implementation Dashboard** (existing)
+**Roadmap 1: Church Implementation Dashboard** (`/dashboard`)
 - Tracks churches through a 5-phase onboarding process with ~35 milestones
 - Users: Church Leaders, Admins
 
-**Roadmap 2: DNA Groups Dashboard** (new - `/groups`)
+**Roadmap 2: DNA Groups Dashboard** (`/groups`)
 - DNA Leaders manage discipleship groups and disciples
-- Separate auth system (`dna_leader_session` cookie)
 - Church leaders can view their church's groups (read-only)
 
-**User Types:**
-- **Church Leaders** - Track their church's implementation progress, invite DNA leaders, view DNA groups
-- **DNA Leaders** - Manage discipleship groups and disciples (separate dashboard at `/groups`)
+**Roadmap 3: DNA Training** (`/training`)
+- Flow Assessment, DNA Manual, Launch Guide
+- Progressive content unlocking based on completion
+
+**User Types & Roles:**
+- **Church Leaders** (`church_leader`) - Track church implementation, invite DNA leaders, view DNA groups
+- **DNA Leaders** (`dna_leader`) - Manage discipleship groups and disciples
+- **Training Participants** (`training_participant`) - Access DNA training content
+- **Admins** (`admin`) - Full access to everything
 - **Disciples** - Group participants (no login, token-based assessment links)
-- **Admins** - Manage all churches, all DNA leaders, full access to everything
+
+> Users can have multiple roles and access multiple dashboards with one login.
 
 ## Key Concepts
 
@@ -51,35 +57,26 @@ awaiting_agreement → awaiting_strategy → active → completed
 ## File Locations
 
 ### Core Logic
-- **Auth helpers**: `/src/lib/auth.ts` - `getSession()`, `isAdmin()`
+- **Unified Auth**: `/src/lib/unified-auth.ts` - `getUnifiedSession()`, `hasRole()`, `isAdmin()`
 - **Email sending**: `/src/lib/email.ts` - All email templates
 - **Types**: `/src/lib/types.ts` - TypeScript interfaces
 - **Supabase client**: `/src/lib/supabase.ts`
 
 ### Key Pages
 - **Landing**: `/src/app/page.tsx`
-- **Assessment form**: `/src/app/assessment/page.tsx`
 - **Login**: `/src/app/login/page.tsx`
-- **Dashboard**: `/src/app/dashboard/page.tsx` (has Overview, DNA Journey, DNA Groups tabs)
+- **Dashboard**: `/src/app/dashboard/page.tsx` (Church leaders)
+- **Groups**: `/src/app/groups/page.tsx` (DNA leaders)
+- **Training**: `/src/app/training/page.tsx` (Training participants)
 - **Admin**: `/src/app/admin/page.tsx`
-- **Admin Church View**: `/src/app/admin/church/[id]/page.tsx` (has Overview, DNA Journey, DNA Groups tabs)
-
-### DNA Groups Pages (Roadmap 2)
-- **DNA Leader Dashboard**: `/src/app/groups/page.tsx`
-- **Create Group**: `/src/app/groups/new/page.tsx`
-- **Group Detail**: `/src/app/groups/[id]/page.tsx`
-- **DNA Leader Signup**: `/src/app/groups/signup/page.tsx`
+- **Unauthorized**: `/src/app/unauthorized/page.tsx`
 
 ### API Routes
 - **Auth**: `/api/auth/magic-link`, `/api/auth/verify`, `/api/auth/logout`
-- **Data**: `/api/dashboard`, `/api/progress`, `/api/assessment`
+- **Dashboard**: `/api/dashboard`, `/api/progress`
 - **Admin**: `/api/admin/churches`, `/api/admin/church/[id]`
-
-### DNA Groups API Routes
-- **DNA Leaders**: `/api/dna-leaders/invite`, `/api/dna-leaders/verify-token`, `/api/dna-leaders/activate`
-- **Groups**: `/api/groups`, `/api/groups/[id]`, `/api/groups/[id]/disciples`, `/api/groups/dashboard`
-- **Church DNA Data**: `/api/churches/[churchId]/dna-groups`
-- **DNA Leader Auth**: `/api/auth/verify-dna-leader`, `/api/auth/logout-dna-leader`
+- **Groups**: `/api/groups`, `/api/groups/[id]`, `/api/groups/dashboard`
+- **Training**: `/api/training/dashboard`, `/api/training/assessment/*`
 
 ## Coding Conventions
 
@@ -106,18 +103,25 @@ return NextResponse.json({ data: result })
 return NextResponse.json({ error: 'Message' }, { status: 400 })
 ```
 
-### Auth Check Pattern
+### Auth Check Pattern (Unified Auth)
 ```typescript
-// Church leader auth
-const session = await getSession()
+import { getUnifiedSession, hasRole, isAdmin } from '@/lib/unified-auth'
+
+// Basic auth check
+const session = await getUnifiedSession()
 if (!session) {
   return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
 }
 
-// DNA leader auth
-const dnaSession = await getDNALeaderSession()
-if (!dnaSession) {
-  return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+// Role-based access
+if (!hasRole(session, 'church_leader') && !isAdmin(session)) {
+  return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+}
+
+// Training access
+import { isTrainingParticipant } from '@/lib/unified-auth'
+if (!isTrainingParticipant(session) && !isAdmin(session)) {
+  return NextResponse.json({ error: 'Not a training participant' }, { status: 403 })
 }
 ```
 
@@ -136,8 +140,9 @@ RESEND_API_KEY=
 ### Add a new API endpoint
 1. Create file in `/src/app/api/[route]/route.ts`
 2. Export async functions: `GET`, `POST`, `PUT`, `DELETE`
-3. Use `getSession()` for auth
-4. Return `NextResponse.json()`
+3. Use `getUnifiedSession()` for auth
+4. Check role with `hasRole(session, 'role_name')`
+5. Return `NextResponse.json()`
 
 ### Add a new page
 1. Create `/src/app/[route]/page.tsx`
@@ -163,23 +168,45 @@ npm run lint     # Run ESLint
 ## Documentation
 
 See `/docs/` for:
-- Architecture details: `technical/ARCHITECTURE.md`
+- Architecture: `technical/ARCHITECTURE.md`
 - File map: `technical/CODEBASE_MAP.md`
 - Conventions: `technical/CONVENTIONS.md`
 - Data models: `technical/DATA_MODELS.md`
-- Integrations: `integrations/FIREFLIES.md`, `integrations/GOOGLE_CALENDAR.md`
-- Business docs: `business/DNA-IMPLEMENTATION-ROADMAP.md`, etc.
-- **DNA Groups Plan**: `planning/DNA-GROUPS-PLAN.md` - Complete implementation plan for Roadmap 2
+- Planning: `planning/NEXT-STEPS.md`
 
-## DNA Groups Database Tables (Migration: `019_dna-groups.sql`)
+## Key Database Tables
+
+### Unified Auth (Migrations 025 & 026)
 
 | Table | Purpose |
 |-------|---------|
-| `dna_leaders` | DNA group leaders (separate from church_leaders) |
+| `users` | Unified user accounts (one per email) |
+| `user_roles` | Role assignments (church_leader, dna_leader, training_participant, admin) |
+| `magic_link_tokens` | Auth tokens for email verification |
+
+### Training (Migration 026)
+
+| Table | Purpose |
+|-------|---------|
+| `user_training_progress` | Journey stage and milestones |
+| `user_content_unlocks` | Progressive content unlocking |
+| `user_flow_assessments` | Flow Assessment responses |
+
+### DNA Groups (Migration 019)
+
+| Table | Purpose |
+|-------|---------|
+| `dna_leaders` | DNA group leaders (linked to users via user_id) |
 | `dna_groups` | Discipleship groups with 5 phases |
 | `disciples` | Group participants (no login) |
 | `group_disciples` | Join table for group membership |
 | `life_assessments` | Week 1/8 assessment responses |
-| `leader_notes` | Private leader notes on disciples |
-| `prayer_requests` | Prayer tracking per disciple |
-| `leader_health_checkins` | 6-month leader health assessments |
+
+### Church Implementation
+
+| Table | Purpose |
+|-------|---------|
+| `churches` | Church records |
+| `church_leaders` | Church leader accounts (linked to users via user_id) |
+| `church_progress` | Milestone completion tracking |
+| `milestones` | Phase milestones definitions |

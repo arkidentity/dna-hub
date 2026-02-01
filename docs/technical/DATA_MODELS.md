@@ -53,6 +53,36 @@
                           │ Junction table   │
                           └──────────────────┘
 
+UNIFIED AUTHENTICATION SYSTEM (Migrations 025-026)
+===================================================
+
+┌─────────────────┐       ┌──────────────────┐
+│      users      │──1:N──│   user_roles     │
+│                 │       │                  │
+│ Unified user    │       │ Role assignments │
+│ accounts        │       │ per user         │
+└────────┬────────┘       └──────────────────┘
+         │
+         │ 1:N
+         ├─────────────────────────────────────────────────┐
+         │                         │                       │
+         ▼                         ▼                       ▼
+┌──────────────────┐    ┌─────────────────────┐    ┌──────────────────┐
+│magic_link_tokens │    │user_training_progress│   │user_content_unlocks│
+│                  │    │                     │    │                  │
+│ Auth tokens      │    │ Training journey    │    │ Progressive      │
+│                  │    │ milestones          │    │ content unlocking│
+└──────────────────┘    └─────────────────────┘    └──────────────────┘
+                                  │
+                                  │ 1:N
+                                  ▼
+                        ┌─────────────────────┐
+                        │user_flow_assessments│
+                        │                     │
+                        │ Flow Assessment     │
+                        │ responses           │
+                        └─────────────────────┘
+
 DNA GROUPS SYSTEM (Roadmap 2)
 =============================
 
@@ -266,16 +296,18 @@ Intake form submissions from potential churches.
 
 ### magic_link_tokens
 
-Authentication tokens for passwordless login.
+Authentication tokens for passwordless login (unified auth system).
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | uuid | Primary key |
-| `leader_id` | uuid | FK → church_leaders.id |
-| `token` | text | Secure random string |
-| `expires_at` | timestamptz | 7 days from creation |
+| `email` | text | User email (links to users.email) |
+| `token` | text | Secure random string (32 bytes hex) |
+| `expires_at` | timestamptz | 24 hours from creation |
 | `used` | boolean | Single-use flag |
 | `created_at` | timestamptz | Record creation |
+
+**Note:** Previously linked to `church_leaders.id`, now uses email to work with the unified `users` table.
 
 ---
 
@@ -611,4 +643,152 @@ CREATE INDEX idx_life_assessments_disciple_id ON life_assessments(disciple_id);
 CREATE INDEX idx_leader_notes_group_id ON leader_notes(group_id);
 CREATE INDEX idx_prayer_requests_group_id ON prayer_requests(group_id);
 CREATE INDEX idx_leader_health_checkins_leader_id ON leader_health_checkins(leader_id);
+```
+
+---
+
+## Unified Authentication Tables (Migrations 025-026)
+
+> Migration files: `database/025_unified-auth.sql`, `database/026_training-auth-unification.sql`
+
+The unified auth system replaces separate authentication for church leaders, DNA leaders, and training participants with a single user account per email.
+
+### users
+
+Central user accounts - one per email address across all roles.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `email` | text | Email (unique) |
+| `name` | text | Full name |
+| `created_at` | timestamptz | Record creation |
+| `updated_at` | timestamptz | Last modification |
+
+---
+
+### user_roles
+
+Role assignments linking users to their permissions. A user can have multiple roles.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | FK → users.id |
+| `role` | text | Role type (see enum below) |
+| `church_id` | uuid | FK → churches.id (for church-scoped roles) |
+| `created_at` | timestamptz | Record creation |
+
+**Role Enum:**
+```
+church_leader         → Church implementation dashboard access
+dna_leader            → DNA Groups dashboard access
+training_participant  → DNA Training platform access
+admin                 → Full system access
+```
+
+**Constraints:**
+- Unique on (`user_id`, `role`, `church_id`)
+- `church_id` is optional - NULL for training_participant and admin roles
+
+---
+
+### user_training_progress
+
+Training journey progress for training participants.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | FK → users.id (unique) |
+| `current_stage` | text | Current training stage |
+| `milestones` | jsonb | Completed milestone data |
+| `created_at` | timestamptz | Record creation |
+| `updated_at` | timestamptz | Last modification |
+
+**Stage Values:**
+```
+onboarding     → Initial stage after signup
+flow_assessment → Flow Assessment phase
+dna_manual     → DNA Manual content
+launch_guide   → Launch Guide content
+toolkit        → 90-Day Toolkit
+completed      → All training complete
+```
+
+---
+
+### user_content_unlocks
+
+Progressive content unlocking for training participants.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | FK → users.id |
+| `content_type` | text | Content item type |
+| `unlocked` | boolean | Is content accessible? |
+| `unlocked_at` | timestamptz | When unlocked |
+| `unlock_trigger` | text | What triggered unlock |
+| `created_at` | timestamptz | Record creation |
+
+**Content Types:**
+```
+flow_assessment   → Flow Assessment (unlocked at signup)
+dna_manual        → DNA Manual (6 sessions)
+launch_guide      → Launch Guide (5 phases)
+toolkit_90day     → 90-Day Toolkit
+```
+
+**Constraints:** Unique on (`user_id`, `content_type`)
+
+---
+
+### user_flow_assessments
+
+Flow Assessment responses and results.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `user_id` | uuid | FK → users.id |
+| `status` | text | 'in_progress' or 'completed' |
+| `current_step` | integer | Current question step |
+| `roadblock_ratings` | jsonb | Ratings for each roadblock |
+| `reflections` | jsonb | Reflection answers |
+| `top_roadblocks` | text[] | Top 3 selected roadblocks |
+| `action_plan` | text | User's action plan |
+| `accountability_partner` | text | Accountability partner name |
+| `accountability_date` | date | Check-in date |
+| `started_at` | timestamptz | When started |
+| `completed_at` | timestamptz | When completed |
+| `previous_assessment_id` | uuid | FK → self (for re-assessments) |
+| `created_at` | timestamptz | Record creation |
+| `updated_at` | timestamptz | Last modification |
+
+---
+
+## Unified Auth Indexes
+
+```sql
+CREATE UNIQUE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_user_roles_user_id ON user_roles(user_id);
+CREATE INDEX idx_user_roles_church_id ON user_roles(church_id);
+CREATE UNIQUE INDEX idx_user_training_progress_user_id ON user_training_progress(user_id);
+CREATE INDEX idx_user_content_unlocks_user_id ON user_content_unlocks(user_id);
+CREATE INDEX idx_user_flow_assessments_user_id ON user_flow_assessments(user_id);
+```
+
+---
+
+## Unified Auth Helper Functions
+
+### initialize_training_user(UUID)
+
+Creates initial training data for a new training participant:
+- Creates `user_training_progress` record with 'onboarding' stage
+- Creates `user_content_unlocks` record unlocking Flow Assessment
+
+```sql
+SELECT initialize_training_user('user-uuid-here');
 ```
