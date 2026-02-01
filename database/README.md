@@ -35,6 +35,8 @@ Files are numbered in the order they should be run:
 | 024 | `training-magic-links.sql` | Magic link authentication for training participants |
 | 025 | `unified-users.sql` | Unified user authentication system with role-based access |
 | 026 | `training-auth-unification.sql` | Migrate training data to unified auth system |
+| 027 | `training-manual-features.sql` | Session notes, bookmarks, and certificates for DNA Manual |
+| 028 | `launch-guide-support.sql` | Launch Guide metadata support (checklist progress, phase completion) |
 
 ## Running Migrations
 
