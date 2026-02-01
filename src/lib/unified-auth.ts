@@ -182,3 +182,222 @@ export function getDNALeaderChurches(session: UserSession | null): string[] {
     .filter(r => r.role === 'dna_leader' && r.churchId !== null)
     .map(r => r.churchId as string)
 }
+
+// ============================================================================
+// TRAINING HELPERS
+// ============================================================================
+
+export interface TrainingProgress {
+  currentStage: string
+  milestones: Record<string, { completed: boolean; completed_at?: string }>
+}
+
+export interface ContentUnlocks {
+  flow_assessment: boolean
+  manual_session_1: boolean
+  manual_session_2: boolean
+  manual_session_3: boolean
+  manual_session_4: boolean
+  manual_session_5: boolean
+  manual_session_6: boolean
+  launch_guide: boolean
+  toolkit_90day: boolean
+  [key: string]: boolean
+}
+
+export interface FlowAssessment {
+  id: string
+  roadblockRatings: Record<string, number>
+  reflections: Record<string, Record<string, string>>
+  topRoadblocks: string[]
+  actionPlan: Record<string, { actions: string[]; deadline: string }>
+  accountabilityPartner: string | null
+  accountabilityDate: string | null
+  status: 'draft' | 'completed'
+  completedAt: string | null
+  canRetake: boolean
+  daysUntilRetake: number | null
+}
+
+/**
+ * Get training progress for a user
+ * @param userId - The user ID
+ * @returns Training progress or null
+ */
+export async function getTrainingProgress(userId: string): Promise<TrainingProgress | null> {
+  const { data, error } = await supabase
+    .from('user_training_progress')
+    .select('current_stage, milestones')
+    .eq('user_id', userId)
+    .single()
+
+  if (error || !data) return null
+
+  return {
+    currentStage: data.current_stage,
+    milestones: data.milestones || {}
+  }
+}
+
+/**
+ * Get content unlocks for a user
+ * @param userId - The user ID
+ * @returns Object with content unlock status
+ */
+export async function getContentUnlocks(userId: string): Promise<ContentUnlocks> {
+  const { data } = await supabase
+    .from('user_content_unlocks')
+    .select('content_type, unlocked')
+    .eq('user_id', userId)
+
+  const unlocks: ContentUnlocks = {
+    flow_assessment: false,
+    manual_session_1: false,
+    manual_session_2: false,
+    manual_session_3: false,
+    manual_session_4: false,
+    manual_session_5: false,
+    manual_session_6: false,
+    launch_guide: false,
+    toolkit_90day: false
+  }
+
+  data?.forEach(item => {
+    unlocks[item.content_type] = item.unlocked
+  })
+
+  return unlocks
+}
+
+/**
+ * Get flow assessment for a user
+ * @param userId - The user ID
+ * @returns Flow assessment or null
+ */
+export async function getFlowAssessment(userId: string): Promise<FlowAssessment | null> {
+  const { data, error } = await supabase
+    .from('user_flow_assessments')
+    .select('*')
+    .eq('user_id', userId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single()
+
+  if (error || !data) return null
+
+  // Calculate if user can retake (3 months since last completion)
+  let canRetake = false
+  let daysUntilRetake: number | null = null
+
+  if (data.completed_at) {
+    const completedDate = new Date(data.completed_at)
+    const retakeDate = new Date(completedDate)
+    retakeDate.setMonth(retakeDate.getMonth() + 3)
+    const now = new Date()
+
+    if (now >= retakeDate) {
+      canRetake = true
+    } else {
+      daysUntilRetake = Math.ceil((retakeDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+    }
+  }
+
+  return {
+    id: data.id,
+    roadblockRatings: data.roadblock_ratings || {},
+    reflections: data.reflections || {},
+    topRoadblocks: data.top_roadblocks || [],
+    actionPlan: data.action_plan || {},
+    accountabilityPartner: data.accountability_partner,
+    accountabilityDate: data.accountability_date,
+    status: data.status,
+    completedAt: data.completed_at,
+    canRetake,
+    daysUntilRetake
+  }
+}
+
+/**
+ * Initialize training data for a new user
+ * @param userId - The user ID
+ */
+export async function initializeTrainingUser(userId: string): Promise<void> {
+  // Create training progress record
+  await supabase
+    .from('user_training_progress')
+    .upsert({
+      user_id: userId,
+      current_stage: 'onboarding',
+      milestones: {}
+    }, { onConflict: 'user_id' })
+
+  // Unlock flow assessment (first step)
+  await supabase
+    .from('user_content_unlocks')
+    .upsert({
+      user_id: userId,
+      content_type: 'flow_assessment',
+      unlocked: true,
+      unlocked_at: new Date().toISOString(),
+      unlock_trigger: 'signup'
+    }, { onConflict: 'user_id,content_type' })
+}
+
+/**
+ * Update a milestone in user's training progress
+ * @param userId - The user ID
+ * @param milestone - The milestone key
+ * @param completed - Whether the milestone is completed
+ */
+export async function updateTrainingMilestone(
+  userId: string,
+  milestone: string,
+  completed: boolean
+): Promise<void> {
+  // Get current milestones
+  const { data: progress } = await supabase
+    .from('user_training_progress')
+    .select('milestones')
+    .eq('user_id', userId)
+    .single()
+
+  if (!progress) return
+
+  const updatedMilestones = {
+    ...progress.milestones,
+    [milestone]: {
+      completed,
+      ...(completed ? { completed_at: new Date().toISOString() } : {})
+    }
+  }
+
+  await supabase
+    .from('user_training_progress')
+    .update({
+      milestones: updatedMilestones,
+      updated_at: new Date().toISOString()
+    })
+    .eq('user_id', userId)
+}
+
+/**
+ * Unlock content for a user
+ * @param userId - The user ID
+ * @param contentType - The content type to unlock
+ * @param trigger - What triggered the unlock
+ */
+export async function unlockContent(
+  userId: string,
+  contentType: string,
+  trigger: string
+): Promise<void> {
+  await supabase
+    .from('user_content_unlocks')
+    .upsert({
+      user_id: userId,
+      content_type: contentType,
+      unlocked: true,
+      unlocked_at: new Date().toISOString(),
+      unlock_trigger: trigger
+    }, { onConflict: 'user_id,content_type' })
+}

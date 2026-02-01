@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createMagicLink, getTrainingUserByEmail } from '@/lib/training-auth';
+import { supabase } from '@/lib/supabase';
 import { sendTrainingLoginEmail } from '@/lib/email';
+import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
@@ -17,8 +18,12 @@ export async function POST(request: NextRequest) {
 
     const trimmedEmail = email.trim().toLowerCase();
 
-    // Check if user exists
-    const user = await getTrainingUserByEmail(trimmedEmail);
+    // Check if user exists in unified users table
+    const { data: user } = await supabase
+      .from('users')
+      .select('id, name')
+      .eq('email', trimmedEmail)
+      .single();
 
     if (!user) {
       // Don't reveal if user exists - return success anyway
@@ -29,20 +34,31 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Create magic link
-    const magicLinkResult = await createMagicLink(trimmedEmail);
+    // Create magic link token using unified system
+    const token = crypto.randomBytes(32).toString('hex');
+    const expiresAt = new Date();
+    expiresAt.setHours(expiresAt.getHours() + 24);
 
-    if (!magicLinkResult.success || !magicLinkResult.token) {
-      console.error('[Training Login] Failed to create magic link');
+    const { error: tokenError } = await supabase
+      .from('magic_link_tokens')
+      .insert({
+        email: trimmedEmail,
+        token,
+        expires_at: expiresAt.toISOString(),
+        used: false
+      });
+
+    if (tokenError) {
+      console.error('[Training Login] Failed to create magic link:', tokenError);
       return NextResponse.json(
         { error: 'Failed to send login link. Please try again.' },
         { status: 500 }
       );
     }
 
-    // Build login URL
+    // Build login URL (unified verify endpoint with training destination)
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-    const loginLink = `${baseUrl}/api/training/verify?token=${magicLinkResult.token}`;
+    const loginLink = `${baseUrl}/api/auth/verify?token=${token}&destination=training`;
 
     // Send login email
     const emailResult = await sendTrainingLoginEmail(

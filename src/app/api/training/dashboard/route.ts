@@ -1,10 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getTrainingSession, getContentUnlocks, getSupabaseAdmin } from '@/lib/training-auth';
+import {
+  getUnifiedSession,
+  isTrainingParticipant,
+  isAdmin,
+  getTrainingProgress,
+  getContentUnlocks,
+  getFlowAssessment
+} from '@/lib/unified-auth';
 
 export async function GET() {
   try {
     // Get current session
-    const session = await getTrainingSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json(
@@ -13,57 +20,30 @@ export async function GET() {
       );
     }
 
-    const { user } = session;
-    const supabase = getSupabaseAdmin();
-
-    // Get content unlocks
-    const unlocks = await getContentUnlocks(user.id);
-
-    // Get flow assessment status
-    const { data: assessments } = await supabase
-      .from('dna_flow_assessments')
-      .select('id, completed_at, is_draft, created_at')
-      .eq('user_id', user.id)
-      .order('created_at', { ascending: false })
-      .limit(1);
-
-    let flowAssessment = null;
-    if (assessments && assessments.length > 0) {
-      const latest = assessments[0];
-      const completed = !latest.is_draft && !!latest.completed_at;
-      let canRetake = false;
-      let daysUntilRetake = null;
-
-      if (completed && latest.completed_at) {
-        const completedDate = new Date(latest.completed_at);
-        const threeMonthsLater = new Date(completedDate);
-        threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
-
-        const now = new Date();
-        canRetake = now >= threeMonthsLater;
-
-        if (!canRetake) {
-          const diffTime = threeMonthsLater.getTime() - now.getTime();
-          daysUntilRetake = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-        }
-      }
-
-      flowAssessment = {
-        exists: true,
-        completed,
-        completedAt: latest.completed_at,
-        canRetake,
-        daysUntilRetake
-      };
+    // Check if user has training access
+    if (!isTrainingParticipant(session) && !isAdmin(session)) {
+      return NextResponse.json(
+        { error: 'Not a training participant' },
+        { status: 403 }
+      );
     }
 
+    // Get training progress
+    const progress = await getTrainingProgress(session.userId);
+
+    // Get content unlocks
+    const unlocks = await getContentUnlocks(session.userId);
+
+    // Get flow assessment status
+    const flowAssessment = await getFlowAssessment(session.userId);
+
     return NextResponse.json({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      journey: user.journey || {
-        current_stage: 'onboarding',
-        milestones: {
+      id: session.userId,
+      name: session.name,
+      email: session.email,
+      journey: {
+        current_stage: progress?.currentStage || 'onboarding',
+        milestones: progress?.milestones || {
           flow_assessment_complete: { completed: false },
           manual_complete: { completed: false },
           launch_guide_reviewed: { completed: false },
@@ -81,7 +61,13 @@ export async function GET() {
         launch_guide: unlocks.launch_guide || false,
         toolkit_90day: unlocks.toolkit_90day || false
       },
-      flowAssessment
+      flowAssessment: flowAssessment ? {
+        exists: true,
+        completed: flowAssessment.status === 'completed',
+        completedAt: flowAssessment.completedAt,
+        canRetake: flowAssessment.canRetake,
+        daysUntilRetake: flowAssessment.daysUntilRetake
+      } : null
     });
 
   } catch (error) {

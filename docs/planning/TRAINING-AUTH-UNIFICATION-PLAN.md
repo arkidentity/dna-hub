@@ -1,6 +1,12 @@
 # Training Auth Unification Plan
 
-## Current State: Two Separate Auth Systems
+## Status: ✅ Implementation Complete
+
+The training auth system has been unified with the main auth system. Run migration `026_training-auth-unification.sql` in Supabase to complete the migration.
+
+---
+
+## Current State: Two Separate Auth Systems (Before Migration)
 
 ### 1. Unified Auth (`/src/lib/unified-auth.ts`)
 Used by: Church dashboard, DNA groups, Admin

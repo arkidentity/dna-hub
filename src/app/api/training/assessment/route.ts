@@ -1,38 +1,53 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTrainingSession, getSupabaseAdmin, updateMilestone, unlockContent } from '@/lib/training-auth';
+import { getUnifiedSession, isTrainingParticipant, isAdmin } from '@/lib/unified-auth';
+import { supabase } from '@/lib/supabase';
 
 // GET: Load existing draft or check for completed assessment
 export async function GET() {
   try {
-    const session = await getTrainingSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabase = getSupabaseAdmin();
-    const userId = session.user.id;
+    if (!isTrainingParticipant(session) && !isAdmin(session)) {
+      return NextResponse.json({ error: 'Not a training participant' }, { status: 403 });
+    }
+
+    const userId = session.userId;
 
     // Check for existing draft first
     const { data: draft } = await supabase
-      .from('dna_flow_assessments')
+      .from('user_flow_assessments')
       .select('*')
       .eq('user_id', userId)
-      .eq('is_draft', true)
+      .eq('status', 'draft')
       .order('created_at', { ascending: false })
       .limit(1)
       .single();
 
     if (draft) {
-      return NextResponse.json({ assessment: draft });
+      return NextResponse.json({
+        assessment: {
+          id: draft.id,
+          roadblock_ratings: draft.roadblock_ratings,
+          reflections: draft.reflections,
+          top_roadblocks: draft.top_roadblocks,
+          action_plan: draft.action_plan,
+          accountability_partner: draft.accountability_partner,
+          accountability_date: draft.accountability_date,
+          is_draft: true
+        }
+      });
     }
 
     // Check for completed assessment (for retake check)
     const { data: completed } = await supabase
-      .from('dna_flow_assessments')
+      .from('user_flow_assessments')
       .select('*')
       .eq('user_id', userId)
-      .eq('is_draft', false)
+      .eq('status', 'completed')
       .order('completed_at', { ascending: false })
       .limit(1)
       .single();
@@ -47,19 +62,23 @@ export async function GET() {
         // Cannot retake yet
         return NextResponse.json({
           canRetake: false,
-          previousAssessment: completed,
+          previousAssessment: {
+            id: completed.id,
+            roadblock_ratings: completed.roadblock_ratings,
+            completed_at: completed.completed_at
+          },
           retakeAvailableAt: threeMonthsLater.toISOString()
         });
       }
 
       // Can retake - create new draft with previous assessment ID
       const { data: newDraft, error: createError } = await supabase
-        .from('dna_flow_assessments')
+        .from('user_flow_assessments')
         .insert({
           user_id: userId,
           roadblock_ratings: {},
           reflections: {},
-          is_draft: true,
+          status: 'draft',
           previous_assessment_id: completed.id
         })
         .select()
@@ -71,19 +90,28 @@ export async function GET() {
       }
 
       return NextResponse.json({
-        assessment: newDraft,
-        previousAssessment: completed
+        assessment: {
+          id: newDraft.id,
+          roadblock_ratings: newDraft.roadblock_ratings,
+          reflections: newDraft.reflections,
+          is_draft: true
+        },
+        previousAssessment: {
+          id: completed.id,
+          roadblock_ratings: completed.roadblock_ratings,
+          completed_at: completed.completed_at
+        }
       });
     }
 
     // No existing assessment - create new draft
     const { data: newDraft, error: createError } = await supabase
-      .from('dna_flow_assessments')
+      .from('user_flow_assessments')
       .insert({
         user_id: userId,
         roadblock_ratings: {},
         reflections: {},
-        is_draft: true
+        status: 'draft'
       })
       .select()
       .single();
@@ -93,7 +121,14 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to start assessment' }, { status: 500 });
     }
 
-    return NextResponse.json({ assessment: newDraft });
+    return NextResponse.json({
+      assessment: {
+        id: newDraft.id,
+        roadblock_ratings: newDraft.roadblock_ratings,
+        reflections: newDraft.reflections,
+        is_draft: true
+      }
+    });
 
   } catch (error) {
     console.error('[Assessment API] GET Error:', error);
@@ -104,10 +139,14 @@ export async function GET() {
 // PUT: Save progress (auto-save draft)
 export async function PUT(request: NextRequest) {
   try {
-    const session = await getTrainingSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!isTrainingParticipant(session) && !isAdmin(session)) {
+      return NextResponse.json({ error: 'Not a training participant' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -117,12 +156,11 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Assessment ID required' }, { status: 400 });
     }
 
-    const supabase = getSupabaseAdmin();
-    const userId = session.user.id;
+    const userId = session.userId;
 
     // Verify ownership
     const { data: existing } = await supabase
-      .from('dna_flow_assessments')
+      .from('user_flow_assessments')
       .select('id, user_id')
       .eq('id', assessmentId)
       .single();
@@ -133,7 +171,7 @@ export async function PUT(request: NextRequest) {
 
     // Update draft
     const { error: updateError } = await supabase
-      .from('dna_flow_assessments')
+      .from('user_flow_assessments')
       .update({
         roadblock_ratings: data.roadblock_ratings,
         reflections: data.reflections,

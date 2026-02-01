@@ -1,24 +1,28 @@
 import { NextResponse } from 'next/server';
-import { getTrainingSession, getSupabaseAdmin } from '@/lib/training-auth';
+import { getUnifiedSession, isTrainingParticipant, isAdmin } from '@/lib/unified-auth';
+import { supabase } from '@/lib/supabase';
 
 // GET: Load completed assessment results
 export async function GET() {
   try {
-    const session = await getTrainingSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const supabase = getSupabaseAdmin();
-    const userId = session.user.id;
+    if (!isTrainingParticipant(session) && !isAdmin(session)) {
+      return NextResponse.json({ error: 'Not a training participant' }, { status: 403 });
+    }
+
+    const userId = session.userId;
 
     // Get latest completed assessment
     const { data: assessment } = await supabase
-      .from('dna_flow_assessments')
+      .from('user_flow_assessments')
       .select('*')
       .eq('user_id', userId)
-      .eq('is_draft', false)
+      .eq('status', 'completed')
       .order('completed_at', { ascending: false })
       .limit(1)
       .single();
@@ -31,7 +35,7 @@ export async function GET() {
     let previousAssessment = null;
     if (assessment.previous_assessment_id) {
       const { data: prev } = await supabase
-        .from('dna_flow_assessments')
+        .from('user_flow_assessments')
         .select('id, roadblock_ratings, completed_at')
         .eq('id', assessment.previous_assessment_id)
         .single();
@@ -40,7 +44,17 @@ export async function GET() {
     }
 
     return NextResponse.json({
-      assessment,
+      assessment: {
+        id: assessment.id,
+        roadblock_ratings: assessment.roadblock_ratings,
+        reflections: assessment.reflections,
+        top_roadblocks: assessment.top_roadblocks,
+        action_plan: assessment.action_plan,
+        accountability_partner: assessment.accountability_partner,
+        accountability_date: assessment.accountability_date,
+        completed_at: assessment.completed_at,
+        previous_assessment_id: assessment.previous_assessment_id
+      },
       previousAssessment
     });
 

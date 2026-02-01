@@ -34,6 +34,7 @@ Files are numbered in the order they should be run:
 | 023 | `assign-admin-roles.sql` | Assign admin roles to existing admin users |
 | 024 | `training-magic-links.sql` | Magic link authentication for training participants |
 | 025 | `unified-users.sql` | Unified user authentication system with role-based access |
+| 026 | `training-auth-unification.sql` | Migrate training data to unified auth system |
 
 ## Running Migrations
 

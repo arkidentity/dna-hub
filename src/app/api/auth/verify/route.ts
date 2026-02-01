@@ -4,6 +4,7 @@ import { cookies } from 'next/headers';
 
 export async function GET(request: NextRequest) {
   const token = request.nextUrl.searchParams.get('token');
+  const destination = request.nextUrl.searchParams.get('destination'); // Optional: 'training', 'groups', 'dashboard'
 
   if (!token) {
     return NextResponse.redirect(new URL('/login?error=invalid', request.url));
@@ -45,6 +46,7 @@ export async function GET(request: NextRequest) {
   cookieStore.delete('church_leader_session');
   cookieStore.delete('dna_leader_session');
   cookieStore.delete('training_session');
+  cookieStore.delete('dna_training_session'); // Old training auth cookie
 
   // Set new unified session cookie
   cookieStore.set('user_session', token, {
@@ -68,10 +70,22 @@ export async function GET(request: NextRequest) {
     .eq('email', tokenData.email)
     .single();
 
-  // Determine redirect based on roles (priority: church_leader > dna_leader > training_participant)
+  // Determine redirect based on destination param or roles
   let redirectTo = '/dashboard'; // default
 
-  if (user && user.user_roles) {
+  // If a specific destination was requested, use it (if user has access)
+  if (destination) {
+    const validDestinations: Record<string, string> = {
+      'training': '/training',
+      'groups': '/groups',
+      'dashboard': '/dashboard',
+      'admin': '/admin'
+    };
+    if (validDestinations[destination]) {
+      redirectTo = validDestinations[destination];
+    }
+  } else if (user && user.user_roles) {
+    // Default: determine based on roles (priority: church_leader > dna_leader > training_participant)
     const roles = user.user_roles.map((r: any) => r.role);
 
     if (roles.includes('church_leader')) {

@@ -1,14 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getTrainingSession, getSupabaseAdmin, updateMilestone, unlockContent } from '@/lib/training-auth';
+import {
+  getUnifiedSession,
+  isTrainingParticipant,
+  isAdmin,
+  updateTrainingMilestone,
+  unlockContent
+} from '@/lib/unified-auth';
+import { supabase } from '@/lib/supabase';
 import { sendAssessmentCompleteEmail } from '@/lib/email';
 
 // POST: Complete the assessment
 export async function POST(request: NextRequest) {
   try {
-    const session = await getTrainingSession();
+    const session = await getUnifiedSession();
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!isTrainingParticipant(session) && !isAdmin(session)) {
+      return NextResponse.json({ error: 'Not a training participant' }, { status: 403 });
     }
 
     const body = await request.json();
@@ -18,13 +29,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Assessment ID required' }, { status: 400 });
     }
 
-    const supabase = getSupabaseAdmin();
-    const userId = session.user.id;
+    const userId = session.userId;
 
     // Verify ownership and that it's still a draft
     const { data: existing } = await supabase
-      .from('dna_flow_assessments')
-      .select('id, user_id, is_draft')
+      .from('user_flow_assessments')
+      .select('id, user_id, status')
       .eq('id', assessmentId)
       .single();
 
@@ -32,7 +42,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Not found' }, { status: 404 });
     }
 
-    if (!existing.is_draft) {
+    if (existing.status !== 'draft') {
       return NextResponse.json({ error: 'Assessment already completed' }, { status: 400 });
     }
 
@@ -44,7 +54,7 @@ export async function POST(request: NextRequest) {
     // Complete the assessment
     const completedAt = new Date().toISOString();
     const { error: updateError } = await supabase
-      .from('dna_flow_assessments')
+      .from('user_flow_assessments')
       .update({
         roadblock_ratings: data.roadblock_ratings,
         reflections: data.reflections,
@@ -52,7 +62,7 @@ export async function POST(request: NextRequest) {
         action_plan: data.action_plan,
         accountability_partner: data.accountability_partner,
         accountability_date: data.accountability_date,
-        is_draft: false,
+        status: 'completed',
         completed_at: completedAt,
         updated_at: completedAt
       })
@@ -64,35 +74,18 @@ export async function POST(request: NextRequest) {
     }
 
     // Update user's journey milestone
-    await updateMilestone(userId, 'flow_assessment_complete', true);
+    await updateTrainingMilestone(userId, 'flow_assessment_complete', true);
 
     // Unlock DNA Manual (Session 1)
     await unlockContent(userId, 'manual_session_1', 'flow_assessment_complete');
-
-    // Also record in training modules
-    await supabase
-      .from('dna_training_modules')
-      .upsert({
-        user_id: userId,
-        module_type: 'flow_assessment',
-        module_id: 'assessment',
-        completed: true,
-        completed_at: completedAt,
-        progress_data: {
-          roadblock_ratings: data.roadblock_ratings,
-          top_roadblocks: data.top_roadblocks
-        }
-      }, {
-        onConflict: 'user_id,module_type,module_id'
-      });
 
     // Send completion email
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const dashboardLink = `${baseUrl}/training`;
 
     await sendAssessmentCompleteEmail(
-      session.user.email,
-      session.user.name || 'there',
+      session.email,
+      session.name || 'there',
       dashboardLink,
       data.top_roadblocks || []
     );
