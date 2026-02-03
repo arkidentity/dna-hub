@@ -2,7 +2,7 @@
  * DNA Flow Assessment Data
  *
  * 7 Roadblocks (Internal obstacles to discipleship multiplication)
- * Based on the Ark app's "Dam Assessment"
+ * Identifies blockages that prevent the flow of discipleship multiplication
  */
 
 export interface Roadblock {

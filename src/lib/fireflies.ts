@@ -437,7 +437,7 @@ async function matchCallTypeToMilestone(
     'proposal': ['Review Partnership Agreement', 'Proposal'],
     'strategy': ['Set Implementation Timeline', 'Strategy'],
     'kickoff': ['Kick-off Meeting', 'Launch', 'Begin'],
-    'assessment': ['Complete Dam Assessment', 'Assessment'],
+    'assessment': ['Complete Flow Assessment', 'Flow Assessment', 'Assessment'],
     'onboarding': ['Onboarding', 'Getting Started'],
     'checkin': ['Check-in', 'Follow-up', 'Review'],
   };
