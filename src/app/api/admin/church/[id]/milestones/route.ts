@@ -178,7 +178,7 @@ export async function DELETE(
   }
 }
 
-// PATCH: Toggle milestone completion or update details
+// PATCH: Toggle milestone completion, update details, or reorder
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -196,7 +196,12 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { milestone_id, completed, target_date, notes } = body;
+    const { milestone_id, completed, target_date, notes, action } = body;
+
+    // Handle reordering actions
+    if (action === 'move_up' || action === 'move_down') {
+      return handleReorderMilestone(churchId, milestone_id, action, session.email);
+    }
 
     if (!milestone_id) {
       return NextResponse.json(
@@ -288,4 +293,107 @@ export async function PATCH(
     console.error('[MILESTONE PATCH] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
+}
+
+// Helper function to handle milestone reordering
+async function handleReorderMilestone(
+  churchId: string,
+  milestoneId: string,
+  action: 'move_up' | 'move_down',
+  adminEmail: string
+) {
+  if (!milestoneId) {
+    return NextResponse.json(
+      { error: 'Milestone ID is required' },
+      { status: 400 }
+    );
+  }
+
+  const supabase = getSupabaseAdmin();
+
+  // Get the current milestone with its phase and display_order
+  const { data: currentMilestone, error: fetchError } = await supabase
+    .from('milestones')
+    .select('id, phase_id, display_order, title')
+    .eq('id', milestoneId)
+    .single();
+
+  if (fetchError || !currentMilestone) {
+    return NextResponse.json({ error: 'Milestone not found' }, { status: 404 });
+  }
+
+  // Get all milestones in the same phase (both template and church-specific)
+  // Template milestones have church_id IS NULL, church-specific have church_id = churchId
+  const { data: phaseMilestones, error: phaseError } = await supabase
+    .from('milestones')
+    .select('id, display_order, title, church_id')
+    .eq('phase_id', currentMilestone.phase_id)
+    .or(`church_id.is.null,church_id.eq.${churchId}`)
+    .order('display_order', { ascending: true });
+
+  if (phaseError || !phaseMilestones || phaseMilestones.length < 2) {
+    return NextResponse.json({ error: 'Cannot reorder - not enough milestones' }, { status: 400 });
+  }
+
+  // Find current milestone index
+  const currentIndex = phaseMilestones.findIndex(m => m.id === milestoneId);
+  if (currentIndex === -1) {
+    return NextResponse.json({ error: 'Milestone not found in phase' }, { status: 404 });
+  }
+
+  // Determine target index based on action
+  const targetIndex = action === 'move_up' ? currentIndex - 1 : currentIndex + 1;
+
+  // Check boundaries
+  if (targetIndex < 0 || targetIndex >= phaseMilestones.length) {
+    return NextResponse.json(
+      { error: `Cannot move ${action === 'move_up' ? 'up' : 'down'} - already at ${action === 'move_up' ? 'top' : 'bottom'}` },
+      { status: 400 }
+    );
+  }
+
+  const targetMilestone = phaseMilestones[targetIndex];
+
+  // Swap display_order values
+  const currentOrder = currentMilestone.display_order;
+  const targetOrder = targetMilestone.display_order;
+
+  // Update both milestones
+  const { error: updateCurrentError } = await supabase
+    .from('milestones')
+    .update({ display_order: targetOrder })
+    .eq('id', currentMilestone.id);
+
+  if (updateCurrentError) {
+    console.error('[MILESTONE REORDER] Error updating current:', updateCurrentError);
+    return NextResponse.json({ error: 'Failed to reorder milestone' }, { status: 500 });
+  }
+
+  const { error: updateTargetError } = await supabase
+    .from('milestones')
+    .update({ display_order: currentOrder })
+    .eq('id', targetMilestone.id);
+
+  if (updateTargetError) {
+    console.error('[MILESTONE REORDER] Error updating target:', updateTargetError);
+    // Attempt to rollback the first update
+    await supabase
+      .from('milestones')
+      .update({ display_order: currentOrder })
+      .eq('id', currentMilestone.id);
+    return NextResponse.json({ error: 'Failed to reorder milestone' }, { status: 500 });
+  }
+
+  // Log the reorder action
+  await logAdminAction(
+    adminEmail,
+    'milestone_update',
+    'milestone',
+    milestoneId,
+    { display_order: currentOrder },
+    { display_order: targetOrder, action, swapped_with: targetMilestone.id },
+    `Moved milestone "${currentMilestone.title}" ${action === 'move_up' ? 'up' : 'down'}`
+  );
+
+  return NextResponse.json({ success: true });
 }

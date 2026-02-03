@@ -12,6 +12,7 @@ import {
   Check,
   ChevronDown,
   ChevronRight,
+  ChevronUp,
   Video,
   BookOpen,
   Pencil,
@@ -42,6 +43,7 @@ interface Milestone {
   description?: string;
   is_key_milestone: boolean;
   is_custom?: boolean;
+  display_order?: number;
   progress?: {
     completed: boolean;
     completed_at?: string;
@@ -141,6 +143,9 @@ export default function AdminChurchJourneyTab({
   const [linkingMilestoneId, setLinkingMilestoneId] = useState<string | null>(null);
   const [linkingCallId, setLinkingCallId] = useState('');
   const [linkingInProgress, setLinkingInProgress] = useState(false);
+
+  // Milestone reordering state
+  const [reorderingMilestone, setReorderingMilestone] = useState<string | null>(null);
 
   // Get unlinked calls (calls without a milestone_id)
   const unlinkedCalls = calls.filter(c => !c.milestone_id);
@@ -396,6 +401,32 @@ export default function AdminChurchJourneyTab({
     }
   };
 
+  const handleMoveMilestone = async (milestoneId: string, direction: 'up' | 'down') => {
+    setReorderingMilestone(milestoneId);
+    try {
+      const response = await fetch(`/api/admin/church/${churchId}/milestones`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          milestone_id: milestoneId,
+          action: `move_${direction}`,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to move milestone');
+      }
+
+      await onRefresh();
+    } catch (error) {
+      console.error('Move milestone error:', error);
+      alert(error instanceof Error ? error.message : 'Failed to move milestone');
+    } finally {
+      setReorderingMilestone(null);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* Progress Overview with Per-Phase Bars */}
@@ -502,7 +533,12 @@ export default function AdminChurchJourneyTab({
 
                 {isExpanded && (
                   <div className="mt-4 pl-8 space-y-2">
-                    {phase.milestones.map((milestone) => (
+                    {phase.milestones.map((milestone, milestoneIndex) => {
+                      const isFirstInPhase = milestoneIndex === 0;
+                      const isLastInPhase = milestoneIndex === phase.milestones.length - 1;
+                      const isReordering = reorderingMilestone === milestone.id;
+
+                      return (
                       <div key={milestone.id} className="space-y-1">
                         <div
                           className={`p-3 rounded-lg flex items-start gap-3 group ${
@@ -534,6 +570,37 @@ export default function AdminChurchJourneyTab({
                                 )}
                                 {milestone.is_custom && (
                                   <span className="text-xs bg-teal/10 text-teal px-2 py-0.5 rounded">Custom</span>
+                                )}
+                                {/* Reorder buttons */}
+                                {isReordering ? (
+                                  <Loader2 className="w-3 h-3 animate-spin text-gold" />
+                                ) : (
+                                  <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <button
+                                      onClick={() => handleMoveMilestone(milestone.id, 'up')}
+                                      disabled={isFirstInPhase}
+                                      className={`p-0.5 rounded transition-colors ${
+                                        isFirstInPhase
+                                          ? 'text-gray-300 cursor-not-allowed'
+                                          : 'text-foreground-muted hover:text-teal hover:bg-teal/10'
+                                      }`}
+                                      title="Move up"
+                                    >
+                                      <ChevronUp className="w-3 h-3" />
+                                    </button>
+                                    <button
+                                      onClick={() => handleMoveMilestone(milestone.id, 'down')}
+                                      disabled={isLastInPhase}
+                                      className={`p-0.5 rounded transition-colors ${
+                                        isLastInPhase
+                                          ? 'text-gray-300 cursor-not-allowed'
+                                          : 'text-foreground-muted hover:text-teal hover:bg-teal/10'
+                                      }`}
+                                      title="Move down"
+                                    >
+                                      <ChevronDown className="w-3 h-3" />
+                                    </button>
+                                  </div>
                                 )}
                                 {milestone.is_custom && (
                                   <button
@@ -880,7 +947,8 @@ export default function AdminChurchJourneyTab({
                           </div>
                         </div>
                       </div>
-                    ))}
+                    );
+                    })}
 
                     {/* Add Milestone Form */}
                     {isAddingToPhase ? (

@@ -119,6 +119,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 2b. Add training_participant role (DNA leaders need training access)
+    const { data: existingTrainingRole } = await supabase
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('role', 'training_participant')
+      .maybeSingle();
+
+    if (!existingTrainingRole) {
+      await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: 'training_participant',
+          church_id: null,
+        });
+    }
+
     // 3. Activate the DNA leader record and link to user
     const { error: updateError } = await supabase
       .from('dna_leaders')

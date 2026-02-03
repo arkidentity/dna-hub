@@ -167,6 +167,24 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // 2b. Add training_participant role (DNA leaders need training access)
+    const { data: existingTrainingRole } = await supabase
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('role', 'training_participant')
+      .maybeSingle();
+
+    if (!existingTrainingRole) {
+      await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: 'training_participant',
+          church_id: null, // Training is not church-specific
+        });
+    }
+
     // 3. Create DNA leader record (for group management features)
     const { data: newLeader, error: insertError } = await supabase
       .from('dna_leaders')
@@ -210,8 +228,9 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Send invitation email with direct magic link
+    // DNA leaders start with training, then can access groups
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dnadiscipleship.com';
-    const magicLink = `${baseUrl}/api/auth/verify?token=${magicToken}&destination=groups`;
+    const magicLink = `${baseUrl}/api/auth/verify?token=${magicToken}&destination=training`;
 
     const emailResult = await sendDNALeaderDirectInviteEmail(
       normalizedEmail,

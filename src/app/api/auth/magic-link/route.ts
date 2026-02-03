@@ -59,12 +59,13 @@ export async function POST(request: NextRequest) {
       }
 
       // Determine destination based on roles (or use provided destination)
+      // Priority: church_leader -> dashboard, dna_leader -> training (they need training first), training_participant -> training, admin -> admin
       let dest = destination || '';
       if (!dest) {
         if (roles.includes('church_leader')) {
           dest = 'dashboard';
         } else if (roles.includes('dna_leader')) {
-          dest = 'groups';
+          dest = 'training'; // DNA leaders start with training
         } else if (roles.includes('training_participant')) {
           dest = 'training';
         } else if (roles.includes('admin')) {
