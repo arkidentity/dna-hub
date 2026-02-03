@@ -147,6 +147,12 @@ export default function AdminChurchJourneyTab({
   // Milestone reordering state
   const [reorderingMilestone, setReorderingMilestone] = useState<string | null>(null);
 
+  // Milestone title/description editing state
+  const [editingMilestoneId, setEditingMilestoneId] = useState<string | null>(null);
+  const [editMilestoneTitle, setEditMilestoneTitle] = useState('');
+  const [editMilestoneDescription, setEditMilestoneDescription] = useState('');
+  const [editMilestoneIsKey, setEditMilestoneIsKey] = useState(false);
+
   // Get unlinked calls (calls without a milestone_id)
   const unlinkedCalls = calls.filter(c => !c.milestone_id);
 
@@ -214,8 +220,12 @@ export default function AdminChurchJourneyTab({
     }
   };
 
-  const handleDeleteMilestone = async (milestoneId: string) => {
-    if (!confirm('Are you sure you want to delete this custom milestone?')) return;
+  const handleDeleteMilestone = async (milestoneId: string, isCustom?: boolean) => {
+    const message = isCustom
+      ? 'Are you sure you want to delete this custom milestone? This cannot be undone.'
+      : 'Are you sure you want to hide this milestone? It will be removed from this church\'s DNA Journey but can be restored later.';
+
+    if (!confirm(message)) return;
 
     try {
       const response = await fetch(
@@ -427,6 +437,55 @@ export default function AdminChurchJourneyTab({
     }
   };
 
+  const handleSaveMilestoneEdit = async (milestoneId: string) => {
+    if (!editMilestoneTitle.trim()) {
+      alert('Title is required');
+      return;
+    }
+    setUpdatingMilestone(milestoneId);
+    try {
+      const response = await fetch(`/api/admin/church/${churchId}/milestones`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          milestone_id: milestoneId,
+          title: editMilestoneTitle.trim(),
+          description: editMilestoneDescription.trim() || null,
+          is_key_milestone: editMilestoneIsKey,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update milestone');
+      }
+
+      await onRefresh();
+      setEditingMilestoneId(null);
+      setEditMilestoneTitle('');
+      setEditMilestoneDescription('');
+      setEditMilestoneIsKey(false);
+    } catch (error) {
+      console.error('Save milestone edit error:', error);
+      alert('Failed to update milestone');
+    } finally {
+      setUpdatingMilestone(null);
+    }
+  };
+
+  const startEditingMilestone = (milestone: Milestone) => {
+    setEditingMilestoneId(milestone.id);
+    setEditMilestoneTitle(milestone.title);
+    setEditMilestoneDescription(milestone.description || '');
+    setEditMilestoneIsKey(milestone.is_key_milestone);
+  };
+
+  const cancelEditingMilestone = () => {
+    setEditingMilestoneId(null);
+    setEditMilestoneTitle('');
+    setEditMilestoneDescription('');
+    setEditMilestoneIsKey(false);
+  };
+
   return (
     <div className="space-y-6">
       {/* Progress Overview with Per-Phase Bars */}
@@ -560,61 +619,126 @@ export default function AdminChurchJourneyTab({
                             </button>
                           )}
                           <div className="flex-1 min-w-0">
-                            <div className="flex items-start justify-between gap-2">
-                              <p className={`font-medium ${milestone.progress?.completed ? 'line-through text-foreground-muted' : 'text-navy'}`}>
-                                {milestone.title}
-                              </p>
-                              <div className="flex items-center gap-2 flex-shrink-0">
-                                {milestone.is_key_milestone && (
-                                  <span className="text-xs bg-gold/10 text-gold px-2 py-0.5 rounded">Key</span>
-                                )}
-                                {milestone.is_custom && (
-                                  <span className="text-xs bg-teal/10 text-teal px-2 py-0.5 rounded">Custom</span>
-                                )}
-                                {/* Reorder buttons */}
-                                {isReordering ? (
-                                  <Loader2 className="w-3 h-3 animate-spin text-gold" />
-                                ) : (
-                                  <div className="flex flex-col opacity-0 group-hover:opacity-100 transition-opacity">
+                            {editingMilestoneId === milestone.id ? (
+                              /* Editing mode */
+                              <div className="space-y-2">
+                                <input
+                                  type="text"
+                                  value={editMilestoneTitle}
+                                  onChange={(e) => setEditMilestoneTitle(e.target.value)}
+                                  placeholder="Milestone title *"
+                                  className="w-full text-sm px-3 py-2 border border-input-border rounded-lg font-medium"
+                                  autoFocus
+                                />
+                                <textarea
+                                  value={editMilestoneDescription}
+                                  onChange={(e) => setEditMilestoneDescription(e.target.value)}
+                                  placeholder="Description (optional)"
+                                  className="w-full text-sm px-3 py-2 border border-input-border rounded-lg resize-none"
+                                  rows={2}
+                                />
+                                <div className="flex items-center justify-between">
+                                  <label className="flex items-center gap-2 cursor-pointer">
+                                    <input
+                                      type="checkbox"
+                                      checked={editMilestoneIsKey}
+                                      onChange={(e) => setEditMilestoneIsKey(e.target.checked)}
+                                      className="w-4 h-4 rounded border-gray-300"
+                                    />
+                                    <span className="text-sm flex items-center gap-1">
+                                      <Star className="w-3 h-3 text-gold" />
+                                      Key Milestone
+                                    </span>
+                                  </label>
+                                  <div className="flex items-center gap-2">
                                     <button
-                                      onClick={() => handleMoveMilestone(milestone.id, 'up')}
-                                      disabled={isFirstInPhase}
-                                      className={`p-0.5 rounded transition-colors ${
-                                        isFirstInPhase
-                                          ? 'text-gray-300 cursor-not-allowed'
-                                          : 'text-foreground-muted hover:text-teal hover:bg-teal/10'
-                                      }`}
-                                      title="Move up"
+                                      onClick={() => handleSaveMilestoneEdit(milestone.id)}
+                                      disabled={updatingMilestone === milestone.id || !editMilestoneTitle.trim()}
+                                      className="flex items-center gap-1 px-3 py-1.5 bg-gold text-white rounded hover:bg-gold-dark transition-colors disabled:opacity-50 text-sm"
                                     >
-                                      <ChevronUp className="w-3 h-3" />
+                                      {updatingMilestone === milestone.id ? (
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                      ) : (
+                                        <Save className="w-3 h-3" />
+                                      )}
+                                      Save
                                     </button>
                                     <button
-                                      onClick={() => handleMoveMilestone(milestone.id, 'down')}
-                                      disabled={isLastInPhase}
-                                      className={`p-0.5 rounded transition-colors ${
-                                        isLastInPhase
-                                          ? 'text-gray-300 cursor-not-allowed'
-                                          : 'text-foreground-muted hover:text-teal hover:bg-teal/10'
-                                      }`}
-                                      title="Move down"
+                                      onClick={cancelEditingMilestone}
+                                      className="px-3 py-1.5 text-foreground-muted hover:bg-background-secondary rounded transition-colors text-sm"
                                     >
-                                      <ChevronDown className="w-3 h-3" />
+                                      Cancel
                                     </button>
                                   </div>
-                                )}
-                                {milestone.is_custom && (
-                                  <button
-                                    onClick={() => handleDeleteMilestone(milestone.id)}
-                                    className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:bg-red-50 rounded transition-opacity"
-                                    title="Delete custom milestone"
-                                  >
-                                    <Trash2 className="w-3 h-3" />
-                                  </button>
-                                )}
+                                </div>
                               </div>
-                            </div>
-                            {!compactView && milestone.description && (
-                              <p className="text-sm text-foreground-muted mt-1">{milestone.description}</p>
+                            ) : (
+                              /* Display mode */
+                              <>
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="flex items-center gap-2 min-w-0">
+                                    <p className={`font-medium ${milestone.progress?.completed ? 'line-through text-foreground-muted' : 'text-navy'}`}>
+                                      {milestone.title}
+                                    </p>
+                                    <button
+                                      onClick={() => startEditingMilestone(milestone)}
+                                      className="p-1 text-gray-400 hover:text-teal hover:bg-teal/10 rounded transition-colors flex-shrink-0"
+                                      title="Edit milestone"
+                                    >
+                                      <Pencil className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                  <div className="flex items-center gap-2 flex-shrink-0">
+                                    {milestone.is_key_milestone && (
+                                      <span className="text-xs bg-gold/10 text-gold px-2 py-0.5 rounded">Key</span>
+                                    )}
+                                    {milestone.is_custom && (
+                                      <span className="text-xs bg-teal/10 text-teal px-2 py-0.5 rounded">Custom</span>
+                                    )}
+                                    {/* Reorder buttons - always visible */}
+                                    {isReordering ? (
+                                      <Loader2 className="w-4 h-4 animate-spin text-gold" />
+                                    ) : (
+                                      <div className="flex flex-col -space-y-1">
+                                        <button
+                                          onClick={() => handleMoveMilestone(milestone.id, 'up')}
+                                          disabled={isFirstInPhase}
+                                          className={`p-0.5 rounded transition-colors ${
+                                            isFirstInPhase
+                                              ? 'text-gray-300 cursor-not-allowed'
+                                              : 'text-gray-400 hover:text-teal hover:bg-teal/10'
+                                          }`}
+                                          title="Move up"
+                                        >
+                                          <ChevronUp className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                          onClick={() => handleMoveMilestone(milestone.id, 'down')}
+                                          disabled={isLastInPhase}
+                                          className={`p-0.5 rounded transition-colors ${
+                                            isLastInPhase
+                                              ? 'text-gray-300 cursor-not-allowed'
+                                              : 'text-gray-400 hover:text-teal hover:bg-teal/10'
+                                          }`}
+                                          title="Move down"
+                                        >
+                                          <ChevronDown className="w-4 h-4" />
+                                        </button>
+                                      </div>
+                                    )}
+                                    <button
+                                      onClick={() => handleDeleteMilestone(milestone.id, milestone.is_custom)}
+                                      className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
+                                      title={milestone.is_custom ? "Delete milestone" : "Hide milestone"}
+                                    >
+                                      <Trash2 className="w-4 h-4" />
+                                    </button>
+                                  </div>
+                                </div>
+                                {!compactView && milestone.description && (
+                                  <p className="text-sm text-foreground-muted mt-1">{milestone.description}</p>
+                                )}
+                              </>
                             )}
 
                             {/* Target Date - Editable */}

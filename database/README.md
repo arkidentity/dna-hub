@@ -38,6 +38,7 @@ Files are numbered in the order they should be run:
 | 027 | `training-manual-features.sql` | Session notes, bookmarks, and certificates for DNA Manual |
 | 028 | `launch-guide-support.sql` | Launch Guide metadata support (checklist progress, phase completion) |
 | 029 | `flow-assessment-strategy-calls.sql` | Rename Dam Assessment to Flow Assessment + Add strategy call milestones per phase |
+| 030 | `hidden-milestones.sql` | Allow hiding template milestones per church |
 
 ## Running Migrations
 

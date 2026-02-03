@@ -77,6 +77,14 @@ export async function GET(
         .or(`church_id.is.null,church_id.eq.${churchId}`)
         .order('display_order', { ascending: true });
 
+      // Get hidden milestones for this church
+      const { data: hiddenMilestones } = await supabase
+        .from('church_hidden_milestones')
+        .select('milestone_id')
+        .eq('church_id', churchId);
+
+      const hiddenMilestoneIds = new Set(hiddenMilestones?.map(h => h.milestone_id) || []);
+
       const { data: progress } = await supabase
         .from('church_progress')
         .select('*')
@@ -111,7 +119,10 @@ export async function GET(
         .not('milestone_id', 'is', null);
 
       phases = phasesData.map((phase) => {
-        const phaseMilestones = milestones?.filter((m) => m.phase_id === phase.id) || [];
+        // Filter out hidden milestones for this church
+        const phaseMilestones = milestones?.filter((m) =>
+          m.phase_id === phase.id && !hiddenMilestoneIds.has(m.id)
+        ) || [];
         const milestonesWithProgress = phaseMilestones.map((m) => {
           const milestoneProgress = progress?.find((p) => p.milestone_id === m.id);
           const milestoneAttachments = attachments?.filter((a) => a.milestone_id === m.id);

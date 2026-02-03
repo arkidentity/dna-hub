@@ -9,7 +9,6 @@ import {
   X,
   Loader2,
   ExternalLink,
-  CheckCircle,
   Check,
   Video,
   Pencil,
@@ -343,23 +342,23 @@ export default function AdminChurchOverviewTab({
 
       {/* Two Column Layout */}
       <div className="grid md:grid-cols-2 gap-6">
-        {/* Scheduled Calls */}
+        {/* Scheduled Calls - Only show upcoming/uncompleted calls */}
         <div className="card">
           <h3 className="font-semibold text-navy mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-teal" />
-            Scheduled Calls
+            Upcoming Calls
           </h3>
           <div className="space-y-3">
-            {calls.length === 0 ? (
-              <p className="text-sm text-foreground-muted">No calls scheduled yet</p>
+            {calls.filter(c => !c.completed).length === 0 ? (
+              <p className="text-sm text-foreground-muted">No upcoming calls scheduled</p>
             ) : (
-              calls.map((call) => {
-                const isUpcoming = !call.completed && new Date(call.scheduled_at) > new Date();
+              calls.filter(c => !c.completed).map((call) => {
+                const isInFuture = new Date(call.scheduled_at) > new Date();
                 const isEditing = editingCallId === call.id;
                 return (
                   <div
                     key={call.id}
-                    className={`p-3 rounded-lg group ${call.completed ? 'bg-success/5' : 'bg-background-secondary'}`}
+                    className="p-3 rounded-lg group bg-background-secondary"
                   >
                     <div className="flex items-center justify-between mb-1">
                       {isEditing ? (
@@ -401,19 +400,12 @@ export default function AdminChurchOverviewTab({
                       )}
                       {!isEditing && (
                         <div className="flex items-center gap-2">
-                          {call.completed ? (
-                            <span className="text-xs text-success flex items-center gap-1">
-                              <CheckCircle className="w-3 h-3" />
-                              Completed
-                            </span>
-                          ) : (
-                            <button
-                              onClick={() => handleCompleteCall(call.id)}
-                              className="text-xs text-teal hover:text-teal-light"
-                            >
-                              Mark Complete
-                            </button>
-                          )}
+                          <button
+                            onClick={() => handleCompleteCall(call.id)}
+                            className="text-xs text-teal hover:text-teal-light"
+                          >
+                            Mark Complete
+                          </button>
                           <button
                             onClick={() => {
                               setEditingCallId(call.id);
@@ -435,7 +427,7 @@ export default function AdminChurchOverviewTab({
                       )}
                     </div>
                     <p className="text-sm text-foreground-muted">{formatDateTime(call.scheduled_at)}</p>
-                    {isUpcoming && call.meet_link && (
+                    {isInFuture && call.meet_link && (
                       <a
                         href={call.meet_link}
                         target="_blank"

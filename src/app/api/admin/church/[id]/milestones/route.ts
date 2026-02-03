@@ -103,7 +103,7 @@ export async function POST(
   }
 }
 
-// DELETE: Remove a custom milestone
+// DELETE: Remove a custom milestone or hide a template milestone
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -132,10 +132,10 @@ export async function DELETE(
 
     const supabase = getSupabaseAdmin();
 
-    // Only allow deleting church-specific milestones (not template milestones)
+    // Get milestone to check if it's custom or template
     const { data: milestone, error: fetchError } = await supabase
       .from('milestones')
-      .select('church_id')
+      .select('id, church_id, title')
       .eq('id', milestoneId)
       .single();
 
@@ -143,42 +143,105 @@ export async function DELETE(
       return NextResponse.json({ error: 'Milestone not found' }, { status: 404 });
     }
 
-    if (milestone.church_id !== churchId) {
+    const isCustomMilestone = milestone.church_id === churchId;
+    const isTemplateMilestone = milestone.church_id === null;
+
+    if (isCustomMilestone) {
+      // Custom milestone: Actually delete it
+      // Delete progress entries first
+      await supabase
+        .from('church_progress')
+        .delete()
+        .eq('milestone_id', milestoneId)
+        .eq('church_id', churchId);
+
+      // Delete attachments
+      await supabase
+        .from('milestone_attachments')
+        .delete()
+        .eq('milestone_id', milestoneId)
+        .eq('church_id', churchId);
+
+      // Delete the milestone
+      const { error: deleteError } = await supabase
+        .from('milestones')
+        .delete()
+        .eq('id', milestoneId);
+
+      if (deleteError) {
+        console.error('[MILESTONE DELETE] Error:', deleteError);
+        return NextResponse.json(
+          { error: 'Failed to delete milestone' },
+          { status: 500 }
+        );
+      }
+
+      // Log the deletion
+      await logAdminAction(
+        session.email,
+        'milestone_update',
+        'milestone',
+        milestoneId,
+        { title: milestone.title, church_id: churchId },
+        null,
+        `Deleted custom milestone: ${milestone.title}`
+      );
+
+      return NextResponse.json({ success: true, action: 'deleted' });
+    } else if (isTemplateMilestone) {
+      // Template milestone: Hide it for this church (don't actually delete)
+      const { error: hideError } = await supabase
+        .from('church_hidden_milestones')
+        .upsert({
+          church_id: churchId,
+          milestone_id: milestoneId,
+          hidden_by: session.email,
+          hidden_at: new Date().toISOString(),
+        }, {
+          onConflict: 'church_id,milestone_id',
+        });
+
+      if (hideError) {
+        console.error('[MILESTONE HIDE] Error:', hideError);
+        return NextResponse.json(
+          { error: 'Failed to hide milestone' },
+          { status: 500 }
+        );
+      }
+
+      // Also delete any progress entries for this church
+      await supabase
+        .from('church_progress')
+        .delete()
+        .eq('milestone_id', milestoneId)
+        .eq('church_id', churchId);
+
+      // Log the hide action
+      await logAdminAction(
+        session.email,
+        'milestone_update',
+        'milestone',
+        milestoneId,
+        null,
+        { church_id: churchId, hidden: true },
+        `Hid template milestone: ${milestone.title} for church`
+      );
+
+      return NextResponse.json({ success: true, action: 'hidden' });
+    } else {
+      // Milestone belongs to a different church - not allowed
       return NextResponse.json(
-        { error: 'Cannot delete template milestones' },
+        { error: 'Cannot delete milestones from other churches' },
         { status: 403 }
       );
     }
-
-    // Delete progress entries first
-    await supabase
-      .from('church_progress')
-      .delete()
-      .eq('milestone_id', milestoneId)
-      .eq('church_id', churchId);
-
-    // Delete the milestone
-    const { error: deleteError } = await supabase
-      .from('milestones')
-      .delete()
-      .eq('id', milestoneId);
-
-    if (deleteError) {
-      console.error('[MILESTONE DELETE] Error:', deleteError);
-      return NextResponse.json(
-        { error: 'Failed to delete milestone' },
-        { status: 500 }
-      );
-    }
-
-    return NextResponse.json({ success: true });
   } catch (error) {
     console.error('[MILESTONE DELETE] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
 
-// PATCH: Toggle milestone completion, update details, or reorder
+// PATCH: Toggle milestone completion, update details, edit title/description, or reorder
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -196,7 +259,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const { milestone_id, completed, target_date, notes, action } = body;
+    const { milestone_id, completed, target_date, notes, action, title, description, is_key_milestone } = body;
 
     // Handle reordering actions
     if (action === 'move_up' || action === 'move_down') {
@@ -211,6 +274,50 @@ export async function PATCH(
     }
 
     const supabase = getSupabaseAdmin();
+
+    // Handle milestone title/description/is_key_milestone editing
+    if (title !== undefined || description !== undefined || is_key_milestone !== undefined) {
+      // Get the current milestone to log the change
+      const { data: currentMilestone, error: fetchError } = await supabase
+        .from('milestones')
+        .select('id, title, description, is_key_milestone, church_id')
+        .eq('id', milestone_id)
+        .single();
+
+      if (fetchError || !currentMilestone) {
+        return NextResponse.json({ error: 'Milestone not found' }, { status: 404 });
+      }
+
+      // Build update object
+      const milestoneUpdates: Record<string, unknown> = {};
+      if (title !== undefined) milestoneUpdates.title = title;
+      if (description !== undefined) milestoneUpdates.description = description;
+      if (is_key_milestone !== undefined) milestoneUpdates.is_key_milestone = is_key_milestone;
+
+      // Update the milestone
+      const { error: updateError } = await supabase
+        .from('milestones')
+        .update(milestoneUpdates)
+        .eq('id', milestone_id);
+
+      if (updateError) {
+        console.error('[MILESTONE EDIT] Error:', updateError);
+        return NextResponse.json({ error: 'Failed to update milestone' }, { status: 500 });
+      }
+
+      // Log the change
+      await logAdminAction(
+        session.email,
+        'milestone_update',
+        'milestone',
+        milestone_id,
+        { title: currentMilestone.title, description: currentMilestone.description, is_key_milestone: currentMilestone.is_key_milestone },
+        milestoneUpdates,
+        `Updated milestone: ${title || currentMilestone.title}`
+      );
+
+      return NextResponse.json({ success: true });
+    }
 
     // Check if progress entry exists
     const { data: existingProgress } = await supabase
