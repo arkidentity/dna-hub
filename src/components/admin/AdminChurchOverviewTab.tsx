@@ -15,7 +15,18 @@ import {
   Pencil,
   MessageSquare,
   Trash2,
+  ChevronDown,
 } from 'lucide-react';
+
+const CALL_TYPES = [
+  { value: 'discovery', label: 'Discovery' },
+  { value: 'proposal', label: 'Proposal' },
+  { value: 'strategy', label: 'Strategy' },
+  { value: 'kickoff', label: 'Kick-off' },
+  { value: 'assessment', label: 'Assessment' },
+  { value: 'onboarding', label: 'Onboarding' },
+  { value: 'checkin', label: 'Check-in' },
+];
 
 interface Call {
   id: string;
@@ -101,6 +112,10 @@ export default function AdminChurchOverviewTab({
   const [addingCall, setAddingCall] = useState<string | null>(null);
   const [callDate, setCallDate] = useState('');
   const [savingCall, setSavingCall] = useState(false);
+
+  // Call editing (for reassigning call types)
+  const [editingCallId, setEditingCallId] = useState<string | null>(null);
+  const [editCallType, setEditCallType] = useState('');
 
   // Calculate progress stats
   const totalMilestones = phases?.filter(p => p.phase_number > 0).reduce((sum, p) => sum + p.totalCount, 0) || 0;
@@ -228,6 +243,30 @@ export default function AdminChurchOverviewTab({
     }
   };
 
+  const handleUpdateCallType = async (callId: string, newCallType: string) => {
+    try {
+      const response = await fetch('/api/admin/calls', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          callId,
+          callType: newCallType,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update call type');
+      }
+
+      await onRefresh();
+      setEditingCallId(null);
+      setEditCallType('');
+    } catch (error) {
+      console.error('Update call type error:', error);
+      alert('Failed to update call type');
+    }
+  };
+
   const formatDate = (dateStr: string) => {
     return new Date(dateStr).toLocaleDateString('en-US', {
       month: 'short',
@@ -316,35 +355,84 @@ export default function AdminChurchOverviewTab({
             ) : (
               calls.map((call) => {
                 const isUpcoming = !call.completed && new Date(call.scheduled_at) > new Date();
+                const isEditing = editingCallId === call.id;
                 return (
                   <div
                     key={call.id}
                     className={`p-3 rounded-lg group ${call.completed ? 'bg-success/5' : 'bg-background-secondary'}`}
                   >
                     <div className="flex items-center justify-between mb-1">
-                      <span className="font-medium text-navy capitalize">{call.call_type} Call</span>
-                      <div className="flex items-center gap-2">
-                        {call.completed ? (
-                          <span className="text-xs text-success flex items-center gap-1">
-                            <CheckCircle className="w-3 h-3" />
-                            Completed
-                          </span>
-                        ) : (
+                      {isEditing ? (
+                        <div className="flex items-center gap-2">
+                          <div className="relative">
+                            <select
+                              value={editCallType}
+                              onChange={(e) => setEditCallType(e.target.value)}
+                              className="text-sm pl-2 pr-7 py-1 border border-input-border rounded appearance-none bg-white"
+                            >
+                              {CALL_TYPES.map((type) => (
+                                <option key={type.value} value={type.value}>
+                                  {type.label}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
+                          </div>
                           <button
-                            onClick={() => handleCompleteCall(call.id)}
-                            className="text-xs text-teal hover:text-teal-light"
+                            onClick={() => handleUpdateCallType(call.id, editCallType)}
+                            className="p-1 text-success hover:bg-success/10 rounded"
+                            title="Save"
                           >
-                            Mark Complete
+                            <Check className="w-4 h-4" />
                           </button>
-                        )}
-                        <button
-                          onClick={() => handleDeleteCall(call.id)}
-                          className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:bg-red-50 rounded transition-opacity"
-                          title="Delete call"
-                        >
-                          <Trash2 className="w-3 h-3" />
-                        </button>
-                      </div>
+                          <button
+                            onClick={() => {
+                              setEditingCallId(null);
+                              setEditCallType('');
+                            }}
+                            className="p-1 text-foreground-muted hover:bg-background-secondary rounded"
+                            title="Cancel"
+                          >
+                            <X className="w-4 h-4" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="font-medium text-navy capitalize">{call.call_type} Call</span>
+                      )}
+                      {!isEditing && (
+                        <div className="flex items-center gap-2">
+                          {call.completed ? (
+                            <span className="text-xs text-success flex items-center gap-1">
+                              <CheckCircle className="w-3 h-3" />
+                              Completed
+                            </span>
+                          ) : (
+                            <button
+                              onClick={() => handleCompleteCall(call.id)}
+                              className="text-xs text-teal hover:text-teal-light"
+                            >
+                              Mark Complete
+                            </button>
+                          )}
+                          <button
+                            onClick={() => {
+                              setEditingCallId(call.id);
+                              setEditCallType(call.call_type);
+                            }}
+                            className="opacity-0 group-hover:opacity-100 p-1 text-teal hover:bg-teal/10 rounded transition-opacity"
+                            title="Change call type"
+                          >
+                            <Pencil className="w-3 h-3" />
+                          </button>
+                          <button
+                            onClick={() => handleDeleteCall(call.id)}
+                            className="opacity-0 group-hover:opacity-100 p-1 text-red-500 hover:bg-red-50 rounded transition-opacity"
+                            title="Delete call"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </div>
+                      )}
                     </div>
                     <p className="text-sm text-foreground-muted">{formatDateTime(call.scheduled_at)}</p>
                     {isUpcoming && call.meet_link && (

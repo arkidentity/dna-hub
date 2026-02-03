@@ -415,6 +415,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
             churchId={churchId}
             currentPhase={church.current_phase}
             phases={phases}
+            calls={data?.calls || []}
             onRefresh={fetchChurchData}
           />
         )}

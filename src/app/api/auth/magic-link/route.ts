@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getLeaderByEmail, createMagicLinkToken, getDNALeaderByEmail, createDNALeaderMagicLinkToken } from '@/lib/auth';
+import { getSupabaseAdmin, generateToken } from '@/lib/auth';
 import { sendMagicLinkEmail, sendDNALeaderMagicLinkEmail } from '@/lib/email';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json();
+    const { email, destination } = await request.json();
 
     if (!email) {
       return NextResponse.json(
@@ -14,81 +14,78 @@ export async function POST(request: NextRequest) {
     }
 
     const normalizedEmail = email.toLowerCase();
+    const supabase = getSupabaseAdmin();
 
-    // First check if they're a church leader
-    console.log('[MAGIC-LINK] Looking up email:', normalizedEmail);
-    const churchLeader = await getLeaderByEmail(normalizedEmail);
+    // Check if user exists in unified auth system
+    console.log('[MAGIC-LINK] Looking up email in unified auth:', normalizedEmail);
+    const { data: user } = await supabase
+      .from('users')
+      .select(`
+        id,
+        email,
+        name,
+        user_roles (
+          role,
+          church_id
+        )
+      `)
+      .eq('email', normalizedEmail)
+      .single();
 
-    if (churchLeader) {
-      console.log('[MAGIC-LINK] Found church leader:', churchLeader.name, '| Church status:', churchLeader.church?.status);
+    if (user && user.user_roles && user.user_roles.length > 0) {
+      const roles = user.user_roles.map((r: { role: string }) => r.role);
+      console.log('[MAGIC-LINK] Found user in unified auth:', user.name, '| Roles:', roles);
 
-      // Allow login for any valid church status
-      const validStatuses = [
-        'pending_assessment',
-        'awaiting_discovery',
-        'proposal_sent',
-        'awaiting_agreement',
-        'awaiting_strategy',
-        'active',
-        'completed',
-        'paused',
-      ];
+      // Create magic link token in magic_link_tokens table
+      const token = generateToken();
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7); // 7-day expiry
 
-      if (churchLeader.church?.status && validStatuses.includes(churchLeader.church.status)) {
-        // Create magic link token for church leader
-        const token = await createMagicLinkToken(churchLeader.id, normalizedEmail);
-
-        if (!token) {
-          return NextResponse.json(
-            { error: 'Failed to create login link' },
-            { status: 500 }
-          );
-        }
-
-        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-        const magicLink = `${baseUrl}/api/auth/verify?token=${token}`;
-
-        console.log('[MAGIC-LINK] Sending church leader email to:', email);
-        const emailResult = await sendMagicLinkEmail(email, churchLeader.name, magicLink);
-        console.log('[MAGIC-LINK] Email result:', JSON.stringify(emailResult));
-
-        if (process.env.NODE_ENV === 'development') {
-          return NextResponse.json({
-            success: true,
-            message: 'Login link created',
-            devLink: magicLink,
-            userType: 'church_leader',
-          });
-        }
-
-        return NextResponse.json({
-          success: true,
-          message: 'If this email is registered, a login link has been sent.',
+      const { error: tokenError } = await supabase
+        .from('magic_link_tokens')
+        .insert({
+          email: normalizedEmail,
+          token,
+          expires_at: expiresAt.toISOString(),
+          used: false,
         });
-      }
-    }
 
-    // Check if they're a DNA leader
-    const dnaLeader = await getDNALeaderByEmail(normalizedEmail);
-
-    if (dnaLeader && dnaLeader.activated_at) {
-      console.log('[MAGIC-LINK] Found DNA leader:', dnaLeader.name);
-
-      // Create magic link token for DNA leader
-      const token = await createDNALeaderMagicLinkToken(dnaLeader.id);
-
-      if (!token) {
+      if (tokenError) {
+        console.error('[MAGIC-LINK] Token creation error:', tokenError);
         return NextResponse.json(
           { error: 'Failed to create login link' },
           { status: 500 }
         );
       }
 
-      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
-      const magicLink = `${baseUrl}/api/auth/verify-dna-leader?token=${token}`;
+      // Determine destination based on roles (or use provided destination)
+      let dest = destination || '';
+      if (!dest) {
+        if (roles.includes('church_leader')) {
+          dest = 'dashboard';
+        } else if (roles.includes('dna_leader')) {
+          dest = 'groups';
+        } else if (roles.includes('training_participant')) {
+          dest = 'training';
+        } else if (roles.includes('admin')) {
+          dest = 'admin';
+        }
+      }
 
-      console.log('[MAGIC-LINK] Sending DNA leader email to:', email);
-      const emailResult = await sendDNALeaderMagicLinkEmail(email, dnaLeader.name, magicLink);
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+      const magicLink = dest
+        ? `${baseUrl}/api/auth/verify?token=${token}&destination=${dest}`
+        : `${baseUrl}/api/auth/verify?token=${token}`;
+
+      // Send appropriate email based on roles
+      let emailResult;
+      if (roles.includes('dna_leader') && !roles.includes('church_leader')) {
+        console.log('[MAGIC-LINK] Sending DNA leader email to:', normalizedEmail);
+        emailResult = await sendDNALeaderMagicLinkEmail(normalizedEmail, user.name || 'DNA Leader', magicLink);
+      } else {
+        console.log('[MAGIC-LINK] Sending standard magic link email to:', normalizedEmail);
+        emailResult = await sendMagicLinkEmail(normalizedEmail, user.name || 'User', magicLink);
+      }
       console.log('[MAGIC-LINK] Email result:', JSON.stringify(emailResult));
 
       if (process.env.NODE_ENV === 'development') {
@@ -96,7 +93,7 @@ export async function POST(request: NextRequest) {
           success: true,
           message: 'Login link created',
           devLink: magicLink,
-          userType: 'dna_leader',
+          userType: roles[0],
         });
       }
 

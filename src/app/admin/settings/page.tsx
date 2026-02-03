@@ -16,6 +16,9 @@ import {
   Unlink,
   FileText,
   Mic,
+  ChevronDown,
+  Trash2,
+  Link2,
 } from 'lucide-react';
 
 interface CalendarStatus {
@@ -36,7 +39,23 @@ interface UnmatchedEvent {
   event_start: string;
   attendee_emails: string[];
   meet_link?: string;
+  detected_call_type?: string;
 }
+
+interface Church {
+  id: string;
+  name: string;
+}
+
+const CALL_TYPES = [
+  { value: 'discovery', label: 'Discovery Call' },
+  { value: 'proposal', label: 'Proposal Call' },
+  { value: 'strategy', label: 'Strategy Call' },
+  { value: 'kickoff', label: 'Kick-off Call' },
+  { value: 'assessment', label: 'Assessment Call' },
+  { value: 'onboarding', label: 'Onboarding Call' },
+  { value: 'checkin', label: 'Check-in Call' },
+];
 
 interface FirefliesStatus {
   connected: boolean;
@@ -78,6 +97,13 @@ function SettingsContent() {
   const [apiKey, setApiKey] = useState('');
   const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
+  // Manual assignment state
+  const [churches, setChurches] = useState<Church[]>([]);
+  const [assigningEventId, setAssigningEventId] = useState<string | null>(null);
+  const [assignChurchId, setAssignChurchId] = useState('');
+  const [assignCallType, setAssignCallType] = useState('');
+  const [assigningInProgress, setAssigningInProgress] = useState(false);
+
   useEffect(() => {
     // Check for success/error messages from OAuth callback
     const success = searchParams.get('success');
@@ -93,7 +119,20 @@ function SettingsContent() {
 
     fetchCalendarStatus();
     fetchFirefliesStatus();
+    fetchChurches();
   }, [searchParams]);
+
+  const fetchChurches = async () => {
+    try {
+      const response = await fetch('/api/admin/churches');
+      if (response.ok) {
+        const data = await response.json();
+        setChurches(data.churches || []);
+      }
+    } catch (error) {
+      console.error('Failed to fetch churches:', error);
+    }
+  };
 
   const fetchCalendarStatus = async () => {
     try {
@@ -171,6 +210,65 @@ function SettingsContent() {
       setMessage({ type: 'error', text: 'Sync failed. Please try again.' });
     } finally {
       setSyncing(false);
+    }
+  };
+
+  // Manual assignment handlers
+  const handleAssignEvent = async (eventId: string) => {
+    if (!assignChurchId || !assignCallType) {
+      setMessage({ type: 'error', text: 'Please select a church and call type' });
+      return;
+    }
+
+    setAssigningInProgress(true);
+    try {
+      const response = await fetch('/api/admin/calendar/unmatched', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId,
+          churchId: assignChurchId,
+          callType: assignCallType,
+        }),
+      });
+
+      if (response.ok) {
+        setMessage({ type: 'success', text: 'Event assigned successfully!' });
+        setAssigningEventId(null);
+        setAssignChurchId('');
+        setAssignCallType('');
+        await fetchCalendarStatus();
+      } else {
+        const data = await response.json();
+        setMessage({ type: 'error', text: data.error || 'Failed to assign event' });
+      }
+    } catch (error) {
+      console.error('Assign error:', error);
+      setMessage({ type: 'error', text: 'Failed to assign event' });
+    } finally {
+      setAssigningInProgress(false);
+    }
+  };
+
+  const handleDismissEvent = async (eventId: string) => {
+    if (!confirm('Dismiss this event? It will be removed from the unmatched list.')) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/admin/calendar/unmatched?id=${eventId}`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok) {
+        setMessage({ type: 'success', text: 'Event dismissed' });
+        await fetchCalendarStatus();
+      } else {
+        setMessage({ type: 'error', text: 'Failed to dismiss event' });
+      }
+    } catch (error) {
+      console.error('Dismiss error:', error);
+      setMessage({ type: 'error', text: 'Failed to dismiss event' });
     }
   };
 
@@ -487,39 +585,138 @@ function SettingsContent() {
               Unmatched Events ({unmatchedEvents.length})
             </h3>
             <p className="text-sm text-foreground-muted mb-4">
-              These DNA-related events couldn&apos;t be matched to a church automatically. They may need
-              manual review.
+              These events couldn&apos;t be matched to a church automatically. Assign them manually or dismiss if not relevant.
             </p>
             <div className="space-y-3">
-              {unmatchedEvents.slice(0, 5).map((event) => (
+              {unmatchedEvents.slice(0, 10).map((event) => (
                 <div
                   key={event.id}
-                  className="flex items-center justify-between p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
+                  className="p-3 bg-yellow-50 border border-yellow-200 rounded-lg"
                 >
-                  <div>
-                    <p className="font-medium text-navy">{event.event_title}</p>
-                    <p className="text-xs text-foreground-muted">
-                      {formatDate(event.event_start)}
-                      {event.attendee_emails.length > 0 &&
-                        ` • ${event.attendee_emails.join(', ')}`}
-                    </p>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-navy">{event.event_title}</p>
+                      <p className="text-xs text-foreground-muted mt-1">
+                        {formatDate(event.event_start)}
+                        {event.attendee_emails.length > 0 &&
+                          ` • ${event.attendee_emails.slice(0, 2).join(', ')}`}
+                        {event.attendee_emails.length > 2 && ` +${event.attendee_emails.length - 2} more`}
+                      </p>
+                      {event.detected_call_type && (
+                        <span className="inline-block mt-1 text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                          Detected: {event.detected_call_type}
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {event.meet_link && (
+                        <a
+                          href={event.meet_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-xs text-teal hover:text-teal-light flex items-center gap-1"
+                        >
+                          <ExternalLink className="w-3 h-3" />
+                        </a>
+                      )}
+                      <button
+                        onClick={() => {
+                          setAssigningEventId(assigningEventId === event.id ? null : event.id);
+                          setAssignCallType(event.detected_call_type || '');
+                          setAssignChurchId('');
+                        }}
+                        className="text-xs text-gold hover:text-gold-dark flex items-center gap-1 px-2 py-1 border border-gold/30 rounded hover:bg-gold/5"
+                      >
+                        <Link2 className="w-3 h-3" />
+                        Assign
+                      </button>
+                      <button
+                        onClick={() => handleDismissEvent(event.id)}
+                        className="text-xs text-gray-500 hover:text-red-500 p-1"
+                        title="Dismiss"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
                   </div>
-                  {event.meet_link && (
-                    <a
-                      href={event.meet_link}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-xs text-teal hover:text-teal-light flex items-center gap-1"
-                    >
-                      <ExternalLink className="w-3 h-3" />
-                      Meet
-                    </a>
+
+                  {/* Assignment form - shows when this event is selected */}
+                  {assigningEventId === event.id && (
+                    <div className="mt-3 pt-3 border-t border-yellow-200 space-y-3">
+                      <div className="grid grid-cols-2 gap-3">
+                        <div>
+                          <label className="block text-xs font-medium text-navy mb-1">Church</label>
+                          <div className="relative">
+                            <select
+                              value={assignChurchId}
+                              onChange={(e) => setAssignChurchId(e.target.value)}
+                              className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg appearance-none bg-white pr-8"
+                            >
+                              <option value="">Select church...</option>
+                              {churches.map((church) => (
+                                <option key={church.id} value={church.id}>
+                                  {church.name}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="block text-xs font-medium text-navy mb-1">Call Type</label>
+                          <div className="relative">
+                            <select
+                              value={assignCallType}
+                              onChange={(e) => setAssignCallType(e.target.value)}
+                              className="w-full text-sm px-3 py-2 border border-gray-300 rounded-lg appearance-none bg-white pr-8"
+                            >
+                              <option value="">Select type...</option>
+                              {CALL_TYPES.map((type) => (
+                                <option key={type.value} value={type.value}>
+                                  {type.label}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => handleAssignEvent(event.id)}
+                          disabled={assigningInProgress || !assignChurchId || !assignCallType}
+                          className="flex items-center gap-1 px-3 py-1.5 bg-gold text-white text-sm rounded hover:bg-gold-dark transition-colors disabled:opacity-50"
+                        >
+                          {assigningInProgress ? (
+                            <>
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                              Assigning...
+                            </>
+                          ) : (
+                            <>
+                              <Check className="w-3 h-3" />
+                              Assign to Church
+                            </>
+                          )}
+                        </button>
+                        <button
+                          onClick={() => {
+                            setAssigningEventId(null);
+                            setAssignChurchId('');
+                            setAssignCallType('');
+                          }}
+                          className="px-3 py-1.5 text-sm text-gray-600 hover:bg-gray-100 rounded transition-colors"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    </div>
                   )}
                 </div>
               ))}
-              {unmatchedEvents.length > 5 && (
+              {unmatchedEvents.length > 10 && (
                 <p className="text-sm text-foreground-muted text-center">
-                  +{unmatchedEvents.length - 5} more unmatched events
+                  +{unmatchedEvents.length - 10} more unmatched events
                 </p>
               )}
             </div>

@@ -9,6 +9,7 @@ import {
   X,
   Loader2,
   CheckCircle,
+  Check,
   ChevronDown,
   ChevronRight,
   Video,
@@ -21,7 +22,19 @@ import {
   List,
   LayoutList,
   Paperclip,
+  Phone,
+  Link2,
+  Unlink,
+  ExternalLink,
 } from 'lucide-react';
+
+interface LinkedCall {
+  id: string;
+  call_type: string;
+  scheduled_at: string;
+  completed: boolean;
+  meet_link?: string;
+}
 
 interface Milestone {
   id: string;
@@ -49,7 +62,27 @@ interface Milestone {
     file_url?: string;
     resource_type?: string;
   }>;
+  linked_calls?: LinkedCall[];
 }
+
+interface ScheduledCall {
+  id: string;
+  call_type: string;
+  scheduled_at: string;
+  completed: boolean;
+  meet_link?: string;
+  milestone_id?: string;
+}
+
+const CALL_TYPE_LABELS: Record<string, string> = {
+  discovery: 'Discovery',
+  proposal: 'Proposal',
+  strategy: 'Strategy',
+  kickoff: 'Kick-off',
+  assessment: 'Assessment',
+  onboarding: 'Onboarding',
+  checkin: 'Check-in',
+};
 
 interface Phase {
   id: string;
@@ -66,6 +99,7 @@ interface AdminChurchJourneyTabProps {
   churchId: string;
   currentPhase: number;
   phases: Phase[];
+  calls?: ScheduledCall[];
   onRefresh: () => Promise<void>;
 }
 
@@ -73,6 +107,7 @@ export default function AdminChurchJourneyTab({
   churchId,
   currentPhase,
   phases,
+  calls = [],
   onRefresh,
 }: AdminChurchJourneyTabProps) {
   // Journey state
@@ -101,6 +136,14 @@ export default function AdminChurchJourneyTab({
   const [editNotesValue, setEditNotesValue] = useState('');
   const [updatingMilestone, setUpdatingMilestone] = useState<string | null>(null);
   const [uploadingMilestone, setUploadingMilestone] = useState<string | null>(null);
+
+  // Call linking state
+  const [linkingMilestoneId, setLinkingMilestoneId] = useState<string | null>(null);
+  const [linkingCallId, setLinkingCallId] = useState('');
+  const [linkingInProgress, setLinkingInProgress] = useState(false);
+
+  // Get unlinked calls (calls without a milestone_id)
+  const unlinkedCalls = calls.filter(c => !c.milestone_id);
 
   // Calculate progress stats
   const totalMilestones = phases?.filter(p => p.phase_number > 0).reduce((sum, p) => sum + p.totalCount, 0) || 0;
@@ -291,6 +334,66 @@ export default function AdminChurchJourneyTab({
       day: 'numeric',
       year: 'numeric',
     });
+  };
+
+  const formatDateTime = (dateStr: string) => {
+    return new Date(dateStr).toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      hour: 'numeric',
+      minute: '2-digit',
+    });
+  };
+
+  const handleLinkCall = async (milestoneId: string) => {
+    if (!linkingCallId) return;
+    setLinkingInProgress(true);
+    try {
+      const response = await fetch('/api/admin/calls', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          callId: linkingCallId,
+          milestoneId: milestoneId,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to link call');
+      }
+
+      await onRefresh();
+      setLinkingMilestoneId(null);
+      setLinkingCallId('');
+    } catch (error) {
+      console.error('Link call error:', error);
+      alert('Failed to link call to milestone');
+    } finally {
+      setLinkingInProgress(false);
+    }
+  };
+
+  const handleUnlinkCall = async (callId: string) => {
+    if (!confirm('Unlink this call from the milestone?')) return;
+    try {
+      const response = await fetch('/api/admin/calls', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          callId: callId,
+          milestoneId: null,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to unlink call');
+      }
+
+      await onRefresh();
+    } catch (error) {
+      console.error('Unlink call error:', error);
+      alert('Failed to unlink call');
+    }
   };
 
   return (
@@ -669,6 +772,109 @@ export default function AdminChurchJourneyTab({
                                     </>
                                   )}
                                 </label>
+                              </div>
+                            )}
+
+                            {/* Linked Calls */}
+                            {!compactView && (
+                              <div className="mt-3">
+                                {milestone.linked_calls && milestone.linked_calls.length > 0 && (
+                                  <div className="space-y-1 mb-2">
+                                    <p className="text-xs font-medium text-navy/70 flex items-center gap-1">
+                                      <Phone className="w-3 h-3" />
+                                      Linked Calls:
+                                    </p>
+                                    {milestone.linked_calls.map((call) => (
+                                      <div
+                                        key={call.id}
+                                        className="flex items-center justify-between text-xs bg-blue-50 px-2 py-1.5 rounded group"
+                                      >
+                                        <div className="flex items-center gap-2">
+                                          <span className={`font-medium ${call.completed ? 'text-green-700' : 'text-blue-700'}`}>
+                                            {CALL_TYPE_LABELS[call.call_type] || call.call_type}
+                                          </span>
+                                          <span className="text-foreground-muted">
+                                            {formatDateTime(call.scheduled_at)}
+                                          </span>
+                                          {call.completed && (
+                                            <span className="text-xs bg-green-100 text-green-700 px-1.5 py-0.5 rounded">
+                                              Completed
+                                            </span>
+                                          )}
+                                        </div>
+                                        <div className="flex items-center gap-1">
+                                          {call.meet_link && (
+                                            <a
+                                              href={call.meet_link}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="p-1 text-blue-600 hover:text-blue-800"
+                                              title="Open Meet link"
+                                            >
+                                              <ExternalLink className="w-3 h-3" />
+                                            </a>
+                                          )}
+                                          <button
+                                            onClick={() => handleUnlinkCall(call.id)}
+                                            className="p-1 text-foreground-muted hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity"
+                                            title="Unlink call"
+                                          >
+                                            <Unlink className="w-3 h-3" />
+                                          </button>
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
+                                )}
+
+                                {/* Link call form */}
+                                {linkingMilestoneId === milestone.id ? (
+                                  <div className="flex items-center gap-2 mt-2">
+                                    <select
+                                      value={linkingCallId}
+                                      onChange={(e) => setLinkingCallId(e.target.value)}
+                                      className="flex-1 text-xs px-2 py-1 border border-input-border rounded bg-white"
+                                    >
+                                      <option value="">Select a call...</option>
+                                      {unlinkedCalls.map((call) => (
+                                        <option key={call.id} value={call.id}>
+                                          {CALL_TYPE_LABELS[call.call_type] || call.call_type} - {formatDateTime(call.scheduled_at)}
+                                          {call.completed ? ' (Completed)' : ''}
+                                        </option>
+                                      ))}
+                                    </select>
+                                    <button
+                                      onClick={() => handleLinkCall(milestone.id)}
+                                      disabled={linkingInProgress || !linkingCallId}
+                                      className="p-1 text-success hover:bg-success/10 rounded disabled:opacity-50"
+                                      title="Link"
+                                    >
+                                      {linkingInProgress ? (
+                                        <Loader2 className="w-3 h-3 animate-spin" />
+                                      ) : (
+                                        <Check className="w-3 h-3" />
+                                      )}
+                                    </button>
+                                    <button
+                                      onClick={() => {
+                                        setLinkingMilestoneId(null);
+                                        setLinkingCallId('');
+                                      }}
+                                      className="p-1 text-foreground-muted hover:bg-background-secondary rounded"
+                                      title="Cancel"
+                                    >
+                                      <X className="w-3 h-3" />
+                                    </button>
+                                  </div>
+                                ) : unlinkedCalls.length > 0 ? (
+                                  <button
+                                    onClick={() => setLinkingMilestoneId(milestone.id)}
+                                    className="text-xs text-blue-600 hover:text-blue-800 flex items-center gap-1 mt-1"
+                                  >
+                                    <Link2 className="w-3 h-3" />
+                                    <span>Link a call</span>
+                                  </button>
+                                ) : null}
                               </div>
                             )}
                           </div>

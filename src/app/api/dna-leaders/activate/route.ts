@@ -2,10 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, generateToken } from '@/lib/auth';
 import { cookies } from 'next/headers';
 
-const DNA_SESSION_COOKIE_NAME = 'dna_leader_session';
-
 // POST /api/dna-leaders/activate
-// Activate a DNA leader account after they complete signup
+// Activate a DNA leader account after they complete signup (legacy flow)
+// NEW FLOW: Admin invites create user/role upfront, so this is only for legacy invitations
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
@@ -57,7 +56,70 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Activate the leader
+    // =====================================================
+    // UNIFIED AUTH: Create user and role records
+    // =====================================================
+
+    // 1. Create or find the user in the unified users table
+    let userId: string;
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', leader.email)
+      .single();
+
+    if (existingUser) {
+      userId = existingUser.id;
+      // Update name if needed
+      await supabase
+        .from('users')
+        .update({ name: name.trim() })
+        .eq('id', userId);
+    } else {
+      const { data: newUser, error: userError } = await supabase
+        .from('users')
+        .insert({
+          email: leader.email,
+          name: name.trim(),
+        })
+        .select('id')
+        .single();
+
+      if (userError) {
+        console.error('[DNA Leaders] User creation error:', userError);
+        return NextResponse.json(
+          { error: 'Failed to create user account' },
+          { status: 500 }
+        );
+      }
+      userId = newUser.id;
+    }
+
+    // 2. Add dna_leader role (if not already present)
+    const { data: existingRole } = await supabase
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('role', 'dna_leader')
+      .eq('church_id', leader.church_id)
+      .maybeSingle();
+
+    if (!existingRole) {
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: 'dna_leader',
+          church_id: leader.church_id,
+        });
+
+      if (roleError) {
+        console.error('[DNA Leaders] Role creation error:', roleError);
+        // Continue anyway - the user can still log in
+      }
+    }
+
+    // 3. Activate the DNA leader record and link to user
     const { error: updateError } = await supabase
       .from('dna_leaders')
       .update({
@@ -66,6 +128,7 @@ export async function POST(request: NextRequest) {
         activated_at: new Date().toISOString(),
         signup_token: null, // Clear the token after use
         signup_token_expires_at: null,
+        user_id: userId, // Link to unified user
       })
       .eq('id', leader.id);
 
@@ -77,20 +140,39 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Create a session for the DNA leader
+    // 4. Create magic link token for unified session
     const sessionToken = generateToken();
+    const tokenExpiresAt = new Date();
+    tokenExpiresAt.setDate(tokenExpiresAt.getDate() + 7); // 7-day expiry
+
+    const { error: tokenError } = await supabase
+      .from('magic_link_tokens')
+      .insert({
+        email: leader.email,
+        token: sessionToken,
+        expires_at: tokenExpiresAt.toISOString(),
+        used: true, // Mark as used immediately (we're creating the session now)
+      });
+
+    if (tokenError) {
+      console.error('[DNA Leaders] Magic token error:', tokenError);
+      // Continue anyway
+    }
+
+    // 5. Set unified session cookie (not legacy dna_leader_session)
     const cookieStore = await cookies();
 
-    cookieStore.set(DNA_SESSION_COOKIE_NAME, JSON.stringify({
-      token: sessionToken,
-      leaderId: leader.id,
-      churchId: leader.church_id,
-      createdAt: Date.now(),
-    }), {
+    // Clear any old session cookies
+    cookieStore.delete('dna_leader_session');
+    cookieStore.delete('church_leader_session');
+    cookieStore.delete('training_session');
+
+    // Set new unified session cookie
+    cookieStore.set('user_session', sessionToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
-      maxAge: 60 * 60 * 24 * 30, // 30 days
+      maxAge: 60 * 60 * 24 * 7, // 7 days
       path: '/',
     });
 

@@ -103,6 +103,13 @@ export async function GET(
         `)
         .order('display_order', { ascending: true });
 
+      // Get calls linked to milestones for this church
+      const { data: linkedCalls } = await supabase
+        .from('scheduled_calls')
+        .select('*')
+        .eq('church_id', churchId)
+        .not('milestone_id', 'is', null);
+
       phases = phasesData.map((phase) => {
         const phaseMilestones = milestones?.filter((m) => m.phase_id === phase.id) || [];
         const milestonesWithProgress = phaseMilestones.map((m) => {
@@ -113,11 +120,14 @@ export async function GET(
             ?.filter((mr) => mr.milestone_id === m.id)
             .map((mr) => mr.resource)
             .filter(Boolean) || [];
+          // Get calls linked to this milestone
+          const milestoneCalls = linkedCalls?.filter((c) => c.milestone_id === m.id) || [];
           return {
             ...m,
             progress: milestoneProgress || null,
             attachments: milestoneAttachments || [],
             resources, // Global template resources
+            linked_calls: milestoneCalls, // Calls linked to this milestone
             is_custom: !!m.church_id, // Flag for church-specific milestones
           };
         });

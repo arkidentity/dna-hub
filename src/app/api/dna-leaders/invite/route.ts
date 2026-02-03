@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin, generateToken } from '@/lib/auth';
 import { getUnifiedSession, isAdmin as checkIsAdmin, getPrimaryChurch } from '@/lib/unified-auth';
-import { sendDNALeaderInvitationEmail } from '@/lib/email';
+import { sendDNALeaderDirectInviteEmail } from '@/lib/email';
 
 // POST /api/dna-leaders/invite
 // Invite a new DNA leader (church admin or super admin only)
@@ -105,12 +105,69 @@ export async function POST(request: NextRequest) {
       churchName = church?.name || null;
     }
 
-    // Generate signup token
-    const signupToken = generateToken();
-    const tokenExpiresAt = new Date();
-    tokenExpiresAt.setDate(tokenExpiresAt.getDate() + 7); // 7-day expiry
+    // =====================================================
+    // UNIFIED AUTH: Create user and role records upfront
+    // This allows the invited person to log in directly with a magic link
+    // =====================================================
 
-    // Create DNA leader record
+    // 1. Create or find the user in the unified users table
+    let userId: string;
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', normalizedEmail)
+      .single();
+
+    if (existingUser) {
+      userId = existingUser.id;
+    } else {
+      const { data: newUser, error: userError } = await supabase
+        .from('users')
+        .insert({
+          email: normalizedEmail,
+          name: name.trim(),
+        })
+        .select('id')
+        .single();
+
+      if (userError) {
+        console.error('[DNA Leaders] User creation error:', userError);
+        return NextResponse.json(
+          { error: 'Failed to create user account' },
+          { status: 500 }
+        );
+      }
+      userId = newUser.id;
+    }
+
+    // 2. Add dna_leader role (if not already present)
+    const { data: existingRole } = await supabase
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('role', 'dna_leader')
+      .eq('church_id', finalChurchId)
+      .maybeSingle();
+
+    if (!existingRole) {
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: 'dna_leader',
+          church_id: finalChurchId,
+        });
+
+      if (roleError) {
+        console.error('[DNA Leaders] Role creation error:', roleError);
+        return NextResponse.json(
+          { error: 'Failed to assign DNA leader role' },
+          { status: 500 }
+        );
+      }
+    }
+
+    // 3. Create DNA leader record (for group management features)
     const { data: newLeader, error: insertError } = await supabase
       .from('dna_leaders')
       .insert({
@@ -119,8 +176,8 @@ export async function POST(request: NextRequest) {
         church_id: finalChurchId,
         invited_by: inviterId,
         invited_by_type: isSuperAdmin ? 'super_admin' : 'church_admin',
-        signup_token: signupToken,
-        signup_token_expires_at: tokenExpiresAt.toISOString(),
+        user_id: userId, // Link to unified user
+        activated_at: new Date().toISOString(), // Pre-activate since admin invited them
       })
       .select()
       .single();
@@ -128,19 +185,38 @@ export async function POST(request: NextRequest) {
     if (insertError) {
       console.error('[DNA Leaders] Insert error:', insertError);
       return NextResponse.json(
-        { error: 'Failed to create invitation' },
+        { error: 'Failed to create DNA leader record' },
         { status: 500 }
       );
     }
 
-    // Send invitation email
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dnadiscipleship.com';
-    const signupUrl = `${baseUrl}/groups/signup?token=${signupToken}`;
+    // 4. Create magic link token for direct login
+    const magicToken = generateToken();
+    const tokenExpiresAt = new Date();
+    tokenExpiresAt.setDate(tokenExpiresAt.getDate() + 7); // 7-day expiry
 
-    const emailResult = await sendDNALeaderInvitationEmail(
+    const { error: tokenError } = await supabase
+      .from('magic_link_tokens')
+      .insert({
+        email: normalizedEmail,
+        token: magicToken,
+        expires_at: tokenExpiresAt.toISOString(),
+        used: false,
+      });
+
+    if (tokenError) {
+      console.error('[DNA Leaders] Magic token error:', tokenError);
+      // Continue anyway - they can request a new magic link via login
+    }
+
+    // 5. Send invitation email with direct magic link
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dnadiscipleship.com';
+    const magicLink = `${baseUrl}/api/auth/verify?token=${magicToken}&destination=groups`;
+
+    const emailResult = await sendDNALeaderDirectInviteEmail(
       normalizedEmail,
       name.trim(),
-      signupUrl,
+      magicLink,
       churchName,
       inviterName,
       message
@@ -148,7 +224,7 @@ export async function POST(request: NextRequest) {
 
     if (!emailResult.success) {
       console.error('[DNA Leaders] Email send error:', emailResult.error);
-      // Don't fail the request - the record is created, they can resend
+      // Don't fail the request - the record is created, they can request a new magic link
     }
 
     return NextResponse.json({

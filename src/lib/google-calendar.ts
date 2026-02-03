@@ -183,122 +183,68 @@ export function detectCallType(
   if (lower.includes('onboarding')) return 'onboarding';
   if (lower.includes('check-in') || lower.includes('checkin') || lower.includes('check in')) return 'checkin';
 
-  // Only match "DNA" if it's specifically "DNA Discovery", "DNA Call", or similar church-specific patterns
-  // This prevents generic DNA-related meetings from being auto-classified as discovery calls
-  if (
-    lower.includes('dna discovery') ||
-    lower.includes('dna call') ||
-    lower.includes('dna intro') ||
-    lower.includes('dna meeting')
-  ) {
+  // Only match "DNA Discovery" specifically - this prevents generic DNA meetings
+  // (like "DNA Training with John" or "DNA meeting with individual") from being
+  // incorrectly classified as discovery calls
+  if (lower.includes('dna discovery')) {
     return 'discovery';
   }
 
   return null;
 }
 
-// Match event to a church by attendee email, title, or aliases
+// Admin emails that should NOT trigger auto-matching
+// (admins are on all calls, so their presence doesn't indicate which church)
+const ADMIN_EMAILS = ['thearkidentity@gmail.com', 'travis@arkidentity.com'];
+
+// Match event to a church by church leader attendee email ONLY
+// This is the most reliable matching method - title/alias matching is too error-prone
+// Events that can't be matched go to the unmatched queue for manual assignment
 export async function matchEventToChurch(
   event: calendar_v3.Schema$Event
 ): Promise<{ churchId: string; churchName: string } | null> {
   const supabase = getSupabaseAdmin();
-  const title = (event.summary || '').toLowerCase();
 
-  // Get all churches with their aliases
-  const { data: churches } = await supabase.from('churches').select('id, name, aliases');
+  // Get all churches for name lookup
+  const { data: churches } = await supabase.from('churches').select('id, name');
 
   if (!churches) {
     console.log('[GOOGLE] No churches found in database');
     return null;
   }
 
-  // Priority 1: Try matching by attendee email (most reliable)
+  // ONLY match by church leader attendee email (most reliable)
+  // Skip admin emails - they're on all calls so don't indicate which church
   const attendees = event.attendees || [];
   for (const attendee of attendees) {
     if (!attendee.email) continue;
+
+    // Skip admin emails
+    const normalizedEmail = attendee.email.toLowerCase().trim();
+    if (ADMIN_EMAILS.includes(normalizedEmail)) {
+      console.log(`[GOOGLE] Skipping admin email: ${attendee.email}`);
+      continue;
+    }
 
     // Check if this email belongs to a church leader
     const { data: leader } = await supabase
       .from('church_leaders')
       .select('church_id')
-      .eq('email', attendee.email)
+      .eq('email', normalizedEmail)
       .single();
 
     if (leader) {
       const church = churches.find((c) => c.id === leader.church_id);
       if (church) {
-        console.log(`[GOOGLE] Matched by attendee email: ${attendee.email} → ${church.name}`);
+        console.log(`[GOOGLE] Matched by church leader email: ${attendee.email} → ${church.name}`);
         return { churchId: church.id, churchName: church.name };
       }
     }
   }
 
-  // Priority 2: Try matching by church aliases (e.g., "BLVD" → Boulevard Church)
-  // IMPORTANT: Only match if the title contains an explicit call type keyword
-  // This prevents false matches like "DNA Training - BLVD example"
-  for (const church of churches) {
-    const aliases = church.aliases || [];
-    for (const alias of aliases) {
-      if (!alias) continue;
-
-      // Check if title contains this alias
-      if (title.includes(alias.toLowerCase())) {
-        // STRICT CHECK: Alias match only counts if the title also contains
-        // an explicit call type keyword (not just "DNA")
-        const hasExplicitCallType =
-          title.includes('discovery') ||
-          title.includes('proposal') ||
-          title.includes('agreement') ||
-          title.includes('strategy') ||
-          title.includes('kick-off') ||
-          title.includes('kickoff') ||
-          title.includes('assessment') ||
-          title.includes('onboarding') ||
-          title.includes('check-in') ||
-          title.includes('checkin');
-
-        if (hasExplicitCallType) {
-          console.log(`[GOOGLE] Matched by alias with explicit call type: "${alias}" → ${church.name}`);
-          return { churchId: church.id, churchName: church.name };
-        } else {
-          console.log(
-            `[GOOGLE] Skipping alias match for "${alias}" - no explicit call type in title: "${event.summary}"`
-          );
-        }
-      }
-    }
-  }
-
-  // Priority 3: Try matching by full church name in title
-  // IMPORTANT: Only match if the title contains an explicit call type keyword
-  for (const church of churches) {
-    if (title.includes(church.name.toLowerCase())) {
-      // STRICT CHECK: Name match only counts if the title also contains
-      // an explicit call type keyword (not just "DNA")
-      const hasExplicitCallType =
-        title.includes('discovery') ||
-        title.includes('proposal') ||
-        title.includes('agreement') ||
-        title.includes('strategy') ||
-        title.includes('kick-off') ||
-        title.includes('kickoff') ||
-        title.includes('assessment') ||
-        title.includes('onboarding') ||
-        title.includes('check-in') ||
-        title.includes('checkin');
-
-      if (hasExplicitCallType) {
-        console.log(`[GOOGLE] Matched by name with explicit call type: "${church.name}"`);
-        return { churchId: church.id, churchName: church.name };
-      } else {
-        console.log(
-          `[GOOGLE] Skipping name match for "${church.name}" - no explicit call type in title: "${event.summary}"`
-        );
-      }
-    }
-  }
-
-  console.log(`[GOOGLE] No match found for event: "${event.summary}"`);
+  // No church leader found in attendees - event goes to unmatched queue
+  // This is intentionally conservative to avoid wrong assignments
+  console.log(`[GOOGLE] No church leader found in attendees for: "${event.summary}" - sending to unmatched queue`);
   return null;
 }
 
