@@ -39,6 +39,7 @@ Files are numbered in the order they should be run:
 | 028 | `launch-guide-support.sql` | Launch Guide metadata support (checklist progress, phase completion) |
 | 029 | `flow-assessment-strategy-calls.sql` | Rename Dam Assessment to Flow Assessment + Add strategy call milestones per phase |
 | 030 | `hidden-milestones.sql` | Allow hiding template milestones per church |
+| 031 | `cleanup-dam-assessment-strategy-calls.sql` | Fix Dam→Flow Assessment text + Remove default strategy call milestones |
 
 ## Running Migrations
 

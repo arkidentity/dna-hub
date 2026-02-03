@@ -378,7 +378,7 @@ Template resources (PDFs, videos, guides) available to all churches. These are l
 
 **Example Resources:**
 - Leader Identification Worksheet (welcome_package)
-- Pastor's Guide to Dam Assessment (phase_1)
+- Pastor's Guide to Flow Assessment (phase_1)
 - Vision Casting Guide (phase_2)
 - DNA Launch Guide (phase_4)
 

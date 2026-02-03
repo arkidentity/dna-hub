@@ -1,6 +1,6 @@
 'use client';
 
-import { Calendar, Phone, CheckCircle, Clock, Video } from 'lucide-react';
+import { Calendar, Phone, Clock, Video } from 'lucide-react';
 import { ScheduledCall } from '@/lib/types';
 import { formatCallDate } from './utils';
 
@@ -9,27 +9,20 @@ interface ScheduleCallCardProps {
 }
 
 export default function ScheduleCallCard({ calls }: ScheduleCallCardProps) {
-  // Find the next upcoming uncompleted call
-  const upcomingCall = calls.find(c => !c.completed && new Date(c.scheduled_at) > new Date());
-
-  // Get all uncompleted calls (including past ones that haven't been marked complete)
-  const pendingCalls = calls.filter(c => !c.completed);
-
-  // Get completed calls
-  const completedCalls = calls.filter(c => c.completed);
+  // Only show uncompleted calls (completed calls are hidden)
+  const upcomingCalls = calls.filter(c => !c.completed);
 
   return (
     <div className="card">
       <h3 className="font-semibold text-navy mb-4 flex items-center gap-2">
         <Calendar className="w-5 h-5 text-teal" />
-        Scheduled Calls
+        Upcoming Calls
       </h3>
 
-      {/* Show all scheduled calls */}
-      {calls.length > 0 ? (
+      {/* Show only upcoming/pending calls */}
+      {upcomingCalls.length > 0 ? (
         <div className="space-y-3 mb-4">
-          {/* Pending/Upcoming calls first */}
-          {pendingCalls.map(call => {
+          {upcomingCalls.map(call => {
             const isPast = new Date(call.scheduled_at) < new Date();
             const isUpcoming = !isPast;
             return (
@@ -68,30 +61,9 @@ export default function ScheduleCallCard({ calls }: ScheduleCallCardProps) {
               </div>
             );
           })}
-
-          {/* Completed calls */}
-          {completedCalls.map(call => (
-            <div
-              key={call.id}
-              className="p-3 rounded-lg bg-success/5 border-l-4 border-success"
-            >
-              <div className="flex items-center gap-2">
-                <CheckCircle className="w-4 h-4 text-success" />
-                <p className="text-xs font-medium uppercase tracking-wide text-success">
-                  Completed
-                </p>
-              </div>
-              <p className="font-medium text-navy capitalize mt-1">
-                {call.call_type.replace('_', ' ')} Call
-              </p>
-              <p className="text-sm text-foreground-muted">
-                {formatCallDate(call.scheduled_at)}
-              </p>
-            </div>
-          ))}
         </div>
       ) : (
-        <p className="text-sm text-foreground-muted mb-4">No calls scheduled yet.</p>
+        <p className="text-sm text-foreground-muted mb-4">No upcoming calls scheduled.</p>
       )}
 
       {/* Booking links */}
