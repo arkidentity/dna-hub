@@ -112,7 +112,7 @@ export async function POST(request: NextRequest) {
     // Check if milestone is a key milestone and send notification
     if (completed) {
       const { data: milestone } = await supabaseAdmin
-        .from('milestones')
+        .from('church_milestones')
         .select('*, phase:phases(name, phase_number)')
         .eq('id', milestoneId)
         .single();
@@ -130,15 +130,16 @@ export async function POST(request: NextRequest) {
 
       // Check if all milestones in phase are completed - auto advance
       const { data: phaseInfo } = await supabaseAdmin
-        .from('milestones')
+        .from('church_milestones')
         .select('phase_id')
         .eq('id', milestoneId)
         .single();
 
       if (phaseInfo) {
         const { data: allPhaseMilestones } = await supabaseAdmin
-          .from('milestones')
+          .from('church_milestones')
           .select('id')
+          .eq('church_id', church.id)
           .eq('phase_id', phaseInfo.phase_id);
 
         const { data: completedMilestones } = await supabaseAdmin

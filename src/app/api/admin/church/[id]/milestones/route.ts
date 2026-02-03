@@ -43,26 +43,28 @@ export async function POST(
       return NextResponse.json({ error: 'Church not found' }, { status: 404 });
     }
 
-    // Get the highest display_order for milestones in this phase
+    // Get the highest display_order for milestones in this phase for this church
     const { data: existingMilestones } = await supabase
-      .from('milestones')
+      .from('church_milestones')
       .select('display_order')
+      .eq('church_id', churchId)
       .eq('phase_id', phase_id)
       .order('display_order', { ascending: false })
       .limit(1);
 
     const nextOrder = (existingMilestones?.[0]?.display_order || 0) + 1;
 
-    // Create the milestone (church-specific milestones have church_id set)
+    // Create the milestone in church_milestones (custom milestone)
     const { data: milestone, error: milestoneError } = await supabase
-      .from('milestones')
+      .from('church_milestones')
       .insert({
+        church_id: churchId,
         phase_id,
         title,
         description: description || null,
         is_key_milestone: is_key_milestone || false,
         display_order: nextOrder,
-        church_id: churchId, // Links this milestone to a specific church
+        is_custom: true, // Custom milestones are marked as such
       })
       .select()
       .single();
@@ -103,7 +105,7 @@ export async function POST(
   }
 }
 
-// DELETE: Remove a custom milestone or hide a template milestone
+// DELETE: Remove a milestone from this church
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -132,9 +134,9 @@ export async function DELETE(
 
     const supabase = getSupabaseAdmin();
 
-    // Get milestone to check if it's custom or template
+    // Get milestone to verify it belongs to this church
     const { data: milestone, error: fetchError } = await supabase
-      .from('milestones')
+      .from('church_milestones')
       .select('id, church_id, title')
       .eq('id', milestoneId)
       .single();
@@ -143,98 +145,61 @@ export async function DELETE(
       return NextResponse.json({ error: 'Milestone not found' }, { status: 404 });
     }
 
-    const isCustomMilestone = milestone.church_id === churchId;
-    const isTemplateMilestone = milestone.church_id === null;
-
-    if (isCustomMilestone) {
-      // Custom milestone: Actually delete it
-      // Delete progress entries first
-      await supabase
-        .from('church_progress')
-        .delete()
-        .eq('milestone_id', milestoneId)
-        .eq('church_id', churchId);
-
-      // Delete attachments
-      await supabase
-        .from('milestone_attachments')
-        .delete()
-        .eq('milestone_id', milestoneId)
-        .eq('church_id', churchId);
-
-      // Delete the milestone
-      const { error: deleteError } = await supabase
-        .from('milestones')
-        .delete()
-        .eq('id', milestoneId);
-
-      if (deleteError) {
-        console.error('[MILESTONE DELETE] Error:', deleteError);
-        return NextResponse.json(
-          { error: 'Failed to delete milestone' },
-          { status: 500 }
-        );
-      }
-
-      // Log the deletion
-      await logAdminAction(
-        session.email,
-        'milestone_update',
-        'milestone',
-        milestoneId,
-        { title: milestone.title, church_id: churchId },
-        null,
-        `Deleted custom milestone: ${milestone.title}`
-      );
-
-      return NextResponse.json({ success: true, action: 'deleted' });
-    } else if (isTemplateMilestone) {
-      // Template milestone: Hide it for this church (don't actually delete)
-      const { error: hideError } = await supabase
-        .from('church_hidden_milestones')
-        .upsert({
-          church_id: churchId,
-          milestone_id: milestoneId,
-          hidden_by: session.email,
-          hidden_at: new Date().toISOString(),
-        }, {
-          onConflict: 'church_id,milestone_id',
-        });
-
-      if (hideError) {
-        console.error('[MILESTONE HIDE] Error:', hideError);
-        return NextResponse.json(
-          { error: 'Failed to hide milestone' },
-          { status: 500 }
-        );
-      }
-
-      // Also delete any progress entries for this church
-      await supabase
-        .from('church_progress')
-        .delete()
-        .eq('milestone_id', milestoneId)
-        .eq('church_id', churchId);
-
-      // Log the hide action
-      await logAdminAction(
-        session.email,
-        'milestone_update',
-        'milestone',
-        milestoneId,
-        null,
-        { church_id: churchId, hidden: true },
-        `Hid template milestone: ${milestone.title} for church`
-      );
-
-      return NextResponse.json({ success: true, action: 'hidden' });
-    } else {
-      // Milestone belongs to a different church - not allowed
+    // Verify milestone belongs to this church
+    if (milestone.church_id !== churchId) {
       return NextResponse.json(
         { error: 'Cannot delete milestones from other churches' },
         { status: 403 }
       );
     }
+
+    // Delete progress entries first
+    await supabase
+      .from('church_progress')
+      .delete()
+      .eq('milestone_id', milestoneId)
+      .eq('church_id', churchId);
+
+    // Delete attachments
+    await supabase
+      .from('milestone_attachments')
+      .delete()
+      .eq('milestone_id', milestoneId)
+      .eq('church_id', churchId);
+
+    // Unlink any scheduled calls
+    await supabase
+      .from('scheduled_calls')
+      .update({ milestone_id: null })
+      .eq('milestone_id', milestoneId)
+      .eq('church_id', churchId);
+
+    // Delete the milestone
+    const { error: deleteError } = await supabase
+      .from('church_milestones')
+      .delete()
+      .eq('id', milestoneId);
+
+    if (deleteError) {
+      console.error('[MILESTONE DELETE] Error:', deleteError);
+      return NextResponse.json(
+        { error: 'Failed to delete milestone' },
+        { status: 500 }
+      );
+    }
+
+    // Log the deletion
+    await logAdminAction(
+      session.email,
+      'milestone_update',
+      'milestone',
+      milestoneId,
+      { title: milestone.title, church_id: churchId },
+      null,
+      `Deleted milestone: ${milestone.title}`
+    );
+
+    return NextResponse.json({ success: true, action: 'deleted' });
   } catch (error) {
     console.error('[MILESTONE DELETE] Error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
@@ -279,13 +244,21 @@ export async function PATCH(
     if (title !== undefined || description !== undefined || is_key_milestone !== undefined) {
       // Get the current milestone to log the change
       const { data: currentMilestone, error: fetchError } = await supabase
-        .from('milestones')
+        .from('church_milestones')
         .select('id, title, description, is_key_milestone, church_id')
         .eq('id', milestone_id)
         .single();
 
       if (fetchError || !currentMilestone) {
         return NextResponse.json({ error: 'Milestone not found' }, { status: 404 });
+      }
+
+      // Verify milestone belongs to this church
+      if (currentMilestone.church_id !== churchId) {
+        return NextResponse.json(
+          { error: 'Cannot edit milestones from other churches' },
+          { status: 403 }
+        );
       }
 
       // Build update object
@@ -296,7 +269,7 @@ export async function PATCH(
 
       // Update the milestone
       const { error: updateError } = await supabase
-        .from('milestones')
+        .from('church_milestones')
         .update(milestoneUpdates)
         .eq('id', milestone_id);
 
@@ -420,8 +393,8 @@ async function handleReorderMilestone(
 
   // Get the current milestone with its phase and display_order
   const { data: currentMilestone, error: fetchError } = await supabase
-    .from('milestones')
-    .select('id, phase_id, display_order, title')
+    .from('church_milestones')
+    .select('id, phase_id, display_order, title, church_id')
     .eq('id', milestoneId)
     .single();
 
@@ -429,13 +402,20 @@ async function handleReorderMilestone(
     return NextResponse.json({ error: 'Milestone not found' }, { status: 404 });
   }
 
-  // Get all milestones in the same phase (both template and church-specific)
-  // Template milestones have church_id IS NULL, church-specific have church_id = churchId
+  // Verify milestone belongs to this church
+  if (currentMilestone.church_id !== churchId) {
+    return NextResponse.json(
+      { error: 'Cannot reorder milestones from other churches' },
+      { status: 403 }
+    );
+  }
+
+  // Get all milestones in the same phase for this church
   const { data: phaseMilestones, error: phaseError } = await supabase
-    .from('milestones')
-    .select('id, display_order, title, church_id')
+    .from('church_milestones')
+    .select('id, display_order, title')
+    .eq('church_id', churchId)
     .eq('phase_id', currentMilestone.phase_id)
-    .or(`church_id.is.null,church_id.eq.${churchId}`)
     .order('display_order', { ascending: true });
 
   if (phaseError || !phaseMilestones || phaseMilestones.length < 2) {
@@ -467,7 +447,7 @@ async function handleReorderMilestone(
 
   // Update both milestones
   const { error: updateCurrentError } = await supabase
-    .from('milestones')
+    .from('church_milestones')
     .update({ display_order: targetOrder })
     .eq('id', currentMilestone.id);
 
@@ -477,7 +457,7 @@ async function handleReorderMilestone(
   }
 
   const { error: updateTargetError } = await supabase
-    .from('milestones')
+    .from('church_milestones')
     .update({ display_order: currentOrder })
     .eq('id', targetMilestone.id);
 
@@ -485,7 +465,7 @@ async function handleReorderMilestone(
     console.error('[MILESTONE REORDER] Error updating target:', updateTargetError);
     // Attempt to rollback the first update
     await supabase
-      .from('milestones')
+      .from('church_milestones')
       .update({ display_order: currentOrder })
       .eq('id', currentMilestone.id);
     return NextResponse.json({ error: 'Failed to reorder milestone' }, { status: 500 });

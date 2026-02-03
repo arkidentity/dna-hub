@@ -40,6 +40,7 @@ Files are numbered in the order they should be run:
 | 029 | `flow-assessment-strategy-calls.sql` | Rename Dam Assessment to Flow Assessment + Add strategy call milestones per phase |
 | 030 | `hidden-milestones.sql` | Allow hiding template milestones per church |
 | 031 | `cleanup-dam-assessment-strategy-calls.sql` | Fix Dam→Flow Assessment text + Remove default strategy call milestones |
+| 032 | `template_milestones.sql` | Template-based milestone system - church-specific editable milestones |
 
 ## Running Migrations
 

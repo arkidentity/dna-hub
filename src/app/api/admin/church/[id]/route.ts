@@ -62,7 +62,7 @@ export async function GET(
       .eq('church_id', churchId)
       .order('scheduled_at', { ascending: true });
 
-    // Get phases and milestones for all churches (admin view)
+    // Get phases and church-specific milestones (admin view)
     let phases = null;
     const { data: phasesData } = await supabase
       .from('phases')
@@ -70,20 +70,12 @@ export async function GET(
       .order('phase_number', { ascending: true });
 
     if (phasesData) {
-      // Get template milestones (no church_id) and church-specific milestones
+      // Get church-specific milestones (from church_milestones table)
       const { data: milestones } = await supabase
-        .from('milestones')
+        .from('church_milestones')
         .select('*')
-        .or(`church_id.is.null,church_id.eq.${churchId}`)
+        .eq('church_id', churchId)
         .order('display_order', { ascending: true });
-
-      // Get hidden milestones for this church
-      const { data: hiddenMilestones } = await supabase
-        .from('church_hidden_milestones')
-        .select('milestone_id')
-        .eq('church_id', churchId);
-
-      const hiddenMilestoneIds = new Set(hiddenMilestones?.map(h => h.milestone_id) || []);
 
       const { data: progress } = await supabase
         .from('church_progress')
@@ -118,11 +110,11 @@ export async function GET(
         .eq('church_id', churchId)
         .not('milestone_id', 'is', null);
 
+      // Check if template has been applied
+      const templateApplied = church.template_applied_at !== null;
+
       phases = phasesData.map((phase) => {
-        // Filter out hidden milestones for this church
-        const phaseMilestones = milestones?.filter((m) =>
-          m.phase_id === phase.id && !hiddenMilestoneIds.has(m.id)
-        ) || [];
+        const phaseMilestones = milestones?.filter((m) => m.phase_id === phase.id) || [];
         const milestonesWithProgress = phaseMilestones.map((m) => {
           const milestoneProgress = progress?.find((p) => p.milestone_id === m.id);
           const milestoneAttachments = attachments?.filter((a) => a.milestone_id === m.id);
@@ -139,7 +131,6 @@ export async function GET(
             attachments: milestoneAttachments || [],
             resources, // Global template resources
             linked_calls: milestoneCalls, // Calls linked to this milestone
-            is_custom: !!m.church_id, // Flag for church-specific milestones
           };
         });
 
@@ -163,6 +154,7 @@ export async function GET(
           status,
           completedCount,
           totalCount: phaseMilestones.length,
+          templateApplied,
         };
       });
     }

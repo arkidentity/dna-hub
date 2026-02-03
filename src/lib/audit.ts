@@ -10,7 +10,8 @@ export type AuditAction =
   | 'document_delete'
   | 'call_scheduled'
   | 'call_completed'
-  | 'phase_advanced';
+  | 'phase_advanced'
+  | 'template_applied';
 
 export type AuditEntityType = 'church' | 'milestone' | 'document' | 'call';
 

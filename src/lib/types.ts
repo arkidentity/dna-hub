@@ -632,3 +632,67 @@ export interface AssessmentComparison {
   strengths: string[];
   focus_areas: string[];
 }
+
+// ============================================================================
+// Journey Template System Types (Migration 032)
+// ============================================================================
+
+// Journey Template - master template definition
+export interface JourneyTemplate {
+  id: string;
+  name: string;
+  description?: string;
+  is_default: boolean;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Template Milestone - master milestone definition within a template
+export interface TemplateMilestone {
+  id: string;
+  template_id: string;
+  phase_id: string;
+  title: string;
+  description?: string;
+  resource_url?: string;
+  resource_type?: 'pdf' | 'video' | 'link' | 'guide';
+  display_order: number;
+  is_key_milestone: boolean;
+  created_at: string;
+}
+
+// Church Milestone - church-specific copy of a milestone (fully editable)
+export interface ChurchMilestone {
+  id: string;
+  church_id: string;
+  phase_id: string;
+  title: string;
+  description?: string;
+  resource_url?: string;
+  resource_type?: 'pdf' | 'video' | 'link' | 'guide';
+  display_order: number;
+  is_key_milestone: boolean;
+  source_template_id?: string;
+  source_milestone_id?: string;
+  is_custom: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Church Milestone with progress and attachments (for UI)
+export interface ChurchMilestoneWithProgress extends ChurchMilestone {
+  progress?: ChurchProgress;
+  completed_by_name?: string;
+  attachments?: MilestoneAttachment[];
+  resources?: MilestoneResource[];
+  linked_calls?: ScheduledCall[];
+}
+
+// Phase with church-specific milestones
+export interface PhaseWithChurchMilestones extends Phase {
+  milestones: ChurchMilestoneWithProgress[];
+  status: 'locked' | 'current' | 'completed' | 'upcoming';
+  completedCount: number;
+  totalCount: number;
+}

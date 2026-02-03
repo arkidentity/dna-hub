@@ -95,6 +95,7 @@ interface Phase {
   status: string;
   completedCount: number;
   totalCount: number;
+  templateApplied?: boolean;
 }
 
 interface AdminChurchJourneyTabProps {
@@ -102,6 +103,7 @@ interface AdminChurchJourneyTabProps {
   currentPhase: number;
   phases: Phase[];
   calls?: ScheduledCall[];
+  templateApplied?: boolean;
   onRefresh: () => Promise<void>;
 }
 
@@ -110,6 +112,7 @@ export default function AdminChurchJourneyTab({
   currentPhase,
   phases,
   calls = [],
+  templateApplied = true,
   onRefresh,
 }: AdminChurchJourneyTabProps) {
   // Journey state
@@ -152,6 +155,9 @@ export default function AdminChurchJourneyTab({
   const [editMilestoneTitle, setEditMilestoneTitle] = useState('');
   const [editMilestoneDescription, setEditMilestoneDescription] = useState('');
   const [editMilestoneIsKey, setEditMilestoneIsKey] = useState(false);
+
+  // Template application state
+  const [applyingTemplate, setApplyingTemplate] = useState(false);
 
   // Get unlinked calls (calls without a milestone_id)
   const unlinkedCalls = calls.filter(c => !c.milestone_id);
@@ -220,12 +226,8 @@ export default function AdminChurchJourneyTab({
     }
   };
 
-  const handleDeleteMilestone = async (milestoneId: string, isCustom?: boolean) => {
-    const message = isCustom
-      ? 'Are you sure you want to delete this custom milestone? This cannot be undone.'
-      : 'Are you sure you want to hide this milestone? It will be removed from this church\'s DNA Journey but can be restored later.';
-
-    if (!confirm(message)) return;
+  const handleDeleteMilestone = async (milestoneId: string) => {
+    if (!confirm('Are you sure you want to delete this milestone? This cannot be undone.')) return;
 
     try {
       const response = await fetch(
@@ -241,6 +243,29 @@ export default function AdminChurchJourneyTab({
     } catch (error) {
       console.error('Delete milestone error:', error);
       alert('Failed to delete milestone');
+    }
+  };
+
+  const handleApplyTemplate = async () => {
+    if (!confirm('Apply the standard DNA Journey template? This will add Phase 0 and Phase 1 milestones.')) return;
+
+    setApplyingTemplate(true);
+    try {
+      const response = await fetch(`/api/admin/church/${churchId}/apply-template`, {
+        method: 'POST',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to apply template');
+      }
+
+      await onRefresh();
+    } catch (error) {
+      console.error('Apply template error:', error);
+      alert(error instanceof Error ? error.message : 'Failed to apply template');
+    } finally {
+      setApplyingTemplate(false);
     }
   };
 
@@ -538,6 +563,37 @@ export default function AdminChurchJourneyTab({
         </div>
       </div>
 
+      {/* Apply Template Button (if not applied yet) */}
+      {!templateApplied && (
+        <div className="card bg-gold/5 border-gold/20">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-navy">No Journey Template Applied</h3>
+              <p className="text-sm text-foreground-muted mt-1">
+                Apply the standard DNA Journey template to populate Phase 0 and Phase 1 milestones.
+              </p>
+            </div>
+            <button
+              onClick={handleApplyTemplate}
+              disabled={applyingTemplate}
+              className="flex items-center gap-2 px-4 py-2 bg-gold text-white rounded-lg hover:bg-gold-dark transition-colors disabled:opacity-50"
+            >
+              {applyingTemplate ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Applying...
+                </>
+              ) : (
+                <>
+                  <Plus className="w-4 h-4" />
+                  Apply Template
+                </>
+              )}
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Phases */}
       <div className="space-y-4">
         {phases && phases.length > 0 ? (
@@ -727,9 +783,9 @@ export default function AdminChurchJourneyTab({
                                       </div>
                                     )}
                                     <button
-                                      onClick={() => handleDeleteMilestone(milestone.id, milestone.is_custom)}
+                                      onClick={() => handleDeleteMilestone(milestone.id)}
                                       className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors"
-                                      title={milestone.is_custom ? "Delete milestone" : "Hide milestone"}
+                                      title="Delete milestone"
                                     >
                                       <Trash2 className="w-4 h-4" />
                                     </button>

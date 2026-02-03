@@ -65,10 +65,11 @@ export async function GET() {
       );
     }
 
-    // Get all milestones
+    // Get church-specific milestones (from church_milestones table)
     const { data: milestones, error: milestonesError } = await supabaseAdmin
-      .from('milestones')
+      .from('church_milestones')
       .select('*')
+      .eq('church_id', church.id)
       .order('display_order', { ascending: true });
 
     if (milestonesError) {

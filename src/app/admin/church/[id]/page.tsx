@@ -38,6 +38,7 @@ interface ChurchDetail {
     phase_5_start?: string;
     phase_5_target?: string;
     aliases?: string[];
+    template_applied_at?: string;
   };
   leader: {
     id: string;
@@ -416,6 +417,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
             currentPhase={church.current_phase}
             phases={phases}
             calls={data?.calls || []}
+            templateApplied={!!church.template_applied_at}
             onRefresh={fetchChurchData}
           />
         )}
