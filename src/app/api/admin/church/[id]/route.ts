@@ -87,7 +87,8 @@ export async function GET(
         .select('*')
         .eq('church_id', churchId);
 
-      // Get global resources linked to milestones
+      // Get global resources linked to template milestones
+      // milestone_resources links to template_milestones, so we map via source_milestone_id
       const { data: milestoneResources } = await supabase
         .from('milestone_resources')
         .select(`
@@ -102,6 +103,13 @@ export async function GET(
           )
         `)
         .order('display_order', { ascending: true });
+
+      // Build a map from template_milestone_id -> resources
+      const templateResourcesMap = new Map<string, typeof milestoneResources>();
+      milestoneResources?.forEach(mr => {
+        const existing = templateResourcesMap.get(mr.milestone_id) || [];
+        templateResourcesMap.set(mr.milestone_id, [...existing, mr]);
+      });
 
       // Get calls linked to milestones for this church
       const { data: linkedCalls } = await supabase
@@ -118,11 +126,13 @@ export async function GET(
         const milestonesWithProgress = phaseMilestones.map((m) => {
           const milestoneProgress = progress?.find((p) => p.milestone_id === m.id);
           const milestoneAttachments = attachments?.filter((a) => a.milestone_id === m.id);
-          // Get global resources for this milestone
-          const resources = milestoneResources
-            ?.filter((mr) => mr.milestone_id === m.id)
+          // Get global resources for this milestone (via source_milestone_id -> template_milestones)
+          const templateResources = m.source_milestone_id
+            ? templateResourcesMap.get(m.source_milestone_id) || []
+            : [];
+          const resources = templateResources
             .map((mr) => mr.resource)
-            .filter(Boolean) || [];
+            .filter(Boolean);
           // Get calls linked to this milestone
           const milestoneCalls = linkedCalls?.filter((c) => c.milestone_id === m.id) || [];
           return {

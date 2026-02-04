@@ -2,6 +2,55 @@
 
 All notable changes to DNA Hub are documented here.
 
+## [2026-02-03] Template-Based Milestone System (Migration 032)
+
+### Added
+
+#### Template Milestone System
+- **New tables:** `journey_templates`, `template_milestones`, `church_milestones`
+- Each church now gets their own COPY of milestones (fully editable)
+- Editing a milestone only affects that specific church
+- New columns on `churches` table: `journey_template_id`, `template_applied_at`
+- New API endpoint: `/api/admin/church/[id]/apply-template` - copies template to church
+- "Apply Template" button in admin UI for new churches
+
+#### Template Content
+- **Phase 0 (Onboarding):** Discovery Call Notes, Proposal Call Notes, Agreement Call Notes, Kick-off Notes
+- **Phase 1 (Church Partnership):** Vision Alignment Meeting, Identify Church DNA Champion, Leaders Complete Flow Assessment, Review Pastor's Guide to Flow Assessment, Flow Assessment Debrief Meetings
+- **Phases 2-5:** Empty structures - admin adds custom milestones per church as needed
+
+### Changed
+
+#### Milestone Architecture
+- `church_progress.milestone_id` now references `church_milestones` (not `milestones`)
+- Removed "hide milestone" functionality (no longer needed with per-church copies)
+- API routes updated to query `church_milestones` instead of `milestones`
+
+#### Files Modified
+| File | Change |
+|------|--------|
+| `/src/lib/types.ts` | Added `JourneyTemplate`, `TemplateMilestone`, `ChurchMilestone` interfaces |
+| `/src/app/api/admin/church/[id]/route.ts` | Query `church_milestones` |
+| `/src/app/api/admin/church/[id]/milestones/route.ts` | Simplified CRUD for `church_milestones` |
+| `/src/app/api/dashboard/route.ts` | Query `church_milestones` |
+| `/src/app/api/progress/route.ts` | Reference `church_milestones` |
+| `/src/components/admin/AdminChurchJourneyTab.tsx` | Removed hide logic, added "Apply Template" button |
+
+### Deprecated
+
+- `milestones` table renamed to `milestones_deprecated` (kept for rollback)
+- `church_hidden_milestones` table dropped (no longer needed)
+
+### Migration Notes
+
+Run `database/032_template_milestones.sql` to:
+1. Create new tables
+2. Migrate existing church data to `church_milestones`
+3. Preserve all progress and attachments
+4. Update foreign key constraints
+
+---
+
 ## [Unreleased]
 
 ### Added

@@ -9,15 +9,16 @@
 │    churches     │──1:N──│  church_leaders  │
 │                 │       │                  │
 │ Primary entity  │       │ Login identity   │
+│ + template ref  │       │                  │
 └────────┬────────┘       └──────────────────┘
          │
          │ 1:N
          ▼
 ┌─────────────────┐       ┌──────────────────┐
-│ church_progress │──N:1──│   milestones     │ (Template + Custom)
+│ church_progress │──N:1──│ church_milestones│ (Per-church copies)
 │                 │       │                  │
-│ Completion data │       │ Curriculum items │
-│ + admin_notes   │       │ + church_id opt. │
+│ Completion data │       │ Fully editable   │
+│ + admin_notes   │       │ per church       │
 └─────────────────┘       └────────┬─────────┘
                                    │ N:1
                                    ▼
@@ -26,6 +27,25 @@
                           │                  │
                           │ 6 phases (0-5)   │
                           └──────────────────┘
+
+TEMPLATE MILESTONE SYSTEM (Migration 032)
+=========================================
+
+┌─────────────────────┐       ┌──────────────────────┐
+│  journey_templates  │──1:N──│  template_milestones │
+│                     │       │                      │
+│ "Standard DNA       │       │ Master definitions   │
+│  Journey" etc.      │       │ (Phase 0 & 1 only)   │
+└─────────────────────┘       └──────────────────────┘
+         │
+         │ 1:N (via churches.journey_template_id)
+         ▼
+┌─────────────────┐           ┌──────────────────────┐
+│    churches     │───1:N────▶│  church_milestones   │
+│                 │           │                      │
+│ template_id     │           │ Church-specific      │
+│ applied_at      │           │ copies (editable)    │
+└─────────────────┘           └──────────────────────┘
 
 ┌─────────────────────┐   ┌──────────────────┐
 │ church_assessments  │   │ magic_link_tokens│
@@ -142,6 +162,8 @@ Primary entity tracking each church through the implementation process.
 | `phase_4_end` | date | End date for phase 4 |
 | `phase_5_start` | date | Start date for phase 5 |
 | `phase_5_end` | date | End date for phase 5 |
+| `journey_template_id` | uuid | FK → journey_templates.id |
+| `template_applied_at` | timestamptz | When template milestones were copied |
 | `created_at` | timestamptz | Record creation |
 | `updated_at` | timestamptz | Last modification |
 
@@ -205,27 +227,99 @@ The 5 standard phases every church goes through. Seeded data, rarely modified.
 
 ---
 
-### milestones (Template + Custom)
+### milestones_deprecated (Legacy - DO NOT USE)
 
-Individual tasks within each phase. Can be template milestones (shared across all churches) or custom milestones (specific to one church).
+> **DEPRECATED**: This table has been replaced by the template milestone system (Migration 032).
+> Kept for rollback purposes only. All new code should use `church_milestones`.
+
+---
+
+### journey_templates
+
+Master journey templates that define the milestone structure.
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | uuid | Primary key |
+| `name` | varchar(255) | Template name (e.g., "Standard DNA Journey") |
+| `description` | text | Template description |
+| `is_default` | boolean | Is this the default template? |
+| `is_active` | boolean | Is template available for use? |
+| `created_at` | timestamptz | Record creation |
+| `updated_at` | timestamptz | Last modification |
+
+**Notes:**
+- Currently one template: "Standard DNA Journey"
+- Supports multiple templates in future
+
+---
+
+### template_milestones
+
+Master milestone definitions within a journey template. Only Phase 0 and 1 are populated.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `template_id` | uuid | FK → journey_templates.id |
 | `phase_id` | uuid | FK → phases.id |
-| `church_id` | uuid | FK → churches.id (nullable - NULL = template, value = custom) |
-| `title` | text | Milestone title |
+| `title` | varchar(255) | Milestone title |
 | `description` | text | What to accomplish |
 | `resource_url` | text | Link to PDF/video/guide |
-| `resource_type` | text | 'pdf', 'video', 'link', 'guide', 'worksheet' |
+| `resource_type` | varchar(50) | 'pdf', 'video', 'link', 'guide' |
 | `display_order` | integer | Sort within phase |
 | `is_key_milestone` | boolean | Triggers notification |
 | `created_at` | timestamptz | Record creation |
 
+**Pre-populated Milestones:**
+
+**Phase 0: Onboarding**
+- Discovery Call Notes
+- Proposal Call Notes
+- Agreement Call Notes
+- Kick-off Notes (key milestone)
+
+**Phase 1: Church Partnership**
+- Vision Alignment Meeting
+- Identify Church DNA Champion
+- Leaders Complete Flow Assessment (key milestone)
+- Review Pastor's Guide to Flow Assessment
+- Flow Assessment Debrief Meetings (key milestone)
+
+**Phases 2-5:** Empty - admin adds custom milestones per church
+
+---
+
+### church_milestones
+
+Church-specific milestone copies. Fully editable per church.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `church_id` | uuid | FK → churches.id |
+| `phase_id` | uuid | FK → phases.id |
+| `title` | varchar(255) | Milestone title |
+| `description` | text | What to accomplish |
+| `resource_url` | text | Link to PDF/video/guide |
+| `resource_type` | varchar(50) | 'pdf', 'video', 'link', 'guide' |
+| `display_order` | integer | Sort within phase |
+| `is_key_milestone` | boolean | Triggers notification |
+| `source_template_id` | uuid | FK → journey_templates.id (for tracking) |
+| `source_milestone_id` | uuid | FK → template_milestones.id (for tracking) |
+| `is_custom` | boolean | TRUE if manually added by admin |
+| `created_at` | timestamptz | Record creation |
+| `updated_at` | timestamptz | Last modification |
+
 **Notes:**
-- ~35 template milestones across all phases
-- `church_id = NULL` means template milestone (shown to all churches)
-- `church_id = [uuid]` means custom milestone for that specific church only
+- Each church gets their own COPY of milestones
+- Editing a milestone only affects that church
+- `is_custom = TRUE` for manually added milestones
+- `is_custom = FALSE` for milestones copied from template
+- `source_template_id` tracks which template was used
+
+**Constraints:**
+- Unique on (`church_id`, `phase_id`, `display_order`)
 
 ---
 
@@ -237,7 +331,7 @@ Per-church completion status for each milestone.
 |--------|------|-------------|
 | `id` | uuid | Primary key |
 | `church_id` | uuid | FK → churches.id |
-| `milestone_id` | uuid | FK → milestones.id |
+| `milestone_id` | uuid | FK → church_milestones.id |
 | `completed` | boolean | Is it done? |
 | `completed_at` | timestamptz | When completed |
 | `completed_by` | text | Who marked it complete |
@@ -407,11 +501,16 @@ Junction table linking global resources to specific milestones. When a milestone
 -- Performance indexes
 CREATE INDEX idx_church_progress_church ON church_progress(church_id);
 CREATE INDEX idx_church_progress_milestone ON church_progress(milestone_id);
-CREATE INDEX idx_milestones_phase ON milestones(phase_id);
-CREATE INDEX idx_milestones_church_id ON milestones(church_id);
 CREATE INDEX idx_church_leaders_church ON church_leaders(church_id);
 CREATE INDEX idx_magic_tokens_token ON magic_link_tokens(token);
 CREATE INDEX idx_magic_tokens_expires ON magic_link_tokens(expires_at);
+
+-- Template milestone system indexes
+CREATE INDEX idx_template_milestones_template ON template_milestones(template_id);
+CREATE INDEX idx_template_milestones_phase ON template_milestones(phase_id);
+CREATE INDEX idx_church_milestones_church ON church_milestones(church_id);
+CREATE INDEX idx_church_milestones_phase ON church_milestones(phase_id);
+CREATE INDEX idx_church_milestones_church_phase ON church_milestones(church_id, phase_id);
 
 -- Global resources indexes
 CREATE INDEX idx_global_resources_category ON global_resources(category);

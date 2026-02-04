@@ -206,7 +206,10 @@ See `/docs/` for:
 
 | Table | Purpose |
 |-------|---------|
-| `churches` | Church records |
+| `churches` | Church records (includes `journey_template_id`) |
 | `church_leaders` | Church leader accounts (linked to users via user_id) |
 | `church_progress` | Milestone completion tracking |
-| `milestones` | Phase milestones definitions |
+| `journey_templates` | Master journey templates (e.g., "Standard DNA Journey") |
+| `template_milestones` | Master milestone definitions (Phase 0 & 1 only) |
+| `church_milestones` | Church-specific milestone copies (fully editable per church) |
+| `milestones_deprecated` | Old milestones table (kept for rollback, do not use) |

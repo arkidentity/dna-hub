@@ -1,5 +1,12 @@
 # Handoff Document: Milestone Reordering & Strategy Calls per Phase
 
+> **NOTE (Feb 2026):** Migration 032 implemented a template-based milestone system. Strategy calls are no longer added as template milestones (Option B in section C). Instead:
+> - Phase 0 & 1 have pre-defined milestones
+> - Phases 2-5 are empty - admin adds custom milestones per church
+> - Strategy call milestones should be added per-church as needed
+>
+> See `/docs/planning/TEMPLATE-MILESTONE-REFACTOR.md` for current architecture.
+
 ## Overview
 
 This document outlines the implementation plan for two remaining features:

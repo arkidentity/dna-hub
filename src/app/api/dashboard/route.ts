@@ -119,7 +119,8 @@ export async function GET() {
       attachmentsMap.set(attachment.milestone_id, [...existing, attachment]);
     });
 
-    // Get global resources linked to milestones
+    // Get global resources linked to template milestones
+    // milestone_resources links to template_milestones, so we need to join through source_milestone_id
     const { data: milestoneResources } = await supabaseAdmin
       .from('milestone_resources')
       .select(`
@@ -135,7 +136,7 @@ export async function GET() {
       `)
       .order('display_order', { ascending: true });
 
-    // Create a map of milestone resources
+    // Create a map from template_milestone_id -> resources
     type ResourceData = {
       id: string;
       name: string;
@@ -143,12 +144,20 @@ export async function GET() {
       file_url: string | null;
       resource_type: string | null;
     };
-    const resourcesMap = new Map<string, ResourceData[]>();
+    const templateResourcesMap = new Map<string, ResourceData[]>();
     milestoneResources?.forEach(mr => {
       const resource = mr.resource as unknown as ResourceData | null;
       if (resource) {
-        const existing = resourcesMap.get(mr.milestone_id) || [];
-        resourcesMap.set(mr.milestone_id, [...existing, resource]);
+        const existing = templateResourcesMap.get(mr.milestone_id) || [];
+        templateResourcesMap.set(mr.milestone_id, [...existing, resource]);
+      }
+    });
+
+    // Build a map from church_milestone_id -> resources (via source_milestone_id)
+    const resourcesMap = new Map<string, ResourceData[]>();
+    milestones?.forEach(cm => {
+      if (cm.source_milestone_id && templateResourcesMap.has(cm.source_milestone_id)) {
+        resourcesMap.set(cm.id, templateResourcesMap.get(cm.source_milestone_id)!);
       }
     });
 

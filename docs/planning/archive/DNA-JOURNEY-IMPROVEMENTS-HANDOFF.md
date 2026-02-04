@@ -1,7 +1,14 @@
 # DNA Journey Improvements - Handoff Document
 
 **Date:** February 3, 2026
-**Status:** Ready for testing and deployment
+**Status:** Superseded by Migration 032
+
+> **NOTE:** The "hidden milestones" approach described in this document (migration 030) has been replaced by the Template-Based Milestone System (migration 032). With migration 032:
+> - Each church gets their own COPY of milestones
+> - Milestones can be edited/deleted directly per church
+> - No need for the `church_hidden_milestones` table (it was dropped)
+>
+> See `/docs/planning/TEMPLATE-MILESTONE-REFACTOR.md` for the current architecture.
 
 ---
 
