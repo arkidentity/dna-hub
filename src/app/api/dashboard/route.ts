@@ -121,7 +121,8 @@ export async function GET() {
 
     // Get global resources linked to template milestones
     // milestone_resources links to template_milestones, so we need to join through source_milestone_id
-    const { data: milestoneResources } = await supabaseAdmin
+    // Note: If migration 033 hasn't been run yet, this query may fail - we handle that gracefully
+    const { data: milestoneResources, error: resourcesError } = await supabaseAdmin
       .from('milestone_resources')
       .select(`
         milestone_id,
@@ -135,6 +136,11 @@ export async function GET() {
         )
       `)
       .order('display_order', { ascending: true });
+
+    if (resourcesError) {
+      console.error('Milestone resources fetch error:', resourcesError);
+      // Don't fail the whole request - resources are optional
+    }
 
     // Create a map from template_milestone_id -> resources
     type ResourceData = {
@@ -233,8 +239,9 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Dashboard fetch error:', error);
+    console.error('Stack trace:', error instanceof Error ? error.stack : 'No stack');
     return NextResponse.json(
-      { error: 'Internal server error' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
