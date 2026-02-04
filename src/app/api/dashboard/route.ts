@@ -42,6 +42,13 @@ export async function GET() {
     const church = churchLeader.church;
     const leader = churchLeader;
 
+    if (!church) {
+      return NextResponse.json(
+        { error: 'Church not found for this leader' },
+        { status: 404 }
+      );
+    }
+
     // If church is not active, redirect to portal (unless admin)
     const adminUser = isAdmin(session);
     if (!adminUser && church.status !== 'active' && church.status !== 'completed') {
@@ -189,7 +196,7 @@ export async function GET() {
       .order('display_order', { ascending: true });
 
     // Build phases with milestones and progress
-    const phasesWithMilestones: PhaseWithMilestones[] = phases.map(phase => {
+    const phasesWithMilestones: PhaseWithMilestones[] = (phases || []).map(phase => {
       const phaseMilestones: MilestoneWithProgress[] = (milestones || [])
         .filter(m => m.phase_id === phase.id)
         .map(milestone => ({
