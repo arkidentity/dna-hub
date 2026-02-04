@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, use } from 'react';
+import { useEffect, useState, use, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
@@ -40,6 +40,7 @@ export default function PhasePage({
   const [error, setError] = useState('');
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
   useEffect(() => {
     async function fetchData() {
@@ -88,11 +89,23 @@ export default function PhasePage({
   }, [phaseId, router]);
 
   const toggleSection = (sectionId: string) => {
-    setExpandedSections((prev) =>
-      prev.includes(sectionId)
+    const isCurrentlyExpanded = expandedSections.includes(sectionId);
+
+    setExpandedSections(
+      isCurrentlyExpanded
         ? [] // Collapse if clicking on the open section
         : [sectionId] // Only open the clicked section (accordion behavior)
     );
+
+    // Scroll to the section if opening it
+    if (!isCurrentlyExpanded) {
+      setTimeout(() => {
+        const sectionEl = sectionRefs.current[sectionId];
+        if (sectionEl) {
+          sectionEl.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      }, 100);
+    }
   };
 
   const toggleChecklistItem = async (itemId: string) => {
@@ -268,10 +281,21 @@ export default function PhasePage({
     );
   }
 
+  // Calculate progress based on section checks (primary) and checklist items (secondary)
+  const totalSectionChecks = phase.sections.filter(s => s.sectionCheck).length;
+  const completedSectionChecks = (progress.sectionChecks || []).length;
   const checklistProgress = progress.checklistCompleted.length;
   const checklistTotal = phase.checklist.length;
-  const progressPercent = Math.round((checklistProgress / checklistTotal) * 100);
-  const allChecklistComplete = checklistProgress === checklistTotal;
+
+  // Total progress = section checks + checklist items
+  const totalItems = totalSectionChecks + checklistTotal;
+  const completedItems = completedSectionChecks + checklistProgress;
+  const progressPercent = totalItems > 0 ? Math.round((completedItems / totalItems) * 100) : 0;
+
+  // Phase is complete when all section checks are done AND all checklist items (if any) are done
+  const allSectionChecksComplete = completedSectionChecks === totalSectionChecks;
+  const allChecklistComplete = checklistTotal === 0 || checklistProgress === checklistTotal;
+  const phaseReadyToComplete = allSectionChecksComplete && allChecklistComplete;
 
   return (
     <div className="phase-page">
@@ -304,9 +328,9 @@ export default function PhasePage({
           {/* Progress Bar */}
           <div className="progress-section">
             <div className="progress-info">
-              <span className="progress-label">Checklist Progress</span>
+              <span className="progress-label">Phase Progress</span>
               <span className="progress-count">
-                {checklistProgress}/{checklistTotal}
+                {completedItems}/{totalItems}
               </span>
             </div>
             <div className="progress-bar-container">
@@ -333,7 +357,11 @@ export default function PhasePage({
                 : false;
 
               return (
-                <div key={section.id} className={`section-card ${sectionCheckCompleted ? 'section-completed' : ''}`}>
+                <div
+                  key={section.id}
+                  ref={(el) => { sectionRefs.current[section.id] = el; }}
+                  className={`section-card ${sectionCheckCompleted ? 'section-completed' : ''}`}
+                >
                   <button
                     className="section-header"
                     onClick={() => toggleSection(section.id)}
@@ -480,62 +508,60 @@ export default function PhasePage({
             })}
           </div>
 
-          {/* Checklist */}
-          <div className="checklist-section">
-            <h2>Phase {phase.id} Checklist</h2>
-            <div className="checklist-grid">
-              {phase.checklist.map((item) => {
-                const isChecked = progress.checklistCompleted.includes(item.id);
-                return (
-                  <label
-                    key={item.id}
-                    className={`checklist-item ${isChecked ? 'checked' : ''}`}
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={() => toggleChecklistItem(item.id)}
-                      disabled={isSaving}
-                    />
-                    <span className="checkbox-custom">
-                      {isChecked && (
-                        <svg
-                          width="14"
-                          height="14"
-                          viewBox="0 0 24 24"
-                          fill="none"
-                          stroke="currentColor"
-                          strokeWidth="3"
-                        >
-                          <polyline points="20 6 9 17 4 12" />
-                        </svg>
-                      )}
-                    </span>
-                    <span className="checkbox-label">{item.label}</span>
-                  </label>
-                );
-              })}
+          {/* Checklist - only show if there are checklist items */}
+          {phase.checklist.length > 0 && (
+            <div className="checklist-section">
+              <h2>Phase {phase.id} Checklist</h2>
+              <div className="checklist-grid">
+                {phase.checklist.map((item) => {
+                  const isChecked = progress.checklistCompleted.includes(item.id);
+                  return (
+                    <label
+                      key={item.id}
+                      className={`checklist-item ${isChecked ? 'checked' : ''}`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={() => toggleChecklistItem(item.id)}
+                        disabled={isSaving}
+                      />
+                      <span className="checkbox-custom">
+                        {isChecked && (
+                          <svg
+                            width="14"
+                            height="14"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="3"
+                          >
+                            <polyline points="20 6 9 17 4 12" />
+                          </svg>
+                        )}
+                      </span>
+                      <span className="checkbox-label">{item.label}</span>
+                    </label>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Next Phase Prompt */}
-          <div className="next-phase-section">
-            <h3>Ready for Next Phase?</h3>
-            <p>{phase.nextPhasePrompt}</p>
-          </div>
-
-          {/* Phase Complete Button */}
-          {allChecklistComplete && !progress.completed && (
-            <div className="phase-complete-section">
+          {/* Phase Complete Section with CTA */}
+          <div className="phase-complete-section">
+            {phaseReadyToComplete && !progress.completed ? (
               <button
                 className="btn-phase-complete"
                 onClick={completePhase}
                 disabled={isSaving}
               >
-                {isSaving ? 'Saving...' : 'Complete Phase & Continue'}
+                {isSaving ? 'Saving...' : phase.nextPhasePrompt}
               </button>
-            </div>
-          )}
+            ) : (
+              <p className="next-phase-hint">{phase.nextPhasePrompt}</p>
+            )}
+          </div>
 
           {/* Navigation */}
           <div className="phase-navigation">
@@ -1414,6 +1440,14 @@ const styles = `
   .btn-phase-complete:disabled {
     opacity: 0.7;
     cursor: not-allowed;
+  }
+
+  .next-phase-hint {
+    font-size: 15px;
+    color: #A0AEC0;
+    margin: 0;
+    line-height: 1.6;
+    white-space: pre-line;
   }
 
   /* Navigation */

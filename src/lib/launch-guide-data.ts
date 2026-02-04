@@ -311,73 +311,43 @@ Remember: Discipleship is both flow and structure. This guide provides the struc
           },
         },
         {
-          id: 'rhythms-meeting',
-          title: 'Checkpoint 3: Weekly Meeting Time',
+          id: 'rhythms',
+          title: 'Checkpoint 3: Setting Up Your Rhythms',
           intro:
             'Before you invite disciples, establish your structure. Clarity prevents confusion later.',
           subsections: [
             {
-              title: 'Questions to answer:',
+              title: 'Weekly Meeting Time',
               items: [
                 'What day/time works for you AND your co-leader consistently?',
                 'Where will you meet? (Home, coffee shop, church building, online?)',
                 'How long will meetings last? (We recommend 90 minutes)',
               ],
             },
-          ],
-          sectionCheck: {
-            id: 'p0_check_meeting_time',
-            label: 'Meeting time and location established?',
-          },
-        },
-        {
-          id: 'rhythms-communication',
-          title: 'Checkpoint 4: Communication Plan',
-          subsections: [
             {
-              title: 'Questions to answer:',
+              title: 'Communication Plan',
               items: [
                 'What platform will you use for group chat? (Text, GroupMe, WhatsApp, etc.)',
                 'How often will you check in between meetings?',
                 'What\'s your response time expectation? (24 hours? Same day?)',
               ],
             },
-          ],
-          sectionCheck: {
-            id: 'p0_check_communication',
-            label: 'Communication plan set up?',
-          },
-        },
-        {
-          id: 'rhythms-gatherings',
-          title: 'Checkpoint 5: Additional Gatherings',
-          subsections: [
             {
-              title: 'Questions to answer:',
+              title: 'Additional Gatherings',
               items: [
                 'When will you do meals, outreach, or social hangouts?',
                 'How often? (We recommend at least once a month outside of formal meetings)',
               ],
             },
-          ],
-          sectionCheck: {
-            id: 'p0_check_gatherings',
-            label: 'Additional gatherings planned?',
-          },
-        },
-        {
-          id: 'rhythms-duration',
-          title: 'Checkpoint 6: Duration & Multiplication Commitment',
-          subsections: [
             {
-              title: 'Questions to answer:',
+              title: 'Duration & Multiplication Commitment',
               items: [
                 'How long is this DNA group committed to meeting? (12 months recommended)',
                 'When will you multiply? (Set a tentative date so everyone expects it)',
               ],
             },
           ],
-          note: 'Note: This date will likely change once you get into the process. Setting a tentative date now creates shared expectation.',
+          note: 'Note: The multiplication date will likely change once you get into the process. Setting a tentative date now creates shared expectation.',
           interactiveFields: [
             {
               id: 'tentative_multiplication_date',
@@ -387,13 +357,13 @@ Remember: Discipleship is both flow and structure. This guide provides the struc
             },
           ],
           sectionCheck: {
-            id: 'p0_check_duration',
-            label: 'Duration commitment established?',
+            id: 'p0_check_rhythms',
+            label: 'All rhythms established?',
           },
         },
         {
-          id: 'rhythms-agreement',
-          title: 'Checkpoint 7: DNA Group Agreement',
+          id: 'agreement',
+          title: 'Checkpoint 4: DNA Group Agreement',
           callout: {
             title: 'Create a DNA Group Agreement',
             content:
@@ -410,7 +380,7 @@ Remember: Discipleship is both flow and structure. This guide provides the struc
         },
         {
           id: 'prayer',
-          title: 'Checkpoint 8: Prayer Strategy',
+          title: 'Checkpoint 5: Prayer Strategy',
           intro: 'Discipleship begins in prayer, not in planning.',
           content: `Spend intentional time asking God:
 • "Who do you want me to invest in?"
@@ -455,7 +425,7 @@ Jesus prayed all night before choosing His disciples (Luke 6:12-13). You don't n
         },
         {
           id: 'invitation',
-          title: 'Checkpoint 9: The Invitation Process',
+          title: 'Checkpoint 6: The Invitation Process',
           intro:
             "This phase is about observation and initiation. You're not formally asking them to be discipled yet—you're testing receptivity and building connection.",
           subsections: [
@@ -515,7 +485,7 @@ Jesus prayed all night before choosing His disciples (Luke 6:12-13). You don't n
         },
         {
           id: 'direct-ask',
-          title: 'Checkpoint 10: The Direct Conversation',
+          title: 'Checkpoint 7: The Direct Conversation',
           intro:
             'Goal: Clearly present the opportunity for discipleship and gauge their response.',
           sampleConversation: `"I've been thinking and praying a lot about discipleship lately. God has been stirring in me a desire to invest deeply in a few people—to help them grow in their faith, understand the Bible better, and step into everything God has for them.
@@ -564,7 +534,7 @@ I don't know if this is something you're interested in, but I wanted to ask: Wou
         },
         {
           id: 'expectations',
-          title: 'Checkpoint 11: Setting Expectations Together',
+          title: 'Checkpoint 8: Setting Expectations Together',
           intro:
             'If they say yes or want more details, have THIS conversation:',
           subsections: [
@@ -614,24 +584,27 @@ I don't know if this is something you're interested in, but I wanted to ask: Wou
             },
           ],
           note: 'Ask directly: "Does this sound like something you\'re ready to commit to?"\n\nIf yes: Set the first meeting date and share the DNA Group Agreement.\nIf hesitation: "What\'s holding you back?" Address concerns.',
+          interactiveFields: [
+            {
+              id: 'first_meeting_date',
+              type: 'date',
+              label: 'First Meeting Date',
+              placeholder: 'Select the date of your first meeting...',
+            },
+          ],
           sectionCheck: {
             id: 'p0_check_expectations',
-            label: 'Ready to start your first DNA Group? Complete Phase and continue.',
+            label: 'First meeting scheduled?',
           },
         },
       ],
       checklist: [
         // The main checklist items are now tracked via sectionCheck in each section
-        // These are the final confirmations before moving to Phase 1
-        {
-          id: 'p0_disciples_committed',
-          label: "They've verbally committed to the DNA group",
-        },
-        { id: 'p0_first_meeting', label: 'First meeting scheduled' },
-        { id: 'p0_agreement_shared', label: 'DNA Group Agreement shared with disciples' },
+        // First meeting date is now tracked in the Expectations section
+        // DNA Group Agreement sharing is now tracked in Phase 1
       ],
       nextPhasePrompt:
-        'If you have 2 disciples committed (1 for you, 1 for co-leader), you\'re ready for Phase 1.',
+        'Ready to start your first DNA Group? Complete Phase and continue.',
     },
 
     // ==========================================
@@ -646,6 +619,24 @@ I don't know if this is something you're interested in, but I wanted to ask: Wou
       intro:
         "The first 3 months are critical. You're laying foundation, building trust, and establishing patterns that will carry the group for the next 6-9 months. Use the 90-Day Toolkit for week-by-week guidance.",
       sections: [
+        {
+          id: 'agreement-shared',
+          title: 'Checkpoint 1: Share DNA Group Agreement',
+          intro: 'Before your first meeting, share the DNA Group Agreement with your disciples.',
+          content: `The agreement you created in Phase 0 sets the foundation for your group. Share it with each disciple before the first meeting so everyone knows what to expect.
+
+When you share the agreement:
+• Send it via email or group chat
+• Give them time to read through it
+• Let them know you'll review it together at the first meeting
+• Answer any initial questions they have
+
+This step ensures everyone comes to the first meeting with aligned expectations.`,
+          sectionCheck: {
+            id: 'p1_check_agreement_shared',
+            label: 'DNA Group Agreement shared with disciples?',
+          },
+        },
         {
           id: 'week1',
           title: 'Week 1: First Official Meeting',
