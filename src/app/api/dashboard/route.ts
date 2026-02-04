@@ -92,10 +92,7 @@ export async function GET() {
     // Get church progress
     const { data: progress, error: progressError } = await supabase
       .from('church_progress')
-      .select(`
-        *,
-        completed_by_leader:church_leaders(name)
-      `)
+      .select('*')
       .eq('church_id', church.id);
 
     if (progressError) {
@@ -105,14 +102,6 @@ export async function GET() {
         { status: 500 }
       );
     }
-
-    // Create a map of milestone progress
-    const progressMap = new Map(
-      progress?.map(p => [p.milestone_id, {
-        ...p,
-        completed_by_name: p.completed_by_leader?.name
-      }]) || []
-    );
 
     // Get all attachments for this church
     const { data: attachments } = await supabase
@@ -190,7 +179,6 @@ export async function GET() {
         return {
           ...milestone,
           progress: milestoneProgress || null,
-          completed_by_name: milestoneProgress?.completed_by_leader?.name,
           attachments: milestoneAttachments || [],
           resources,
         };
