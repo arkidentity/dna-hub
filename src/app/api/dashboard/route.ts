@@ -190,7 +190,7 @@ export async function GET() {
 
     // Build phases with milestones and progress
     const phasesWithMilestones: PhaseWithMilestones[] = phases.map(phase => {
-      const phaseMilestones: MilestoneWithProgress[] = milestones
+      const phaseMilestones: MilestoneWithProgress[] = (milestones || [])
         .filter(m => m.phase_id === phase.id)
         .map(milestone => ({
           ...milestone,
