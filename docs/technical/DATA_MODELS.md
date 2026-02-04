@@ -896,3 +896,205 @@ Creates initial training data for a new training participant:
 ```sql
 SELECT initialize_training_user('user-uuid-here');
 ```
+
+---
+
+## Daily DNA Integration Tables (Migration 034 - Planned)
+
+> See `/docs/planning/DAILY-DNA-DATABASE-MIGRATION.md` for full migration plan.
+
+The Daily DNA mobile app will share the DNA Hub Supabase database for real-time sync between disciples and leaders.
+
+### disciple_app_accounts
+
+Disciple login accounts for the Daily DNA mobile app. **Separate from leader auth** (which uses `users` table).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `disciple_id` | uuid | FK → disciples.id |
+| `auth_user_id` | uuid | FK → auth.users.id (Supabase Auth) |
+| `created_at` | timestamptz | Record creation |
+| `last_login_at` | timestamptz | Last app login |
+
+**Why separate auth?** Leaders use magic links for frictionless multi-device access. Disciples need persistent mobile login (email/password or OAuth) for daily engagement tracking.
+
+---
+
+### disciple_journal_entries
+
+3D Journal entries from the Daily DNA app (Head/Heart/Hands).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `disciple_id` | uuid | FK → disciples.id |
+| `local_id` | text | Client-side UUID for offline sync |
+| `head_text` | text | "What did I learn?" |
+| `heart_text` | text | "What did I feel?" |
+| `hands_text` | text | "What will I do?" |
+| `is_favorite` | boolean | Marked as favorite |
+| `tags` | jsonb | User-defined tags |
+| `created_at` | timestamptz | Entry creation (client time) |
+| `synced_at` | timestamptz | When synced to server |
+| `updated_at` | timestamptz | Last modification |
+
+**Constraints:** Unique on (`disciple_id`, `local_id`) for deduplication
+
+---
+
+### disciple_prayer_cards
+
+4D Prayer cards from the Daily DNA app (Revere/Reflect/Request/Rest).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `disciple_id` | uuid | FK → disciples.id |
+| `local_id` | text | Client-side UUID for offline sync |
+| `title` | text | Prayer card title |
+| `revere` | text | Praise/worship |
+| `reflect` | text | Confession |
+| `request` | text | Prayer requests |
+| `rest` | text | Thanksgiving/peace |
+| `status` | text | 'active', 'answered', 'archived' |
+| `answered_at` | timestamptz | When marked answered |
+| `testimony` | text | How prayer was answered |
+| `prayer_count` | integer | Times prayed |
+| `created_at` | timestamptz | Entry creation |
+| `synced_at` | timestamptz | When synced to server |
+| `updated_at` | timestamptz | Last modification |
+
+---
+
+### disciple_progress
+
+Engagement tracking - streaks, badges, stats.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `disciple_id` | uuid | FK → disciples.id (unique) |
+| `current_streak` | integer | Consecutive days |
+| `longest_streak` | integer | All-time best |
+| `last_activity_date` | date | For streak calculation |
+| `total_journal_entries` | integer | All-time count |
+| `total_prayer_cards` | integer | All-time count |
+| `badges` | jsonb | Earned badges |
+| `current_challenge_id` | uuid | Active challenge |
+| `created_at` | timestamptz | Record creation |
+| `updated_at` | timestamptz | Last modification |
+
+---
+
+### tool_assignments
+
+Leader assigns tools/content to disciples.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `group_id` | uuid | FK → dna_groups.id |
+| `disciple_id` | uuid | FK → disciples.id |
+| `tool_type` | text | Type of tool (see enum) |
+| `tool_reference` | text | Video ID, document URL, etc. |
+| `title` | text | Display title |
+| `description` | text | Instructions/notes |
+| `assigned_by` | uuid | FK → dna_leaders.id |
+| `due_date` | date | Optional deadline |
+| `created_at` | timestamptz | Record creation |
+
+**Tool Types:**
+```
+video            → Teaching video
+document         → PDF/reading
+reflection       → Written reflection prompt
+practice         → Practical exercise
+scripture        → Scripture memorization
+```
+
+---
+
+### tool_completions
+
+Tracks tool completion by disciples (syncs from Daily DNA app).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `assignment_id` | uuid | FK → tool_assignments.id |
+| `disciple_id` | uuid | FK → disciples.id |
+| `completed_at` | timestamptz | When completed |
+| `notes` | text | Optional reflection |
+| `synced_from_app` | boolean | TRUE if from Daily DNA app |
+| `created_at` | timestamptz | Record creation |
+
+**Constraints:** Unique on (`assignment_id`, `disciple_id`)
+
+---
+
+### journey_checkpoints
+
+Phase checkpoints requiring leader approval.
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `group_id` | uuid | FK → dna_groups.id |
+| `disciple_id` | uuid | FK → disciples.id |
+| `checkpoint_type` | text | Type of checkpoint |
+| `phase` | integer | Which phase (0-3) |
+| `approved_by` | uuid | FK → dna_leaders.id |
+| `approved_at` | timestamptz | When approved |
+| `notes` | text | Leader notes |
+| `created_at` | timestamptz | Record creation |
+
+**Checkpoint Types:**
+```
+week1_assessment     → Life Assessment Week 1 complete
+foundation_complete  → Phase 1 Foundation checkpoint
+week8_assessment     → Life Assessment Week 8 complete
+multiplication_ready → Ready for Phase 3
+```
+
+---
+
+### discipleship_log
+
+Unified notes + prayer requests from leaders (replaces separate tables).
+
+| Column | Type | Description |
+|--------|------|-------------|
+| `id` | uuid | Primary key |
+| `group_id` | uuid | FK → dna_groups.id |
+| `disciple_id` | uuid | FK → disciples.id |
+| `leader_id` | uuid | FK → dna_leaders.id |
+| `entry_type` | text | 'note' or 'prayer' |
+| `content` | text | Note or prayer text |
+| `prayer_status` | text | 'active', 'answered', 'archived' |
+| `prayer_answered_at` | timestamptz | When answered |
+| `prayer_answer_note` | text | How answered |
+| `created_at` | timestamptz | Record creation |
+
+---
+
+## Daily DNA Sync Strategy
+
+**Real-time (Supabase Subscriptions):**
+- Tool completions → Leader sees immediately
+- Checkpoint completions → Updates disciple phase
+- Assessment submissions → Triggers notifications
+
+**Batch (Daily Cron Jobs):**
+- Streak calculations → Runs at midnight
+- Engagement analytics → Dashboard aggregates
+- Health metrics → Leader dashboard stats
+
+**Two-Way Sync Pattern:**
+```javascript
+// From Daily DNA app (journalSync.ts pattern)
+1. Push local changes with local_id
+2. Server uses UPSERT on (disciple_id, local_id)
+3. Pull server changes since lastSyncTimestamp
+4. Merge into local storage, dedupe by local_id
+```

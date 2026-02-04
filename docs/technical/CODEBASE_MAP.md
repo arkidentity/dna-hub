@@ -2,6 +2,15 @@
 
 > Quick reference for finding files and understanding the project structure.
 
+## Project Overview
+
+DNA Hub consists of three main systems (roadmaps):
+1. **Church Implementation Dashboard** (`/dashboard`) - Tracks churches through 5-phase onboarding
+2. **DNA Groups Dashboard** (`/groups`) - DNA Leaders manage discipleship groups
+3. **DNA Training** (`/training`) - Progressive training content for new leaders
+
+**Coming Soon:** Daily DNA mobile app integration (shared database for real-time disciple engagement tracking)
+
 ## Directory Structure
 
 ```
@@ -93,6 +102,11 @@ dna-hub/
 │   │       │       ├── route.ts          # GET/PATCH: Group details
 │   │       │       └── disciples/route.ts # POST/GET: Manage disciples
 │   │       │
+│   │       ├── training/                 # DNA Training (Roadmap 3)
+│   │       │   ├── dashboard/route.ts    # GET: Training progress
+│   │       │   └── assessment/           # Flow Assessment
+│   │       │       └── [token]/route.ts  # GET/POST: Assessment flow
+│   │       │
 │   │       └── churches/
 │   │           └── [churchId]/
 │   │               └── dna-groups/route.ts # GET: Church's DNA leaders/groups
@@ -146,10 +160,11 @@ dna-hub/
 
 ## Key Files by Purpose
 
-### Authentication
+### Authentication (Unified Auth System)
 | File | Purpose |
 |------|---------|
-| `/src/lib/auth.ts` | Session management, admin check |
+| `/src/lib/unified-auth.ts` | `getUnifiedSession()`, `hasRole()`, `isAdmin()` |
+| `/src/lib/auth.ts` | Legacy session management (being phased out) |
 | `/src/app/api/auth/magic-link/route.ts` | Generate & email login token |
 | `/src/app/api/auth/verify/route.ts` | Validate token, create session |
 | `/src/app/login/page.tsx` | Login form UI |
@@ -214,6 +229,8 @@ dna-hub/
 | `/groups/new` | `app/groups/new/page.tsx` | Create new group | DNA Leader |
 | `/groups/[id]` | `app/groups/[id]/page.tsx` | Group detail with disciples | DNA Leader |
 | `/groups/signup` | `app/groups/signup/page.tsx` | DNA Leader signup (from invite) | Public (token) |
+| `/training` | `app/training/page.tsx` | DNA Training dashboard | Training Participant |
+| `/unauthorized` | `app/unauthorized/page.tsx` | Access denied page | Public |
 
 ## API Routes
 
@@ -276,6 +293,12 @@ dna-hub/
 | `/api/groups/[id]/disciples` | GET | List disciples in group |
 | `/api/churches/[churchId]/dna-groups` | GET | Church's DNA leaders and groups |
 
+### Training Endpoints (Roadmap 3)
+| Route | Method | Purpose |
+|-------|--------|---------|
+| `/api/training/dashboard` | GET | Training progress and unlocked content |
+| `/api/training/assessment/[token]` | GET/POST | Flow Assessment submission |
+
 ## Common Modifications
 
 ### Add a new page
@@ -308,3 +331,25 @@ dna-hub/
 1. CSS variables: `/src/app/globals.css` (`:root` section)
 2. Component classes: same file (bottom section)
 3. Tailwind utilities: inline in components
+
+## Coming Soon: Daily DNA Integration
+
+The Daily DNA mobile app will share the same Supabase database for real-time sync:
+
+### New Tables (Migration 034 - Planned)
+| Table | Purpose |
+|-------|---------|
+| `disciple_app_accounts` | Disciple login for Daily DNA app (separate from leader auth) |
+| `disciple_journal_entries` | 3D Journal entries (Head/Heart/Hands) |
+| `disciple_prayer_cards` | 4D Prayer cards (Revere/Reflect/Request/Rest) |
+| `disciple_progress` | Streaks, badges, engagement stats |
+| `tool_assignments` | Leader assigns tools to disciples |
+| `tool_completions` | Tracks tool completion (syncs from Daily DNA app) |
+| `journey_checkpoints` | Phase checkpoints (leader-approved) |
+| `discipleship_log` | Unified notes + prayer requests |
+
+### Sync Strategy
+- **Real-time:** Tool completions, checkpoint completions, assessment submissions
+- **Batch (daily):** Engagement analytics, streak calculations, dashboard aggregates
+
+See `/docs/planning/DAILY-DNA-DATABASE-MIGRATION.md` for full migration plan.

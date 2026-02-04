@@ -24,6 +24,8 @@ DNA Hub manages the **DNA Discipleship Framework** implementation at churches. I
 **Roadmap 2: DNA Groups Dashboard** (`/groups`)
 - DNA Leaders manage discipleship groups and disciples
 - Church leaders can view their church's groups (read-only)
+- Integrates with Daily DNA mobile app for disciple engagement tracking
+- Dark mode theme for premium feel
 
 **Roadmap 3: DNA Training** (`/training`)
 - Flow Assessment, DNA Manual, Launch Guide
@@ -34,7 +36,7 @@ DNA Hub manages the **DNA Discipleship Framework** implementation at churches. I
 - **DNA Leaders** (`dna_leader`) - Manage discipleship groups and disciples
 - **Training Participants** (`training_participant`) - Access DNA training content
 - **Admins** (`admin`) - Full access to everything
-- **Disciples** - Group participants (no login, token-based assessment links)
+- **Disciples** - Group participants (separate Daily DNA app auth, token-based assessment links)
 
 > Users can have multiple roles and access multiple dashboards with one login.
 
@@ -201,6 +203,21 @@ See `/docs/` for:
 | `disciples` | Group participants (no login) |
 | `group_disciples` | Join table for group membership |
 | `life_assessments` | Week 1/8 assessment responses |
+
+### Daily DNA Integration (Migration 034 - Planned)
+
+| Table | Purpose |
+|-------|---------|
+| `disciple_app_accounts` | Disciple login for Daily DNA app (separate auth from leaders) |
+| `disciple_journal_entries` | 3D Journal entries (Head/Heart/Hands) |
+| `disciple_prayer_cards` | 4D Prayer cards |
+| `disciple_progress` | Streaks, badges, engagement stats |
+| `tool_assignments` | Leader assigns tools to disciples |
+| `tool_completions` | Tracks tool completion (syncs from Daily DNA app) |
+| `journey_checkpoints` | Phase checkpoints (leader-approved) |
+| `discipleship_log` | Unified notes + prayer requests |
+
+**Important:** Daily DNA app uses the same Supabase database as DNA Hub for seamless integration. Disciples have separate auth (`disciple_app_accounts`) from leaders (`users` table).
 
 ### Church Implementation
 

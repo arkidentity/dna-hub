@@ -10,12 +10,14 @@ import {
   Users,
   AlertCircle,
   RefreshCw,
+  UserCog,
 } from 'lucide-react';
 import { PhaseWithMilestones, MilestoneWithProgress, Church, ChurchLeader, FunnelDocument, ScheduledCall, GlobalResource } from '@/lib/types';
 import {
   OverviewTab,
   JourneyTab,
   GroupsTab,
+  TeamTab,
 } from '@/components/dashboard';
 
 interface DashboardData {
@@ -32,7 +34,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'groups'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'team' | 'groups'>('overview');
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [compactView, setCompactView] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -360,6 +362,7 @@ export default function DashboardPage() {
             {[
               { id: 'overview', label: 'Overview', icon: LayoutDashboard },
               { id: 'journey', label: 'DNA Journey', icon: Map },
+              { id: 'team', label: 'Team', icon: UserCog },
               { id: 'groups', label: 'DNA Groups', icon: Users },
             ].map((tab) => (
               <button
@@ -425,6 +428,13 @@ export default function DashboardPage() {
             onSaveChurchNotes={saveChurchNotes}
             onCancelEditChurchNotes={() => { setEditingChurchNotesId(null); setEditChurchNotesValue(''); }}
             onEditChurchNotesChange={setEditChurchNotesValue}
+          />
+        )}
+
+        {activeTab === 'team' && (
+          <TeamTab
+            churchId={church.id}
+            churchName={church.name}
           />
         )}
 
