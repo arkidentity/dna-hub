@@ -64,15 +64,20 @@ export async function GET() {
       const isCompleted = unlock?.metadata?.completed === true;
       const checklistCompleted: string[] =
         unlock?.metadata?.checklistCompleted || [];
+      const sectionChecks: string[] =
+        unlock?.metadata?.sectionChecks || [];
 
       phases.push({
         phaseId: phase.id,
         completed: isCompleted,
         completedAt: isCompleted ? unlock?.updated_at : null,
         checklistCompleted,
+        sectionChecks,
       });
 
       totalChecklistCompleted += checklistCompleted.length;
+      // Also count section checks towards progress
+      totalChecklistCompleted += sectionChecks.length;
 
       if (isCompleted && phase.id >= currentPhase) {
         currentPhase = phase.id + 1;

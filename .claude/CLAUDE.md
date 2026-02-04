@@ -208,8 +208,12 @@ See `/docs/` for:
 |-------|---------|
 | `churches` | Church records (includes `journey_template_id`) |
 | `church_leaders` | Church leader accounts (linked to users via user_id) |
-| `church_progress` | Milestone completion tracking |
+| `church_progress` | Milestone completion tracking (FK → church_milestones) |
 | `journey_templates` | Master journey templates (e.g., "Standard DNA Journey") |
 | `template_milestones` | Master milestone definitions (Phase 0 & 1 only) |
 | `church_milestones` | Church-specific milestone copies (fully editable per church) |
+| `milestone_resources` | Links `global_resources` to `template_milestones` (NOT church_milestones) |
+| `global_resources` | Shared PDFs, guides, worksheets for all churches |
 | `milestones_deprecated` | Old milestones table (kept for rollback, do not use) |
+
+**Important:** `milestone_resources` references `template_milestones`, not `church_milestones`. Dashboard API joins via `church_milestones.source_milestone_id` to get resources.

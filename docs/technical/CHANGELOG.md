@@ -2,6 +2,38 @@
 
 All notable changes to DNA Hub are documented here.
 
+## [2026-02-04] Fix milestone_resources Foreign Key (Migration 033)
+
+### Fixed
+
+#### milestone_resources Table
+- **Problem:** After migration 032, `milestone_resources` still had FK to `milestones` (now `milestones_deprecated`)
+- **Solution:** Updated FK to reference `template_milestones` instead
+- Global resources are now linked at the **template level**, not per-church
+- Dashboard API updated to join via `church_milestones.source_milestone_id`
+
+#### Dashboard API Fix
+- Fixed 500 error on church dashboard caused by orphaned FK constraint
+- Simplified progress query (removed `completed_by_leader` join that was causing issues)
+- Changed from `supabaseAdmin` import to `getSupabaseAdmin()` function call (matches admin pattern)
+
+### Files Modified
+| File | Change |
+|------|--------|
+| `database/033_fix_milestone_resources.sql` | New migration to fix FK constraint |
+| `/src/app/api/dashboard/route.ts` | Updated to use `getSupabaseAdmin()`, join resources via `source_milestone_id` |
+| `/src/app/api/admin/church/[id]/route.ts` | Updated resource mapping for admin view |
+| `docs/technical/DATA_MODELS.md` | Updated `milestone_resources` documentation |
+
+### Migration Notes
+
+Run `database/033_fix_milestone_resources.sql` to:
+1. Drop old FK constraint referencing `milestones_deprecated`
+2. Truncate stale data from `milestone_resources`
+3. Add new FK constraint referencing `template_milestones`
+
+---
+
 ## [2026-02-03] Template-Based Milestone System (Migration 032)
 
 ### Added

@@ -18,7 +18,7 @@
 
 ## **Introduction**
 
-You've completed the DNA Discipleship course. You understand the heart behind making disciples. Now what?
+You've completed the DNA Multiplication Manual. You understand the heart behind making disciples. Now what?
 
 This guide is your practical roadmap from “I want to make disciples" to "I'm actively discipling." Think of this as your flight checklist—each phase has specific actions, conversations, and checkpoints to help you launch well.
 

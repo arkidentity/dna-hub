@@ -14,6 +14,7 @@ interface PhaseProgress {
   completed: boolean;
   completedAt: string | null;
   checklistCompleted: string[];
+  sectionChecks: string[];
 }
 
 interface LaunchGuideProgress {
@@ -101,11 +102,24 @@ export default function LaunchGuidePage() {
 
   function getPhaseStatus(
     phaseId: number
-  ): 'completed' | 'current' | 'locked' {
+  ): 'completed' | 'current' | 'locked' | 'accessible' {
     const phaseProgress = progress.phases.find((p) => p.phaseId === phaseId);
     if (phaseProgress?.completed) return 'completed';
     if (phaseId === progress.currentPhase) return 'current';
     if (phaseId < progress.currentPhase) return 'completed';
+
+    // Check if previous phase has enough progress to allow "look ahead"
+    if (phaseId > 0) {
+      const prevPhaseProgress = progress.phases.find((p) => p.phaseId === phaseId - 1);
+      const prevPhase = launchGuideData.phases.find((p) => p.id === phaseId - 1);
+      const prevTotalSectionChecks = prevPhase?.sections.filter(s => s.sectionCheck).length || 0;
+      const prevCompletedChecks = prevPhaseProgress?.sectionChecks?.length || 0;
+
+      if (prevTotalSectionChecks > 0 && prevCompletedChecks >= Math.ceil(prevTotalSectionChecks * 0.5)) {
+        return 'accessible';
+      }
+    }
+
     return 'locked';
   }
 
@@ -207,24 +221,6 @@ export default function LaunchGuidePage() {
             </div>
           </section>
 
-          {/* Timeline Overview */}
-          <section className="timeline-section">
-            <h2>Timeline Overview</h2>
-            <div className="timeline-grid">
-              {launchGuideData.timeline.map((item) => (
-                <div key={item.phase} className="timeline-item">
-                  <div className="timeline-phase">Phase {item.phase}</div>
-                  <div className="timeline-content">
-                    <h4>{item.name}</h4>
-                    <p className="timeline-duration">{item.duration}</p>
-                    <p className="timeline-focus">{item.focus}</p>
-                    <p className="timeline-milestone">{item.milestone}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </section>
-
           {/* Phases List */}
           <section className="phases-section">
             <h2>{getPhaseCount()} Phases</h2>
@@ -232,6 +228,9 @@ export default function LaunchGuidePage() {
               {launchGuideData.phases.map((phase) => {
                 const status = getPhaseStatus(phase.id);
                 const checklistProgress = getPhaseChecklistProgress(phase.id);
+                const timelineInfo = launchGuideData.timeline.find(
+                  (t) => t.phase === phase.id
+                );
 
                 return (
                   <div key={phase.id} className={`phase-card ${status}`}>
@@ -274,13 +273,26 @@ export default function LaunchGuidePage() {
                     <div className="phase-content">
                       <h3>{phase.title}</h3>
                       <p className="phase-tagline">{phase.tagline}</p>
+                      {timelineInfo && (
+                        <div className="phase-details">
+                          <p className="phase-focus">
+                            <strong>Focus:</strong> {timelineInfo.focus}
+                          </p>
+                          <p className="phase-milestone">
+                            <strong>Milestone:</strong> {timelineInfo.milestone}
+                          </p>
+                        </div>
+                      )}
                       <div className="phase-meta">
                         <span className="phase-duration">{phase.duration}</span>
-                        {status !== 'locked' && (
+                        {(status !== 'locked' && status !== 'accessible') && (
                           <span className="checklist-progress">
                             {checklistProgress.completed}/
                             {checklistProgress.total} checklist items
                           </span>
+                        )}
+                        {status === 'accessible' && (
+                          <span className="preview-label">Preview available</span>
                         )}
                       </div>
                     </div>
@@ -293,6 +305,13 @@ export default function LaunchGuidePage() {
                           className="btn-secondary"
                         >
                           Review
+                        </Link>
+                      ) : status === 'accessible' ? (
+                        <Link
+                          href={`/training/launch-guide/${phase.id}`}
+                          className="btn-tertiary"
+                        >
+                          Preview
                         </Link>
                       ) : (
                         <Link
@@ -308,22 +327,6 @@ export default function LaunchGuidePage() {
                   </div>
                 );
               })}
-            </div>
-          </section>
-
-          {/* Weekly Meeting Flow */}
-          <section className="meeting-flow-section">
-            <h2>{launchGuideData.weeklyMeetingFlow.title}</h2>
-            <div className="meeting-flow-grid">
-              {launchGuideData.weeklyMeetingFlow.segments.map((segment, i) => (
-                <div key={i} className="meeting-segment">
-                  <div className="segment-time">{segment.time}</div>
-                  <div className="segment-content">
-                    <h4>{segment.name}</h4>
-                    <p>{segment.description}</p>
-                  </div>
-                </div>
-              ))}
             </div>
           </section>
 
@@ -579,71 +582,6 @@ const styles = `
     line-height: 1.5;
   }
 
-  /* Timeline Section */
-  .timeline-section {
-    margin-bottom: 40px;
-  }
-
-  .timeline-section h2 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #A0AEC0;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin: 0 0 16px 0;
-  }
-
-  .timeline-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
-    gap: 16px;
-  }
-
-  .timeline-item {
-    background: #242D3D;
-    border-radius: 12px;
-    padding: 20px;
-    text-align: center;
-  }
-
-  .timeline-phase {
-    display: inline-block;
-    padding: 4px 12px;
-    background: rgba(212, 168, 83, 0.15);
-    color: #D4A853;
-    border-radius: 20px;
-    font-size: 12px;
-    font-weight: 600;
-    margin-bottom: 12px;
-  }
-
-  .timeline-content h4 {
-    color: #FFFFFF;
-    font-size: 16px;
-    margin: 0 0 8px 0;
-  }
-
-  .timeline-duration {
-    color: #D4A853;
-    font-size: 13px;
-    font-weight: 600;
-    margin: 0 0 8px 0;
-  }
-
-  .timeline-focus {
-    color: #A0AEC0;
-    font-size: 13px;
-    margin: 0 0 8px 0;
-  }
-
-  .timeline-milestone {
-    color: #5A6577;
-    font-size: 12px;
-    font-style: italic;
-    margin: 0;
-    line-height: 1.4;
-  }
-
   /* Phases Section */
   .phases-section {
     margin-bottom: 48px;
@@ -690,6 +628,11 @@ const styles = `
     opacity: 0.6;
   }
 
+  .phase-card.accessible {
+    border-color: rgba(45, 106, 106, 0.5);
+    opacity: 0.85;
+  }
+
   .phase-number {
     width: 48px;
     height: 48px;
@@ -714,6 +657,11 @@ const styles = `
   .phase-card.locked .phase-number {
     background: #1A2332;
     color: #5A6577;
+  }
+
+  .phase-card.accessible .phase-number {
+    background: rgba(45, 106, 106, 0.15);
+    color: #2D6A6A;
   }
 
   .phase-content h3 {
@@ -741,6 +689,36 @@ const styles = `
   }
 
   .checklist-progress {
+    color: #D4A853;
+  }
+
+  .preview-label {
+    color: #2D6A6A;
+    font-style: italic;
+  }
+
+  .phase-details {
+    margin: 12px 0;
+    padding: 12px;
+    background: #1A2332;
+    border-radius: 8px;
+  }
+
+  .phase-focus,
+  .phase-milestone {
+    font-size: 13px;
+    color: #A0AEC0;
+    margin: 0 0 6px 0;
+    line-height: 1.5;
+  }
+
+  .phase-focus:last-child,
+  .phase-milestone:last-child {
+    margin-bottom: 0;
+  }
+
+  .phase-focus strong,
+  .phase-milestone strong {
     color: #D4A853;
   }
 
@@ -787,63 +765,28 @@ const styles = `
     color: #1A2332;
   }
 
+  .btn-tertiary {
+    display: inline-block;
+    padding: 10px 20px;
+    background: transparent;
+    color: #2D6A6A;
+    border: 2px solid #2D6A6A;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s;
+    white-space: nowrap;
+  }
+
+  .btn-tertiary:hover {
+    background: rgba(45, 106, 106, 0.1);
+  }
+
   .locked-label {
     color: #5A6577;
     font-size: 14px;
     font-weight: 500;
-  }
-
-  /* Meeting Flow Section */
-  .meeting-flow-section {
-    margin-bottom: 40px;
-  }
-
-  .meeting-flow-section h2 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #A0AEC0;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    margin: 0 0 16px 0;
-  }
-
-  .meeting-flow-grid {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
-
-  .meeting-segment {
-    background: #242D3D;
-    border-radius: 12px;
-    padding: 16px 20px;
-    display: flex;
-    gap: 20px;
-    align-items: center;
-  }
-
-  .segment-time {
-    min-width: 60px;
-    padding: 8px 12px;
-    background: rgba(212, 168, 83, 0.15);
-    color: #D4A853;
-    border-radius: 8px;
-    font-size: 13px;
-    font-weight: 600;
-    text-align: center;
-  }
-
-  .segment-content h4 {
-    color: #FFFFFF;
-    font-size: 15px;
-    font-weight: 600;
-    margin: 0 0 4px 0;
-  }
-
-  .segment-content p {
-    color: #A0AEC0;
-    font-size: 14px;
-    margin: 0;
   }
 
   /* Final Thoughts Section */

@@ -480,18 +480,23 @@ Template resources (PDFs, videos, guides) available to all churches. These are l
 
 ### milestone_resources
 
-Junction table linking global resources to specific milestones. When a milestone has linked resources, they appear for all churches on that milestone.
+Junction table linking global resources to **template milestones**. Resources are linked at the template level, and church dashboards access them via `church_milestones.source_milestone_id`.
 
 | Column | Type | Description |
 |--------|------|-------------|
 | `id` | uuid | Primary key |
-| `milestone_id` | uuid | FK → milestones.id |
+| `milestone_id` | uuid | FK → template_milestones.id |
 | `resource_id` | uuid | FK → global_resources.id |
 | `display_order` | integer | Sort order for resources on this milestone |
 | `created_at` | timestamptz | Record creation |
 
 **Constraints:**
 - Unique on (`milestone_id`, `resource_id`)
+
+**How Resources Are Accessed:**
+1. `milestone_resources` links to `template_milestones` (master definitions)
+2. Each church has copies in `church_milestones` with `source_milestone_id` pointing back to the template
+3. Dashboard API joins via `source_milestone_id` to get resources for each church milestone
 
 ---
 

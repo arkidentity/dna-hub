@@ -25,6 +25,19 @@ export interface ResponseItem {
   action: string;
 }
 
+export interface InteractiveField {
+  id: string;
+  type: 'text' | 'textarea' | 'date' | 'names_list';
+  label: string;
+  placeholder?: string;
+  maxItems?: number; // for names_list type
+}
+
+export interface SectionCheck {
+  id: string;
+  label: string;
+}
+
 export interface Section {
   id: string;
   title: string;
@@ -37,6 +50,10 @@ export interface Section {
   note?: string;
   callout?: { title: string; content: string; note?: string };
   items?: string[];
+  // New interactive properties
+  sectionCheck?: SectionCheck; // Inline completion check for this section
+  interactiveFields?: InteractiveField[]; // User input fields
+  resourceLink?: { label: string; description: string }; // Link to resources
 }
 
 export interface Phase {
@@ -92,7 +109,7 @@ export const launchGuideData: LaunchGuideData = {
   title: 'DNA Launch Guide',
   subtitle: 'A Step-by-Step Blueprint for New Disciple-Makers',
 
-  introduction: `You've completed the DNA Discipleship course. You understand the heart behind making disciples. Now what?
+  introduction: `You've completed the Multiplication Manual. You understand the heart behind making disciples. Now what?
 
 This guide is your practical roadmap from "I want to make disciples" to "I'm actively discipling someone." Think of this as your flight checklist—each phase has specific actions, conversations, and checkpoints to help you launch well.
 
@@ -218,6 +235,10 @@ Remember: Discipleship is both flow and structure. This guide provides the struc
             },
           ],
           note: 'If you answered "no" to multiple questions in any category, that\'s not disqualifying—it just means you need to address those areas first. Talk to a leader. Get help. Don\'t rush this.',
+          sectionCheck: {
+            id: 'p0_check_self_assessment',
+            label: 'Ready to find your Co-Leader?',
+          },
         },
         {
           id: 'co-leader',
@@ -275,54 +296,121 @@ Remember: Discipleship is both flow and structure. This guide provides the struc
                 "In rare cases, you may start without one—but actively keep looking. Pray for God to send someone who can step into that role within the first 3 months. Solo leadership is not sustainable long-term.",
             },
           ],
+          interactiveFields: [
+            {
+              id: 'potential_co_leaders',
+              type: 'names_list',
+              label: 'Potential Co-Leader Names',
+              placeholder: 'Enter a name...',
+              maxItems: 5,
+            },
+          ],
+          sectionCheck: {
+            id: 'p0_check_co_leader',
+            label: 'Found your Co-Leader?',
+          },
         },
         {
-          id: 'rhythms',
-          title: 'Checkpoint 3: Setting Up Your Rhythms',
+          id: 'rhythms-meeting',
+          title: 'Checkpoint 3: Weekly Meeting Time',
           intro:
             'Before you invite disciples, establish your structure. Clarity prevents confusion later.',
           subsections: [
             {
-              title: 'Weekly Meeting Time',
+              title: 'Questions to answer:',
               items: [
                 'What day/time works for you AND your co-leader consistently?',
                 'Where will you meet? (Home, coffee shop, church building, online?)',
                 'How long will meetings last? (We recommend 90 minutes)',
               ],
             },
+          ],
+          sectionCheck: {
+            id: 'p0_check_meeting_time',
+            label: 'Meeting time and location established?',
+          },
+        },
+        {
+          id: 'rhythms-communication',
+          title: 'Checkpoint 4: Communication Plan',
+          subsections: [
             {
-              title: 'Communication Plan',
+              title: 'Questions to answer:',
               items: [
                 'What platform will you use for group chat? (Text, GroupMe, WhatsApp, etc.)',
                 'How often will you check in between meetings?',
                 'What\'s your response time expectation? (24 hours? Same day?)',
               ],
             },
+          ],
+          sectionCheck: {
+            id: 'p0_check_communication',
+            label: 'Communication plan set up?',
+          },
+        },
+        {
+          id: 'rhythms-gatherings',
+          title: 'Checkpoint 5: Additional Gatherings',
+          subsections: [
             {
-              title: 'Additional Gatherings',
+              title: 'Questions to answer:',
               items: [
                 'When will you do meals, outreach, or social hangouts?',
                 'How often? (We recommend at least once a month outside of formal meetings)',
               ],
             },
+          ],
+          sectionCheck: {
+            id: 'p0_check_gatherings',
+            label: 'Additional gatherings planned?',
+          },
+        },
+        {
+          id: 'rhythms-duration',
+          title: 'Checkpoint 6: Duration & Multiplication Commitment',
+          subsections: [
             {
-              title: 'Duration Commitment',
+              title: 'Questions to answer:',
               items: [
                 'How long is this DNA group committed to meeting? (12 months recommended)',
                 'When will you multiply? (Set a tentative date so everyone expects it)',
               ],
             },
           ],
+          note: 'Note: This date will likely change once you get into the process. Setting a tentative date now creates shared expectation.',
+          interactiveFields: [
+            {
+              id: 'tentative_multiplication_date',
+              type: 'date',
+              label: 'Tentative Multiplication Date',
+              placeholder: 'Select a date...',
+            },
+          ],
+          sectionCheck: {
+            id: 'p0_check_duration',
+            label: 'Duration commitment established?',
+          },
+        },
+        {
+          id: 'rhythms-agreement',
+          title: 'Checkpoint 7: DNA Group Agreement',
           callout: {
             title: 'Create a DNA Group Agreement',
             content:
               'Meeting time and location, communication expectations, commitment length, multiplication goal, how to handle absences or conflicts. Everyone signs it. This isn\'t legalistic—it\'s honoring. It says "we\'re serious about this."',
-            note: '(3 sample agreements available in the resources section)',
+          },
+          resourceLink: {
+            label: 'Download Agreement Templates',
+            description: '3 sample agreements available in the resources section',
+          },
+          sectionCheck: {
+            id: 'p0_check_agreement',
+            label: 'DNA Group Agreement created?',
           },
         },
         {
           id: 'prayer',
-          title: 'Checkpoint 4: Prayer Strategy',
+          title: 'Checkpoint 8: Prayer Strategy',
           intro: 'Discipleship begins in prayer, not in planning.',
           content: `Spend intentional time asking God:
 • "Who do you want me to invest in?"
@@ -351,10 +439,23 @@ Jesus prayed all night before choosing His disciples (Luke 6:12-13). You don't n
             },
           ],
           note: 'Pray with your co-leader: Set aside 30-60 minutes to pray together specifically about potential disciples. Listen to what the Holy Spirit highlights to each of you.',
+          interactiveFields: [
+            {
+              id: 'prayer_list_names',
+              type: 'names_list',
+              label: 'Your Prayer List',
+              placeholder: 'Enter a name...',
+              maxItems: 10,
+            },
+          ],
+          sectionCheck: {
+            id: 'p0_check_prayer',
+            label: 'Narrowed it down to 1 or 2 disciples? You\'re ready to start the invitation process.',
+          },
         },
         {
           id: 'invitation',
-          title: 'The Invitation Process',
+          title: 'Checkpoint 9: The Invitation Process',
           intro:
             "This phase is about observation and initiation. You're not formally asking them to be discipled yet—you're testing receptivity and building connection.",
           subsections: [
@@ -379,7 +480,7 @@ Jesus prayed all night before choosing His disciples (Luke 6:12-13). You don't n
               ],
             },
             {
-              title: 'Red Flags:',
+              title: 'Red Flags (click to expand):',
               type: 'warning',
               items: [
                 "They don't engage spiritual topics at all",
@@ -389,7 +490,7 @@ Jesus prayed all night before choosing His disciples (Luke 6:12-13). You don't n
               ],
             },
             {
-              title: 'Green Lights:',
+              title: 'Green Lights (click to expand):',
               type: 'success',
               items: [
                 'They express frustration with spiritual stagnation',
@@ -399,10 +500,22 @@ Jesus prayed all night before choosing His disciples (Luke 6:12-13). You don't n
               ],
             },
           ],
+          interactiveFields: [
+            {
+              id: 'invitation_feedback',
+              type: 'textarea',
+              label: 'How did it go?',
+              placeholder: 'Reflect on your coffee conversation(s)...',
+            },
+          ],
+          sectionCheck: {
+            id: 'p0_check_invitation',
+            label: 'Ready to have the direct conversation?',
+          },
         },
         {
           id: 'direct-ask',
-          title: 'The Direct Conversation',
+          title: 'Checkpoint 10: The Direct Conversation',
           intro:
             'Goal: Clearly present the opportunity for discipleship and gauge their response.',
           sampleConversation: `"I've been thinking and praying a lot about discipleship lately. God has been stirring in me a desire to invest deeply in a few people—to help them grow in their faith, understand the Bible better, and step into everything God has for them.
@@ -444,10 +557,14 @@ I don't know if this is something you're interested in, but I wanted to ask: Wou
               ] as ResponseItem[],
             },
           ],
+          sectionCheck: {
+            id: 'p0_check_direct_conversation',
+            label: 'Ready to set expectations?',
+          },
         },
         {
           id: 'expectations',
-          title: 'Setting Expectations Together',
+          title: 'Checkpoint 11: Setting Expectations Together',
           intro:
             'If they say yes or want more details, have THIS conversation:',
           subsections: [
@@ -497,37 +614,21 @@ I don't know if this is something you're interested in, but I wanted to ask: Wou
             },
           ],
           note: 'Ask directly: "Does this sound like something you\'re ready to commit to?"\n\nIf yes: Set the first meeting date and share the DNA Group Agreement.\nIf hesitation: "What\'s holding you back?" Address concerns.',
+          sectionCheck: {
+            id: 'p0_check_expectations',
+            label: 'Ready to start your first DNA Group? Complete Phase and continue.',
+          },
         },
       ],
       checklist: [
-        { id: 'p0_self_assessment', label: 'Honest self-assessment completed' },
-        { id: 'p0_co_leader', label: 'Co-leader identified and committed' },
+        // The main checklist items are now tracked via sectionCheck in each section
+        // These are the final confirmations before moving to Phase 1
         {
-          id: 'p0_schedule',
-          label: 'Meeting schedule and location established',
-        },
-        { id: 'p0_communication', label: 'Communication plan set up' },
-        { id: 'p0_agreement', label: 'DNA Group Agreement created' },
-        {
-          id: 'p0_prayer_list',
-          label: 'Prayer list created and prayed over for 1-2 weeks',
-        },
-        { id: 'p0_disciples_identified', label: '2-3 potential disciples identified' },
-        {
-          id: 'p0_conversations',
-          label: '2-3 informal conversations with potential disciples completed',
-        },
-        {
-          id: 'p0_direct_convo',
-          label: 'Had the direct discipleship conversation',
-        },
-        {
-          id: 'p0_commitment',
+          id: 'p0_disciples_committed',
           label: "They've verbally committed to the DNA group",
         },
-        { id: 'p0_expectations', label: 'Expectations clearly communicated' },
         { id: 'p0_first_meeting', label: 'First meeting scheduled' },
-        { id: 'p0_agreement_shared', label: 'DNA Group Agreement shared' },
+        { id: 'p0_agreement_shared', label: 'DNA Group Agreement shared with disciples' },
       ],
       nextPhasePrompt:
         'If you have 2 disciples committed (1 for you, 1 for co-leader), you\'re ready for Phase 1.',

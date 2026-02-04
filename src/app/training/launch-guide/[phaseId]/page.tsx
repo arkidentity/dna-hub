@@ -10,11 +10,15 @@ import {
   Section,
   Subsection,
   ResponseItem,
+  InteractiveField,
+  SectionCheck,
 } from '@/lib/launch-guide-data';
 
 interface PhaseProgress {
   completed: boolean;
   checklistCompleted: string[];
+  sectionChecks?: string[]; // IDs of completed section checks
+  userData?: Record<string, unknown>; // User input data (names, dates, etc.)
 }
 
 export default function PhasePage({
@@ -29,6 +33,8 @@ export default function PhasePage({
   const [progress, setProgress] = useState<PhaseProgress>({
     completed: false,
     checklistCompleted: [],
+    sectionChecks: [],
+    userData: {},
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
@@ -84,8 +90,8 @@ export default function PhasePage({
   const toggleSection = (sectionId: string) => {
     setExpandedSections((prev) =>
       prev.includes(sectionId)
-        ? prev.filter((id) => id !== sectionId)
-        : [...prev, sectionId]
+        ? [] // Collapse if clicking on the open section
+        : [sectionId] // Only open the clicked section (accordion behavior)
     );
   };
 
@@ -133,6 +139,77 @@ export default function PhasePage({
       }));
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  const toggleSectionCheck = async (checkId: string) => {
+    if (isSaving) return;
+
+    const currentChecks = progress.sectionChecks || [];
+    const isCurrentlyChecked = currentChecks.includes(checkId);
+    const newChecks = isCurrentlyChecked
+      ? currentChecks.filter((id) => id !== checkId)
+      : [...currentChecks, checkId];
+
+    // Optimistic update
+    setProgress((prev) => ({
+      ...prev,
+      sectionChecks: newChecks,
+    }));
+
+    setIsSaving(true);
+    try {
+      const response = await fetch(
+        `/api/training/launch-guide/phases/${phaseId}/section-check`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ checkId, completed: !isCurrentlyChecked }),
+        }
+      );
+
+      if (response.ok) {
+        const data = await response.json();
+        setProgress(data.progress);
+      } else {
+        // Revert on error
+        setProgress((prev) => ({
+          ...prev,
+          sectionChecks: currentChecks,
+        }));
+      }
+    } catch (err) {
+      console.error('Failed to update section check:', err);
+      setProgress((prev) => ({
+        ...prev,
+        sectionChecks: currentChecks,
+      }));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const updateUserData = async (fieldId: string, value: unknown) => {
+    const currentData = progress.userData || {};
+    const newData = { ...currentData, [fieldId]: value };
+
+    // Optimistic update
+    setProgress((prev) => ({
+      ...prev,
+      userData: newData,
+    }));
+
+    try {
+      await fetch(
+        `/api/training/launch-guide/phases/${phaseId}/user-data`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ fieldId, value }),
+        }
+      );
+    } catch (err) {
+      console.error('Failed to save user data:', err);
     }
   };
 
@@ -249,16 +326,31 @@ export default function PhasePage({
 
           {/* Sections */}
           <div className="sections-list">
-            {phase.sections.map((section) => {
+            {phase.sections.map((section, sectionIndex) => {
               const isExpanded = expandedSections.includes(section.id);
+              const sectionCheckCompleted = section.sectionCheck
+                ? (progress.sectionChecks || []).includes(section.sectionCheck.id)
+                : false;
 
               return (
-                <div key={section.id} className="section-card">
+                <div key={section.id} className={`section-card ${sectionCheckCompleted ? 'section-completed' : ''}`}>
                   <button
                     className="section-header"
                     onClick={() => toggleSection(section.id)}
                   >
                     <div className="section-info">
+                      <div className="section-status">
+                        {sectionCheckCompleted ? (
+                          <span className="status-icon completed">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+                              <polyline points="22 4 12 14.01 9 11.01" />
+                            </svg>
+                          </span>
+                        ) : (
+                          <span className="status-icon pending">{sectionIndex + 1}</span>
+                        )}
+                      </div>
                       <h3>{section.title}</h3>
                     </div>
                     <div className="section-toggle">
@@ -328,9 +420,57 @@ export default function PhasePage({
                           )}
                         </div>
                       )}
+                      {section.resourceLink && (
+                        <div className="resource-link-box">
+                          <a href="/training/resources" className="resource-link">
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
+                              <polyline points="14 2 14 8 20 8" />
+                              <line x1="16" y1="13" x2="8" y2="13" />
+                              <line x1="16" y1="17" x2="8" y2="17" />
+                            </svg>
+                            {section.resourceLink.label}
+                          </a>
+                          <p className="resource-description">{section.resourceLink.description}</p>
+                        </div>
+                      )}
                       {section.note && (
                         <div className="section-note">
                           <p>{section.note}</p>
+                        </div>
+                      )}
+
+                      {/* Interactive Fields */}
+                      {section.interactiveFields?.map((field) => (
+                        <InteractiveFieldRenderer
+                          key={field.id}
+                          field={field}
+                          value={progress.userData?.[field.id]}
+                          onChange={(value) => updateUserData(field.id, value)}
+                        />
+                      ))}
+
+                      {/* Section Check */}
+                      {section.sectionCheck && (
+                        <div className="section-check-box">
+                          <label
+                            className={`section-check-item ${sectionCheckCompleted ? 'checked' : ''}`}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={sectionCheckCompleted}
+                              onChange={() => toggleSectionCheck(section.sectionCheck!.id)}
+                              disabled={isSaving}
+                            />
+                            <span className="checkbox-custom">
+                              {sectionCheckCompleted && (
+                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
+                                  <polyline points="20 6 9 17 4 12" />
+                                </svg>
+                              )}
+                            </span>
+                            <span className="checkbox-label">{section.sectionCheck.label}</span>
+                          </label>
                         </div>
                       )}
                     </div>
@@ -446,16 +586,40 @@ export default function PhasePage({
 }
 
 function SubsectionRenderer({ subsection }: { subsection: Subsection }) {
+  const [isExpanded, setIsExpanded] = useState(
+    subsection.type !== 'warning' && subsection.type !== 'success'
+  );
   const typeClass = subsection.type || '';
+  const isCollapsible = subsection.type === 'warning' || subsection.type === 'success';
 
   return (
-    <div className={`subsection ${typeClass}`}>
-      <h4>{subsection.title}</h4>
+    <div className={`subsection ${typeClass} ${isCollapsible ? 'collapsible' : ''}`}>
+      {isCollapsible ? (
+        <button
+          className="subsection-header-btn"
+          onClick={() => setIsExpanded(!isExpanded)}
+        >
+          <h4>{subsection.title}</h4>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            style={{ transform: isExpanded ? 'rotate(180deg)' : 'rotate(0)' }}
+          >
+            <polyline points="6 9 12 15 18 9" />
+          </svg>
+        </button>
+      ) : (
+        <h4>{subsection.title}</h4>
+      )}
       {subsection.subtitle && (
         <p className="subsection-subtitle">{subsection.subtitle}</p>
       )}
       {subsection.content && <p className="subsection-content">{subsection.content}</p>}
-      {subsection.items && (
+      {(!isCollapsible || isExpanded) && subsection.items && (
         <>
           {subsection.numbered ? (
             <ol className="subsection-list numbered">
@@ -488,6 +652,145 @@ function SubsectionRenderer({ subsection }: { subsection: Subsection }) {
           <p>{subsection.note}</p>
         </div>
       )}
+    </div>
+  );
+}
+
+function InteractiveFieldRenderer({
+  field,
+  value,
+  onChange,
+}: {
+  field: InteractiveField;
+  value: unknown;
+  onChange: (value: unknown) => void;
+}) {
+  const [localValue, setLocalValue] = useState<string>('');
+  const [namesList, setNamesList] = useState<string[]>((value as string[]) || []);
+
+  // Debounce saving for text fields
+  useEffect(() => {
+    if (field.type === 'textarea' || field.type === 'text') {
+      const timer = setTimeout(() => {
+        if (localValue !== (value as string || '')) {
+          onChange(localValue);
+        }
+      }, 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [localValue, field.type, onChange, value]);
+
+  // Initialize local value from saved value
+  useEffect(() => {
+    if (field.type === 'textarea' || field.type === 'text' || field.type === 'date') {
+      setLocalValue((value as string) || '');
+    }
+  }, [value, field.type]);
+
+  if (field.type === 'names_list') {
+    const addName = () => {
+      if (localValue.trim() && namesList.length < (field.maxItems || 10)) {
+        const newList = [...namesList, localValue.trim()];
+        setNamesList(newList);
+        onChange(newList);
+        setLocalValue('');
+      }
+    };
+
+    const removeName = (index: number) => {
+      const newList = namesList.filter((_, i) => i !== index);
+      setNamesList(newList);
+      onChange(newList);
+    };
+
+    return (
+      <div className="interactive-field names-list-field">
+        <label>{field.label}</label>
+        <div className="names-input-row">
+          <input
+            type="text"
+            value={localValue}
+            onChange={(e) => setLocalValue(e.target.value)}
+            placeholder={field.placeholder}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') {
+                e.preventDefault();
+                addName();
+              }
+            }}
+          />
+          <button
+            type="button"
+            onClick={addName}
+            disabled={!localValue.trim() || namesList.length >= (field.maxItems || 10)}
+            className="add-name-btn"
+          >
+            Add
+          </button>
+        </div>
+        {namesList.length > 0 && (
+          <ul className="names-list">
+            {namesList.map((name, i) => (
+              <li key={i}>
+                <span>{name}</span>
+                <button
+                  type="button"
+                  onClick={() => removeName(i)}
+                  className="remove-name-btn"
+                >
+                  &times;
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+        <p className="field-hint">
+          {namesList.length}/{field.maxItems || 10} names added
+        </p>
+      </div>
+    );
+  }
+
+  if (field.type === 'date') {
+    return (
+      <div className="interactive-field date-field">
+        <label>{field.label}</label>
+        <input
+          type="date"
+          value={localValue}
+          onChange={(e) => {
+            setLocalValue(e.target.value);
+            onChange(e.target.value);
+          }}
+        />
+      </div>
+    );
+  }
+
+  if (field.type === 'textarea') {
+    return (
+      <div className="interactive-field textarea-field">
+        <label>{field.label}</label>
+        <textarea
+          value={localValue}
+          onChange={(e) => setLocalValue(e.target.value)}
+          placeholder={field.placeholder}
+          rows={4}
+        />
+      </div>
+    );
+  }
+
+  // Default text field
+  return (
+    <div className="interactive-field text-field">
+      <label>{field.label}</label>
+      <input
+        type="text"
+        value={localValue}
+        onChange={(e) => setLocalValue(e.target.value)}
+        placeholder={field.placeholder}
+      />
     </div>
   );
 }
@@ -667,6 +970,12 @@ const styles = `
     background: #242D3D;
     border-radius: 12px;
     overflow: hidden;
+    border: 2px solid transparent;
+    transition: border-color 0.2s;
+  }
+
+  .section-card.section-completed {
+    border-color: rgba(74, 158, 127, 0.3);
   }
 
   .section-header {
@@ -682,11 +991,46 @@ const styles = `
     color: #FFFFFF;
   }
 
+  .section-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .section-status {
+    flex-shrink: 0;
+  }
+
+  .status-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  .status-icon.pending {
+    background: rgba(212, 168, 83, 0.15);
+    color: #D4A853;
+  }
+
+  .status-icon.completed {
+    background: rgba(74, 158, 127, 0.15);
+    color: #4A9E7F;
+  }
+
   .section-info h3 {
     font-size: 16px;
     font-weight: 600;
     margin: 0;
     color: #D4A853;
+  }
+
+  .section-card.section-completed .section-info h3 {
+    color: #4A9E7F;
   }
 
   .section-toggle {
@@ -783,6 +1127,31 @@ const styles = `
 
   .subsection.success {
     border-left: 4px solid #4A9E7F;
+  }
+
+  .subsection.collapsible {
+    cursor: pointer;
+  }
+
+  .subsection-header-btn {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0;
+    margin-bottom: 8px;
+  }
+
+  .subsection-header-btn h4 {
+    margin: 0;
+  }
+
+  .subsection-header-btn svg {
+    color: #5A6577;
+    transition: transform 0.2s;
   }
 
   .subsection-note {
@@ -1087,6 +1456,219 @@ const styles = `
     text-decoration: none;
   }
 
+  /* Resource Link */
+  .resource-link-box {
+    margin: 20px 0;
+    padding: 20px;
+    background: rgba(45, 106, 106, 0.1);
+    border: 1px solid rgba(45, 106, 106, 0.3);
+    border-radius: 8px;
+    text-align: center;
+  }
+
+  .resource-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    color: #2D6A6A;
+    text-decoration: none;
+    font-weight: 600;
+    font-size: 15px;
+    padding: 12px 20px;
+    background: rgba(45, 106, 106, 0.15);
+    border-radius: 8px;
+    transition: all 0.2s;
+  }
+
+  .resource-link:hover {
+    background: rgba(45, 106, 106, 0.25);
+  }
+
+  .resource-description {
+    font-size: 13px;
+    color: #A0AEC0;
+    margin: 12px 0 0 0;
+  }
+
+  /* Section Check */
+  .section-check-box {
+    margin-top: 24px;
+    padding-top: 20px;
+    border-top: 1px solid #3D4A5C;
+  }
+
+  .section-check-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px;
+    background: linear-gradient(135deg, rgba(212, 168, 83, 0.1) 0%, rgba(212, 168, 83, 0.05) 100%);
+    border: 1px solid rgba(212, 168, 83, 0.3);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .section-check-item:hover {
+    background: linear-gradient(135deg, rgba(212, 168, 83, 0.15) 0%, rgba(212, 168, 83, 0.08) 100%);
+  }
+
+  .section-check-item.checked {
+    background: linear-gradient(135deg, rgba(74, 158, 127, 0.1) 0%, rgba(74, 158, 127, 0.05) 100%);
+    border-color: rgba(74, 158, 127, 0.3);
+  }
+
+  .section-check-item input {
+    display: none;
+  }
+
+  .section-check-item .checkbox-custom {
+    width: 24px;
+    height: 24px;
+    flex-shrink: 0;
+    border: 2px solid #D4A853;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .section-check-item.checked .checkbox-custom {
+    background: #4A9E7F;
+    border-color: #4A9E7F;
+    color: #FFFFFF;
+  }
+
+  .section-check-item .checkbox-label {
+    font-size: 15px;
+    color: #D4A853;
+    font-weight: 600;
+  }
+
+  .section-check-item.checked .checkbox-label {
+    color: #4A9E7F;
+  }
+
+  /* Interactive Fields */
+  .interactive-field {
+    margin: 20px 0;
+    padding: 20px;
+    background: #1A2332;
+    border-radius: 8px;
+  }
+
+  .interactive-field label {
+    display: block;
+    font-size: 14px;
+    font-weight: 600;
+    color: #D4A853;
+    margin-bottom: 12px;
+  }
+
+  .interactive-field input[type="text"],
+  .interactive-field input[type="date"],
+  .interactive-field textarea {
+    width: 100%;
+    padding: 12px 16px;
+    background: #242D3D;
+    border: 1px solid #3D4A5C;
+    border-radius: 8px;
+    color: #E2E8F0;
+    font-size: 14px;
+    transition: border-color 0.2s;
+  }
+
+  .interactive-field input:focus,
+  .interactive-field textarea:focus {
+    outline: none;
+    border-color: #D4A853;
+  }
+
+  .interactive-field textarea {
+    resize: vertical;
+    min-height: 100px;
+  }
+
+  /* Names List Field */
+  .names-input-row {
+    display: flex;
+    gap: 8px;
+  }
+
+  .names-input-row input {
+    flex: 1;
+  }
+
+  .add-name-btn {
+    padding: 12px 20px;
+    background: #D4A853;
+    color: #1A2332;
+    border: none;
+    border-radius: 8px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.2s;
+    white-space: nowrap;
+  }
+
+  .add-name-btn:hover:not(:disabled) {
+    background: #E5B964;
+  }
+
+  .add-name-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .names-list {
+    list-style: none;
+    padding: 0;
+    margin: 16px 0 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .names-list li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 12px;
+    background: rgba(212, 168, 83, 0.15);
+    border-radius: 20px;
+    font-size: 14px;
+    color: #E2E8F0;
+  }
+
+  .remove-name-btn {
+    width: 20px;
+    height: 20px;
+    padding: 0;
+    background: rgba(229, 115, 115, 0.2);
+    border: none;
+    border-radius: 50%;
+    color: #E57373;
+    cursor: pointer;
+    font-size: 16px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+
+  .remove-name-btn:hover {
+    background: rgba(229, 115, 115, 0.4);
+  }
+
+  .field-hint {
+    font-size: 12px;
+    color: #5A6577;
+    margin: 12px 0 0 0;
+  }
+
   /* Mobile */
   @media (max-width: 640px) {
     .header-content h1 {
@@ -1103,6 +1685,16 @@ const styles = `
 
     .checklist-item {
       padding: 12px;
+    }
+
+    .names-input-row {
+      flex-direction: column;
+    }
+
+    .section-info {
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
     }
   }
 `;

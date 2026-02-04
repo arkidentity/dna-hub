@@ -52,8 +52,9 @@ export async function GET(
       );
     }
 
-    // Check if previous phase is complete (if not phase 0)
-    if (phaseIdNum > 0) {
+    // Check if previous phase has sufficient progress (allows "look ahead")
+    // Users can view the next phase once they've completed at least 50% of section checks in current phase
+    if (phaseIdNum > 0 && !isAdmin(session)) {
       const prevPhaseKey = `launch_guide_phase_${phaseIdNum - 1}`;
       const { data: prevPhaseUnlock } = await supabase
         .from('user_content_unlocks')
@@ -62,10 +63,18 @@ export async function GET(
         .eq('content_type', prevPhaseKey)
         .single();
 
-      if (
-        !prevPhaseUnlock?.metadata?.completed &&
-        !isAdmin(session)
-      ) {
+      // Phase is accessible if:
+      // 1. Previous phase is marked as completed, OR
+      // 2. Previous phase has at least 50% of section checks completed
+      const prevPhaseCompleted = prevPhaseUnlock?.metadata?.completed;
+      const prevSectionChecks = prevPhaseUnlock?.metadata?.sectionChecks || [];
+      const prevPhase = getPhase(phaseIdNum - 1);
+      const prevTotalSectionChecks = prevPhase?.sections.filter(s => s.sectionCheck).length || 0;
+      const hasEnoughProgress = prevTotalSectionChecks > 0
+        ? prevSectionChecks.length >= Math.ceil(prevTotalSectionChecks * 0.5)
+        : false;
+
+      if (!prevPhaseCompleted && !hasEnoughProgress) {
         return NextResponse.json(
           { error: 'Previous phase not complete' },
           { status: 403 }
@@ -86,6 +95,8 @@ export async function GET(
       progress: {
         completed: phaseUnlock?.metadata?.completed || false,
         checklistCompleted: phaseUnlock?.metadata?.checklistCompleted || [],
+        sectionChecks: phaseUnlock?.metadata?.sectionChecks || [],
+        userData: phaseUnlock?.metadata?.userData || {},
       },
     });
   } catch (error) {
