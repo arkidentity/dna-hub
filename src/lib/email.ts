@@ -961,6 +961,80 @@ export async function sendDNALeaderDirectInviteEmail(
   });
 }
 
+// Church Leader Invitation Email (with magic link - for additional church leaders)
+// This is sent when an admin/existing church leader invites a new church leader
+export async function sendChurchLeaderInviteEmail(
+  to: string,
+  leaderName: string,
+  magicLink: string,
+  churchName: string,
+  inviterName: string,
+  personalMessage?: string
+) {
+  const subject = `You've been invited to lead DNA implementation at ${churchName}`;
+
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1A2332;">Hi ${leaderName},</h2>
+
+      <p>${inviterName} has invited you to join the DNA implementation team at ${churchName}!</p>
+
+      ${personalMessage ? `
+      <div style="background: #F8F9FA; padding: 16px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2D6A6A;">
+        <p style="margin: 0; color: #5A6577; font-style: italic;">"${personalMessage}"</p>
+        <p style="margin: 8px 0 0 0; color: #1A2332; font-weight: 500;">— ${inviterName}</p>
+      </div>
+      ` : ''}
+
+      <p>As a church leader in DNA Hub, you'll have access to:</p>
+
+      <ul style="color: #5A6577; line-height: 1.8;">
+        <li><strong>Implementation Dashboard</strong> - Track your church's DNA journey milestones</li>
+        <li><strong>DNA Training</strong> - Flow Assessment, DNA Manual, and Launch Guide</li>
+        <li><strong>DNA Groups</strong> - Manage and track discipleship groups</li>
+      </ul>
+
+      <p><strong>Your account is ready!</strong> Click below to log in and get started:</p>
+
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${magicLink}"
+           style="background: #D4A853; color: white; padding: 16px 32px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          Log In to DNA Hub
+        </a>
+      </div>
+
+      <p style="color: #5A6577; font-size: 14px;">
+        This link expires in 7 days. After that, you can always request a new login link from the login page.
+      </p>
+
+      <p style="color: #5A6577; font-size: 14px;">
+        Or copy this link: <br>
+        <a href="${magicLink}" style="color: #2D6A6A;">${magicLink}</a>
+      </p>
+
+      <hr style="border: none; border-top: 1px solid #E8DDD0; margin: 32px 0;" />
+
+      <p style="color: #5A6577; font-size: 14px;">
+        Making disciples who make disciples,<br>
+        <strong>ARK Identity Team</strong>
+      </p>
+
+      <p style="color: #5A6577; font-size: 14px;">
+        Questions? Reply to this email or visit <a href="https://dnadiscipleship.com/help" style="color: #2D6A6A;">dnadiscipleship.com/help</a>
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    notificationType: 'church_leader_invite'
+  });
+}
+
 // =====================================================
 // TRAINING PLATFORM EMAILS
 // =====================================================

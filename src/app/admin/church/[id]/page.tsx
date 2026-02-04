@@ -17,7 +17,8 @@ import {
   X,
 } from 'lucide-react';
 import { GroupsTab } from '@/components/dashboard';
-import { AdminChurchOverviewTab, AdminChurchJourneyTab } from '@/components/admin';
+import { AdminChurchOverviewTab, AdminChurchJourneyTab, ChurchLeadersTab } from '@/components/admin';
+import { UserCog } from 'lucide-react';
 
 interface ChurchDetail {
   church: {
@@ -120,7 +121,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
   const router = useRouter();
   const [data, setData] = useState<ChurchDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'groups'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'leaders' | 'groups'>('overview');
 
   // Alias editing state
   const [editingAliases, setEditingAliases] = useState(false);
@@ -376,6 +377,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
             {[
               { id: 'overview', label: 'Overview', icon: LayoutDashboard },
               { id: 'journey', label: 'DNA Journey', icon: Map },
+              { id: 'leaders', label: 'Leaders', icon: UserCog },
               { id: 'groups', label: 'DNA Groups', icon: Users },
             ].map((tab) => (
               <button
@@ -419,6 +421,14 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
             calls={data?.calls || []}
             templateApplied={!!church.template_applied_at}
             onRefresh={fetchChurchData}
+          />
+        )}
+
+        {/* Leaders Tab */}
+        {activeTab === 'leaders' && (
+          <ChurchLeadersTab
+            churchId={churchId}
+            churchName={church.name}
           />
         )}
 

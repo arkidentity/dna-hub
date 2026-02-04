@@ -1,0 +1,377 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getSupabaseAdmin, generateToken } from '@/lib/auth';
+import { getUnifiedSession, isAdmin as checkIsAdmin, hasRole, getPrimaryChurch } from '@/lib/unified-auth';
+import { sendChurchLeaderInviteEmail } from '@/lib/email';
+
+// POST /api/admin/church-leaders/invite
+// Invite a new church leader (admin or existing church leader only)
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getUnifiedSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const isSuperAdmin = checkIsAdmin(session);
+    const isChurchLeader = hasRole(session, 'church_leader');
+
+    // Must be admin or church leader to invite
+    if (!isSuperAdmin && !isChurchLeader) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const { name, email, church_id, message } = body;
+
+    // Validate required fields
+    if (!email) {
+      return NextResponse.json(
+        { error: 'Email is required' },
+        { status: 400 }
+      );
+    }
+
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Invalid email format' },
+        { status: 400 }
+      );
+    }
+
+    const supabase = getSupabaseAdmin();
+    const normalizedEmail = email.toLowerCase().trim();
+
+    // Determine church affiliation
+    let finalChurchId: string;
+    let churchName: string;
+    const inviterName = session.name || 'DNA Hub Admin';
+    const inviterId = session.userId;
+
+    if (isSuperAdmin) {
+      // Super admin must specify a church
+      if (!church_id) {
+        return NextResponse.json(
+          { error: 'Church ID is required' },
+          { status: 400 }
+        );
+      }
+
+      // Verify church exists
+      const { data: church, error: churchError } = await supabase
+        .from('churches')
+        .select('id, name')
+        .eq('id', church_id)
+        .single();
+
+      if (churchError || !church) {
+        return NextResponse.json(
+          { error: 'Church not found' },
+          { status: 400 }
+        );
+      }
+      finalChurchId = church.id;
+      churchName = church.name;
+    } else {
+      // Church leader can only invite to their own church
+      const sessionChurchId = getPrimaryChurch(session);
+      if (!sessionChurchId) {
+        return NextResponse.json(
+          { error: 'You must be associated with a church to invite leaders' },
+          { status: 400 }
+        );
+      }
+      finalChurchId = sessionChurchId;
+
+      // Get church name
+      const { data: church } = await supabase
+        .from('churches')
+        .select('name')
+        .eq('id', finalChurchId)
+        .single();
+
+      if (!church) {
+        return NextResponse.json(
+          { error: 'Church not found' },
+          { status: 400 }
+        );
+      }
+      churchName = church.name;
+    }
+
+    // Check if already a church leader for this church
+    const { data: existingChurchLeader } = await supabase
+      .from('church_leaders')
+      .select('id, email')
+      .eq('email', normalizedEmail)
+      .eq('church_id', finalChurchId)
+      .single();
+
+    if (existingChurchLeader) {
+      return NextResponse.json(
+        { error: 'This person is already a church leader for this church' },
+        { status: 400 }
+      );
+    }
+
+    // =====================================================
+    // UNIFIED AUTH: Create user and role records upfront
+    // =====================================================
+
+    // 1. Create or find the user in the unified users table
+    let userId: string;
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id, name')
+      .eq('email', normalizedEmail)
+      .single();
+
+    if (existingUser) {
+      userId = existingUser.id;
+    } else {
+      const { data: newUser, error: userError } = await supabase
+        .from('users')
+        .insert({
+          email: normalizedEmail,
+          name: name?.trim() || null,
+        })
+        .select('id')
+        .single();
+
+      if (userError) {
+        console.error('[Church Leaders] User creation error:', userError);
+        return NextResponse.json(
+          { error: 'Failed to create user account' },
+          { status: 500 }
+        );
+      }
+      userId = newUser.id;
+    }
+
+    // 2. Add church_leader role (if not already present)
+    const { data: existingChurchLeaderRole } = await supabase
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('role', 'church_leader')
+      .eq('church_id', finalChurchId)
+      .maybeSingle();
+
+    if (!existingChurchLeaderRole) {
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: 'church_leader',
+          church_id: finalChurchId,
+        });
+
+      if (roleError) {
+        console.error('[Church Leaders] Role creation error:', roleError);
+        return NextResponse.json(
+          { error: 'Failed to assign church leader role' },
+          { status: 500 }
+        );
+      }
+    }
+
+    // 3. Add dna_leader role (church leaders should also be DNA leaders)
+    const { data: existingDNARole } = await supabase
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('role', 'dna_leader')
+      .eq('church_id', finalChurchId)
+      .maybeSingle();
+
+    if (!existingDNARole) {
+      await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: 'dna_leader',
+          church_id: finalChurchId,
+        });
+    }
+
+    // 4. Add training_participant role (for access to training)
+    const { data: existingTrainingRole } = await supabase
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('role', 'training_participant')
+      .maybeSingle();
+
+    if (!existingTrainingRole) {
+      await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: 'training_participant',
+          church_id: null, // Training is not church-specific
+        });
+    }
+
+    // 5. Create church_leaders record (for backward compatibility)
+    const { error: churchLeaderError } = await supabase
+      .from('church_leaders')
+      .insert({
+        email: normalizedEmail,
+        name: name?.trim() || existingUser?.name || null,
+        church_id: finalChurchId,
+        user_id: userId,
+      });
+
+    if (churchLeaderError) {
+      console.error('[Church Leaders] Church leader creation error:', churchLeaderError);
+      return NextResponse.json(
+        { error: 'Failed to create church leader record' },
+        { status: 500 }
+      );
+    }
+
+    // 6. Create dna_leaders record (pre-activated for DNA Groups access)
+    const { data: existingDNALeader } = await supabase
+      .from('dna_leaders')
+      .select('id')
+      .eq('email', normalizedEmail)
+      .maybeSingle();
+
+    if (!existingDNALeader) {
+      await supabase
+        .from('dna_leaders')
+        .insert({
+          email: normalizedEmail,
+          name: name?.trim() || existingUser?.name || null,
+          church_id: finalChurchId,
+          invited_by: inviterId,
+          invited_by_type: isSuperAdmin ? 'super_admin' : 'church_admin',
+          user_id: userId,
+          activated_at: new Date().toISOString(), // Pre-activate
+        });
+    }
+
+    // 7. Create magic link token for direct login
+    const magicToken = generateToken();
+    const tokenExpiresAt = new Date();
+    tokenExpiresAt.setDate(tokenExpiresAt.getDate() + 7); // 7-day expiry
+
+    const { error: tokenError } = await supabase
+      .from('magic_link_tokens')
+      .insert({
+        email: normalizedEmail,
+        token: magicToken,
+        expires_at: tokenExpiresAt.toISOString(),
+        used: false,
+      });
+
+    if (tokenError) {
+      console.error('[Church Leaders] Magic token error:', tokenError);
+      // Continue anyway - they can request a new magic link via login
+    }
+
+    // 8. Send invitation email with direct magic link
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dnadiscipleship.com';
+    const magicLink = `${baseUrl}/api/auth/verify?token=${magicToken}&destination=dashboard`;
+
+    const emailResult = await sendChurchLeaderInviteEmail(
+      normalizedEmail,
+      name?.trim() || 'Church Leader',
+      magicLink,
+      churchName,
+      inviterName,
+      message
+    );
+
+    if (!emailResult.success) {
+      console.error('[Church Leaders] Email send error:', emailResult.error);
+      // Don't fail the request - the record is created, they can request a new magic link
+    }
+
+    return NextResponse.json({
+      success: true,
+      leader: {
+        email: normalizedEmail,
+        name: name?.trim() || null,
+        church_id: finalChurchId,
+      },
+      emailSent: emailResult.success,
+    });
+
+  } catch (error) {
+    console.error('[Church Leaders] Invite error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
+
+// GET /api/admin/church-leaders/invite
+// List church leaders for a specific church
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getUnifiedSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const isSuperAdmin = checkIsAdmin(session);
+    const isChurchLeader = hasRole(session, 'church_leader');
+
+    if (!isSuperAdmin && !isChurchLeader) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { searchParams } = new URL(request.url);
+    const churchId = searchParams.get('church_id');
+
+    if (!churchId) {
+      return NextResponse.json(
+        { error: 'Church ID is required' },
+        { status: 400 }
+      );
+    }
+
+    // Non-admin church leaders can only see their own church
+    if (!isSuperAdmin) {
+      const sessionChurchId = getPrimaryChurch(session);
+      if (sessionChurchId !== churchId) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
+
+    const supabase = getSupabaseAdmin();
+
+    const { data: leaders, error } = await supabase
+      .from('church_leaders')
+      .select(`
+        id,
+        email,
+        name,
+        church_id,
+        created_at,
+        user_id
+      `)
+      .eq('church_id', churchId)
+      .order('created_at', { ascending: true });
+
+    if (error) {
+      console.error('[Church Leaders] List error:', error);
+      return NextResponse.json(
+        { error: 'Failed to fetch church leaders' },
+        { status: 500 }
+      );
+    }
+
+    return NextResponse.json({ leaders: leaders || [] });
+
+  } catch (error) {
+    console.error('[Church Leaders] List error:', error);
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 }
+    );
+  }
+}
