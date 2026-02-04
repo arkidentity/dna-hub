@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { supabaseAdmin } from '@/lib/auth';
+import { getSupabaseAdmin } from '@/lib/auth';
 import { getUnifiedSession, isAdmin, hasRole } from '@/lib/unified-auth';
 import { PhaseWithMilestones, MilestoneWithProgress } from '@/lib/types';
 
@@ -22,8 +22,10 @@ export async function GET() {
       );
     }
 
+    const supabase = getSupabaseAdmin();
+
     // Get church_leader record to find church_id
-    const { data: churchLeader, error: leaderError } = await supabaseAdmin
+    const { data: churchLeader, error: leaderError } = await supabase
       .from('church_leaders')
       .select(`
         *,
@@ -59,10 +61,10 @@ export async function GET() {
     }
 
     // Get all phases
-    const { data: phases, error: phasesError } = await supabaseAdmin
+    const { data: phases, error: phasesError } = await supabase
       .from('phases')
       .select('*')
-      .order('display_order', { ascending: true });
+      .order('phase_number', { ascending: true });
 
     if (phasesError) {
       console.error('Phases fetch error:', phasesError);
@@ -73,7 +75,7 @@ export async function GET() {
     }
 
     // Get church-specific milestones (from church_milestones table)
-    const { data: milestones, error: milestonesError } = await supabaseAdmin
+    const { data: milestones, error: milestonesError } = await supabase
       .from('church_milestones')
       .select('*')
       .eq('church_id', church.id)
@@ -88,7 +90,7 @@ export async function GET() {
     }
 
     // Get church progress
-    const { data: progress, error: progressError } = await supabaseAdmin
+    const { data: progress, error: progressError } = await supabase
       .from('church_progress')
       .select(`
         *,
@@ -113,7 +115,7 @@ export async function GET() {
     );
 
     // Get all attachments for this church
-    const { data: attachments } = await supabaseAdmin
+    const { data: attachments } = await supabase
       .from('milestone_attachments')
       .select('*')
       .eq('church_id', church.id)
@@ -127,9 +129,8 @@ export async function GET() {
     });
 
     // Get global resources linked to template milestones
-    // milestone_resources links to template_milestones, so we need to join through source_milestone_id
-    // Note: If migration 033 hasn't been run yet, this query may fail - we handle that gracefully
-    const { data: milestoneResources, error: resourcesError } = await supabaseAdmin
+    // milestone_resources links to template_milestones, so we map via source_milestone_id
+    const { data: milestoneResources } = await supabase
       .from('milestone_resources')
       .select(`
         milestone_id,
@@ -144,52 +145,29 @@ export async function GET() {
       `)
       .order('display_order', { ascending: true });
 
-    if (resourcesError) {
-      console.error('Milestone resources fetch error:', resourcesError);
-      // Don't fail the whole request - resources are optional
-    }
-
-    // Create a map from template_milestone_id -> resources
-    type ResourceData = {
-      id: string;
-      name: string;
-      description: string | null;
-      file_url: string | null;
-      resource_type: string | null;
-    };
-    const templateResourcesMap = new Map<string, ResourceData[]>();
+    // Build a map from template_milestone_id -> resources
+    const templateResourcesMap = new Map<string, typeof milestoneResources>();
     milestoneResources?.forEach(mr => {
-      const resource = mr.resource as unknown as ResourceData | null;
-      if (resource) {
-        const existing = templateResourcesMap.get(mr.milestone_id) || [];
-        templateResourcesMap.set(mr.milestone_id, [...existing, resource]);
-      }
-    });
-
-    // Build a map from church_milestone_id -> resources (via source_milestone_id)
-    const resourcesMap = new Map<string, ResourceData[]>();
-    milestones?.forEach(cm => {
-      if (cm.source_milestone_id && templateResourcesMap.has(cm.source_milestone_id)) {
-        resourcesMap.set(cm.id, templateResourcesMap.get(cm.source_milestone_id)!);
-      }
+      const existing = templateResourcesMap.get(mr.milestone_id) || [];
+      templateResourcesMap.set(mr.milestone_id, [...existing, mr]);
     });
 
     // Get funnel documents for this church
-    const { data: documents } = await supabaseAdmin
+    const { data: documents } = await supabase
       .from('funnel_documents')
       .select('*')
       .eq('church_id', church.id)
       .order('created_at', { ascending: true });
 
     // Get scheduled calls for this church
-    const { data: calls } = await supabaseAdmin
+    const { data: calls } = await supabase
       .from('scheduled_calls')
       .select('*')
       .eq('church_id', church.id)
       .order('scheduled_at', { ascending: true });
 
     // Get global resources (general resources for all churches)
-    const { data: globalResources } = await supabaseAdmin
+    const { data: globalResources } = await supabase
       .from('global_resources')
       .select('*')
       .eq('is_active', true)
@@ -197,17 +175,28 @@ export async function GET() {
 
     // Build phases with milestones and progress
     const phasesWithMilestones: PhaseWithMilestones[] = (phases || []).map(phase => {
-      const phaseMilestones: MilestoneWithProgress[] = (milestones || [])
-        .filter(m => m.phase_id === phase.id)
-        .map(milestone => ({
-          ...milestone,
-          progress: progressMap.get(milestone.id),
-          completed_by_name: progressMap.get(milestone.id)?.completed_by_name,
-          attachments: attachmentsMap.get(milestone.id) || [],
-          resources: resourcesMap.get(milestone.id) || [],
-        }));
+      const phaseMilestones = (milestones || []).filter(m => m.phase_id === phase.id);
+      const milestonesWithProgress: MilestoneWithProgress[] = phaseMilestones.map(milestone => {
+        const milestoneProgress = progress?.find(p => p.milestone_id === milestone.id);
+        const milestoneAttachments = attachments?.filter(a => a.milestone_id === milestone.id);
+        // Get global resources for this milestone (via source_milestone_id -> template_milestones)
+        const templateResources = milestone.source_milestone_id
+          ? templateResourcesMap.get(milestone.source_milestone_id) || []
+          : [];
+        const resources = templateResources
+          .map(mr => mr.resource)
+          .filter(Boolean);
 
-      const completedCount = phaseMilestones.filter(m => m.progress?.completed).length;
+        return {
+          ...milestone,
+          progress: milestoneProgress || null,
+          completed_by_name: milestoneProgress?.completed_by_leader?.name,
+          attachments: milestoneAttachments || [],
+          resources,
+        };
+      });
+
+      const completedCount = milestonesWithProgress.filter(m => m.progress?.completed).length;
       const totalCount = phaseMilestones.length;
 
       // Determine phase status
@@ -228,7 +217,7 @@ export async function GET() {
 
       return {
         ...phase,
-        milestones: phaseMilestones,
+        milestones: milestonesWithProgress,
         status,
         completedCount,
         totalCount,
