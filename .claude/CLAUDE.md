@@ -169,7 +169,14 @@ npm run lint     # Run ESLint
 
 ## Documentation
 
-See `/docs/` for:
+**Cross-Project Docs** (in `/dna-planning/`):
+- Architecture: `ARCHITECTURE.md`
+- Database Schema: `DATABASE-SCHEMA.md`
+- Integration Plan: `INTEGRATION-PLAN.md`
+- Next Steps: `NEXT-STEPS.md`
+- Changelog: `CHANGELOG.md`
+
+**Hub-Specific Docs** (in `/docs/`):
 - Architecture: `technical/ARCHITECTURE.md`
 - File map: `technical/CODEBASE_MAP.md`
 - Conventions: `technical/CONVENTIONS.md`
@@ -204,20 +211,44 @@ See `/docs/` for:
 | `group_disciples` | Join table for group membership |
 | `life_assessments` | Week 1/8 assessment responses |
 
-### Daily DNA Integration (Migration 034 - Planned)
+### Daily DNA Integration (Migration 034 - COMPLETE)
 
 | Table | Purpose |
 |-------|---------|
 | `disciple_app_accounts` | Disciple login for Daily DNA app (separate auth from leaders) |
 | `disciple_journal_entries` | 3D Journal entries (Head/Heart/Hands) |
 | `disciple_prayer_cards` | 4D Prayer cards |
+| `disciple_prayer_sessions` | Prayer session tracking |
+| `disciple_testimonies` | Testimony Builder (STORY framework) |
 | `disciple_progress` | Streaks, badges, engagement stats |
+| `disciple_creed_progress` | Creed Cards mastery |
+| `toolkit_modules` | 90-Day Toolkit content |
+| `toolkit_checkpoints` | Checkpoint definitions |
+| `disciple_toolkit_progress` | Individual toolkit progress |
+| `disciple_checkpoint_completions` | Checkpoint completions |
+| `challenge_registrations` | 3D Bible Challenge signups |
+| `life_assessment_questions` | Assessment question bank |
+| `life_assessment_responses` | Assessment responses |
 | `tool_assignments` | Leader assigns tools to disciples |
 | `tool_completions` | Tracks tool completion (syncs from Daily DNA app) |
 | `journey_checkpoints` | Phase checkpoints (leader-approved) |
 | `discipleship_log` | Unified notes + prayer requests |
+| `disciple_push_subscriptions` | Push notification endpoints |
+| `disciple_notification_prefs` | Notification settings |
+| `disciple_sync_metadata` | Device sync tracking |
 
-**Important:** Daily DNA app uses the same Supabase database as DNA Hub for seamless integration. Disciples have separate auth (`disciple_app_accounts`) from leaders (`users` table).
+**Important:** Daily DNA app (`/dna-app/daily-dna/`) uses the same Supabase database as DNA Hub for seamless integration. Disciples have separate auth (`disciple_app_accounts`) from leaders (`users` table).
+
+**Key Database Functions:**
+- `upsert_journal_entry` - Sync journal entries from Daily DNA app
+- `upsert_prayer_card` - Sync prayer cards from Daily DNA app
+- `calculate_disciple_streak` - Calculate engagement streaks
+- `update_disciple_progress` - Update progress stats
+
+**Daily DNA App Connection (Feb 2025):**
+- Daily DNA app now points to DNA Hub Supabase
+- Uses `account_id` (not `user_id`) referencing `disciple_app_accounts`
+- OAuth setup pending (Google, Discord, Apple)
 
 ### Church Implementation
 
