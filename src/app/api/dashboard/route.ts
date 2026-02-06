@@ -60,11 +60,74 @@ export async function GET() {
       );
     }
 
-    // Get all phases
-    const { data: phases, error: phasesError } = await supabase
-      .from('phases')
-      .select('*')
-      .order('phase_number', { ascending: true });
+    // Run all independent queries in parallel for performance
+    const [
+      phasesResult,
+      milestonesResult,
+      progressResult,
+      attachmentsResult,
+      milestoneResourcesResult,
+      documentsResult,
+      callsResult,
+      globalResourcesResult,
+    ] = await Promise.all([
+      supabase
+        .from('phases')
+        .select('*')
+        .order('phase_number', { ascending: true }),
+      supabase
+        .from('church_milestones')
+        .select('*')
+        .eq('church_id', church.id)
+        .order('display_order', { ascending: true }),
+      supabase
+        .from('church_progress')
+        .select('*')
+        .eq('church_id', church.id),
+      supabase
+        .from('milestone_attachments')
+        .select('*')
+        .eq('church_id', church.id)
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('milestone_resources')
+        .select(`
+          milestone_id,
+          display_order,
+          resource:global_resources (
+            id,
+            name,
+            description,
+            file_url,
+            resource_type
+          )
+        `)
+        .order('display_order', { ascending: true }),
+      supabase
+        .from('funnel_documents')
+        .select('*')
+        .eq('church_id', church.id)
+        .order('created_at', { ascending: true }),
+      supabase
+        .from('scheduled_calls')
+        .select('*')
+        .eq('church_id', church.id)
+        .order('scheduled_at', { ascending: true }),
+      supabase
+        .from('global_resources')
+        .select('*')
+        .eq('is_active', true)
+        .order('display_order', { ascending: true }),
+    ]);
+
+    const { data: phases, error: phasesError } = phasesResult;
+    const { data: milestones, error: milestonesError } = milestonesResult;
+    const { data: progress, error: progressError } = progressResult;
+    const { data: attachments } = attachmentsResult;
+    const { data: milestoneResources } = milestoneResourcesResult;
+    const { data: documents } = documentsResult;
+    const { data: calls } = callsResult;
+    const { data: globalResources } = globalResourcesResult;
 
     if (phasesError) {
       console.error('Phases fetch error:', phasesError);
@@ -74,13 +137,6 @@ export async function GET() {
       );
     }
 
-    // Get church-specific milestones (from church_milestones table)
-    const { data: milestones, error: milestonesError } = await supabase
-      .from('church_milestones')
-      .select('*')
-      .eq('church_id', church.id)
-      .order('display_order', { ascending: true });
-
     if (milestonesError) {
       console.error('Milestones fetch error:', milestonesError);
       return NextResponse.json(
@@ -88,12 +144,6 @@ export async function GET() {
         { status: 500 }
       );
     }
-
-    // Get church progress
-    const { data: progress, error: progressError } = await supabase
-      .from('church_progress')
-      .select('*')
-      .eq('church_id', church.id);
 
     if (progressError) {
       console.error('Progress fetch error:', progressError);
@@ -103,64 +153,12 @@ export async function GET() {
       );
     }
 
-    // Get all attachments for this church
-    const { data: attachments } = await supabase
-      .from('milestone_attachments')
-      .select('*')
-      .eq('church_id', church.id)
-      .order('created_at', { ascending: true });
-
-    // Create a map of milestone attachments
-    const attachmentsMap = new Map<string, typeof attachments>();
-    attachments?.forEach(attachment => {
-      const existing = attachmentsMap.get(attachment.milestone_id) || [];
-      attachmentsMap.set(attachment.milestone_id, [...existing, attachment]);
-    });
-
-    // Get global resources linked to template milestones
-    // milestone_resources links to template_milestones, so we map via source_milestone_id
-    const { data: milestoneResources } = await supabase
-      .from('milestone_resources')
-      .select(`
-        milestone_id,
-        display_order,
-        resource:global_resources (
-          id,
-          name,
-          description,
-          file_url,
-          resource_type
-        )
-      `)
-      .order('display_order', { ascending: true });
-
     // Build a map from template_milestone_id -> resources
     const templateResourcesMap = new Map<string, typeof milestoneResources>();
     milestoneResources?.forEach(mr => {
       const existing = templateResourcesMap.get(mr.milestone_id) || [];
       templateResourcesMap.set(mr.milestone_id, [...existing, mr]);
     });
-
-    // Get funnel documents for this church
-    const { data: documents } = await supabase
-      .from('funnel_documents')
-      .select('*')
-      .eq('church_id', church.id)
-      .order('created_at', { ascending: true });
-
-    // Get scheduled calls for this church
-    const { data: calls } = await supabase
-      .from('scheduled_calls')
-      .select('*')
-      .eq('church_id', church.id)
-      .order('scheduled_at', { ascending: true });
-
-    // Get global resources (general resources for all churches)
-    const { data: globalResources } = await supabase
-      .from('global_resources')
-      .select('*')
-      .eq('is_active', true)
-      .order('display_order', { ascending: true });
 
     // Build phases with milestones and progress
     const phasesWithMilestones: PhaseWithMilestones[] = (phases || []).map(phase => {

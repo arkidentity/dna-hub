@@ -40,43 +40,57 @@ export async function GET() {
       return NextResponse.json({ error: 'Failed to fetch churches' }, { status: 500 });
     }
 
-    // Get leaders for each church
+    // Run dependent queries in parallel for performance
     const churchIds = churches?.map(c => c.id) || [];
-    const { data: leaders } = await supabase
-      .from('church_leaders')
-      .select('id, church_id, name, email')
-      .in('church_id', churchIds)
-      .eq('is_primary_contact', true);
-
-    // Get progress for active churches
     const activeChurchIds = churches?.filter(c => c.status === 'active').map(c => c.id) || [];
-    const { data: progress } = await supabase
-      .from('church_progress')
-      .select('church_id, completed, target_date')
-      .in('church_id', activeChurchIds);
 
-    // Get milestones count (excluding phase 0)
-    const { data: phases } = await supabase
-      .from('phases')
-      .select('id')
-      .gt('phase_number', 0);
+    const [
+      leadersResult,
+      progressResult,
+      phasesResult,
+      scheduledCallsResult,
+    ] = await Promise.all([
+      supabase
+        .from('church_leaders')
+        .select('id, church_id, name, email')
+        .in('church_id', churchIds)
+        .eq('is_primary_contact', true),
+      activeChurchIds.length > 0
+        ? supabase
+            .from('church_progress')
+            .select('church_id, completed, target_date')
+            .in('church_id', activeChurchIds)
+        : Promise.resolve({ data: [] as { church_id: string; completed: boolean; target_date: string }[] }),
+      supabase
+        .from('phases')
+        .select('id')
+        .gt('phase_number', 0),
+      churchIds.length > 0
+        ? supabase
+            .from('scheduled_calls')
+            .select('church_id, call_type, scheduled_at')
+            .in('church_id', churchIds)
+            .eq('completed', false)
+            .gt('scheduled_at', new Date().toISOString())
+            .order('scheduled_at', { ascending: true })
+        : Promise.resolve({ data: [] as { church_id: string; call_type: string; scheduled_at: string }[] }),
+    ]);
 
+    const { data: leaders } = leadersResult as { data: { id: string; church_id: string; name: string; email: string }[] | null };
+    const progress = ('data' in progressResult ? progressResult.data : progressResult) as { church_id: string; completed: boolean; target_date: string }[] | null;
+    const { data: phases } = phasesResult as { data: { id: string }[] | null };
+    const scheduledCalls = ('data' in scheduledCallsResult ? scheduledCallsResult.data : scheduledCallsResult) as { church_id: string; call_type: string; scheduled_at: string }[] | null;
+
+    // Get milestones count (depends on phases result)
     const phaseIds = phases?.map(p => p.id) || [];
-    const { data: milestones } = await supabase
-      .from('milestones')
-      .select('id')
-      .in('phase_id', phaseIds);
+    const { data: milestones } = phaseIds.length > 0
+      ? await supabase
+          .from('milestones')
+          .select('id')
+          .in('phase_id', phaseIds)
+      : { data: [] };
 
     const totalMilestones = milestones?.length || 0;
-
-    // Get next scheduled calls
-    const { data: scheduledCalls } = await supabase
-      .from('scheduled_calls')
-      .select('church_id, call_type, scheduled_at')
-      .in('church_id', churchIds)
-      .eq('completed', false)
-      .gt('scheduled_at', new Date().toISOString())
-      .order('scheduled_at', { ascending: true });
 
     // Build church summaries
     const churchSummaries = churches?.map(church => {

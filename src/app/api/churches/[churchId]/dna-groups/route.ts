@@ -38,7 +38,7 @@ export async function GET(
     // Get leader IDs to fetch their groups
     const leaderIds = (leaders || []).map(l => l.id);
 
-    // Fetch groups for these leaders
+    // Fetch groups and health check-ins in parallel (both depend on leaderIds)
     let groups: Array<{
       id: string;
       leader_id: string;
@@ -48,15 +48,30 @@ export async function GET(
       disciple_count?: number;
     }> = [];
 
-    if (leaderIds.length > 0) {
-      const { data: groupsData, error: groupsError } = await supabase
-        .from('dna_groups')
-        .select('*')
-        .in('leader_id', leaderIds)
-        .order('created_at', { ascending: false });
+    let healthSummaries: Array<{
+      leader_id: string;
+      status: string;
+      flag_areas: unknown[];
+      due_date: string;
+      completed_at?: string;
+    }> = [];
 
-      if (groupsError) throw groupsError;
-      groups = groupsData || [];
+    if (leaderIds.length > 0) {
+      const [groupsResult, healthResult] = await Promise.all([
+        supabase
+          .from('dna_groups')
+          .select('*')
+          .in('leader_id', leaderIds)
+          .order('created_at', { ascending: false }),
+        supabase
+          .from('leader_health_checkins')
+          .select('leader_id, status, flag_areas, due_date, completed_at')
+          .in('leader_id', leaderIds)
+          .order('due_date', { ascending: false }),
+      ]);
+
+      if (groupsResult.error) throw groupsResult.error;
+      groups = groupsResult.data || [];
 
       // Get disciple counts for each group
       if (groups.length > 0) {
@@ -78,28 +93,11 @@ export async function GET(
           }));
         }
       }
-    }
 
-    // Fetch health check-in summaries (only status and flags visible to church leaders)
-    let healthSummaries: Array<{
-      leader_id: string;
-      status: string;
-      flag_areas: unknown[];
-      due_date: string;
-      completed_at?: string;
-    }> = [];
-
-    if (leaderIds.length > 0) {
-      const { data: healthData, error: healthError } = await supabase
-        .from('leader_health_checkins')
-        .select('leader_id, status, flag_areas, due_date, completed_at')
-        .in('leader_id', leaderIds)
-        .order('due_date', { ascending: false });
-
-      if (!healthError && healthData) {
-        // Get only the most recent checkin per leader
-        const latestByLeader: Record<string, typeof healthData[0]> = {};
-        healthData.forEach(h => {
+      // Process health check-in summaries
+      if (!healthResult.error && healthResult.data) {
+        const latestByLeader: Record<string, (typeof healthResult.data)[0]> = {};
+        healthResult.data.forEach(h => {
           if (!latestByLeader[h.leader_id]) {
             latestByLeader[h.leader_id] = h;
           }

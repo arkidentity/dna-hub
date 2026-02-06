@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
@@ -58,6 +58,15 @@ export default function DashboardPage() {
   useEffect(() => {
     fetchDashboard();
   }, []);
+
+  // Prefetch tab data in the background after initial dashboard loads
+  useEffect(() => {
+    if (!data) return;
+    const churchId = data.church.id;
+    // Warm up browser fetch cache for tab endpoints
+    fetch(`/api/churches/${churchId}/dna-groups`).catch(() => {});
+    fetch(`/api/admin/church-leaders/invite?church_id=${churchId}`).catch(() => {});
+  }, [data?.church?.id]);
 
   // Persist compact view preference
   useEffect(() => {
@@ -119,14 +128,55 @@ export default function DashboardPage() {
     });
   };
 
+  // Helper to update a specific milestone's progress in local state
+  const updateMilestoneInState = useCallback((
+    milestoneId: string,
+    updater: (progress: MilestoneWithProgress['progress']) => Partial<NonNullable<MilestoneWithProgress['progress']>>
+  ) => {
+    setData(prev => {
+      if (!prev) return prev;
+      const now = new Date().toISOString();
+      return {
+        ...prev,
+        phases: prev.phases.map(phase => ({
+          ...phase,
+          milestones: phase.milestones.map(m => {
+            if (m.id !== milestoneId) return m;
+            const updates = updater(m.progress);
+            const base = m.progress || {
+              id: `temp-${milestoneId}`,
+              church_id: prev.church.id,
+              milestone_id: milestoneId,
+              completed: false,
+              created_at: now,
+              updated_at: now,
+            };
+            return { ...m, progress: { ...base, ...updates, updated_at: now } };
+          }),
+          completedCount: phase.milestones.reduce((count, m) => {
+            if (m.id === milestoneId) {
+              const updates = updater(m.progress);
+              return count + (updates.completed ? 1 : 0);
+            }
+            return count + (m.progress?.completed ? 1 : 0);
+          }, 0),
+        })),
+      };
+    });
+  }, []);
+
   const toggleMilestone = async (milestone: MilestoneWithProgress, phaseStatus: string) => {
     if (phaseStatus === 'locked' || phaseStatus === 'upcoming') return;
 
-    setUpdatingMilestone(milestone.id);
+    const newCompleted = !milestone.progress?.completed;
+
+    // Optimistic update — reflect change immediately
+    updateMilestoneInState(milestone.id, () => ({
+      completed: newCompleted,
+      completed_at: newCompleted ? new Date().toISOString() : undefined,
+    }));
 
     try {
-      const newCompleted = !milestone.progress?.completed;
-
       const response = await fetch('/api/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -139,66 +189,70 @@ export default function DashboardPage() {
       if (!response.ok) {
         throw new Error('Failed to update progress');
       }
-
-      await fetchDashboard();
     } catch (error) {
       console.error('Progress update error:', error);
-    } finally {
-      setUpdatingMilestone(null);
+      // Revert on failure
+      await fetchDashboard();
     }
   };
 
   // Admin: Save target date
   const saveTargetDate = async (milestoneId: string) => {
-    setUpdatingMilestone(milestoneId);
+    const dateVal = editDateValue || null;
+
+    // Optimistic update
+    updateMilestoneInState(milestoneId, () => ({
+      target_date: dateVal || undefined,
+    }));
+    setEditingDateId(null);
+    setEditDateValue('');
+
     try {
       const response = await fetch('/api/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           milestoneId,
-          targetDate: editDateValue || null,
+          targetDate: dateVal,
         }),
       });
 
       if (!response.ok) {
         throw new Error('Failed to update date');
       }
-
-      await fetchDashboard();
-      setEditingDateId(null);
-      setEditDateValue('');
     } catch (error) {
       console.error('Date update error:', error);
-    } finally {
-      setUpdatingMilestone(null);
+      await fetchDashboard();
     }
   };
 
   // Admin: Save notes
   const saveNotes = async (milestoneId: string) => {
-    setUpdatingMilestone(milestoneId);
+    const notesVal = editNotesValue;
+
+    // Optimistic update
+    updateMilestoneInState(milestoneId, () => ({
+      notes: notesVal,
+    }));
+    setEditingNotesId(null);
+    setEditNotesValue('');
+
     try {
       const response = await fetch('/api/progress', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           milestoneId,
-          notes: editNotesValue,
+          notes: notesVal,
         }),
       });
 
       if (!response.ok) {
         throw new Error('Failed to update notes');
       }
-
-      await fetchDashboard();
-      setEditingNotesId(null);
-      setEditNotesValue('');
     } catch (error) {
       console.error('Notes update error:', error);
-    } finally {
-      setUpdatingMilestone(null);
+      await fetchDashboard();
     }
   };
 
@@ -221,29 +275,41 @@ export default function DashboardPage() {
   };
 
   const saveChurchNotes = async (milestoneId: string) => {
-    setUpdatingMilestone(milestoneId);
+    const notesVal = editChurchNotesValue;
+
+    // Optimistic update — update the milestone's church_notes in local state
+    setData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        phases: prev.phases.map(phase => ({
+          ...phase,
+          milestones: phase.milestones.map(m =>
+            m.id === milestoneId ? { ...m, church_notes: notesVal } : m
+          ),
+        })),
+      };
+    });
+    setEditingChurchNotesId(null);
+    setEditChurchNotesValue('');
+
     try {
       const response = await fetch('/api/church/progress/notes', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           milestoneId,
-          churchNotes: editChurchNotesValue,
+          churchNotes: notesVal,
         }),
       });
 
       if (!response.ok) {
         throw new Error('Failed to update church notes');
       }
-
-      await fetchDashboard();
-      setEditingChurchNotesId(null);
-      setEditChurchNotesValue('');
     } catch (error) {
       console.error('Church notes update error:', error);
       alert('Failed to save notes. Please try again.');
-    } finally {
-      setUpdatingMilestone(null);
+      await fetchDashboard();
     }
   };
 
@@ -265,7 +331,8 @@ export default function DashboardPage() {
         return;
       }
 
-      await fetchDashboard();
+      // Refresh to get the new attachment with server-generated ID/URL
+      fetchDashboard();
     } catch (error) {
       console.error('Upload error:', error);
       alert('Failed to upload file');
@@ -277,6 +344,21 @@ export default function DashboardPage() {
   const handleDeleteAttachment = async (attachmentId: string) => {
     if (!confirm('Delete this attachment?')) return;
 
+    // Optimistic removal from local state
+    setData(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        phases: prev.phases.map(phase => ({
+          ...phase,
+          milestones: phase.milestones.map(m => ({
+            ...m,
+            attachments: m.attachments?.filter(a => a.id !== attachmentId) || [],
+          })),
+        })),
+      };
+    });
+
     try {
       const response = await fetch(`/api/attachments?id=${attachmentId}`, {
         method: 'DELETE',
@@ -285,13 +367,12 @@ export default function DashboardPage() {
       if (!response.ok) {
         const error = await response.json();
         alert(error.error || 'Failed to delete attachment');
-        return;
+        await fetchDashboard();
       }
-
-      await fetchDashboard();
     } catch (error) {
       console.error('Delete error:', error);
       alert('Failed to delete attachment');
+      await fetchDashboard();
     }
   };
 

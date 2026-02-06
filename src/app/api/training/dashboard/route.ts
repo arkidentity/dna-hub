@@ -28,14 +28,12 @@ export async function GET() {
       );
     }
 
-    // Get training progress
-    const progress = await getTrainingProgress(session.userId);
-
-    // Get content unlocks
-    const unlocks = await getContentUnlocks(session.userId);
-
-    // Get flow assessment status
-    const flowAssessment = await getFlowAssessment(session.userId);
+    // Run all independent queries in parallel for performance
+    const [progress, unlocks, flowAssessment] = await Promise.all([
+      getTrainingProgress(session.userId),
+      getContentUnlocks(session.userId),
+      getFlowAssessment(session.userId),
+    ]);
 
     return NextResponse.json({
       id: session.userId,

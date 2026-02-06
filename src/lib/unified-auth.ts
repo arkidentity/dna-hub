@@ -25,8 +25,13 @@ export interface UserSession {
   roles: UserRole[]
 }
 
+// In-memory session cache to avoid 2 DB queries per request
+const sessionCache = new Map<string, { session: UserSession; expiresAt: number }>()
+const SESSION_CACHE_TTL = 2 * 60 * 1000 // 2 minutes
+
 /**
- * Get the current user session from the unified session cookie
+ * Get the current user session from the unified session cookie.
+ * Uses an in-memory cache to avoid hitting the DB on every API call.
  * @returns UserSession or null if not authenticated
  */
 export async function getUnifiedSession(): Promise<UserSession | null> {
@@ -37,9 +42,13 @@ export async function getUnifiedSession(): Promise<UserSession | null> {
     return null
   }
 
-  // Use server-side Supabase client
+  // Check cache first
+  const cached = sessionCache.get(sessionToken)
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.session
+  }
 
-  // Verify token is valid and used
+  // Cache miss — verify token against DB
   const { data: tokenData, error: tokenError } = await supabase
     .from('magic_link_tokens')
     .select('email, expires_at, used')
@@ -47,11 +56,13 @@ export async function getUnifiedSession(): Promise<UserSession | null> {
     .single()
 
   if (tokenError || !tokenData || !tokenData.used) {
+    sessionCache.delete(sessionToken)
     return null
   }
 
   // Check if token is expired
   if (new Date(tokenData.expires_at) < new Date()) {
+    sessionCache.delete(sessionToken)
     return null
   }
 
@@ -71,10 +82,11 @@ export async function getUnifiedSession(): Promise<UserSession | null> {
     .single()
 
   if (userError || !user) {
+    sessionCache.delete(sessionToken)
     return null
   }
 
-  return {
+  const session: UserSession = {
     userId: user.id,
     email: user.email,
     name: user.name,
@@ -82,6 +94,33 @@ export async function getUnifiedSession(): Promise<UserSession | null> {
       role: r.role,
       churchId: r.church_id
     }))
+  }
+
+  // Store in cache
+  sessionCache.set(sessionToken, {
+    session,
+    expiresAt: Date.now() + SESSION_CACHE_TTL,
+  })
+
+  // Evict stale entries periodically (keep cache from growing unbounded)
+  if (sessionCache.size > 100) {
+    const now = Date.now()
+    for (const [key, val] of sessionCache) {
+      if (val.expiresAt <= now) sessionCache.delete(key)
+    }
+  }
+
+  return session
+}
+
+/**
+ * Clear the session cache for a specific token (call on logout)
+ */
+export function clearSessionCache(token?: string) {
+  if (token) {
+    sessionCache.delete(token)
+  } else {
+    sessionCache.clear()
   }
 }
 
