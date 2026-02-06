@@ -45,6 +45,19 @@ function GroupDetailContent() {
   const [group, setGroup] = useState<GroupData | null>(null);
   const [showNewBanner, setShowNewBanner] = useState(isNew);
 
+  // Phase advancement modal state
+  const [showAdvanceModal, setShowAdvanceModal] = useState(false);
+  const [advancing, setAdvancing] = useState(false);
+
+  // Co-leader modal state
+  const [showCoLeaderModal, setShowCoLeaderModal] = useState(false);
+  const [availableLeaders, setAvailableLeaders] = useState<{ id: string; name: string; email: string }[]>([]);
+  const [selectedLeaderId, setSelectedLeaderId] = useState('');
+  const [loadingLeaders, setLoadingLeaders] = useState(false);
+  const [coLeaderError, setCoLeaderError] = useState<string | null>(null);
+  const [settingCoLeader, setSettingCoLeader] = useState(false);
+  const [removingCoLeader, setRemovingCoLeader] = useState(false);
+
   // Add disciple modal state
   const [showAddModal, setShowAddModal] = useState(false);
   const [addingDisciple, setAddingDisciple] = useState(false);
@@ -70,6 +83,104 @@ function GroupDetailContent() {
     'foundation': 'bg-yellow-100 text-yellow-700',
     'growth': 'bg-green-100 text-green-700',
     'multiplication': 'bg-purple-100 text-purple-700',
+  };
+
+  // Phase advancement helpers
+  const phaseOrder = ['pre-launch', 'invitation', 'foundation', 'growth', 'multiplication'];
+  const currentPhaseIndex = group ? phaseOrder.indexOf(group.current_phase) : -1;
+  const nextPhase = currentPhaseIndex >= 0 && currentPhaseIndex < phaseOrder.length - 1
+    ? phaseOrder[currentPhaseIndex + 1]
+    : null;
+
+  const handleAdvancePhase = async () => {
+    if (!nextPhase || !group) return;
+    setAdvancing(true);
+
+    try {
+      const response = await fetch(`/api/groups/${groupId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ current_phase: nextPhase }),
+      });
+
+      const data = await response.json();
+      if (response.ok && data.group) {
+        setGroup({ ...group, current_phase: data.group.current_phase });
+        setShowAdvanceModal(false);
+      }
+    } catch (err) {
+      console.error('Phase advance error:', err);
+    }
+
+    setAdvancing(false);
+  };
+
+  const openCoLeaderModal = async () => {
+    setShowCoLeaderModal(true);
+    setCoLeaderError(null);
+    setSelectedLeaderId('');
+    setLoadingLeaders(true);
+
+    try {
+      const response = await fetch('/api/groups/leaders');
+      const data = await response.json();
+      if (response.ok && data.leaders) {
+        setAvailableLeaders(data.leaders);
+      }
+    } catch (err) {
+      console.error('Fetch leaders error:', err);
+      setCoLeaderError('Failed to load available leaders');
+    }
+    setLoadingLeaders(false);
+  };
+
+  const handleSetCoLeader = async () => {
+    if (!selectedLeaderId) return;
+    setSettingCoLeader(true);
+    setCoLeaderError(null);
+
+    try {
+      const response = await fetch(`/api/groups/${groupId}/co-leader`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ leader_id: selectedLeaderId }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || data.error) {
+        setCoLeaderError(data.error || 'Failed to set co-leader');
+        setSettingCoLeader(false);
+        return;
+      }
+
+      // Update group with new co-leader
+      if (group) {
+        setGroup({ ...group, co_leader: data.co_leader });
+      }
+      setShowCoLeaderModal(false);
+    } catch (err) {
+      console.error('Set co-leader error:', err);
+      setCoLeaderError('Failed to set co-leader');
+    }
+    setSettingCoLeader(false);
+  };
+
+  const handleRemoveCoLeader = async () => {
+    if (!confirm('Are you sure you want to remove the co-leader from this group?')) return;
+    setRemovingCoLeader(true);
+
+    try {
+      const response = await fetch(`/api/groups/${groupId}/co-leader`, {
+        method: 'DELETE',
+      });
+
+      if (response.ok && group) {
+        setGroup({ ...group, co_leader: null });
+      }
+    } catch (err) {
+      console.error('Remove co-leader error:', err);
+    }
+    setRemovingCoLeader(false);
   };
 
   useEffect(() => {
@@ -214,6 +325,30 @@ function GroupDetailContent() {
                   <span> &bull; Target: {new Date(group.multiplication_target_date).toLocaleDateString()}</span>
                 )}
               </p>
+              {/* Co-leader info */}
+              <div className="flex items-center gap-2 mt-2">
+                {group.co_leader ? (
+                  <>
+                    <span className="text-white/70 text-sm">
+                      Co-Leader: <span className="text-white font-medium">{group.co_leader.name}</span>
+                    </span>
+                    <button
+                      onClick={handleRemoveCoLeader}
+                      disabled={removingCoLeader}
+                      className="text-xs text-white/50 hover:text-red-300 transition-colors"
+                    >
+                      {removingCoLeader ? 'Removing...' : '(Remove)'}
+                    </button>
+                  </>
+                ) : (
+                  <button
+                    onClick={openCoLeaderModal}
+                    className="text-sm text-gold hover:text-gold-light transition-colors"
+                  >
+                    + Invite Co-Leader
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -249,7 +384,46 @@ function GroupDetailContent() {
       )}
 
       {/* Main content */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
+        {/* Phase Progress Stepper */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="text-sm font-semibold text-navy uppercase tracking-wide">Group Journey</h2>
+            {nextPhase && (
+              <button
+                onClick={() => setShowAdvanceModal(true)}
+                className="text-sm bg-gold hover:bg-gold/90 text-white font-medium py-1.5 px-4 rounded-lg transition-colors"
+              >
+                Advance Phase
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-1">
+            {phaseOrder.map((phase, index) => {
+              const isCurrent = phase === group.current_phase;
+              const isCompleted = index < currentPhaseIndex;
+              return (
+                <div key={phase} className="flex-1 flex items-center">
+                  <div className="flex-1">
+                    <div className={`h-2 rounded-full ${
+                      isCompleted
+                        ? 'bg-green-500'
+                        : isCurrent
+                        ? 'bg-gold'
+                        : 'bg-gray-200'
+                    }`} />
+                    <p className={`text-xs mt-1.5 text-center ${
+                      isCurrent ? 'text-navy font-semibold' : isCompleted ? 'text-green-600' : 'text-gray-400'
+                    }`}>
+                      {phaseLabels[phase]}
+                    </p>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
         {/* Disciples section */}
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
@@ -290,9 +464,10 @@ function GroupDetailContent() {
             /* Disciples list */
             <div className="divide-y divide-gray-200">
               {group.disciples.map((disciple) => (
-                <div
+                <Link
                   key={disciple.id}
-                  className="px-6 py-4 hover:bg-gray-50"
+                  href={`/groups/${groupId}/disciples/${disciple.id}`}
+                  className="block px-6 py-4 hover:bg-gray-50 transition-colors"
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
@@ -330,14 +505,144 @@ function GroupDetailContent() {
                       }`}>
                         {disciple.current_status}
                       </span>
+                      <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
                     </div>
                   </div>
-                </div>
+                </Link>
               ))}
             </div>
           )}
         </div>
       </main>
+
+      {/* Advance Phase Modal */}
+      {showAdvanceModal && nextPhase && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-navy">Advance Phase</h2>
+              <button
+                onClick={() => setShowAdvanceModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="flex items-center gap-2">
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${phaseColors[group.current_phase]}`}>
+                    {phaseLabels[group.current_phase]}
+                  </span>
+                  <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                  </svg>
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium ${phaseColors[nextPhase]}`}>
+                    {phaseLabels[nextPhase]}
+                  </span>
+                </div>
+              </div>
+              <p className="text-gray-600 text-sm">
+                Are you sure you want to advance this group to the <strong>{phaseLabels[nextPhase]}</strong> phase? This action marks the current phase as complete.
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowAdvanceModal(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleAdvancePhase}
+                disabled={advancing}
+                className="bg-gold hover:bg-gold/90 text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {advancing ? 'Advancing...' : 'Advance Phase'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Invite Co-Leader Modal */}
+      {showCoLeaderModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-navy">Invite Co-Leader</h2>
+              <button
+                onClick={() => setShowCoLeaderModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            {coLeaderError && (
+              <div className="bg-red-50 text-red-700 rounded-lg p-4 mb-4 text-sm">
+                {coLeaderError}
+              </div>
+            )}
+
+            {loadingLeaders ? (
+              <div className="text-center py-8">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold mx-auto"></div>
+                <p className="text-sm text-gray-500 mt-2">Loading leaders...</p>
+              </div>
+            ) : availableLeaders.length === 0 ? (
+              <div className="text-center py-8">
+                <p className="text-gray-600">No available DNA leaders found.</p>
+                <p className="text-sm text-gray-400 mt-1">Leaders must be active and from the same church.</p>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-sm font-medium text-navy mb-2">
+                  Select a DNA Leader
+                </label>
+                <select
+                  value={selectedLeaderId}
+                  onChange={(e) => setSelectedLeaderId(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold focus:border-gold"
+                >
+                  <option value="">Choose a leader...</option>
+                  {availableLeaders.map(leader => (
+                    <option key={leader.id} value={leader.id}>
+                      {leader.name} ({leader.email})
+                    </option>
+                  ))}
+                </select>
+
+                <div className="flex justify-end gap-3 mt-6">
+                  <button
+                    type="button"
+                    onClick={() => setShowCoLeaderModal(false)}
+                    className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={handleSetCoLeader}
+                    disabled={!selectedLeaderId || settingCoLeader}
+                    className="bg-gold hover:bg-gold/90 text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {settingCoLeader ? 'Inviting...' : 'Set Co-Leader'}
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Add Disciple Modal */}
       {showAddModal && (

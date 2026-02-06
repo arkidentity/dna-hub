@@ -219,7 +219,7 @@ export async function PATCH(
     // Verify ownership
     const { data: group } = await supabase
       .from('dna_groups')
-      .select('leader_id, co_leader_id')
+      .select('leader_id, co_leader_id, current_phase')
       .eq('id', groupId)
       .single();
 
@@ -234,6 +234,27 @@ export async function PATCH(
     for (const field of allowedFields) {
       if (body[field] !== undefined) {
         updates[field] = body[field];
+      }
+    }
+
+    // Phase advancement validation
+    if (updates.current_phase) {
+      const phaseOrder = ['pre-launch', 'invitation', 'foundation', 'growth', 'multiplication'];
+      const currentIndex = phaseOrder.indexOf(group.current_phase);
+      const newIndex = phaseOrder.indexOf(updates.current_phase as string);
+
+      if (newIndex < 0) {
+        return NextResponse.json({ error: 'Invalid phase' }, { status: 400 });
+      }
+
+      // Only allow advancing one phase at a time
+      if (newIndex > currentIndex + 1) {
+        return NextResponse.json({ error: 'Can only advance one phase at a time' }, { status: 400 });
+      }
+
+      // Only the primary leader can advance phases
+      if (group.leader_id !== leaderId) {
+        return NextResponse.json({ error: 'Only the primary leader can advance phases' }, { status: 403 });
       }
     }
 

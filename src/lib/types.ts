@@ -634,6 +634,64 @@ export interface AssessmentComparison {
 }
 
 // ============================================================================
+// DNA Groups Phase A Types (Discipleship Log, Journey, Profile)
+// ============================================================================
+
+// Discipleship Log entry types
+export type DiscipleshipLogEntryType = 'note' | 'prayer' | 'milestone';
+
+// Discipleship Log Entry (unified timeline for notes + prayers + milestones)
+export interface DiscipleshipLogEntry {
+  id: string;
+  group_id: string;
+  disciple_id: string;
+  created_by_leader_id?: string;
+  created_by_name?: string;
+  entry_type: DiscipleshipLogEntryType;
+  content: string;
+  is_answered?: boolean;
+  answered_at?: string;
+  answer_notes?: string;
+  is_private: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Journey Checkpoint (phase-based progress tracking for disciples)
+export interface JourneyCheckpoint {
+  id: string;
+  group_id: string;
+  disciple_id: string;
+  phase: number;
+  checkpoint_key: string;
+  completed: boolean;
+  completed_at?: string;
+  completed_by_leader_id?: string;
+  completed_by_name?: string;
+  notes?: string;
+  created_at: string;
+}
+
+// Disciple Profile (extended with journey data for profile page)
+export interface DiscipleProfile {
+  id: string;
+  name: string;
+  email: string;
+  phone?: string;
+  joined_date: string;
+  current_status: DiscipleStatus;
+  week1_assessment_status: string;
+  week8_assessment_status: string;
+  group: {
+    id: string;
+    group_name: string;
+    current_phase: DNAGroupPhase;
+  };
+  log_entries: DiscipleshipLogEntry[];
+  checkpoints: JourneyCheckpoint[];
+}
+
+// ============================================================================
 // Journey Template System Types (Migration 032)
 // ============================================================================
 
