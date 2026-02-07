@@ -37,10 +37,10 @@ export async function GET(
       return NextResponse.json({ error: 'Not authorized to access this group' }, { status: 403 });
     }
 
-    // Get disciple basic info
+    // Get disciple basic info (include app_account_id)
     const { data: disciple } = await supabase
       .from('disciples')
-      .select('id, name, email, phone')
+      .select('id, name, email, phone, app_account_id')
       .eq('id', discipleId)
       .single();
 
@@ -56,39 +56,87 @@ export async function GET(
 
     if (!membership) return NextResponse.json({ error: 'Disciple not in this group' }, { status: 404 });
 
-    // Get assessment status
-    const { data: assessments } = await supabase
-      .from('life_assessments')
-      .select('assessment_week, sent_at, completed_at')
-      .eq('group_id', groupId)
-      .eq('disciple_id', discipleId);
+    // Fetch assessments, log entries, checkpoints, and app activity in parallel
+    const appAccountId = disciple.app_account_id;
+
+    const [assessmentsResult, logResult, checkpointsResult, progressResult, toolkitResult, completionsResult] = await Promise.all([
+      supabase
+        .from('life_assessments')
+        .select('assessment_week, sent_at, completed_at')
+        .eq('group_id', groupId)
+        .eq('disciple_id', discipleId),
+      supabase
+        .from('discipleship_log')
+        .select('*')
+        .eq('group_id', groupId)
+        .eq('disciple_id', discipleId)
+        .order('created_at', { ascending: false })
+        .limit(50),
+      supabase
+        .from('journey_checkpoints')
+        .select('*')
+        .eq('group_id', groupId)
+        .eq('disciple_id', discipleId)
+        .order('phase', { ascending: true }),
+      // App engagement stats (only if connected)
+      appAccountId
+        ? supabase
+            .from('disciple_progress')
+            .select('current_streak, longest_streak, last_activity_date, total_journal_entries, total_prayer_sessions, total_prayer_cards, total_time_minutes, badges')
+            .eq('account_id', appAccountId)
+            .single()
+        : Promise.resolve({ data: null, error: null }),
+      appAccountId
+        ? supabase
+            .from('disciple_toolkit_progress')
+            .select('current_month, current_week, started_at, month_1_completed_at, month_2_completed_at, month_3_completed_at')
+            .eq('account_id', appAccountId)
+            .single()
+        : Promise.resolve({ data: null, error: null }),
+      appAccountId
+        ? supabase
+            .from('disciple_checkpoint_completions')
+            .select('checkpoint_id, completed_at, marked_by')
+            .eq('account_id', appAccountId)
+        : Promise.resolve({ data: null, error: null }),
+    ]);
 
     let week1Status = 'not_sent';
     let week8Status = 'not_sent';
-    if (assessments) {
-      assessments.forEach(a => {
+    if (assessmentsResult.data) {
+      assessmentsResult.data.forEach(a => {
         const status = a.completed_at ? 'completed' : a.sent_at ? 'sent' : 'not_sent';
         if (a.assessment_week === 1) week1Status = status;
         if (a.assessment_week === 8) week8Status = status;
       });
     }
 
-    // Get discipleship log entries (most recent 50)
-    const { data: logEntries } = await supabase
-      .from('discipleship_log')
-      .select('*')
-      .eq('group_id', groupId)
-      .eq('disciple_id', discipleId)
-      .order('created_at', { ascending: false })
-      .limit(50);
-
-    // Get journey checkpoints
-    const { data: checkpoints } = await supabase
-      .from('journey_checkpoints')
-      .select('*')
-      .eq('group_id', groupId)
-      .eq('disciple_id', discipleId)
-      .order('phase', { ascending: true });
+    // Build app activity (stats only - no journal content or prayer cards)
+    let appActivity = null;
+    if (appAccountId) {
+      appActivity = {
+        connected: true,
+        progress: progressResult.data ? {
+          current_streak: progressResult.data.current_streak,
+          longest_streak: progressResult.data.longest_streak,
+          last_activity_date: progressResult.data.last_activity_date,
+          total_journal_entries: progressResult.data.total_journal_entries,
+          total_prayer_sessions: progressResult.data.total_prayer_sessions,
+          total_prayer_cards: progressResult.data.total_prayer_cards,
+          total_time_minutes: progressResult.data.total_time_minutes,
+          badges: progressResult.data.badges,
+        } : null,
+        toolkit: toolkitResult.data ? {
+          current_month: toolkitResult.data.current_month,
+          current_week: toolkitResult.data.current_week,
+          started_at: toolkitResult.data.started_at,
+          month_1_completed_at: toolkitResult.data.month_1_completed_at,
+          month_2_completed_at: toolkitResult.data.month_2_completed_at,
+          month_3_completed_at: toolkitResult.data.month_3_completed_at,
+        } : null,
+        checkpoint_completions: completionsResult.data || [],
+      };
+    }
 
     return NextResponse.json({
       disciple: {
@@ -105,8 +153,9 @@ export async function GET(
           group_name: group.group_name,
           current_phase: group.current_phase,
         },
-        log_entries: logEntries || [],
-        checkpoints: checkpoints || [],
+        log_entries: logResult.data || [],
+        checkpoints: checkpointsResult.data || [],
+        app_activity: appActivity,
       },
     });
 

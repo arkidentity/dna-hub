@@ -304,6 +304,103 @@ function DiscipleProfileContent() {
           </div>
         </div>
 
+        {/* App Activity Card */}
+        {disciple.app_activity?.connected ? (
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center gap-2 mb-4">
+              <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+              <h2 className="text-lg font-semibold text-navy">Daily DNA App Activity</h2>
+            </div>
+
+            {disciple.app_activity.progress ? (
+              <>
+                {/* Streak & Overview */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
+                  <div className="bg-orange-50 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-orange-600">{disciple.app_activity.progress.current_streak}</p>
+                    <p className="text-xs text-orange-600/80">Current Streak</p>
+                  </div>
+                  <div className="bg-gray-50 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-navy">{disciple.app_activity.progress.longest_streak}</p>
+                    <p className="text-xs text-gray-500">Longest Streak</p>
+                  </div>
+                  <div className="bg-blue-50 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-blue-600">{disciple.app_activity.progress.total_journal_entries}</p>
+                    <p className="text-xs text-blue-600/80">Journal Entries</p>
+                  </div>
+                  <div className="bg-purple-50 rounded-lg p-3 text-center">
+                    <p className="text-2xl font-bold text-purple-600">{disciple.app_activity.progress.total_prayer_sessions}</p>
+                    <p className="text-xs text-purple-600/80">Prayer Sessions</p>
+                  </div>
+                </div>
+
+                {/* Additional stats */}
+                <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600">
+                  <span>Prayer Cards: <strong className="text-navy">{disciple.app_activity.progress.total_prayer_cards}</strong></span>
+                  <span>Time Spent: <strong className="text-navy">{Math.round(disciple.app_activity.progress.total_time_minutes / 60)}h {disciple.app_activity.progress.total_time_minutes % 60}m</strong></span>
+                  {disciple.app_activity.progress.last_activity_date && (
+                    <span>Last Active: <strong className="text-navy">{new Date(disciple.app_activity.progress.last_activity_date).toLocaleDateString()}</strong></span>
+                  )}
+                </div>
+              </>
+            ) : (
+              <p className="text-sm text-gray-500">Connected to the app but no activity recorded yet.</p>
+            )}
+
+            {/* 90-Day Toolkit Progress */}
+            {disciple.app_activity.toolkit && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <h3 className="text-sm font-semibold text-navy mb-2">90-Day Toolkit Progress</h3>
+                <div className="flex items-center gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
+                      <span>Month {disciple.app_activity.toolkit.current_month}, Week {disciple.app_activity.toolkit.current_week}</span>
+                      <span>{Math.round((disciple.app_activity.toolkit.current_week / 12) * 100)}%</span>
+                    </div>
+                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
+                      <div
+                        className="h-full bg-teal rounded-full transition-all"
+                        style={{ width: `${(disciple.app_activity.toolkit.current_week / 12) * 100}%` }}
+                      ></div>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex gap-3 mt-2 text-xs text-gray-500">
+                  <span className={disciple.app_activity.toolkit.month_1_completed_at ? 'text-green-600 font-medium' : ''}>
+                    M1 {disciple.app_activity.toolkit.month_1_completed_at ? '✓' : '...'}
+                  </span>
+                  <span className={disciple.app_activity.toolkit.month_2_completed_at ? 'text-green-600 font-medium' : ''}>
+                    M2 {disciple.app_activity.toolkit.month_2_completed_at ? '✓' : '...'}
+                  </span>
+                  <span className={disciple.app_activity.toolkit.month_3_completed_at ? 'text-green-600 font-medium' : ''}>
+                    M3 {disciple.app_activity.toolkit.month_3_completed_at ? '✓' : '...'}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {/* Checkpoint Completions */}
+            {disciple.app_activity.checkpoint_completions.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <h3 className="text-sm font-semibold text-navy mb-2">Checkpoints Completed</h3>
+                <p className="text-sm text-gray-600">
+                  <strong className="text-navy">{disciple.app_activity.checkpoint_completions.length}</strong> checkpoints completed
+                </p>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center gap-2 mb-2">
+              <span className="w-2 h-2 rounded-full bg-gray-300"></span>
+              <h2 className="text-lg font-semibold text-navy">Daily DNA App</h2>
+            </div>
+            <p className="text-sm text-gray-500">
+              This disciple hasn&apos;t signed up for the Daily DNA app yet. An invitation email was sent when they were added to the group.
+            </p>
+          </div>
+        )}
+
         {/* Quick Actions */}
         <div className="flex gap-3">
           <button

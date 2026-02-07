@@ -86,7 +86,7 @@ export async function GET(
       coLeader = coLeaderData;
     }
 
-    // Get disciples in this group
+    // Get disciples in this group (include app_account_id for app connection status)
     const { data: groupDisciples, error: disciplesError } = await supabase
       .from('group_disciples')
       .select(`
@@ -97,7 +97,8 @@ export async function GET(
           id,
           name,
           email,
-          phone
+          phone,
+          app_account_id
         )
       `)
       .eq('group_id', groupId)
@@ -107,22 +108,36 @@ export async function GET(
       console.error('[Groups] Disciples fetch error:', disciplesError);
     }
 
-    // Get assessment status for each disciple
-    const discipleIds = (groupDisciples || [])
-      .filter(gd => gd.disciple)
-      .map(gd => (gd.disciple as unknown as { id: string }).id);
+    // Get assessment status and app stats for each disciple
+    const filteredDisciples = (groupDisciples || []).filter(gd => gd.disciple);
+    const discipleIds = filteredDisciples.map(gd => (gd.disciple as unknown as { id: string }).id);
+
+    // Collect app account IDs for connected disciples
+    const appAccountIds = filteredDisciples
+      .map(gd => (gd.disciple as unknown as { app_account_id: string | null }).app_account_id)
+      .filter((id): id is string => id !== null);
 
     let assessmentsMap: Record<string, { week1?: string; week8?: string }> = {};
+    let appStatsMap: Record<string, { current_streak: number; last_activity_date: string | null }> = {};
 
     if (discipleIds.length > 0) {
-      const { data: assessments } = await supabase
-        .from('life_assessments')
-        .select('disciple_id, assessment_week, sent_at, completed_at')
-        .eq('group_id', groupId)
-        .in('disciple_id', discipleIds);
+      // Fetch assessments and app stats in parallel
+      const [assessmentsResult, appStatsResult] = await Promise.all([
+        supabase
+          .from('life_assessments')
+          .select('disciple_id, assessment_week, sent_at, completed_at')
+          .eq('group_id', groupId)
+          .in('disciple_id', discipleIds),
+        appAccountIds.length > 0
+          ? supabase
+              .from('disciple_progress')
+              .select('account_id, current_streak, last_activity_date')
+              .in('account_id', appAccountIds)
+          : Promise.resolve({ data: null }),
+      ]);
 
-      if (assessments) {
-        assessments.forEach(a => {
+      if (assessmentsResult.data) {
+        assessmentsResult.data.forEach(a => {
           if (!assessmentsMap[a.disciple_id]) {
             assessmentsMap[a.disciple_id] = {};
           }
@@ -134,24 +149,35 @@ export async function GET(
           }
         });
       }
+
+      if (appStatsResult.data) {
+        appStatsResult.data.forEach(s => {
+          appStatsMap[s.account_id] = {
+            current_streak: s.current_streak,
+            last_activity_date: s.last_activity_date,
+          };
+        });
+      }
     }
 
-    // Format disciples with assessment status
-    const disciples = (groupDisciples || [])
-      .filter(gd => gd.disciple)
-      .map(gd => {
-        const disciple = gd.disciple as unknown as { id: string; name: string; email: string; phone?: string };
-        return {
-          id: disciple.id,
-          name: disciple.name,
-          email: disciple.email,
-          phone: disciple.phone,
-          joined_date: gd.joined_date,
-          current_status: gd.current_status,
-          week1_assessment_status: assessmentsMap[disciple.id]?.week1 || 'not_sent',
-          week8_assessment_status: assessmentsMap[disciple.id]?.week8 || 'not_sent',
-        };
-      });
+    // Format disciples with assessment status and app stats
+    const disciples = filteredDisciples.map(gd => {
+      const disciple = gd.disciple as unknown as { id: string; name: string; email: string; phone?: string; app_account_id: string | null };
+      const appStats = disciple.app_account_id ? appStatsMap[disciple.app_account_id] : null;
+      return {
+        id: disciple.id,
+        name: disciple.name,
+        email: disciple.email,
+        phone: disciple.phone,
+        joined_date: gd.joined_date,
+        current_status: gd.current_status,
+        week1_assessment_status: assessmentsMap[disciple.id]?.week1 || 'not_sent',
+        week8_assessment_status: assessmentsMap[disciple.id]?.week8 || 'not_sent',
+        app_connected: !!disciple.app_account_id,
+        current_streak: appStats?.current_streak ?? null,
+        last_activity_date: appStats?.last_activity_date ?? null,
+      };
+    });
 
     return NextResponse.json({
       group: {

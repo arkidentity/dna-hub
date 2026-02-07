@@ -13,6 +13,9 @@ interface Disciple {
   current_status: 'active' | 'completed' | 'dropped';
   week1_assessment_status?: 'not_sent' | 'sent' | 'completed';
   week8_assessment_status?: 'not_sent' | 'sent' | 'completed';
+  app_connected?: boolean;
+  current_streak?: number | null;
+  last_activity_date?: string | null;
 }
 
 interface GroupData {
@@ -471,8 +474,26 @@ function GroupDetailContent() {
                 >
                   <div className="flex items-center justify-between">
                     <div className="flex-1">
-                      <h3 className="font-semibold text-navy">{disciple.name}</h3>
-                      <p className="text-sm text-gray-500">{disciple.email}</p>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-semibold text-navy">{disciple.name}</h3>
+                        {disciple.app_connected ? (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-teal-50 text-teal-700" title="Connected to Daily DNA app">
+                            <span className="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
+                            App
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-400" title="Not on Daily DNA app">
+                            <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
+                            No app
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <p className="text-sm text-gray-500">{disciple.email}</p>
+                        {disciple.app_connected && disciple.current_streak != null && disciple.current_streak > 0 && (
+                          <span className="text-xs text-orange-600 font-medium">{disciple.current_streak}d streak</span>
+                        )}
+                      </div>
                     </div>
                     <div className="flex items-center gap-4">
                       {/* Assessment status indicators */}

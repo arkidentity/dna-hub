@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
 import { getUnifiedSession, hasRole } from '@/lib/unified-auth';
+import { sendDailyDNAInvitationEmail } from '@/lib/email';
 
 // POST /api/groups/[id]/disciples
 // Add a disciple to a group
@@ -45,7 +46,7 @@ export async function POST(
     // Verify ownership of the group
     const { data: group, error: groupError } = await supabase
       .from('dna_groups')
-      .select('id, leader_id, co_leader_id')
+      .select('id, group_name, leader_id, co_leader_id')
       .eq('id', groupId)
       .single();
 
@@ -139,6 +140,14 @@ export async function POST(
       console.error('[Disciples] Membership error:', membershipError);
       return NextResponse.json({ error: 'Failed to add disciple to group' }, { status: 500 });
     }
+
+    // Send Daily DNA app invitation email (fire-and-forget)
+    sendDailyDNAInvitationEmail(
+      normalizedEmail,
+      name.trim(),
+      session.name || 'Your DNA Leader',
+      group.group_name
+    ).catch(err => console.error('[Disciples] Email send error:', err));
 
     return NextResponse.json({
       success: true,

@@ -672,6 +672,38 @@ export interface JourneyCheckpoint {
   created_at: string;
 }
 
+// App engagement stats (stats only - no journal/prayer content)
+export interface AppActivityProgress {
+  current_streak: number;
+  longest_streak: number;
+  last_activity_date: string | null;
+  total_journal_entries: number;
+  total_prayer_sessions: number;
+  total_prayer_cards: number;
+  total_time_minutes: number;
+  badges: string[];
+}
+
+export interface AppActivityToolkit {
+  current_month: number;
+  current_week: number;
+  started_at: string | null;
+  month_1_completed_at: string | null;
+  month_2_completed_at: string | null;
+  month_3_completed_at: string | null;
+}
+
+export interface AppActivity {
+  connected: boolean;
+  progress: AppActivityProgress | null;
+  toolkit: AppActivityToolkit | null;
+  checkpoint_completions: Array<{
+    checkpoint_id: number;
+    completed_at: string;
+    marked_by: string;
+  }>;
+}
+
 // Disciple Profile (extended with journey data for profile page)
 export interface DiscipleProfile {
   id: string;
@@ -689,6 +721,7 @@ export interface DiscipleProfile {
   };
   log_entries: DiscipleshipLogEntry[];
   checkpoints: JourneyCheckpoint[];
+  app_activity?: AppActivity | null;
 }
 
 // ============================================================================

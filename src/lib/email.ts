@@ -1341,3 +1341,73 @@ export async function send3StepsEmail(
     notificationType: '3_steps_email'
   });
 }
+
+// =====================================================
+// DAILY DNA APP EMAILS
+// =====================================================
+
+// Daily DNA App: Invitation email sent when a leader adds a disciple to a group
+export async function sendDailyDNAInvitationEmail(
+  to: string,
+  discipleName: string,
+  leaderName: string,
+  groupName: string
+) {
+  const appUrl = process.env.DAILY_DNA_APP_URL || 'https://dailydna.app';
+
+  const subject = `${leaderName} added you to a DNA group - get the Daily DNA app`;
+
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; background: #1A2332; color: #FFFFFF;">
+      <div style="padding: 32px; text-align: center;">
+        <h1 style="color: #D4A853; margin: 0; font-size: 24px;">Daily DNA</h1>
+        <p style="color: #A0AEC0; margin: 8px 0 0 0; font-size: 14px;">Your discipleship companion</p>
+      </div>
+
+      <div style="background: #FFFBF5; padding: 32px; color: #1A2332;">
+        <h2 style="margin: 0 0 16px 0; color: #1A2332;">Hey ${discipleName},</h2>
+
+        <p style="color: #5A6577; line-height: 1.6;">${leaderName} has added you to the DNA group <strong>${groupName}</strong>. You're about to start an exciting discipleship journey!</p>
+
+        <div style="background: #F4E7D7; padding: 20px; border-radius: 8px; margin: 24px 0;">
+          <h3 style="color: #1A2332; margin: 0 0 12px 0;">Get the Daily DNA App</h3>
+          <p style="color: #5A6577; margin: 0 0 8px 0; font-size: 14px;">
+            The Daily DNA app is your personal companion for the journey. Use it to:
+          </p>
+          <ul style="color: #5A6577; margin: 8px 0 0 0; padding-left: 20px; font-size: 14px; line-height: 1.8;">
+            <li><strong>3D Journal</strong> - Engage with Scripture daily (Head, Heart, Hands)</li>
+            <li><strong>4D Prayer</strong> - Build a consistent prayer life</li>
+            <li><strong>90-Day Toolkit</strong> - Track your growth milestones</li>
+          </ul>
+        </div>
+
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="${appUrl}"
+             style="background: #D4A853; color: #1A2332; padding: 16px 32px;
+                    border-radius: 8px; text-decoration: none; font-weight: 600;
+                    display: inline-block; font-size: 16px;">
+            Get Started on Daily DNA
+          </a>
+        </div>
+
+        <p style="color: #5A6577; font-size: 14px;">
+          Sign up with this email address (<strong>${to}</strong>) so your leader can track your progress.
+        </p>
+
+        <hr style="border: none; border-top: 1px solid #E8DDD0; margin: 32px 0;" />
+
+        <p style="color: #5A6577; margin: 0;">
+          Making disciples who make disciples,<br>
+          <strong style="color: #1A2332;">The DNA Team</strong>
+        </p>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    notificationType: 'daily_dna_invitation'
+  });
+}
