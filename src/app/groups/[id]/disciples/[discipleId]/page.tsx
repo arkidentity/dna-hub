@@ -31,6 +31,9 @@ function DiscipleProfileContent() {
   const [answeringEntry, setAnsweringEntry] = useState<DiscipleshipLogEntry | null>(null);
   const [answerNotes, setAnswerNotes] = useState('');
 
+  // Time filter for app activity metrics
+  const [metricsDays, setMetricsDays] = useState<number | null>(null); // null = all time
+
   // Phase display helpers
   const phaseLabels: Record<string, string> = {
     'pre-launch': 'Pre-Launch',
@@ -56,11 +59,12 @@ function DiscipleProfileContent() {
 
   useEffect(() => {
     fetchProfile();
-  }, [groupId, discipleId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [groupId, discipleId, metricsDays]); // eslint-disable-line react-hooks/exhaustive-deps
 
   async function fetchProfile() {
     try {
-      const response = await fetch(`/api/groups/${groupId}/disciples/${discipleId}`);
+      const daysQuery = metricsDays ? `?days=${metricsDays}` : '';
+      const response = await fetch(`/api/groups/${groupId}/disciples/${discipleId}${daysQuery}`);
 
       if (response.status === 401) {
         router.push('/login');
@@ -307,9 +311,32 @@ function DiscipleProfileContent() {
         {/* App Activity Card */}
         {disciple.app_activity?.connected ? (
           <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center gap-2 mb-4">
-              <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-              <h2 className="text-lg font-semibold text-navy">Daily DNA App Activity</h2>
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-teal-500"></span>
+                <h2 className="text-lg font-semibold text-navy">Daily DNA App Activity</h2>
+              </div>
+              {/* Time filter buttons */}
+              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+                {[
+                  { label: '7d', value: 7 },
+                  { label: '30d', value: 30 },
+                  { label: '90d', value: 90 },
+                  { label: 'All', value: null },
+                ].map((opt) => (
+                  <button
+                    key={opt.label}
+                    onClick={() => setMetricsDays(opt.value)}
+                    className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                      metricsDays === opt.value
+                        ? 'bg-white text-navy shadow-sm'
+                        : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
+              </div>
             </div>
 
             {disciple.app_activity.progress ? (
@@ -325,18 +352,30 @@ function DiscipleProfileContent() {
                     <p className="text-xs text-gray-500">Longest Streak</p>
                   </div>
                   <div className="bg-blue-50 rounded-lg p-3 text-center">
-                    <p className="text-2xl font-bold text-blue-600">{disciple.app_activity.progress.total_journal_entries}</p>
+                    <p className="text-2xl font-bold text-blue-600">
+                      {disciple.app_activity.filtered_metrics
+                        ? disciple.app_activity.filtered_metrics.journal_entries
+                        : disciple.app_activity.progress.total_journal_entries}
+                    </p>
                     <p className="text-xs text-blue-600/80">Journal Entries</p>
                   </div>
                   <div className="bg-purple-50 rounded-lg p-3 text-center">
-                    <p className="text-2xl font-bold text-purple-600">{disciple.app_activity.progress.total_prayer_sessions}</p>
+                    <p className="text-2xl font-bold text-purple-600">
+                      {disciple.app_activity.filtered_metrics
+                        ? disciple.app_activity.filtered_metrics.prayer_sessions
+                        : disciple.app_activity.progress.total_prayer_sessions}
+                    </p>
                     <p className="text-xs text-purple-600/80">Prayer Sessions</p>
                   </div>
                 </div>
 
                 {/* Additional stats */}
                 <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600">
-                  <span>Prayer Cards: <strong className="text-navy">{disciple.app_activity.progress.total_prayer_cards}</strong></span>
+                  <span>Prayer Cards: <strong className="text-navy">
+                    {disciple.app_activity.filtered_metrics
+                      ? disciple.app_activity.filtered_metrics.prayer_cards
+                      : disciple.app_activity.progress.total_prayer_cards}
+                  </strong></span>
                   <span>Time Spent: <strong className="text-navy">{Math.round(disciple.app_activity.progress.total_time_minutes / 60)}h {disciple.app_activity.progress.total_time_minutes % 60}m</strong></span>
                   {disciple.app_activity.progress.last_activity_date && (
                     <span>Last Active: <strong className="text-navy">{new Date(disciple.app_activity.progress.last_activity_date).toLocaleDateString()}</strong></span>
@@ -345,6 +384,39 @@ function DiscipleProfileContent() {
               </>
             ) : (
               <p className="text-sm text-gray-500">Connected to the app but no activity recorded yet.</p>
+            )}
+
+            {/* Creed Card Progress */}
+            {disciple.app_activity.creed_progress && disciple.app_activity.creed_progress.total_cards_mastered > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <h3 className="text-sm font-semibold text-navy mb-2">Creed Cards</h3>
+                <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600">
+                  <span>Cards Mastered: <strong className="text-navy">{disciple.app_activity.creed_progress.total_cards_mastered}</strong></span>
+                  <span>Study Sessions: <strong className="text-navy">{disciple.app_activity.creed_progress.total_study_sessions}</strong></span>
+                  {disciple.app_activity.creed_progress.last_studied_at && (
+                    <span>Last Studied: <strong className="text-navy">{new Date(disciple.app_activity.creed_progress.last_studied_at).toLocaleDateString()}</strong></span>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Testimony Builder */}
+            {disciple.app_activity.testimonies && disciple.app_activity.testimonies.length > 0 && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <h3 className="text-sm font-semibold text-navy mb-2">Testimonies</h3>
+                <div className="space-y-1.5">
+                  {disciple.app_activity.testimonies.map((t) => (
+                    <div key={t.id} className="flex items-center gap-2 text-sm">
+                      <span className={`inline-block w-2 h-2 rounded-full ${t.status === 'complete' ? 'bg-green-500' : 'bg-yellow-400'}`}></span>
+                      <span className="text-gray-700">{t.title}</span>
+                      <span className="text-xs text-gray-400">
+                        {t.status === 'complete' ? 'Complete' : 'Draft'}
+                        {t.testimony_type && ` \u00B7 ${t.testimony_type.replace(/_/g, ' ')}`}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
             )}
 
             {/* 90-Day Toolkit Progress */}
@@ -367,13 +439,13 @@ function DiscipleProfileContent() {
                 </div>
                 <div className="flex gap-3 mt-2 text-xs text-gray-500">
                   <span className={disciple.app_activity.toolkit.month_1_completed_at ? 'text-green-600 font-medium' : ''}>
-                    M1 {disciple.app_activity.toolkit.month_1_completed_at ? '✓' : '...'}
+                    M1 {disciple.app_activity.toolkit.month_1_completed_at ? '\u2713' : '...'}
                   </span>
                   <span className={disciple.app_activity.toolkit.month_2_completed_at ? 'text-green-600 font-medium' : ''}>
-                    M2 {disciple.app_activity.toolkit.month_2_completed_at ? '✓' : '...'}
+                    M2 {disciple.app_activity.toolkit.month_2_completed_at ? '\u2713' : '...'}
                   </span>
                   <span className={disciple.app_activity.toolkit.month_3_completed_at ? 'text-green-600 font-medium' : ''}>
-                    M3 {disciple.app_activity.toolkit.month_3_completed_at ? '✓' : '...'}
+                    M3 {disciple.app_activity.toolkit.month_3_completed_at ? '\u2713' : '...'}
                   </span>
                 </div>
               </div>

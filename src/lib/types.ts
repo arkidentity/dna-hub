@@ -693,15 +693,40 @@ export interface AppActivityToolkit {
   month_3_completed_at: string | null;
 }
 
+export interface AppFilteredMetrics {
+  days: number | 'all';
+  journal_entries: number;
+  prayer_sessions: number;
+  prayer_cards: number;
+}
+
+export interface AppTestimonySummary {
+  id: string;
+  title: string;
+  status: 'draft' | 'complete';
+  testimony_type: string | null;
+  created_at: string;
+}
+
+export interface AppCreedProgress {
+  cards_mastered: number[];
+  total_cards_mastered: number;
+  total_study_sessions: number;
+  last_studied_at: string | null;
+}
+
 export interface AppActivity {
   connected: boolean;
   progress: AppActivityProgress | null;
+  filtered_metrics?: AppFilteredMetrics;
   toolkit: AppActivityToolkit | null;
   checkpoint_completions: Array<{
     checkpoint_id: number;
     completed_at: string;
     marked_by: string;
   }>;
+  testimonies?: AppTestimonySummary[];
+  creed_progress?: AppCreedProgress | null;
 }
 
 // Disciple Profile (extended with journey data for profile page)
