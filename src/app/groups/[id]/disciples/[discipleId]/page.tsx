@@ -7,6 +7,26 @@ import type { DiscipleshipLogEntry, DiscipleProfile, DNAGroupPhase } from '@/lib
 
 type LogFilter = 'all' | 'note' | 'prayer' | 'milestone';
 
+// Streak motivational messages (mirrors DNA app)
+function getStreakMessage(current: number, longest: number): string {
+  if (current === 0) return 'No active streak yet';
+  if (current === 1) return 'Just getting started!';
+  if (current < 7) return 'Building momentum';
+  if (current < 21) return 'Forming a habit!';
+  if (current < 50) return 'This is becoming who they are';
+  if (current < 100) return 'Incredible consistency';
+  if (current >= longest && current > 0) return 'Longest streak ever!';
+  return 'Faithful and growing';
+}
+
+// Month names for pathway display
+const MONTH_NAMES = ['Building Habits', 'Going Deeper', 'Breakthrough'];
+const WEEK_TITLES = [
+  'Life Assessment', '3D Journal', '4D Prayer', 'Creed Cards',
+  'Q&A Deep Dive', 'Listening Prayer', 'Outreach/Mission', 'Testimony Time',
+  'Breaking Strongholds', 'Identity Shift', 'Spiritual Gifts', 'Life Assessment Revisited',
+];
+
 function DiscipleProfileContent() {
   const params = useParams();
   const router = useRouter();
@@ -32,7 +52,7 @@ function DiscipleProfileContent() {
   const [answerNotes, setAnswerNotes] = useState('');
 
   // Time filter for app activity metrics
-  const [metricsDays, setMetricsDays] = useState<number | null>(null); // null = all time
+  const [metricsDays, setMetricsDays] = useState<number | null>(null);
 
   // Phase display helpers
   const phaseLabels: Record<string, string> = {
@@ -49,12 +69,6 @@ function DiscipleProfileContent() {
     'foundation': 'bg-yellow-100 text-yellow-700',
     'growth': 'bg-green-100 text-green-700',
     'multiplication': 'bg-purple-100 text-purple-700',
-  };
-
-  const statusColors: Record<string, string> = {
-    'active': 'bg-green-100 text-green-700',
-    'completed': 'bg-blue-100 text-blue-700',
-    'dropped': 'bg-gray-100 text-gray-500',
   };
 
   useEffect(() => {
@@ -118,7 +132,6 @@ function DiscipleProfileContent() {
         return;
       }
 
-      // Add new entry to the top of the list
       if (disciple) {
         setDisciple({
           ...disciple,
@@ -150,7 +163,6 @@ function DiscipleProfileContent() {
       const data = await response.json();
       if (!response.ok || data.error) return;
 
-      // Update entry in list
       if (disciple) {
         setDisciple({
           ...disciple,
@@ -177,7 +189,6 @@ function DiscipleProfileContent() {
 
       if (!response.ok) return;
 
-      // Remove entry from list
       if (disciple) {
         setDisciple({
           ...disciple,
@@ -195,10 +206,33 @@ function DiscipleProfileContent() {
     return entry.entry_type === logFilter;
   }) || [];
 
+  // Extract app data with safe defaults
+  const appConnected = disciple?.app_activity?.connected ?? false;
+  const progress = disciple?.app_activity?.progress;
+  const toolkit = disciple?.app_activity?.toolkit;
+  const filtered = disciple?.app_activity?.filtered_metrics;
+  const creed = disciple?.app_activity?.creed_progress;
+  const testimonies = disciple?.app_activity?.testimonies;
+  const checkpointCompletions = disciple?.app_activity?.checkpoint_completions || [];
+
+  const currentStreak = progress?.current_streak ?? 0;
+  const longestStreak = progress?.longest_streak ?? 0;
+  const journalEntries = filtered ? filtered.journal_entries : (progress?.total_journal_entries ?? 0);
+  const prayerSessions = filtered ? filtered.prayer_sessions : (progress?.total_prayer_sessions ?? 0);
+  const prayerCards = filtered ? filtered.prayer_cards : (progress?.total_prayer_cards ?? 0);
+  const creedMastered = creed?.total_cards_mastered ?? 0;
+  const totalTestimonies = testimonies?.length ?? 0;
+
+  // Toolkit/Pathway data
+  const currentWeek = toolkit?.current_week ?? 0;
+  const currentMonth = toolkit?.current_month ?? 1;
+  const toolkitStarted = toolkit?.started_at != null;
+  const pathwayPercent = toolkitStarted ? Math.round((currentWeek / 12) * 100) : 0;
+
   // Loading state
   if (loading) {
     return (
-      <div className="min-h-screen bg-cream flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold mx-auto"></div>
           <p className="mt-4 text-navy">Loading disciple profile...</p>
@@ -210,8 +244,8 @@ function DiscipleProfileContent() {
   // Error state
   if (error || !disciple) {
     return (
-      <div className="min-h-screen bg-cream flex items-center justify-center p-4">
-        <div className="max-w-md w-full bg-white rounded-lg shadow-lg p-8 text-center">
+      <div className="min-h-screen bg-background flex items-center justify-center p-4">
+        <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 text-center">
           <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <svg className="w-8 h-8 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
@@ -221,7 +255,7 @@ function DiscipleProfileContent() {
           <p className="text-gray-600 mb-6">{error || 'Disciple not found'}</p>
           <Link
             href={`/groups/${groupId}`}
-            className="inline-block bg-gold hover:bg-gold/90 text-white font-semibold py-3 px-6 rounded-lg"
+            className="inline-block bg-gold hover:bg-gold-dark text-white font-semibold py-3 px-6 rounded-lg"
           >
             Back to Group
           </Link>
@@ -231,33 +265,75 @@ function DiscipleProfileContent() {
   }
 
   return (
-    <div className="min-h-screen bg-cream">
-      {/* Header */}
+    <div className="min-h-screen bg-background">
+      {/* ============================================================ */}
+      {/* HEADER - Name, Status, Email, Date Joined, Group, Phase      */}
+      {/* ============================================================ */}
       <header className="bg-navy text-white">
         <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-4">
+          <div className="flex items-start gap-4">
             <Link
               href={`/groups/${groupId}`}
-              className="text-white/70 hover:text-white transition-colors"
+              className="text-white/70 hover:text-white transition-colors mt-1"
             >
               <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </Link>
-            <div className="flex-1">
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold">{disciple.name}</h1>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${statusColors[disciple.current_status] || 'bg-gray-100 text-gray-700'}`}>
-                  {disciple.current_status}
-                </span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-3 flex-wrap">
+                {/* Avatar */}
+                <div className="w-12 h-12 rounded-full bg-gold/20 flex items-center justify-center flex-shrink-0">
+                  <span className="text-gold text-lg font-bold">{disciple.name.charAt(0).toUpperCase()}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h1 className="text-2xl font-bold truncate">{disciple.name}</h1>
+                    <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
+                      disciple.current_status === 'active'
+                        ? 'bg-green-500/20 text-green-300'
+                        : disciple.current_status === 'completed'
+                        ? 'bg-blue-500/20 text-blue-300'
+                        : 'bg-gray-500/20 text-gray-400'
+                    }`}>
+                      {disciple.current_status}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-4 mt-1 text-sm text-white/60 flex-wrap">
+                    <span className="truncate">{disciple.email}</span>
+                    <span className="hidden sm:inline">&bull;</span>
+                    <span>Joined {new Date(disciple.joined_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
+                  </div>
+                </div>
               </div>
-              <p className="text-white/70 text-sm mt-1">
-                {disciple.group.group_name}
-                <span className="mx-2">&bull;</span>
-                <span className={`inline-block px-2 py-0.5 rounded text-xs ${phaseColors[disciple.group.current_phase] || 'bg-gray-100 text-gray-700'}`}>
+              {/* Group & Phase badge row */}
+              <div className="flex items-center gap-2 mt-3 flex-wrap">
+                <span className="text-white/50 text-sm">{disciple.group.group_name}</span>
+                <span className={`inline-block px-2.5 py-0.5 rounded text-xs font-medium ${phaseColors[disciple.group.current_phase] || 'bg-gray-100 text-gray-700'}`}>
                   {phaseLabels[disciple.group.current_phase] || disciple.group.current_phase}
                 </span>
-              </p>
+                {/* Assessment badges */}
+                <div className="flex items-center gap-1 ml-auto">
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                    disciple.week1_assessment_status === 'completed'
+                      ? 'bg-green-500/20 text-green-300'
+                      : disciple.week1_assessment_status === 'sent'
+                      ? 'bg-yellow-500/20 text-yellow-300'
+                      : 'bg-white/10 text-white/40'
+                  }`}>
+                    W1 {disciple.week1_assessment_status === 'completed' ? '✓' : disciple.week1_assessment_status === 'sent' ? 'Sent' : '—'}
+                  </span>
+                  <span className={`px-2 py-0.5 rounded text-xs font-medium ${
+                    disciple.week8_assessment_status === 'completed'
+                      ? 'bg-green-500/20 text-green-300'
+                      : disciple.week8_assessment_status === 'sent'
+                      ? 'bg-yellow-500/20 text-yellow-300'
+                      : 'bg-white/10 text-white/40'
+                  }`}>
+                    W8 {disciple.week8_assessment_status === 'completed' ? '✓' : disciple.week8_assessment_status === 'sent' ? 'Sent' : '—'}
+                  </span>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -265,219 +341,386 @@ function DiscipleProfileContent() {
 
       {/* Main content */}
       <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Info Card */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div>
-              <p className="text-sm text-gray-500">Email</p>
-              <p className="text-navy font-medium">{disciple.email}</p>
+
+        {/* ============================================================ */}
+        {/* DAILY DNA ACTIVITY - Streak Hero + Growth Area Cards          */}
+        {/* ============================================================ */}
+        <div className="bg-white rounded-xl shadow-sm border border-card-border overflow-hidden">
+          {/* Section header with time filter */}
+          <div className="flex items-center justify-between px-6 pt-5 pb-3">
+            <div className="flex items-center gap-2.5">
+              <div className={`w-2.5 h-2.5 rounded-full ${appConnected ? 'bg-green-500' : 'bg-gray-300'}`}></div>
+              <h2 className="text-lg font-bold text-navy">Daily DNA Activity</h2>
+              {!appConnected && (
+                <span className="text-xs text-gray-400 bg-gray-100 px-2 py-0.5 rounded-full">Not connected</span>
+              )}
             </div>
-            {disciple.phone && (
-              <div>
-                <p className="text-sm text-gray-500">Phone</p>
-                <p className="text-navy font-medium">{disciple.phone}</p>
+            <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
+              {[
+                { label: '7d', value: 7 },
+                { label: '30d', value: 30 },
+                { label: '90d', value: 90 },
+                { label: 'All', value: null },
+              ].map((opt) => (
+                <button
+                  key={opt.label}
+                  onClick={() => setMetricsDays(opt.value)}
+                  className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
+                    metricsDays === opt.value
+                      ? 'bg-white text-navy shadow-sm'
+                      : 'text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Streak Hero Card */}
+          <div className="mx-6 mb-4 rounded-xl overflow-hidden" style={{
+            background: 'linear-gradient(135deg, #D4A853 0%, #d4a454 50%, #B8923F 100%)',
+          }}>
+            <div className="px-6 py-5 flex items-center gap-5">
+              {/* Flame icon */}
+              <div className="flex-shrink-0">
+                <svg viewBox="0 0 24 24" fill="white" className="w-10 h-10 opacity-90">
+                  <path d="M12 23c-4.97 0-9-3.58-9-8 0-2.52 1.17-4.83 3.18-6.46.38-.31.93-.04.93.45v.47c0 1.6 1.22 3.28 2.68 3.68.67.18 1.21-.52.83-1.08-.95-1.41-1.12-3.07-.55-4.6C10.73 5.04 12.75 3 15.18 3c.63 0 1.16.13 1.16.13C17.56 3.47 19 4.92 19 6.84c0 3.08-2.24 5.94-4.73 7.81-.31.23-.4.68-.17.99.23.31.69.39 1 .16C18.38 13.24 21 9.73 21 6.84c0-2.7-1.94-4.95-4.5-5.61 0 0-.83-.23-1.68-.23C11.35 1 8.44 3.67 7.53 7c-.55 2.01-.34 4.11.58 5.91-1.94.45-3.61 2.26-3.61 4.43 0 2.54 2.26 4.66 5 4.66h5c2.74 0 5-2.12 5-4.66 0-1.8-1.09-3.34-2.65-4.1-.27-.13-.55.13-.47.42.5 1.86-.24 3.84-1.88 5.04-.25.18-.25.57.02.73.83.49 1.78.57 2.65.25.77-.28 1.43-.8 1.88-1.47.11-.16.33-.2.49-.1.5.33.89.83 1.06 1.43.18.63.15 1.29-.08 1.89C19.53 21.96 16.86 23 12 23z" />
+                </svg>
               </div>
+              <div className="flex-1">
+                <div className="flex items-baseline gap-2">
+                  <span className="text-4xl font-extrabold text-navy">{currentStreak}</span>
+                  <span className="text-navy/70 font-medium text-sm">day streak</span>
+                </div>
+                <p className="text-navy/60 text-sm mt-0.5">{getStreakMessage(currentStreak, longestStreak)}</p>
+              </div>
+              {longestStreak > 0 && (
+                <div className="text-right flex-shrink-0">
+                  <p className="text-navy/50 text-xs">Best</p>
+                  <p className="text-navy font-bold text-lg">{longestStreak}</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Growth Areas Grid */}
+          <div className="px-6 pb-2">
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Growth Areas</h3>
+          </div>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 px-6 pb-6">
+            {/* Journal Entries */}
+            <div className="rounded-xl p-4 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(45, 106, 106, 0.08)' }}>
+              <div className="w-9 h-9 mx-auto mb-2 rounded-lg flex items-center justify-center" style={{ background: 'rgba(45, 106, 106, 0.15)' }}>
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--teal)' }}>
+                  <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
+                  <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
+                </svg>
+              </div>
+              <p className="text-2xl font-bold" style={{ color: 'var(--teal)' }}>{journalEntries}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Journal Entries</p>
+            </div>
+
+            {/* Prayer Sessions */}
+            <div className="rounded-xl p-4 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(95, 12, 11, 0.06)' }}>
+              <div className="w-9 h-9 mx-auto mb-2 rounded-lg flex items-center justify-center" style={{ background: 'rgba(95, 12, 11, 0.12)' }}>
+                <svg className="w-5 h-5 text-[#5f0c0b]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M4.318 6.318a4.5 4.5 0 0 0 0 6.364L12 20.364l7.682-7.682a4.5 4.5 0 0 0-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 0 0-6.364 0z" />
+                </svg>
+              </div>
+              <p className="text-2xl font-bold text-[#5f0c0b]">{prayerSessions}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Prayer Sessions</p>
+            </div>
+
+            {/* Prayer Cards */}
+            <div className="rounded-xl p-4 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(95, 12, 11, 0.04)' }}>
+              <div className="w-9 h-9 mx-auto mb-2 rounded-lg flex items-center justify-center" style={{ background: 'rgba(95, 12, 11, 0.08)' }}>
+                <svg className="w-5 h-5 text-[#8b2020]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="5" width="18" height="14" rx="2" />
+                  <path d="M3 10h18" />
+                </svg>
+              </div>
+              <p className="text-2xl font-bold text-[#8b2020]">{prayerCards}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Prayer Cards</p>
+            </div>
+
+            {/* Creed Cards */}
+            <div className="rounded-xl p-4 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(212, 168, 83, 0.08)' }}>
+              <div className="w-9 h-9 mx-auto mb-2 rounded-lg flex items-center justify-center" style={{ background: 'rgba(212, 168, 83, 0.15)' }}>
+                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--gold)' }}>
+                  <rect x="3" y="5" width="18" height="14" rx="2" />
+                  <path d="M3 10h18" />
+                </svg>
+              </div>
+              <p className="text-2xl font-bold" style={{ color: 'var(--gold-dark)' }}>
+                {creedMastered}<span className="text-sm font-normal text-gray-400">/50</span>
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">Creed Cards</p>
+            </div>
+
+            {/* Testimonies */}
+            <div className="rounded-xl p-4 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(74, 158, 127, 0.06)' }}>
+              <div className="w-9 h-9 mx-auto mb-2 rounded-lg flex items-center justify-center" style={{ background: 'rgba(74, 158, 127, 0.12)' }}>
+                <svg className="w-5 h-5 text-[#4A9E7F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 20h9" />
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                </svg>
+              </div>
+              <p className="text-2xl font-bold text-[#4A9E7F]">{totalTestimonies}</p>
+              <p className="text-xs text-gray-500 mt-0.5">Testimonies</p>
+            </div>
+
+            {/* Time Spent */}
+            <div className="rounded-xl p-4 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(59, 130, 246, 0.06)' }}>
+              <div className="w-9 h-9 mx-auto mb-2 rounded-lg flex items-center justify-center" style={{ background: 'rgba(59, 130, 246, 0.12)' }}>
+                <svg className="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <circle cx="12" cy="12" r="10" />
+                  <path d="M12 6v6l4 2" />
+                </svg>
+              </div>
+              <p className="text-2xl font-bold text-blue-600">
+                {progress ? `${Math.floor(progress.total_time_minutes / 60)}` : '0'}
+                <span className="text-sm font-normal text-gray-400">h</span>
+              </p>
+              <p className="text-xs text-gray-500 mt-0.5">Time Spent</p>
+            </div>
+          </div>
+
+          {/* Last active + app connection status footer */}
+          <div className="px-6 pb-4 flex items-center justify-between text-xs text-gray-400 border-t border-gray-100 pt-3">
+            <span>
+              {progress?.last_activity_date
+                ? `Last active: ${new Date(progress.last_activity_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`
+                : 'No activity recorded yet'}
+            </span>
+            {appConnected && (
+              <span className="flex items-center gap-1">
+                <svg className="w-3.5 h-3.5 text-green-500" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                </svg>
+                App Connected
+              </span>
             )}
-            <div>
-              <p className="text-sm text-gray-500">Joined</p>
-              <p className="text-navy font-medium">{new Date(disciple.joined_date).toLocaleDateString()}</p>
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Assessments</p>
-              <div className="flex items-center gap-2 mt-1">
-                <span className={`px-2 py-1 rounded text-xs ${
-                  disciple.week1_assessment_status === 'completed'
-                    ? 'bg-green-100 text-green-700'
-                    : disciple.week1_assessment_status === 'sent'
-                    ? 'bg-yellow-100 text-yellow-700'
-                    : 'bg-gray-100 text-gray-500'
-                }`}>
-                  W1 {disciple.week1_assessment_status === 'completed' ? '✓' : disciple.week1_assessment_status === 'sent' ? 'Sent' : '—'}
-                </span>
-                <span className={`px-2 py-1 rounded text-xs ${
-                  disciple.week8_assessment_status === 'completed'
-                    ? 'bg-green-100 text-green-700'
-                    : disciple.week8_assessment_status === 'sent'
-                    ? 'bg-yellow-100 text-yellow-700'
-                    : 'bg-gray-100 text-gray-500'
-                }`}>
-                  W8 {disciple.week8_assessment_status === 'completed' ? '✓' : disciple.week8_assessment_status === 'sent' ? 'Sent' : '—'}
-                </span>
-              </div>
-            </div>
           </div>
         </div>
 
-        {/* App Activity Card */}
-        {disciple.app_activity?.connected ? (
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-teal-500"></span>
-                <h2 className="text-lg font-semibold text-navy">Daily DNA App Activity</h2>
+        {/* ============================================================ */}
+        {/* PATHWAY - Phase / Toolkit Visual Progress                     */}
+        {/* ============================================================ */}
+        <div className="bg-white rounded-xl shadow-sm border border-card-border overflow-hidden">
+          <div className="px-6 pt-5 pb-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-lg font-bold text-navy">Pathway</h2>
+                <p className="text-sm text-gray-400 mt-0.5">
+                  Phase 1 &middot; 90-Day Toolkit
+                </p>
               </div>
-              {/* Time filter buttons */}
-              <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5">
-                {[
-                  { label: '7d', value: 7 },
-                  { label: '30d', value: 30 },
-                  { label: '90d', value: 90 },
-                  { label: 'All', value: null },
-                ].map((opt) => (
-                  <button
-                    key={opt.label}
-                    onClick={() => setMetricsDays(opt.value)}
-                    className={`px-2.5 py-1 text-xs font-medium rounded-md transition-colors ${
-                      metricsDays === opt.value
-                        ? 'bg-white text-navy shadow-sm'
-                        : 'text-gray-500 hover:text-gray-700'
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
+              {toolkitStarted && (
+                <div className="text-right">
+                  <p className="text-2xl font-bold text-gold-dark">{pathwayPercent}%</p>
+                  <p className="text-xs text-gray-400">Complete</p>
+                </div>
+              )}
             </div>
+          </div>
 
-            {disciple.app_activity.progress ? (
-              <>
-                {/* Streak & Overview */}
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-4">
-                  <div className="bg-orange-50 rounded-lg p-3 text-center">
-                    <p className="text-2xl font-bold text-orange-600">{disciple.app_activity.progress.current_streak}</p>
-                    <p className="text-xs text-orange-600/80">Current Streak</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-lg p-3 text-center">
-                    <p className="text-2xl font-bold text-navy">{disciple.app_activity.progress.longest_streak}</p>
-                    <p className="text-xs text-gray-500">Longest Streak</p>
-                  </div>
-                  <div className="bg-blue-50 rounded-lg p-3 text-center">
-                    <p className="text-2xl font-bold text-blue-600">
-                      {disciple.app_activity.filtered_metrics
-                        ? disciple.app_activity.filtered_metrics.journal_entries
-                        : disciple.app_activity.progress.total_journal_entries}
-                    </p>
-                    <p className="text-xs text-blue-600/80">Journal Entries</p>
-                  </div>
-                  <div className="bg-purple-50 rounded-lg p-3 text-center">
-                    <p className="text-2xl font-bold text-purple-600">
-                      {disciple.app_activity.filtered_metrics
-                        ? disciple.app_activity.filtered_metrics.prayer_sessions
-                        : disciple.app_activity.progress.total_prayer_sessions}
-                    </p>
-                    <p className="text-xs text-purple-600/80">Prayer Sessions</p>
+          {/* Overall progress bar */}
+          <div className="px-6 pb-4">
+            <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
+              <span>Week {currentWeek} of 12</span>
+              <span>Month {currentMonth} of 3</span>
+            </div>
+            <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
+              <div
+                className="h-full rounded-full transition-all duration-500"
+                style={{
+                  width: `${pathwayPercent}%`,
+                  background: 'linear-gradient(90deg, var(--gold) 0%, var(--gold-dark) 100%)',
+                }}
+              ></div>
+            </div>
+          </div>
+
+          {/* Month-by-month breakdown */}
+          <div className="px-6 pb-5 space-y-3">
+            {[1, 2, 3].map((month) => {
+              const monthCompleted = month === 1
+                ? toolkit?.month_1_completed_at != null
+                : month === 2
+                ? toolkit?.month_2_completed_at != null
+                : toolkit?.month_3_completed_at != null;
+              const monthActive = currentMonth === month && toolkitStarted;
+              const weeksInMonth = [1, 2, 3, 4].map(w => w + (month - 1) * 4);
+              const weeksBelowCurrent = weeksInMonth.filter(w => w <= currentWeek).length;
+
+              return (
+                <div
+                  key={month}
+                  className={`rounded-lg border transition-all ${
+                    monthCompleted
+                      ? 'border-green-200 bg-green-50/50'
+                      : monthActive
+                      ? 'border-gold/30 bg-gold/5'
+                      : 'border-gray-100 bg-gray-50/50'
+                  }`}
+                >
+                  <div className="px-4 py-3">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        {monthCompleted ? (
+                          <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center">
+                            <svg className="w-3 h-3 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={3}>
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                            </svg>
+                          </div>
+                        ) : monthActive ? (
+                          <div className="w-5 h-5 rounded-full bg-gold flex items-center justify-center">
+                            <div className="w-2 h-2 bg-white rounded-full"></div>
+                          </div>
+                        ) : (
+                          <div className="w-5 h-5 rounded-full border-2 border-gray-300"></div>
+                        )}
+                        <span className={`text-sm font-semibold ${
+                          monthCompleted ? 'text-green-700' : monthActive ? 'text-navy' : 'text-gray-400'
+                        }`}>
+                          Month {month}: {MONTH_NAMES[month - 1]}
+                        </span>
+                      </div>
+                      {monthCompleted && (
+                        <span className="text-xs text-green-600 font-medium">Complete</span>
+                      )}
+                      {monthActive && !monthCompleted && (
+                        <span className="text-xs text-gold-dark font-medium">{weeksBelowCurrent}/4 weeks</span>
+                      )}
+                    </div>
+
+                    {/* Week pills */}
+                    <div className="flex gap-1.5 ml-7">
+                      {weeksInMonth.map((weekNum) => {
+                        const weekIdx = weekNum - 1;
+                        const isComplete = weekNum < currentWeek || monthCompleted;
+                        const isCurrent = weekNum === currentWeek && !monthCompleted;
+                        // Check checkpoint completions for this week
+                        const hasCheckpoints = checkpointCompletions.some(c => {
+                          const cpId = c.checkpoint_id;
+                          return cpId >= (weekNum - 1) * 3 && cpId < weekNum * 3;
+                        });
+
+                        return (
+                          <div
+                            key={weekNum}
+                            className={`flex-1 group relative`}
+                          >
+                            <div className={`h-1.5 rounded-full transition-all ${
+                              isComplete
+                                ? 'bg-green-400'
+                                : isCurrent
+                                ? 'bg-gold'
+                                : 'bg-gray-200'
+                            }`}></div>
+                            <p className={`text-[10px] mt-1 truncate ${
+                              isComplete ? 'text-green-600' : isCurrent ? 'text-navy font-medium' : 'text-gray-300'
+                            }`}>
+                              W{weekNum}
+                            </p>
+                            {/* Tooltip */}
+                            <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1 hidden group-hover:block z-10">
+                              <div className="bg-navy text-white text-[10px] px-2 py-1 rounded whitespace-nowrap shadow-lg">
+                                {WEEK_TITLES[weekIdx] || `Week ${weekNum}`}
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
+              );
+            })}
+          </div>
 
-                {/* Additional stats */}
-                <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600">
-                  <span>Prayer Cards: <strong className="text-navy">
-                    {disciple.app_activity.filtered_metrics
-                      ? disciple.app_activity.filtered_metrics.prayer_cards
-                      : disciple.app_activity.progress.total_prayer_cards}
-                  </strong></span>
-                  <span>Time Spent: <strong className="text-navy">{Math.round(disciple.app_activity.progress.total_time_minutes / 60)}h {disciple.app_activity.progress.total_time_minutes % 60}m</strong></span>
-                  {disciple.app_activity.progress.last_activity_date && (
-                    <span>Last Active: <strong className="text-navy">{new Date(disciple.app_activity.progress.last_activity_date).toLocaleDateString()}</strong></span>
-                  )}
-                </div>
-              </>
-            ) : (
-              <p className="text-sm text-gray-500">Connected to the app but no activity recorded yet.</p>
+          {/* Checkpoint count footer */}
+          <div className="px-6 pb-4 flex items-center justify-between text-xs text-gray-400 border-t border-gray-100 pt-3">
+            <span>{checkpointCompletions.length} checkpoints completed</span>
+            {toolkit?.started_at && (
+              <span>Started {new Date(toolkit.started_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
             )}
+          </div>
+        </div>
 
-            {/* Creed Card Progress */}
-            {disciple.app_activity.creed_progress && disciple.app_activity.creed_progress.total_cards_mastered > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <h3 className="text-sm font-semibold text-navy mb-2">Creed Cards</h3>
-                <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-gray-600">
-                  <span>Cards Mastered: <strong className="text-navy">{disciple.app_activity.creed_progress.total_cards_mastered}</strong></span>
-                  <span>Study Sessions: <strong className="text-navy">{disciple.app_activity.creed_progress.total_study_sessions}</strong></span>
-                  {disciple.app_activity.creed_progress.last_studied_at && (
-                    <span>Last Studied: <strong className="text-navy">{new Date(disciple.app_activity.creed_progress.last_studied_at).toLocaleDateString()}</strong></span>
+        {/* ============================================================ */}
+        {/* CREED CARDS & TESTIMONIES (Compact row)                      */}
+        {/* ============================================================ */}
+        {(creedMastered > 0 || totalTestimonies > 0) && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {/* Creed Progress */}
+            {creed && creedMastered > 0 && (
+              <div className="bg-white rounded-xl shadow-sm border border-card-border p-5">
+                <h3 className="text-sm font-bold text-navy mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-gold" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <rect x="3" y="5" width="18" height="14" rx="2" />
+                    <path d="M3 10h18" />
+                  </svg>
+                  Creed Cards
+                </h3>
+                <div className="flex items-center gap-4">
+                  <div>
+                    <p className="text-3xl font-bold text-gold-dark">{creedMastered}</p>
+                    <p className="text-xs text-gray-400">mastered</p>
+                  </div>
+                  <div className="h-10 border-l border-gray-200"></div>
+                  <div>
+                    <p className="text-lg font-semibold text-navy">{creed.total_study_sessions}</p>
+                    <p className="text-xs text-gray-400">study sessions</p>
+                  </div>
+                  {creed.last_studied_at && (
+                    <>
+                      <div className="h-10 border-l border-gray-200"></div>
+                      <div>
+                        <p className="text-sm font-medium text-navy">{new Date(creed.last_studied_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</p>
+                        <p className="text-xs text-gray-400">last studied</p>
+                      </div>
+                    </>
                   )}
                 </div>
               </div>
             )}
 
-            {/* Testimony Builder */}
-            {disciple.app_activity.testimonies && disciple.app_activity.testimonies.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <h3 className="text-sm font-semibold text-navy mb-2">Testimonies</h3>
-                <div className="space-y-1.5">
-                  {disciple.app_activity.testimonies.map((t) => (
-                    <div key={t.id} className="flex items-center gap-2 text-sm">
-                      <span className={`inline-block w-2 h-2 rounded-full ${t.status === 'complete' ? 'bg-green-500' : 'bg-yellow-400'}`}></span>
-                      <span className="text-gray-700">{t.title}</span>
-                      <span className="text-xs text-gray-400">
+            {/* Testimonies */}
+            {testimonies && totalTestimonies > 0 && (
+              <div className="bg-white rounded-xl shadow-sm border border-card-border p-5">
+                <h3 className="text-sm font-bold text-navy mb-3 flex items-center gap-2">
+                  <svg className="w-4 h-4 text-[#4A9E7F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <path d="M12 20h9" />
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
+                  </svg>
+                  Testimonies
+                </h3>
+                <div className="space-y-2">
+                  {testimonies.map((t) => (
+                    <div key={t.id} className="flex items-center gap-2">
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${t.status === 'complete' ? 'bg-green-500' : 'bg-yellow-400'}`}></span>
+                      <span className="text-sm text-navy truncate">{t.title}</span>
+                      <span className="text-xs text-gray-400 flex-shrink-0">
                         {t.status === 'complete' ? 'Complete' : 'Draft'}
-                        {t.testimony_type && ` \u00B7 ${t.testimony_type.replace(/_/g, ' ')}`}
+                        {t.testimony_type && ` · ${t.testimony_type.replace(/_/g, ' ')}`}
                       </span>
                     </div>
                   ))}
                 </div>
               </div>
             )}
-
-            {/* 90-Day Toolkit Progress */}
-            {disciple.app_activity.toolkit && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <h3 className="text-sm font-semibold text-navy mb-2">90-Day Toolkit Progress</h3>
-                <div className="flex items-center gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-                      <span>Month {disciple.app_activity.toolkit.current_month}, Week {disciple.app_activity.toolkit.current_week}</span>
-                      <span>{Math.round((disciple.app_activity.toolkit.current_week / 12) * 100)}%</span>
-                    </div>
-                    <div className="h-2 bg-gray-100 rounded-full overflow-hidden">
-                      <div
-                        className="h-full bg-teal rounded-full transition-all"
-                        style={{ width: `${(disciple.app_activity.toolkit.current_week / 12) * 100}%` }}
-                      ></div>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-3 mt-2 text-xs text-gray-500">
-                  <span className={disciple.app_activity.toolkit.month_1_completed_at ? 'text-green-600 font-medium' : ''}>
-                    M1 {disciple.app_activity.toolkit.month_1_completed_at ? '\u2713' : '...'}
-                  </span>
-                  <span className={disciple.app_activity.toolkit.month_2_completed_at ? 'text-green-600 font-medium' : ''}>
-                    M2 {disciple.app_activity.toolkit.month_2_completed_at ? '\u2713' : '...'}
-                  </span>
-                  <span className={disciple.app_activity.toolkit.month_3_completed_at ? 'text-green-600 font-medium' : ''}>
-                    M3 {disciple.app_activity.toolkit.month_3_completed_at ? '\u2713' : '...'}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {/* Checkpoint Completions */}
-            {disciple.app_activity.checkpoint_completions.length > 0 && (
-              <div className="mt-4 pt-4 border-t border-gray-100">
-                <h3 className="text-sm font-semibold text-navy mb-2">Checkpoints Completed</h3>
-                <p className="text-sm text-gray-600">
-                  <strong className="text-navy">{disciple.app_activity.checkpoint_completions.length}</strong> checkpoints completed
-                </p>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center gap-2 mb-2">
-              <span className="w-2 h-2 rounded-full bg-gray-300"></span>
-              <h2 className="text-lg font-semibold text-navy">Daily DNA App</h2>
-            </div>
-            <p className="text-sm text-gray-500">
-              This disciple hasn&apos;t signed up for the Daily DNA app yet. An invitation email was sent when they were added to the group.
-            </p>
           </div>
         )}
 
-        {/* Quick Actions */}
+        {/* ============================================================ */}
+        {/* QUICK ACTIONS                                                 */}
+        {/* ============================================================ */}
         <div className="flex gap-3">
           <button
             onClick={() => openAddModal('note')}
-            className="flex items-center gap-2 bg-gold hover:bg-gold/90 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors"
+            className="flex items-center gap-2 bg-gold hover:bg-gold-dark text-white font-medium py-2.5 px-5 rounded-lg text-sm transition-colors shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
@@ -486,7 +729,7 @@ function DiscipleProfileContent() {
           </button>
           <button
             onClick={() => openAddModal('prayer')}
-            className="flex items-center gap-2 bg-teal hover:bg-teal/90 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors"
+            className="flex items-center gap-2 bg-teal hover:bg-teal-light text-white font-medium py-2.5 px-5 rounded-lg text-sm transition-colors shadow-sm"
           >
             <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
@@ -495,14 +738,15 @@ function DiscipleProfileContent() {
           </button>
         </div>
 
-        {/* Discipleship Log */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
+        {/* ============================================================ */}
+        {/* DISCIPLESHIP LOG                                              */}
+        {/* ============================================================ */}
+        <div className="bg-white rounded-xl shadow-sm border border-card-border">
+          <div className="px-6 py-4 border-b border-gray-100">
             <div className="flex items-center justify-between">
-              <h2 className="text-lg font-semibold text-navy">Discipleship Log</h2>
-              <span className="text-sm text-gray-500">{filteredEntries.length} entries</span>
+              <h2 className="text-lg font-bold text-navy">Discipleship Log</h2>
+              <span className="text-sm text-gray-400">{filteredEntries.length} entries</span>
             </div>
-            {/* Filter tabs */}
             <div className="flex gap-2 mt-3">
               {(['all', 'note', 'prayer', 'milestone'] as LogFilter[]).map(filter => (
                 <button
@@ -528,7 +772,7 @@ function DiscipleProfileContent() {
                 </svg>
               </div>
               <h3 className="text-lg font-semibold text-navy mb-2">No entries yet</h3>
-              <p className="text-gray-600 mb-4 max-w-sm mx-auto">
+              <p className="text-gray-500 mb-4 max-w-sm mx-auto">
                 Start documenting your discipleship journey with notes and prayer requests.
               </p>
             </div>
@@ -537,7 +781,6 @@ function DiscipleProfileContent() {
               {filteredEntries.map(entry => (
                 <div key={entry.id} className="px-6 py-4">
                   <div className="flex items-start gap-3">
-                    {/* Entry type icon */}
                     <div className={`w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${
                       entry.entry_type === 'note'
                         ? 'bg-blue-100'
@@ -560,7 +803,6 @@ function DiscipleProfileContent() {
                       )}
                     </div>
 
-                    {/* Entry content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <span className="text-xs font-medium text-gray-500 uppercase">
@@ -574,7 +816,6 @@ function DiscipleProfileContent() {
                       </div>
                       <p className="text-navy whitespace-pre-wrap">{entry.content}</p>
 
-                      {/* Answered prayer details */}
                       {entry.entry_type === 'prayer' && entry.is_answered && entry.answer_notes && (
                         <div className="mt-2 pl-3 border-l-2 border-green-300">
                           <p className="text-sm text-green-700 italic">{entry.answer_notes}</p>
@@ -586,24 +827,21 @@ function DiscipleProfileContent() {
                         </div>
                       )}
 
-                      {/* Footer: author + date + actions */}
                       <div className="flex items-center gap-3 mt-2">
                         <span className="text-xs text-gray-400">
                           {entry.created_by_name && `${entry.created_by_name} · `}
                           {new Date(entry.created_at).toLocaleDateString()}
                         </span>
 
-                        {/* Mark as answered button (prayers only) */}
                         {entry.entry_type === 'prayer' && !entry.is_answered && (
                           <button
                             onClick={() => { setAnsweringEntry(entry); setAnswerNotes(''); }}
-                            className="text-xs text-teal hover:text-teal/80 font-medium"
+                            className="text-xs text-teal hover:text-teal-light font-medium"
                           >
                             Mark Answered
                           </button>
                         )}
 
-                        {/* Delete button */}
                         <button
                           onClick={() => handleDeleteEntry(entry.id)}
                           className="text-xs text-gray-400 hover:text-red-500"
@@ -620,10 +858,12 @@ function DiscipleProfileContent() {
         </div>
       </main>
 
-      {/* Add Note/Prayer Modal */}
+      {/* ============================================================ */}
+      {/* ADD NOTE/PRAYER MODAL                                         */}
+      {/* ============================================================ */}
       {showAddModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-6">
               <h2 className="text-xl font-bold text-navy">
                 {modalType === 'note' ? 'Add Note' : 'Add Prayer Request'}
@@ -670,8 +910,8 @@ function DiscipleProfileContent() {
                   disabled={submitting || !modalContent.trim()}
                   className={`font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed text-white ${
                     modalType === 'note'
-                      ? 'bg-gold hover:bg-gold/90'
-                      : 'bg-teal hover:bg-teal/90'
+                      ? 'bg-gold hover:bg-gold-dark'
+                      : 'bg-teal hover:bg-teal-light'
                   }`}
                 >
                   {submitting ? 'Adding...' : modalType === 'note' ? 'Add Note' : 'Add Prayer'}
@@ -682,10 +922,12 @@ function DiscipleProfileContent() {
         </div>
       )}
 
-      {/* Mark Prayer Answered Modal */}
+      {/* ============================================================ */}
+      {/* MARK PRAYER ANSWERED MODAL                                    */}
+      {/* ============================================================ */}
       {answeringEntry && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-navy">Mark Prayer Answered</h2>
               <button
@@ -739,7 +981,7 @@ function DiscipleProfileContent() {
 
 function ProfileLoading() {
   return (
-    <div className="min-h-screen bg-cream flex items-center justify-center">
+    <div className="min-h-screen bg-background flex items-center justify-center">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-gold mx-auto"></div>
         <p className="mt-4 text-navy">Loading...</p>
