@@ -117,7 +117,7 @@ export async function GET(
       .map(gd => (gd.disciple as unknown as { app_account_id: string | null }).app_account_id)
       .filter((id): id is string => id !== null);
 
-    let assessmentsMap: Record<string, { week1?: string; week8?: string }> = {};
+    let assessmentsMap: Record<string, { week1?: string; week12?: string }> = {};
     let appStatsMap: Record<string, { current_streak: number; last_activity_date: string | null }> = {};
 
     if (discipleIds.length > 0) {
@@ -144,8 +144,8 @@ export async function GET(
           const status = a.completed_at ? 'completed' : a.sent_at ? 'sent' : 'not_sent';
           if (a.assessment_week === 1) {
             assessmentsMap[a.disciple_id].week1 = status;
-          } else if (a.assessment_week === 8) {
-            assessmentsMap[a.disciple_id].week8 = status;
+          } else if (a.assessment_week === 12) {
+            assessmentsMap[a.disciple_id].week12 = status;
           }
         });
       }
@@ -172,7 +172,7 @@ export async function GET(
         joined_date: gd.joined_date,
         current_status: gd.current_status,
         week1_assessment_status: assessmentsMap[disciple.id]?.week1 || 'not_sent',
-        week8_assessment_status: assessmentsMap[disciple.id]?.week8 || 'not_sent',
+        week12_assessment_status: assessmentsMap[disciple.id]?.week12 || 'not_sent',
         app_connected: !!disciple.app_account_id,
         current_streak: appStats?.current_streak ?? null,
         last_activity_date: appStats?.last_activity_date ?? null,

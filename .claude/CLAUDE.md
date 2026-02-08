@@ -209,7 +209,7 @@ npm run lint     # Run ESLint
 | `dna_groups` | Discipleship groups with 5 phases |
 | `disciples` | Group participants (no login) |
 | `group_disciples` | Join table for group membership |
-| `life_assessments` | Week 1/8 assessment responses |
+| `life_assessments` | Week 1/12 assessment responses |
 
 ### Daily DNA Integration (Migration 034 - COMPLETE)
 
@@ -245,10 +245,28 @@ npm run lint     # Run ESLint
 - `calculate_disciple_streak` - Calculate engagement streaks
 - `update_disciple_progress` - Update progress stats
 
-**Daily DNA App Connection (Feb 2025):**
+**Daily DNA App Connection (Feb 2026):**
 - Daily DNA app now points to DNA Hub Supabase
 - Uses `account_id` (not `user_id`) referencing `disciple_app_accounts`
-- OAuth setup pending (Google, Discord, Apple)
+- OAuth configured: Google + Discord (Google verification submitted)
+- Groups & Chat Phase 1 live (real-time group chat)
+- Account syncing to Hub working
+
+**Active Priorities (Feb 8, 2026):**
+- ~~Spiritual Gifts Assessment~~ ✅ Core built in Daily DNA app (96 questions, scoring, results, `/tools/spiritual-gifts` + `/gifts`). Remaining: PDF, cloud sync, email capture, Hub landing page.
+- Groups Calendar (Supabase source of truth, Resend email reminders, .ics links)
+- Assessments tab on disciple profile (Life Assessment scores + Spiritual Gifts results)
+- Global Resources Admin UI
+- Pathway locking (locked unless in DNA group, unlock by phase/month)
+- Fix Week 8 → Week 12 across all Life Assessment references
+- See `/docs/planning/NEXT-STEPS.md` for full roadmap
+
+**Key Decisions (Feb 8, 2026):**
+- No Google Calendar API — using Supabase + Resend + .ics
+- Tool assignment simplified to phase-locking by month
+- Testimonies private unless shared in group chat
+- Training should bridge to Groups dashboard
+- Fireflies deprioritized
 
 ### Church Implementation
 

@@ -465,8 +465,8 @@ export type DNAGroupPhase =
   | 'pre-launch'      // Planning/inviting stage
   | 'invitation'      // Week 0-1: Invitations sent, group forming
   | 'foundation'      // Week 1-4: Building foundation
-  | 'growth'          // Week 5-8: Group maturing
-  | 'multiplication'; // Week 8+: Preparing to multiply
+  | 'growth'          // Week 5-12: Group maturing
+  | 'multiplication'; // Week 12+: Preparing to multiply
 
 // DNA Group - a discipleship group
 export interface DNAGroup {
@@ -507,12 +507,12 @@ export interface GroupDisciple {
   created_at: string;
 }
 
-// Life Assessment (Week 1 and Week 8)
+// Life Assessment (Week 1 and Week 12)
 export interface LifeAssessment {
   id: string;
   disciple_id: string;
   group_id: string;
-  assessment_week: 1 | 8;
+  assessment_week: 1 | 12;
   token: string;
   token_expires_at?: string;
   responses: Record<string, unknown>; // JSONB - flexible structure
@@ -615,16 +615,16 @@ export interface HealthCheckinSummary {
   completed_at?: string;
 }
 
-// Life Assessment comparison (Week 1 vs Week 8)
+// Life Assessment comparison (Week 1 vs Week 12)
 export interface AssessmentComparison {
   disciple: Disciple;
   group: DNAGroup;
   week1: LifeAssessment;
-  week8: LifeAssessment;
+  week12: LifeAssessment;
   category_scores: {
     category: string;
     week1_score: number;
-    week8_score: number;
+    week12_score: number;
     change: number;
     change_level: 'growth' | 'slight_growth' | 'no_change' | 'decline';
   }[];
@@ -738,7 +738,7 @@ export interface DiscipleProfile {
   joined_date: string;
   current_status: DiscipleStatus;
   week1_assessment_status: string;
-  week8_assessment_status: string;
+  week12_assessment_status: string;
   group: {
     id: string;
     group_name: string;

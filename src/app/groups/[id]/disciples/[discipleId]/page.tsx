@@ -324,13 +324,13 @@ function DiscipleProfileContent() {
                     W1 {disciple.week1_assessment_status === 'completed' ? '✓' : disciple.week1_assessment_status === 'sent' ? 'Sent' : '—'}
                   </span>
                   <span className={`px-2 py-0.5 rounded text-xs font-medium ${
-                    disciple.week8_assessment_status === 'completed'
+                    disciple.week12_assessment_status === 'completed'
                       ? 'bg-green-500/20 text-green-300'
-                      : disciple.week8_assessment_status === 'sent'
+                      : disciple.week12_assessment_status === 'sent'
                       ? 'bg-yellow-500/20 text-yellow-300'
                       : 'bg-white/10 text-white/40'
                   }`}>
-                    W8 {disciple.week8_assessment_status === 'completed' ? '✓' : disciple.week8_assessment_status === 'sent' ? 'Sent' : '—'}
+                    W12 {disciple.week12_assessment_status === 'completed' ? '✓' : disciple.week12_assessment_status === 'sent' ? 'Sent' : '—'}
                   </span>
                 </div>
               </div>

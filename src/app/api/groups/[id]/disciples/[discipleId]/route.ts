@@ -174,12 +174,12 @@ export async function GET(
     ]);
 
     let week1Status = 'not_sent';
-    let week8Status = 'not_sent';
+    let week12Status = 'not_sent';
     if (assessmentsResult.data) {
       assessmentsResult.data.forEach((a: { assessment_week: number; sent_at: string | null; completed_at: string | null }) => {
         const status = a.completed_at ? 'completed' : a.sent_at ? 'sent' : 'not_sent';
         if (a.assessment_week === 1) week1Status = status;
-        if (a.assessment_week === 8) week8Status = status;
+        if (a.assessment_week === 12) week12Status = status;
       });
     }
 
@@ -244,7 +244,7 @@ export async function GET(
         joined_date: membership.joined_date,
         current_status: membership.current_status,
         week1_assessment_status: week1Status,
-        week8_assessment_status: week8Status,
+        week12_assessment_status: week12Status,
         group: {
           id: group.id,
           group_name: group.group_name,

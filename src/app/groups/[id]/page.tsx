@@ -12,7 +12,7 @@ interface Disciple {
   joined_date: string;
   current_status: 'active' | 'completed' | 'dropped';
   week1_assessment_status?: 'not_sent' | 'sent' | 'completed';
-  week8_assessment_status?: 'not_sent' | 'sent' | 'completed';
+  week12_assessment_status?: 'not_sent' | 'sent' | 'completed';
   app_connected?: boolean;
   current_streak?: number | null;
   last_activity_date?: string | null;
@@ -508,13 +508,13 @@ function GroupDetailContent() {
                           W1 {disciple.week1_assessment_status === 'completed' ? '✓' : disciple.week1_assessment_status === 'sent' ? 'Sent' : '—'}
                         </span>
                         <span className={`px-2 py-1 rounded ${
-                          disciple.week8_assessment_status === 'completed'
+                          disciple.week12_assessment_status === 'completed'
                             ? 'bg-green-100 text-green-700'
-                            : disciple.week8_assessment_status === 'sent'
+                            : disciple.week12_assessment_status === 'sent'
                             ? 'bg-yellow-100 text-yellow-700'
                             : 'bg-gray-100 text-gray-500'
                         }`}>
-                          W8 {disciple.week8_assessment_status === 'completed' ? '✓' : disciple.week8_assessment_status === 'sent' ? 'Sent' : '—'}
+                          W12 {disciple.week12_assessment_status === 'completed' ? '✓' : disciple.week12_assessment_status === 'sent' ? 'Sent' : '—'}
                         </span>
                       </div>
                       <span className={`px-2 py-1 rounded text-xs ${

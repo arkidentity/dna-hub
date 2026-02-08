@@ -2,7 +2,7 @@
 
 **Goal:** Build progressive SaaS platform for DNA Leader training
 
-**Status:** Phase 1 (Flow Assessment) complete. Ready for content phases.
+**Status:** Phases 1-3 COMPLETE (Flow Assessment + DNA Manual + Launch Guide). Training↔Groups bridge is next.
 
 ---
 
@@ -47,73 +47,44 @@
 
 ---
 
-## 🚧 Phase 2: DNA Manual (6 Sessions)
+## ✅ Phase 2: DNA Manual (6 Sessions) — COMPLETE
 
-### Content Migration
-- [ ] Extract session content from Ark app `dna-course-data.js`
-- [ ] Compare with updated PDF (user to provide)
-- [ ] Create `/src/data/dna-manual-data.ts` with 6 sessions
+**Completed Feb 2026.** 6 sessions, 21 lessons, 1,137 lines of real content fully extracted and implemented.
 
-### Routes & Pages
-- [ ] `/training/manual` - 6-session overview page
-- [ ] `/training/manual/[sessionId]` - Individual session view
-
-### Components
-- [ ] `<SessionCard>` - Session overview with lock/unlock state
-- [ ] `<SessionLesson>` - Expandable lesson accordion
-- [ ] `<WarmUpQuestions>` - Discussion starters
-- [ ] `<ScriptureBlock>` - Formatted Scripture with reference
-
-### API Routes
-- [ ] `GET /api/training/manual/sessions` - Get all sessions with progress
-- [ ] `PUT /api/training/manual/sessions/[id]/complete` - Mark session complete
-
-### Features
-- [ ] Sequential unlocking (Session 2 unlocked after Session 1 complete)
-- [ ] Session completion tracking
-- [ ] Progress bar (X/6 sessions complete)
-- [ ] Unlock Launch Guide upon completion
+- [x] Content extracted and organized in `/src/data/dna-manual-data.ts`
+- [x] `/training/manual` overview page
+- [x] `/training/manual/[sessionId]` individual session views
+- [x] All components built (SessionCard, SessionLesson, WarmUpQuestions, ScriptureBlock)
+- [x] API routes for progress tracking
+- [x] Sequential unlocking, completion tracking, progress bar
+- [x] Bookmarks and notes functionality
+- [x] Completion certificates
 
 ---
 
-## 📋 Phase 3: Launch Guide (5 Phases)
+## ✅ Phase 3: Launch Guide (4 Phases) — COMPLETE
 
-### Content Migration
-- [ ] Extract phase content from Ark app `dna-launch-guide-data.js`
-- [ ] Update with refreshed language from `/resources/DNA Launch Guide.md`
-- [ ] Create `/src/data/launch-guide-data.ts` with 5 phases
+**Completed Feb 2026.** 4 phases, 1,253 lines of content fully extracted and implemented.
 
-### Routes & Pages
-- [ ] `/training/launch-guide` - 5-phase overview page
-- [ ] `/training/launch-guide/[phaseId]` - Individual phase view
-
-### Features
-- [ ] Checklist completion tracking
-- [ ] Progress per phase (X/Y items complete)
-- [ ] Unlock 90-Day Toolkit upon completion
-- [ ] Enable "Create Group" button after Phase 2
+- [x] Content extracted in `/src/data/launch-guide-data.ts`
+- [x] `/training/launch-guide` overview page
+- [x] `/training/launch-guide/[phaseId]` individual phase views
+- [x] Checklist completion tracking
+- [x] Progress per phase
+- [x] All 20 API routes working
 
 ---
 
-## 📋 Phase 4: 90-Day Toolkit
+## ⏸️ Phase 4: 90-Day Toolkit — DEPRIORITIZED
 
-### Content
-- [ ] Review `/resources/THE 90-DAY TOOLKIT_*.md` files
-- [ ] Organize into 90-day structure (Month 1, 2, 3)
-- [ ] Create `/src/data/toolkit-90day-data.ts`
-
-### Routes & Pages
-- [ ] `/training/toolkit` - 90-day overview page
-- [ ] `/training/toolkit/[weekId]` - Individual week view
-
-### Features
-- [ ] Weekly completion tracking
-- [ ] PDF downloads
-- [ ] Progress visualization (90-day calendar view)
+> **Decision (Feb 8, 2026):** 90-Day Toolkit belongs in the DNA Groups experience, not Training.
+> Leaders experience it first as disciples in a DNA group, then teach it. This content will
+> be accessed through the Groups dashboard and Daily DNA Pathway, not the Training platform.
+> Revisit only if leaders specifically request it in Training.
 
 ---
 
-## 📋 Phase 5: Dashboard Enhancements
+## ⏸️ Phase 5: Dashboard Enhancements — DEPRIORITIZED
 
 ### Progressive Unlocking Logic
 ```
@@ -137,18 +108,27 @@ onboarding → flow_assessment → dna_manual → launch_guide → toolkit → c
 
 ---
 
-## 📋 Phase 6: Integration with DNA Groups
+## 🔜 Phase 6: Training ↔ Groups Bridge — NEXT PRIORITY
 
-### Connect Training to Groups
-- [ ] "Create Group" button appears after Launch Guide Phase 2
-- [ ] First group creation triggers milestone
+> **Decision (Feb 8, 2026):** Training and Groups should be more connected. DNA leaders need
+> easy access to training content (especially Launch Guide) from within their group dashboard.
+> The system should surface relevant training based on what stage/week the leader is in.
+
+### Start Simple (Week 3)
+- [ ] Add "Training Quick Access" sidebar/panel on Groups dashboard
+- [ ] Show Launch Guide progress and direct link
+- [ ] Surface relevant training content based on group phase/week
+- [ ] "Create Group" button after Launch Guide Phase 2
+
+### Iterate Later (Post-Launch)
+- [ ] Context-aware "smart content" — auto-suggest training by week
 - [ ] Group progress influences training stage
+- [ ] First group creation triggers training milestone
 - [ ] Show active groups on training dashboard
-- [ ] Link to `/groups` dashboard
 
 ---
 
-## 📋 Phase 7: Admin View
+## ⏸️ Phase 7: Admin View — DEPRIORITIZED
 
 ### Admin Features
 - [ ] View all user journeys (stage, progress, milestones)

@@ -13,6 +13,7 @@ These documents represent completed implementations and are kept for historical 
 | `UNIFIED-AUTH-QUICK-REFERENCE.md` | Jan 2026 | Developer reference for unified auth |
 | `TRAINING-AUTH-UNIFICATION-PLAN.md` | Jan 2026 | Training auth migration plan |
 | `USER-MENU-NAVIGATION.md` | Jan 2026 | UserMenu dropdown component design |
+| `DNA-GROUPS-PLAN-v1.md` | Feb 2026 | Original DNA Groups plan v1 (superseded by `DNA-GROUPS-COMPLETE-PLAN.md`) |
 
 ## When to Reference
 

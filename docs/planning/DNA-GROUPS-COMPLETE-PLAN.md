@@ -1,8 +1,8 @@
 # DNA Groups - Complete Implementation Plan
 
 **Created:** February 3, 2026
-**Status:** Planning Complete | Ready for Implementation
-**Last Updated:** February 3, 2026
+**Status:** Phase A ~85% Complete | Spiritual Gifts ✅ | Calendar + Assessments Tab Next
+**Last Updated:** February 8, 2026
 
 ---
 
@@ -39,20 +39,53 @@ A comprehensive discipleship management system that allows DNA Leaders to:
 - DNA Hub triggers tool unlocks → Daily DNA unlocks for disciple
 - Daily DNA sends completion events → DNA Hub stores PDFs in profiles
 
-### Core Features Still Needed
+### Core Features Status
 
 | Feature | Status | Priority |
 |---------|--------|----------|
-| Leader Notes + Prayer Requests | Not Started | High |
-| Disciple Profile Page | Not Started | High |
-| Group Phase Advancement | Not Started | High |
-| Co-Leader System | Not Started | High |
-| Disciple Journey View | Not Started | High |
-| Tool Assignment System | Not Started | Medium |
-| Daily DNA Integration | Not Started | Medium |
-| Engagement Analytics | Not Started | Medium |
-| Multiplication Wizard | Not Started | Medium |
+| Leader Notes + Prayer Requests (Discipleship Log) | ✅ Complete | High |
+| Disciple Profile Page | ✅ ~85% Complete (needs Assessments tab) | High |
+| Group Phase Advancement | ✅ Complete | High |
+| Co-Leader System | ✅ Complete | High |
+| Groups & Chat Phase 1 | ✅ Complete | High |
+| **DNA Calendar** | **Not Started** | **High — must work before first groups launch** |
+| **Assessments Tab** (Life Assessment + Spiritual Gifts results) | **Not Started** | **High** |
+| **Pathway Locking** (lock phases unless in group) | **Not Started** | **High** |
+| Disciple Journey View | Not Started | Medium |
+| Tool Assignment System | **Simplified** → phase-locking by month | Medium |
+| Engagement Analytics | Deferred | Low (not needed at current scale) |
+| Multiplication Wizard | Not Started | Low |
 | Multiplication Tree | Not Started | Low |
+
+### Key Decisions (Feb 8, 2026)
+
+**Calendar:**
+- Supabase is source of truth for all calendar events (`dna_calendar_events` table)
+- No Google Calendar API — email reminders via Resend + .ics "Add to Calendar" links
+- One unified "My DNA Calendar" per user — aggregates all groups + church events
+- Scoped by role: disciples see group meetings; leaders see group meetings + church events
+- Leaders/Church Admins/ARK Admin create events in Hub. Disciples are read-only.
+- "Upcoming" section in Daily DNA app sits below groups list
+- No attendance tracking (groups of 4)
+
+**Tool Access / Pathway Locking:**
+- Pathway (90-day toolkit phases 1-3) is LOCKED unless disciple is in a DNA group
+- Unlock by phase/month — leader activates phases, not individual tools
+- Always available (no group required): Creed Cards, Spiritual Gifts, Testimony Builder
+- No "leader notes" feature in app — group chat covers that
+
+**Disciple Profile — Assessments Tab:**
+- Build "Assessments" tab showing Life Assessment scores by category + growth comparison
+- Spiritual Gifts results (top 6 gifts) visible to leader
+- Q&A questions visible to leaders (ongoing theological questions)
+- Testimonies stay private unless disciple shares in group chat
+- Fix Week 8 → Week 12 across all references
+
+**Training ↔ Groups Bridge:**
+- Training content should be accessible from Groups dashboard
+- DNA leaders need Launch Guide access from within group dashboard
+- 90-Day Toolkit belongs in Groups experience, not Training
+- Start simple with links + context badges, iterate toward smart content
 
 ---
 
