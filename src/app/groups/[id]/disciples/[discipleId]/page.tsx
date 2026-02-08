@@ -288,7 +288,7 @@ function DiscipleProfileContent() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h1 className="text-2xl font-bold truncate">{disciple.name}</h1>
+                    <h1 className="text-2xl font-bold text-white truncate">{disciple.name}</h1>
                     <span className={`px-2.5 py-0.5 rounded-full text-xs font-semibold ${
                       disciple.current_status === 'active'
                         ? 'bg-green-500/20 text-green-300'

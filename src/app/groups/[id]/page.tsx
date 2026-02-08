@@ -317,7 +317,7 @@ function GroupDetailContent() {
             </Link>
             <div className="flex-1">
               <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold">{group.group_name}</h1>
+                <h1 className="text-2xl font-bold text-white">{group.group_name}</h1>
                 <span className={`px-3 py-1 rounded-full text-xs font-medium ${phaseColors[group.current_phase] || 'bg-gray-100 text-gray-700'}`}>
                   {phaseLabels[group.current_phase] || group.current_phase}
                 </span>

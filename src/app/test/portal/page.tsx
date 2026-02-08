@@ -448,7 +448,7 @@ export default function TestPortalPage() {
                 <suggestedCallInfo.icon className="w-6 h-6 text-gold" />
               </div>
               <div className="flex-1">
-                <h3 className="font-semibold text-lg">Next Step: {suggestedCallInfo.label}</h3>
+                <h3 className="font-semibold text-lg text-white">Next Step: {suggestedCallInfo.label}</h3>
                 <p className="text-gray-300 mt-1">{suggestedCallInfo.duration} • {suggestedCallInfo.purpose}</p>
                 <a
                   href={BOOKING_LINKS[suggestedCallType]}

@@ -73,7 +73,7 @@ export default function NewGroupPage() {
               </svg>
             </Link>
             <div>
-              <h1 className="text-2xl font-bold">Create New Group</h1>
+              <h1 className="text-2xl font-bold text-white">Create New Group</h1>
               <p className="text-white/70 text-sm mt-1">Start a new DNA discipleship group</p>
             </div>
           </div>

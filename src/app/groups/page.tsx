@@ -135,7 +135,7 @@ function DNALeaderDashboardContent() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-2xl font-bold">DNA Groups</h1>
+              <h1 className="text-2xl font-bold text-white">DNA Groups</h1>
               <p className="text-white/70 text-sm mt-1">
                 Welcome back, {data.leader.name}
                 {data.leader.church && (

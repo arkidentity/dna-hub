@@ -375,6 +375,7 @@ const styles = `
     font-size: 28px;
     font-weight: 700;
     margin: 0 0 8px 0;
+    color: #FFFFFF;
   }
 
   .stage-label {

@@ -344,7 +344,7 @@ export default function TestAdminChurchPage() {
           </Link>
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-semibold">{church.name}</h1>
+              <h1 className="text-xl font-semibold text-white">{church.name}</h1>
               <div className="flex items-center gap-3 mt-1 text-sm text-gray-300">
                 <span>{leader.name}</span>
                 <span>•</span>

@@ -70,7 +70,7 @@ export default function OnboardingPage() {
         {/* Dashboard CTA */}
         <section className="mb-16">
           <div className="card bg-navy text-white text-center py-10">
-            <h3 className="text-2xl font-semibold mb-3">Ready to Get Started?</h3>
+            <h3 className="text-2xl font-semibold text-white mb-3">Ready to Get Started?</h3>
             <p className="text-white/80 mb-6 max-w-xl mx-auto">
               Your personalized implementation dashboard is ready. Log in to see your roadmap, access resources, and begin Phase 1.
             </p>

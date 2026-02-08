@@ -73,7 +73,7 @@ export default function Home() {
           </div>
 
           <div className="card bg-navy text-white text-left">
-            <h3 className="text-xl font-semibold mb-3">Is DNA Right for Your Church?</h3>
+            <h3 className="text-xl font-semibold text-white mb-3">Is DNA Right for Your Church?</h3>
             <p className="text-gray-300 mb-4">
               The Manual gives you the vision. The next step is figuring out if DNA is a good fit for your context.
             </p>
@@ -312,7 +312,7 @@ export default function Home() {
         {/* Final CTA */}
         <section className="py-16 border-t border-card-border">
           <div className="card bg-navy text-white text-center py-12 px-8">
-            <h2 className="text-2xl md:text-3xl font-semibold mb-4">Ready to Make Disciples?</h2>
+            <h2 className="text-2xl md:text-3xl font-semibold text-white mb-4">Ready to Make Disciples?</h2>
             <p className="text-gray-300 mb-8 max-w-xl mx-auto">
               Get the DNA Manual and see if multiplication discipleship is right for your church.
             </p>
