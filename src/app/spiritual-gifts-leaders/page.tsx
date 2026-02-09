@@ -33,15 +33,15 @@ export default function SpiritualGiftsLeadersPage() {
 
           <div className="max-w-3xl mx-auto text-center mb-12">
             <p className="text-xl text-gray-700 mb-6 leading-relaxed">
-              When Sarah leads worship, she's exhausted by Sunday afternoon.<br />
+              When Sarah leads worship, she&apos;s exhausted by Sunday afternoon.<br />
               When Tom runs hospitality, he dreads coming to church.<br />
-              When Jessica teaches kids, she feels like she's failing.
+              When Jessica teaches kids, she feels like she&apos;s failing.
             </p>
             <p className="text-2xl font-semibold text-[var(--navy)] mb-4">
-              It's not because they're lazy.
+              It&apos;s not because they&apos;re lazy.
             </p>
             <p className="text-xl text-gray-700">
-              It's because they're serving <strong>outside their God-given design</strong>.
+              It&apos;s because they&apos;re serving <strong>outside their God-given design</strong>.
             </p>
           </div>
 
@@ -88,11 +88,11 @@ export default function SpiritualGiftsLeadersPage() {
                 The Worst Part?
               </h3>
               <p className="text-lg leading-relaxed mb-4">
-                They think <em>they're</em> the problem.
+                They think <em>they&apos;re</em> the problem.
               </p>
               <p className="text-lg leading-relaxed">
-                But the problem isn't them.<br />
-                <strong>It's the wrong fit.</strong>
+                But the problem isn&apos;t them.<br />
+                <strong>It&apos;s the wrong fit.</strong>
               </p>
             </div>
           </div>
@@ -102,7 +102,7 @@ export default function SpiritualGiftsLeadersPage() {
               What if you could place every team member in their sweet spot—
             </p>
             <p className="text-xl text-gray-700">
-              where they're <strong>energized</strong>, <strong>effective</strong>, and operating in their <strong>God-given design</strong>?
+              where they&apos;re <strong>energized</strong>, <strong>effective</strong>, and operating in their <strong>God-given design</strong>?
             </p>
           </div>
         </div>
@@ -120,7 +120,7 @@ export default function SpiritualGiftsLeadersPage() {
             multiplication movements—not burn people out.
           </p>
           <p className="text-lg text-gray-600 italic">
-            "This isn't another personality test. This is your team blueprint."
+            "            &quot;This isn&apos;t another personality test. This is your team blueprint.&quot;"
           </p>
         </div>
       </section>
@@ -136,7 +136,7 @@ export default function SpiritualGiftsLeadersPage() {
               <div>
                 <p className="text-lg text-gray-700 mb-4 leading-relaxed">
                   "Before the assessment, I had John on the greeting team. He was polite but drained.
-                  Turns out he's wired for <strong>teaching</strong>. Now he leads our men's Bible study and he's <strong className="text-[var(--teal)]">THRIVING</strong>."
+                  Turns out he&apos;s wired for <strong>teaching</strong>. Now he leads our men&apos;s Bible study and he&apos;s <strong className="text-[var(--teal)]">THRIVING</strong>."
                 </p>
                 <p className="text-sm font-semibold text-[var(--navy)]">
                   — Pastor Mike, Journey Church (Columbus, OH)
@@ -163,7 +163,7 @@ export default function SpiritualGiftsLeadersPage() {
                 step: '1',
                 title: 'Request Access',
                 time: '2 minutes',
-                desc: 'Fill out the form below. We'll send assessment links to your team within 24 hours.',
+                desc: 'Fill out the form below. We\'ll send assessment links to your team within 24 hours.',
               },
               {
                 step: '2',
@@ -263,13 +263,13 @@ export default function SpiritualGiftsLeadersPage() {
             "Isn't this just another personality test?"
           </h2>
           <p className="text-lg text-gray-700 mb-4 leading-relaxed">
-            <strong>No.</strong> This isn't about preferences (introvert vs extrovert).
+            <strong>No.</strong> This isn&apos;t about preferences (introvert vs extrovert).
           </p>
           <p className="text-lg text-gray-700 mb-4 leading-relaxed">
             This is about God-given <strong>FUNCTION</strong>—what you were designed to <em>DO</em>.
           </p>
           <p className="text-lg text-gray-700 leading-relaxed">
-            Romans 12, 1 Corinthians 12, and Ephesians 4 aren't suggestions.<br />
+            Romans 12, 1 Corinthians 12, and Ephesians 4 aren&apos;t suggestions.<br />
             <strong className="text-[var(--teal)]">They're your team blueprint.</strong>
           </p>
         </div>
