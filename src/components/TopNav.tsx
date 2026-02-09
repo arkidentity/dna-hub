@@ -17,13 +17,20 @@ export default async function TopNav() {
   const admin = isAdmin(session)
 
   return (
-    <nav className="bg-white border-b border-gray-200">
+    <nav className="bg-[var(--navy)] text-white border-b border-gray-700">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Left: Logo */}
-          <div className="flex items-center">
-            <Link href="/" className="text-xl font-bold text-[var(--navy)] hover:text-[var(--teal)] transition-colors">
-              DNA Hub
+          <div className="flex items-center gap-3">
+            <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+              <img
+                src="/dna-logo-gold.png"
+                alt="DNA Logo"
+                className="h-8 w-auto"
+              />
+              <span className="text-lg font-semibold text-white">
+                Discipleship
+              </span>
             </Link>
           </div>
 
