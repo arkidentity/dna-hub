@@ -67,6 +67,17 @@ export async function POST(request: NextRequest) {
                 <li>You can download individual PDFs and team reports</li>
               </ol>
 
+              <!-- CTA Box -->
+              <div style="background: #EFF6FF; border: 2px solid #3B82F6; border-radius: 12px; padding: 24px; margin: 30px 0;">
+                <h3 style="color: #1e293b; margin-top: 0; font-size: 18px;">Want to See What Your Team Will Experience?</h3>
+                <p style="color: #475569; margin-bottom: 20px;">
+                  Take the assessment yourself (15 minutes) and see the quality firsthand. You'll understand exactly what you're asking your team to do.
+                </p>
+                <a href="https://dailydna.app/gifts" style="display: inline-block; background: #2563EB; color: white; padding: 14px 28px; border-radius: 8px; text-decoration: none; font-weight: 600;">
+                  Try It Now →
+                </a>
+              </div>
+
               <h2 style="color: #1e40af; margin-top: 30px;">In the Meantime</h2>
               <p>Want to learn more about DNA Discipleship?</p>
               <ul>

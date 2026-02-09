@@ -69,7 +69,7 @@ export default function SpiritualGiftsLeadersPage() {
           <div className="grid md:grid-cols-2 gap-8 mb-12">
             <div className="space-y-6">
               {[
-                'Your best volunteers quit (and you don't know why)',
+                'Your best volunteers quit (and you don\'t know why)',
                 'Ministry feels like obligation instead of joy',
                 'You spend more time recruiting than discipling',
                 'People serve for 6 months and disappear',

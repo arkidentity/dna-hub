@@ -73,7 +73,25 @@ export default function SpiritualGiftsLeaderForm() {
         <p className="text-gray-600 mb-4">
           We'll be in touch within 24 hours with access details for your team.
         </p>
-        <p className="text-sm text-gray-500">Check your email (including spam folder).</p>
+        <p className="text-sm text-gray-500 mb-6">Check your email (including spam folder).</p>
+
+        {/* CTA to try it themselves */}
+        <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 mt-6">
+          <h4 className="font-bold text-gray-900 mb-2">
+            Want to See What Your Team Will Experience?
+          </h4>
+          <p className="text-sm text-gray-600 mb-4">
+            Take the assessment yourself (15 minutes) and see the quality firsthand.
+          </p>
+          <a
+            href="https://dailydna.app/gifts"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-block bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
+          >
+            Try It Now →
+          </a>
+        </div>
       </div>
     );
   }
