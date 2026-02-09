@@ -175,7 +175,7 @@ export default function SpiritualGiftsLeadersPage() {
                 step: '3',
                 title: 'View Results',
                 time: 'Instant',
-                desc: 'See your team's spiritual gifts dashboard. Know who belongs where—finally.',
+                desc: 'See your team&apos;s spiritual gifts dashboard. Know who belongs where—finally.',
               },
             ].map((item) => (
               <div key={item.step} className="text-center">
