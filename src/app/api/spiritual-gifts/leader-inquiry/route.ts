@@ -50,12 +50,12 @@ export async function POST(request: NextRequest) {
         await resend.emails.send({
           from: 'DNA Discipleship <noreply@dnadiscipleship.com>',
           to: email,
-          subject: 'Your Spiritual Gifts Team Assessment Request',
+          subject: 'Your Ministry Gifts Test Team Request',
           html: `
             <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
               <h1 style="color: #2563eb;">Thanks for Your Interest, ${name}!</h1>
 
-              <p>We received your request for team access to the Spiritual Gifts Assessment for <strong>${churchName}</strong>.</p>
+              <p>We received your request for team access to the Ministry Gifts Test for <strong>${churchName}</strong>.</p>
 
               <p>Our team will review your request and send you access details within 24 hours.</p>
 
@@ -101,7 +101,7 @@ export async function POST(request: NextRequest) {
         await resend.emails.send({
           from: 'DNA Discipleship <noreply@dnadiscipleship.com>',
           to: 'thearkidentity@gmail.com', // Replace with your team email
-          subject: `New Spiritual Gifts Team Request: ${churchName}`,
+          subject: `New Ministry Gifts Test Team Request: ${churchName}`,
           html: `
             <div style="font-family: sans-serif;">
               <h2>New Team Assessment Request</h2>

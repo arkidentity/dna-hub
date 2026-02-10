@@ -50,7 +50,7 @@
 - Cloud sync: localStorage → Supabase on submit, Supabase → localStorage on load
 
 **Remaining tasks (optional enhancements):**
-- Write remaining ~196 bridge sentences (6 hand-written, generic fallback works for now)
+- Write remaining bridge sentences — need to decide on approach first (directional = 600 combos, non-directional = 300). Generic fallback works for now. Revisit with a simpler strategy (e.g. per-gift "how I work with others" blurbs instead of pair-specific sentences).
 
 **Lead Gen Strategy (implemented Feb 9):**
 - Individual users must create an account to take the Spiritual Gifts test (auth gate at `/gifts`)

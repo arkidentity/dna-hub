@@ -13,8 +13,8 @@
 import SpiritualGiftsLeaderForm from '@/components/spiritual-gifts/SpiritualGiftsLeaderForm';
 
 export const metadata = {
-  title: 'Free Spiritual Gifts Assessment for Your Team | DNA Discipleship',
-  description: 'Get a free biblical spiritual gifts assessment for your entire team. Place every team member in their sweet spot where they\'re energized, effective, and thriving.',
+  title: 'Free Ministry Gifts Test for Your Team | DNA Discipleship',
+  description: 'Get a free biblical ministry gifts test for your entire team. Place every team member in their sweet spot where they\'re energized, effective, and thriving.',
 };
 
 export default function MinistryGiftTestPage() {
@@ -24,7 +24,7 @@ export default function MinistryGiftTestPage() {
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[var(--navy)] mb-6 text-center leading-tight">
-            Get a Free Spiritual Gifts Assessment<br />
+            Get a Free Ministry Gifts Test<br />
             <span className="text-[var(--teal)]">for Your Entire Team</span>
           </h1>
 
@@ -89,7 +89,7 @@ export default function MinistryGiftTestPage() {
                 step: '3',
                 title: 'View Your Team Dashboard',
                 time: 'Instant',
-                desc: 'See everyone\'s spiritual gifts in one place. Know who belongs where—finally.',
+                desc: 'See everyone\'s ministry gifts in one place. Know who belongs where—finally.',
               },
             ].map((item) => (
               <div key={item.step} className="text-center">
