@@ -1,6 +1,6 @@
 # DNA Hub + Daily DNA — Next Steps
 
-**Last Updated:** February 9, 2026
+**Last Updated:** February 10, 2026
 
 ---
 
@@ -9,9 +9,9 @@
 | Priority | Key Items |
 |----------|-----------|
 | **This Week** | ~~Spiritual Gifts Assessment~~ ✅, ~~Gifts PDF~~ ✅, ~~Cloud Sync~~ ✅, ~~/gifts auth gate~~ ✅, ~~Pastor landing page~~ ✅, Passage of the Day content |
-| **Next Week** | Assessment PDF, Disciple Profile assessments tab, Global Resources Admin, Groups Calendar |
-| **Week 3** | Pathway locking, Cloud sync (Testimony + Assessment), Training↔Groups bridge, Groups polish |
-| **Post-Launch** | Cloud sync (remaining tools), Groups Chat images, Multiplication tracking |
+| **Next Week** | ~~Life Assessment Supabase sync~~ ✅, ~~Life Assessment PDF (disciple)~~ ✅, ~~Life Assessment inline card (leader view)~~ ✅, Global Resources Admin, Groups Calendar |
+| **Week 3** | Pathway locking, Cloud sync (Testimony), Training↔Groups bridge, Groups polish |
+| **Post-Launch** | DNA Cohort, Cloud sync (remaining tools), Groups Chat images, Multiplication tracking |
 
 ---
 
@@ -73,47 +73,29 @@
 
 ## 🟡 Next Week (Week of Feb 16)
 
-### 3. Assessment to PDF for Church Milestones
+### 3. Life Assessment — FULLY COMPLETE ✅
 
-**Status:** Not Started
-**Priority:** High — needed for church implementation workflow
+**Status:** COMPLETE (Feb 10, 2026)
+**Priority:** ✅ DONE
 
-**Requirements:**
-- Generate PDF from church assessment data
-- Add "Attach Assessment" button on the Church Assessment milestone
-- Store PDF in milestone attachments
+**What was built (Daily DNA app):**
+- ✅ Supabase sync: `/dna-app/daily-dna/lib/assessmentSync.ts` — push-only, upserts on `(account_id, assessment_type)`, triggered on submit
+- ✅ PDF generation: `/dna-app/daily-dna/lib/assessmentPdf.tsx` — client-side via @react-pdf/renderer, W1/W12 scores + growth comparison + reflection answers
+- ✅ PDF download button on Results and Comparison views in `/app/tools/life-assessment/page.tsx`
 
-**Files:**
-- `/src/app/api/assessment/route.ts` — Existing assessment data
-- `/src/app/api/admin/church/[id]/milestones/route.ts` — Milestone attachments
-- New: PDF generation endpoint
+**What was built (DNA Hub):**
+- ✅ Life Assessment inline card on disciple profile — sits between Pathway and Creed/Testimonies
+- ✅ Shows 7 scored categories with W1/W12 score bars + delta pills
+- ✅ Shows reflection answers (Q40-42) — always visible to leader
+- ✅ API route updated to fetch from `life_assessment_responses` table
+- ✅ `LifeAssessmentResult` type added to `/src/lib/types.ts`
 
----
+**Architecture decisions:**
+- No assessments tab — results displayed inline as a card in the existing scroll layout (simpler, no nav change needed)
+- No PDF storage — disciple generates on-demand from localStorage (no storage costs at scale)
+- Leader view pulls live from Supabase `life_assessment_responses` — always current, no files
 
-### 4. Disciple Profile — Assessments Tab
-
-**Status:** Partially built, needs enhancement
-**Priority:** High — leaders need to see disciple assessment results
-
-**What exists:**
-- Disciple profile page with basic info, engagement stats, discipleship log
-- Life Assessment status badges (Week 1/Week 12) ✅ Fixed
-- API endpoint fetches assessment status
-
-**What to build:**
-- **"Assessments" tab** on disciple profile page showing:
-  - Life Assessment scores by category + Week 1 vs Week 12 growth comparison
-  - Spiritual Gifts results (top 6 gifts) — once Gifts assessment is built
-  - Future worksheets TBD
-- **Q&A Questions visible to leaders** — ongoing theological questions the disciple is asking
-- **Testimonies stay private** unless disciple shares in group chat (privacy model)
-
-**~~Bug fix required:~~** ✅ Fixed (Feb 8) — All "Week 8" references changed to "Week 12" across:
-- ~~`/src/lib/types.ts`~~ ✅
-- ~~`/src/app/groups/[id]/page.tsx`~~ ✅
-- ~~`/src/app/groups/[id]/disciples/[discipleId]/page.tsx`~~ ✅
-- ~~`/src/app/api/groups/[id]/route.ts`~~ ✅
-- ~~`/src/app/api/groups/[id]/disciples/[discipleId]/route.ts`~~ ✅
+**Bug fix completed (Feb 8):** ✅ All "Week 8" references changed to "Week 12"
 - **Still needed:** Database `life_assessments` table `assessment_week` column (values 1 and 8 → 1 and 12) — run migration to update existing rows
 
 ---
@@ -184,13 +166,13 @@
 
 ---
 
-### 7. Cloud Sync — Testimony Builder + Life Assessment
+### 7. Cloud Sync — Testimony Builder
 
 **Status:** Not started (journal sync is done and serves as reference pattern)
 **Priority:** High — highest-value tools after journal
 
 **Reference implementation:** `/dna-app/daily-dna/lib/journalSync.ts`
-**Tools to sync:** Testimony Builder, Life Assessment responses
+**Tools to sync:** Testimony Builder (Life Assessment sync is ✅ complete — see item 3 above)
 
 ---
 
@@ -257,6 +239,7 @@
 
 | Item | Priority | Notes |
 |------|----------|-------|
+| **DNA Cohort** | **High** | **Permanent leader peer community — see `DNA-COHORT-PLAN.md`** |
 | Cloud sync — Q&A, Listening Prayer, Pathway | Medium | Extend journal sync pattern |
 | Groups Chat Phase 2 (images/GIFs) | Low | Can wait |
 | Context-aware training (smart content by week/stage) | Medium | Iterative enhancement |
@@ -270,6 +253,7 @@
 ## ✅ Completed
 
 ### Recently Completed (Feb 2026)
+- ✅ **Life Assessment — FULLY COMPLETE** (Feb 10, 2026) — Supabase sync + disciple PDF + inline leader view card on disciple profile
 - ✅ **Spiritual Gifts Assessment — FULLY COMPLETE** (Feb 9, 2026) — Core build + 2-page PDF + cloud sync + auth gate + pastor landing page all deployed
   - ✅ Cloud sync to Supabase (assessment + responses)
   - ✅ Auth gate at `/gifts` route (requires account creation)
@@ -327,8 +311,8 @@ DROP TABLE IF EXISTS milestones_deprecated CASCADE;
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │ ROADMAP 2: DNA Groups Dashboard                                 │
-│ Status: Phase A ~85% ✅ | Calendar + Assessments Tab needed     │
-│ Next: Calendar, Assessments Tab, Pathway Lock                   │
+│ Status: Phase A ~90% ✅ | Calendar + Pathway Lock needed        │
+│ Next: Calendar, Pathway Lock, Groups polish                     │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -336,6 +320,16 @@ DROP TABLE IF EXISTS milestones_deprecated CASCADE;
 │ ROADMAP 3: DNA Training Platform                                │
 │ Status: Flow Assessment + Manual + Launch Guide ✅              │
 │ Next: Bridge to Groups dashboard, context-aware content         │
+└─────────────────────────────────────────────────────────────────┘
+                              │
+                              ▼
+┌─────────────────────────────────────────────────────────────────┐
+│ ROADMAP 4: DNA Cohort                                           │
+│ Status: Planned — not yet built                                 │
+│ Purpose: Permanent leader peer community (church-scoped)        │
+│ Hub: Feed, Discussion, Members, Calendar (new nav section)      │
+│ App: Cohort card in Groups tab (window into Hub)                │
+│ See: docs/planning/DNA-COHORT-PLAN.md                          │
 └─────────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -369,6 +363,7 @@ DROP TABLE IF EXISTS milestones_deprecated CASCADE;
 
 | Document | Purpose |
 |----------|---------|
+| `DNA-COHORT-PLAN.md` | DNA Cohort full architecture — permanent leader peer community, G1 experience, DB schema, build order |
 | `DNA-GROUPS-COMPLETE-PLAN.md` | DNA Groups implementation plan with calendar + assessments decisions |
 | `DNA-TRAINING-IMPLEMENTATION-PLAN.md` | Training platform roadmap (Phases 1-3 complete) |
 | `Gifts/` | Spiritual Gifts Assessment planning (questions, synopses, implementation plan) |

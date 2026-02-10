@@ -11,8 +11,9 @@ import {
   Settings,
   Download,
   UserCheck,
+  BookOpen,
 } from 'lucide-react';
-import { DNALeadersTab, ChurchesTab } from '@/components/admin';
+import { DNALeadersTab, ChurchesTab, ResourcesTab } from '@/components/admin';
 
 interface ChurchSummary {
   id: string;
@@ -42,7 +43,7 @@ interface AdminStats {
 
 export default function AdminPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'churches' | 'dna-leaders'>('churches');
+  const [activeTab, setActiveTab] = useState<'churches' | 'dna-leaders' | 'resources'>('churches');
   const [churches, setChurches] = useState<ChurchSummary[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -163,6 +164,7 @@ export default function AdminPage() {
             {[
               { id: 'churches', label: 'Churches', icon: Building2 },
               { id: 'dna-leaders', label: 'DNA Leaders', icon: UserCheck },
+              { id: 'resources', label: 'Resources', icon: BookOpen },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -193,6 +195,9 @@ export default function AdminPage() {
             onRefresh={fetchAdminData}
           />
         )}
+
+        {/* Resources Tab */}
+        {activeTab === 'resources' && <ResourcesTab />}
       </main>
     </div>
   );
