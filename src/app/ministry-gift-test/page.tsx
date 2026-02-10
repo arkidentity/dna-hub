@@ -13,8 +13,8 @@
 import SpiritualGiftsLeaderForm from '@/components/spiritual-gifts/SpiritualGiftsLeaderForm';
 
 export const metadata = {
-  title: 'Stop Guessing Where Your People Should Serve | DNA Discipleship',
-  description: 'When your team serves outside their gifting, everyone loses. Place every team member in their sweet spot with our biblical ministry gift test.',
+  title: 'Free Spiritual Gifts Assessment for Your Team | DNA Discipleship',
+  description: 'Get a free biblical spiritual gifts assessment for your entire team. Place every team member in their sweet spot where they\'re energized, effective, and thriving.',
 };
 
 export default function MinistryGiftTestPage() {
@@ -24,19 +24,25 @@ export default function MinistryGiftTestPage() {
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[var(--navy)] mb-6 text-center leading-tight">
-            Stop Guessing Where Your<br />
-            <span className="text-[var(--teal)]">People Should Serve</span>
+            Get a Free Spiritual Gifts Assessment<br />
+            <span className="text-[var(--teal)]">for Your Entire Team</span>
           </h1>
 
           <div className="max-w-3xl mx-auto text-center mb-12">
-            <p className="text-xl text-gray-700 mb-6 leading-relaxed">
-              When Nicole organizes events, she gets drained.
+            <p className="text-xl text-gray-700 mb-4 leading-relaxed">
+              When Nicole was organizing events at Cornerstone Church, she felt completely drained.
             </p>
-            <p className="text-2xl font-semibold text-[var(--navy)] mb-4">
-              It&apos;s not because she&apos;s lazy.
+            <p className="text-lg text-gray-600 mb-4">
+              It wasn&apos;t because she was lazy or uncommitted.
             </p>
-            <p className="text-xl text-gray-700">
-              It&apos;s because she&apos;s serving <strong>outside her God-given design</strong>.
+            <p className="text-xl text-gray-700 mb-4">
+              It was because she was serving <strong>outside her God-given design</strong>.
+            </p>
+            <p className="text-xl text-gray-700 mb-6">
+              After discovering her gift of <strong className="text-[var(--teal)]">mercy</strong> through our assessment, she moved to pastoral care—and now she&apos;s <strong className="text-[var(--teal)]">thriving</strong>.
+            </p>
+            <p className="text-2xl font-semibold text-[var(--navy)]">
+              What if every person on your team could serve in their sweet spot?
             </p>
           </div>
 
@@ -45,17 +51,68 @@ export default function MinistryGiftTestPage() {
               href="#get-access"
               className="inline-block bg-[var(--gold)] text-white px-10 py-5 rounded-lg font-bold text-xl hover:opacity-90 transition-opacity shadow-xl"
             >
-              Request Ministry Gift Test
+              Get Free Team Assessment
             </a>
             <p className="text-sm text-gray-500 mt-4">
-              ✓ Setup in under 5 minutes
+              ✓ Results in 15 minutes • ✓ Biblical framework (Romans 12, 1 Cor 12, Ephesians 4)<br />
+              ⏰ <strong>Limited to 50 churches this month</strong>
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Plan - Simple 3 Steps */}
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white border-t border-b border-gray-200">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-3xl font-bold text-[var(--navy)] text-center mb-4">
+            How It Works
+          </h2>
+          <p className="text-center text-gray-600 mb-12 text-lg">
+            Simple. Biblical. Actionable.
+          </p>
+
+          <div className="grid md:grid-cols-3 gap-8 mb-12">
+            {[
+              {
+                step: '1',
+                title: 'Request Team Access',
+                time: '2 minutes',
+                desc: 'Fill out the form below. We\'ll send assessment links to your team within 24 hours.',
+              },
+              {
+                step: '2',
+                title: 'Your Team Takes the Assessment',
+                time: '15 minutes each',
+                desc: '96 questions across 3 biblical gift tiers (Romans 12, 1 Cor 12, Ephesians 4).',
+              },
+              {
+                step: '3',
+                title: 'View Your Team Dashboard',
+                time: 'Instant',
+                desc: 'See everyone\'s spiritual gifts in one place. Know who belongs where—finally.',
+              },
+            ].map((item) => (
+              <div key={item.step} className="text-center">
+                <div className="w-16 h-16 bg-[var(--gold)] text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
+                  {item.step}
+                </div>
+                <h3 className="text-xl font-bold text-[var(--navy)] mb-2">{item.title}</h3>
+                <p className="text-[var(--teal)] font-semibold mb-3">{item.time}</p>
+                <p className="text-gray-600">{item.desc}</p>
+              </div>
+            ))}
+          </div>
+
+          <div className="bg-blue-50 p-6 rounded-xl border-2 border-[var(--teal)] text-center">
+            <p className="text-gray-600 italic">
+              📊 Visual preview of team dashboard coming soon
             </p>
           </div>
         </div>
       </section>
 
       {/* Stakes - What's at Risk */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white border-t border-b border-gray-200">
+      <section className="py-16 px-4 sm:px-6 lg:px-8 bg-gray-50">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-[var(--navy)] text-center mb-12">
             What happens when people serve outside their gifting?
@@ -139,50 +196,6 @@ export default function MinistryGiftTestPage() {
         </div>
       </section>
 
-      {/* Plan - Simple 3 Steps */}
-      <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-5xl mx-auto">
-          <h2 className="text-3xl font-bold text-[var(--navy)] text-center mb-4">
-            How It Works
-          </h2>
-          <p className="text-center text-gray-600 mb-12 text-lg">
-            Simple. Biblical. Actionable.
-          </p>
-
-          <div className="grid md:grid-cols-3 gap-8 mb-12">
-            {[
-              {
-                step: '1',
-                title: 'Request Access',
-                time: '2 minutes',
-                desc: 'Fill out the form below. We\'ll send assessment links to your team within 24 hours.',
-              },
-              {
-                step: '2',
-                title: 'They Take Assessment',
-                time: '15 minutes',
-                desc: '96 questions across 3 biblical tiers (Romans 12, 1 Cor 12, Ephesians 4).',
-              },
-              {
-                step: '3',
-                title: 'View Results',
-                time: 'Instant',
-                desc: 'See your team\'s spiritual gifts dashboard. Know who belongs where—finally.',
-              },
-            ].map((item) => (
-              <div key={item.step} className="text-center">
-                <div className="w-16 h-16 bg-[var(--gold)] text-white rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-bold shadow-lg">
-                  {item.step}
-                </div>
-                <h3 className="text-xl font-bold text-[var(--navy)] mb-2">{item.title}</h3>
-                <p className="text-[var(--teal)] font-semibold mb-3">{item.time}</p>
-                <p className="text-gray-600">{item.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       {/* Form Section - CTA */}
       <section id="get-access" className="py-16 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-[var(--navy)] to-[var(--navy)]/90">
         <div className="max-w-2xl mx-auto">
@@ -248,22 +261,27 @@ export default function MinistryGiftTestPage() {
         </div>
       </section>
 
-      {/* Objection Handling */}
+      {/* Why Biblical Gifts Matter */}
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white border-t border-gray-200">
         <div className="max-w-3xl mx-auto">
-          <h2 className="text-2xl font-bold text-[var(--navy)] mb-4">
-            "Isn't this just another personality test?"
+          <h2 className="text-3xl font-bold text-[var(--navy)] mb-6 text-center">
+            Why Biblical Gifts Matter More Than Personality
           </h2>
           <p className="text-lg text-gray-700 mb-4 leading-relaxed">
-            <strong>No.</strong> This isn&apos;t about preferences (introvert vs extrovert).
+            This isn&apos;t about preferences (introvert vs extrovert).
           </p>
-          <p className="text-lg text-gray-700 mb-4 leading-relaxed">
+          <p className="text-xl text-gray-700 mb-4 leading-relaxed">
             This is about God-given <strong>FUNCTION</strong>—what you were designed to <em>DO</em>.
           </p>
-          <p className="text-lg text-gray-700 leading-relaxed">
-            Romans 12, 1 Corinthians 12, and Ephesians 4 aren&apos;t suggestions.<br />
-            <strong className="text-[var(--teal)]">They're your team blueprint.</strong>
+          <p className="text-lg text-gray-700 mb-6 leading-relaxed">
+            Our assessment identifies where people will be most effective and fulfilled—not just comfortable.
           </p>
+          <div className="bg-[var(--navy)] text-white p-6 rounded-xl">
+            <p className="text-lg leading-relaxed">
+              Romans 12, 1 Corinthians 12, and Ephesians 4 aren&apos;t suggestions.<br />
+              <strong className="text-[var(--gold)] text-xl">They're your team blueprint.</strong>
+            </p>
+          </div>
         </div>
       </section>
 
@@ -274,17 +292,18 @@ export default function MinistryGiftTestPage() {
             Stop Losing Your Best People
           </h2>
           <p className="text-xl mb-10 leading-relaxed">
-            Request your free team assessment and place every team member<br />
+            Get your free team assessment and place every team member<br />
             in the role they were designed for.
           </p>
           <a
             href="#get-access"
             className="inline-block bg-[var(--gold)] text-white px-12 py-6 rounded-lg font-bold text-2xl hover:opacity-90 transition-opacity shadow-2xl"
           >
-            Get Free Assessment
+            Get Free Team Assessment
           </a>
           <p className="text-sm text-gray-200 mt-6">
-            No credit card. No commitment. Just clarity.
+            No credit card. No commitment. Just clarity.<br />
+            ⏰ <strong>Only 50 spots available this month</strong>
           </p>
         </div>
       </section>

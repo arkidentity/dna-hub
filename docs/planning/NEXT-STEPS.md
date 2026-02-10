@@ -1,6 +1,6 @@
 # DNA Hub + Daily DNA — Next Steps
 
-**Last Updated:** February 8, 2026
+**Last Updated:** February 9, 2026
 
 ---
 
@@ -8,7 +8,7 @@
 
 | Priority | Key Items |
 |----------|-----------|
-| **This Week** | ~~Spiritual Gifts Assessment~~ ✅, ~~Gifts PDF~~ ✅, Passage of the Day content, Spiritual Gifts remaining (cloud sync, /gifts auth gate, pastor landing page) |
+| **This Week** | ~~Spiritual Gifts Assessment~~ ✅, ~~Gifts PDF~~ ✅, ~~Cloud Sync~~ ✅, ~~/gifts auth gate~~ ✅, ~~Pastor landing page~~ ✅, Passage of the Day content |
 | **Next Week** | Assessment PDF, Disciple Profile assessments tab, Global Resources Admin, Groups Calendar |
 | **Week 3** | Pathway locking, Cloud sync (Testimony + Assessment), Training↔Groups bridge, Groups polish |
 | **Post-Launch** | Cloud sync (remaining tools), Groups Chat images, Multiplication tracking |
@@ -17,10 +17,10 @@
 
 ## 🔴 This Week (Week of Feb 9)
 
-### 1. Spiritual Gifts Assessment — CORE BUILD COMPLETE ✅
+### 1. Spiritual Gifts Assessment — FULLY COMPLETE ✅
 
-**Status:** Core assessment built and deployed (Feb 8, 2026)
-**Priority:** ~~Highest~~ Remaining items are enhancement-level
+**Status:** COMPLETE (Feb 9, 2026) — Assessment, PDF, Cloud Sync, Auth Gate, Landing Page all deployed
+**Priority:** ✅ DONE
 
 **What was built (Daily DNA app):**
 - ✅ Types: `/dna-app/daily-dna/types/spiritualGifts.ts`
@@ -29,8 +29,17 @@
 - ✅ 25 synopses + bridge sentences: `/dna-app/daily-dna/lib/spiritualGiftsSynopses.ts`
 - ✅ Shared component: `/dna-app/daily-dna/components/gifts/SpiritualGiftsAssessment.tsx`
 - ✅ 2-page PDF generation: `/dna-app/daily-dna/lib/spiritualGiftsPdf.tsx` (client-side via @react-pdf/renderer)
+- ✅ Cloud sync: `/dna-app/daily-dna/lib/spiritualGiftsSync.ts` (syncs to Supabase on submit + load)
 - ✅ In-app route: `/app/tools/spiritual-gifts/page.tsx` (for disciples in 90-day toolkit Week 11)
-- ✅ Public route: `/app/gifts/page.tsx` (requires account creation)
+- ✅ Public route: `/app/gifts/page.tsx` (requires account creation — auth gate added Feb 9)
+
+**What was built (DNA Hub):**
+- ✅ Pastor landing page: `/ministry-gift-test` (StoryBrand conversion framework, Feb 9)
+- ✅ Lead capture form: `/components/spiritual-gifts/SpiritualGiftsLeaderForm.tsx`
+- ✅ API endpoint: `/api/spiritual-gifts/leader-inquiry/route.ts` (Resend emails)
+- ✅ Database table: Migration 044 (`spiritual_gifts_leader_inquiries`)
+- ✅ "Try it yourself" CTA in success message + confirmation email
+- ✅ Updated site header: DNA logo + "Discipleship" (navy background)
 
 **Architecture:**
 - One question at a time with progress bar + tier intro banners
@@ -38,16 +47,15 @@
 - Results: Top 6 gifts overview → Per-tier cards with primary/secondary, synopses, bridge sentences, "how to grow", expandable full scores
 - Shared `SpiritualGiftsAssessment` component with `isPublic` prop (two wrappers)
 - Questions shuffled within each tier but tiers stay in order (1→2→3)
+- Cloud sync: localStorage → Supabase on submit, Supabase → localStorage on load
 
-**Remaining tasks (not blockers):**
-- ~~PDF generation for results~~ ✅ Built (Feb 8) — 2-page compact PDF via `@react-pdf/renderer`, client-side generation, download button on results screen. File: `lib/spiritualGiftsPdf.tsx`
-- Cloud sync to Supabase (`spiritual_gifts_assessments` table — migration already exists at `021_spiritual-gifts-assessment.sql`)
-- `/gifts` public route needs auth gate — require account creation to take assessment (no anonymous test-taking)
-- **Pastor landing page** (lead gen) — separate from `/gifts`, lives on Hub/dnadiscipleship.com. Offers pastors team assessment access. Captures: name, email, church name, church size. Follow-up via Resend email sequence.
+**Remaining tasks (optional enhancements):**
 - Write remaining ~196 bridge sentences (6 hand-written, generic fallback works for now)
 
-**Lead Gen Strategy (decided Feb 8):**
-- Individual users must create an account to take the Spiritual Gifts test (no email-only capture)
+**Lead Gen Strategy (implemented Feb 9):**
+- Individual users must create an account to take the Spiritual Gifts test (auth gate at `/gifts`)
+- Pastor landing page at `/ministry-gift-test` captures: name, email, church name, church size
+- Confirmation email includes "Try it yourself" CTA linking to `/gifts`
 - Lead gen funnel targets pastors/church leaders via a dedicated landing page on Hub
 - Pastor landing page offers: "Use this Spiritual Gifts Assessment for your entire team"
 - Captures: name, email, church name, church size → Supabase + Resend follow-up sequence
@@ -262,7 +270,15 @@
 ## ✅ Completed
 
 ### Recently Completed (Feb 2026)
-- ✅ **Spiritual Gifts Assessment + PDF** — Core build + 2-page PDF complete in Daily DNA app (96 questions, 3 tiers, scoring, results with synopses, PDF download, in-app + public routes)
+- ✅ **Spiritual Gifts Assessment — FULLY COMPLETE** (Feb 9, 2026) — Core build + 2-page PDF + cloud sync + auth gate + pastor landing page all deployed
+  - ✅ Cloud sync to Supabase (assessment + responses)
+  - ✅ Auth gate at `/gifts` route (requires account creation)
+  - ✅ Pastor landing page at `/ministry-gift-test` (StoryBrand conversion framework)
+  - ✅ Lead capture form with Resend email automation
+  - ✅ "Try it yourself" CTA in success message + confirmation email
+  - ✅ Migration 044: `spiritual_gifts_leader_inquiries` table
+  - ✅ Site-wide header update: DNA logo + "Discipleship" (navy background)
+- ✅ **Leader Group Chat Fix** (Feb 9, 2026) — Migration 043: Fixed `get_my_group_ids()` to include leaders
 - ✅ Groups & Chat Phase 1 (real-time group chat with shared content)
 - ✅ Account syncing from Daily DNA to Hub
 - ✅ DNA Training — DNA Manual (6 sessions, 21 lessons, fully extracted)

@@ -71,7 +71,7 @@ export default function UserMenu({ session }: UserMenuProps) {
       {/* User button */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="flex items-center gap-2 text-[var(--navy)] hover:text-[var(--teal)] transition-colors"
+        className="flex items-center gap-2 text-white hover:text-[var(--gold)] transition-colors"
         aria-expanded={isOpen}
         aria-haspopup="true"
       >
