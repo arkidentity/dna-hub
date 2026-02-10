@@ -100,6 +100,7 @@ export async function GET(
       prayerCardCountResult,
       testimonyResult,
       creedResult,
+      lifeAssessmentsResult,
     ] = await Promise.all([
       supabase
         .from('life_assessments')
@@ -171,6 +172,15 @@ export async function GET(
             .eq('account_id', appAccountId)
             .single()
         : Promise.resolve({ data: null, error: null }),
+      // Life assessment results (synced from Daily DNA app)
+      appAccountId
+        ? supabase
+            .from('life_assessment_responses')
+            .select('assessment_type, category_scores, overall_score, responses, submitted_at')
+            .eq('account_id', appAccountId)
+            .eq('status', 'submitted')
+            .order('submitted_at', { ascending: true })
+        : Promise.resolve({ data: null, error: null }),
     ]);
 
     let week1Status = 'not_sent';
@@ -231,6 +241,11 @@ export async function GET(
           total_cards_mastered: (creedResult.data.cards_mastered || []).length,
           total_study_sessions: creedResult.data.total_study_sessions,
           last_studied_at: creedResult.data.last_studied_at,
+        } : null,
+        // Life assessment results (synced from Daily DNA app)
+        life_assessments: lifeAssessmentsResult.data ? {
+          week1: (lifeAssessmentsResult.data as Array<{ assessment_type: string; category_scores: Record<string, number> | null; overall_score: number | null; responses: Record<string, unknown>; submitted_at: string | null }>).find(r => r.assessment_type === 'week_1') || null,
+          week12: (lifeAssessmentsResult.data as Array<{ assessment_type: string; category_scores: Record<string, number> | null; overall_score: number | null; responses: Record<string, unknown>; submitted_at: string | null }>).find(r => r.assessment_type === 'week_12') || null,
         } : null,
       };
     }

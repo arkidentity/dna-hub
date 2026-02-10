@@ -206,6 +206,30 @@ function DiscipleProfileContent() {
     return entry.entry_type === logFilter;
   }) || [];
 
+  // Life assessment data
+  const lifeAssessments = disciple?.app_activity?.life_assessments;
+  const week1Assessment = lifeAssessments?.week1 ?? null;
+  const week12Assessment = lifeAssessments?.week12 ?? null;
+  const hasLifeAssessment = !!(week1Assessment || week12Assessment);
+
+  // Category display config (matches assessmentData.ts order, excludes reflection)
+  const LIFE_ASSESSMENT_CATEGORIES = [
+    { id: 'relationship_with_god', label: 'Relationship with God' },
+    { id: 'spiritual_freedom', label: 'Spiritual Freedom' },
+    { id: 'identity_emotions', label: 'Identity & Emotions' },
+    { id: 'relationships', label: 'Relationships' },
+    { id: 'calling_purpose', label: 'Calling & Purpose' },
+    { id: 'lifestyle_stewardship', label: 'Lifestyle & Stewardship' },
+    { id: 'spiritual_fruit', label: 'Spiritual Fruit' },
+  ];
+
+  // Reflection question text (matches assessmentData.ts Q40-Q42)
+  const REFLECTION_QUESTIONS: Record<number, string> = {
+    40: "What's the biggest area of growth you need in the next 3 months?",
+    41: "If you're honest, what are you afraid of?",
+    42: "Why did you say yes to DNA discipleship?",
+  };
+
   // Extract app data with safe defaults
   const appConnected = disciple?.app_activity?.connected ?? false;
   const progress = disciple?.app_activity?.progress;
@@ -648,6 +672,156 @@ function DiscipleProfileContent() {
             )}
           </div>
         </div>
+
+        {/* ============================================================ */}
+        {/* LIFE ASSESSMENT                                               */}
+        {/* ============================================================ */}
+        {hasLifeAssessment && (
+          <div className="bg-white rounded-xl shadow-sm border border-card-border overflow-hidden">
+            <div className="px-6 pt-5 pb-4 border-b border-gray-100">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-bold text-navy">Life Assessment</h2>
+                <div className="flex items-center gap-3 text-xs text-gray-400">
+                  {week1Assessment?.submitted_at && (
+                    <span>W1: {new Date(week1Assessment.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  )}
+                  {week12Assessment?.submitted_at && (
+                    <span>W12: {new Date(week12Assessment.submitted_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}</span>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            {/* Category Scores */}
+            <div className="px-6 py-4">
+              {/* Column headers */}
+              <div className="grid grid-cols-[1fr_80px_80px_56px] gap-2 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
+                <span>Category</span>
+                <span className="text-center">Week 1</span>
+                <span className="text-center">Week 12</span>
+                <span className="text-center">Change</span>
+              </div>
+
+              <div className="space-y-3">
+                {LIFE_ASSESSMENT_CATEGORIES.map((cat) => {
+                  const w1Score = week1Assessment?.category_scores?.[cat.id] ?? null;
+                  const w12Score = week12Assessment?.category_scores?.[cat.id] ?? null;
+                  const delta = w1Score !== null && w12Score !== null
+                    ? Math.round((w12Score - w1Score) * 10) / 10
+                    : null;
+
+                  return (
+                    <div key={cat.id} className="grid grid-cols-[1fr_80px_80px_56px] gap-2 items-center">
+                      <span className="text-sm text-navy font-medium truncate">{cat.label}</span>
+
+                      {/* Week 1 score */}
+                      <div className="flex flex-col items-center gap-1">
+                        {w1Score !== null ? (
+                          <>
+                            <span className="text-xs font-semibold text-gray-700">{w1Score.toFixed(1)}<span className="text-gray-400 font-normal">/5</span></span>
+                            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full rounded-full bg-navy/40" style={{ width: `${(w1Score / 5) * 100}%` }} />
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-xs text-gray-300">—</span>
+                        )}
+                      </div>
+
+                      {/* Week 12 score */}
+                      <div className="flex flex-col items-center gap-1">
+                        {w12Score !== null ? (
+                          <>
+                            <span className="text-xs font-semibold text-gray-700">{w12Score.toFixed(1)}<span className="text-gray-400 font-normal">/5</span></span>
+                            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                              <div className="h-full rounded-full" style={{ width: `${(w12Score / 5) * 100}%`, background: 'var(--gold)' }} />
+                            </div>
+                          </>
+                        ) : (
+                          <span className="text-xs text-gray-300">—</span>
+                        )}
+                      </div>
+
+                      {/* Delta */}
+                      <div className="flex justify-center">
+                        {delta !== null ? (
+                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                            delta > 0
+                              ? 'bg-green-100 text-green-700'
+                              : delta < 0
+                              ? 'bg-red-100 text-red-600'
+                              : 'bg-gray-100 text-gray-500'
+                          }`}>
+                            {delta > 0 ? `+${delta}` : delta === 0 ? '—' : delta}
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-300">—</span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Overall scores */}
+              {(week1Assessment?.overall_score !== null || week12Assessment?.overall_score !== null) && (
+                <div className="mt-4 pt-3 border-t border-gray-100 grid grid-cols-[1fr_80px_80px_56px] gap-2 items-center">
+                  <span className="text-sm font-bold text-navy">Overall</span>
+                  <span className="text-center text-sm font-bold text-navy">
+                    {week1Assessment?.overall_score != null ? `${week1Assessment.overall_score.toFixed(1)}/5` : '—'}
+                  </span>
+                  <span className="text-center text-sm font-bold" style={{ color: 'var(--gold-dark)' }}>
+                    {week12Assessment?.overall_score != null ? `${week12Assessment.overall_score.toFixed(1)}/5` : '—'}
+                  </span>
+                  <div className="flex justify-center">
+                    {week1Assessment?.overall_score != null && week12Assessment?.overall_score != null ? (() => {
+                      const d = Math.round((week12Assessment.overall_score - week1Assessment.overall_score) * 10) / 10;
+                      return (
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
+                          d > 0 ? 'bg-green-100 text-green-700' : d < 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'
+                        }`}>
+                          {d > 0 ? `+${d}` : d === 0 ? '—' : d}
+                        </span>
+                      );
+                    })() : <span className="text-xs text-gray-300">—</span>}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Reflection Answers */}
+            {(week1Assessment || week12Assessment) && (
+              <div className="px-6 pb-5 border-t border-gray-100">
+                <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-4 mb-3">Reflection</h3>
+                <div className="space-y-4">
+                  {([40, 41, 42] as const).map((qId) => {
+                    const w1Answer = week1Assessment?.responses?.[qId] as string | undefined;
+                    const w12Answer = week12Assessment?.responses?.[qId] as string | undefined;
+                    if (!w1Answer && !w12Answer) return null;
+
+                    return (
+                      <div key={qId}>
+                        <p className="text-xs text-gray-500 mb-1.5">{REFLECTION_QUESTIONS[qId]}</p>
+                        {w1Answer && (
+                          <div className="mb-1.5">
+                            <span className="text-[10px] font-semibold text-navy/40 uppercase tracking-wider mr-2">W1</span>
+                            <span className="text-sm text-navy">{w1Answer}</span>
+                          </div>
+                        )}
+                        {w12Answer && (
+                          <div>
+                            <span className="text-[10px] font-semibold uppercase tracking-wider mr-2" style={{ color: 'var(--gold-dark)' }}>W12</span>
+                            <span className="text-sm text-navy">{w12Answer}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
 
         {/* ============================================================ */}
         {/* CREED CARDS & TESTIMONIES (Compact row)                      */}

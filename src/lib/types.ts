@@ -715,6 +715,14 @@ export interface AppCreedProgress {
   last_studied_at: string | null;
 }
 
+export interface LifeAssessmentResult {
+  assessment_type: 'week_1' | 'week_12';
+  category_scores: Record<string, number> | null;
+  overall_score: number | null;
+  responses: Record<string, unknown>;
+  submitted_at: string | null;
+}
+
 export interface AppActivity {
   connected: boolean;
   progress: AppActivityProgress | null;
@@ -727,6 +735,10 @@ export interface AppActivity {
   }>;
   testimonies?: AppTestimonySummary[];
   creed_progress?: AppCreedProgress | null;
+  life_assessments?: {
+    week1: LifeAssessmentResult | null;
+    week12: LifeAssessmentResult | null;
+  } | null;
 }
 
 // Disciple Profile (extended with journey data for profile page)
