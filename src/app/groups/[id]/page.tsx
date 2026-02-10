@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import EventModal from '@/components/groups/EventModal';
 
 interface Disciple {
   id: string;
@@ -70,6 +71,9 @@ function GroupDetailContent() {
     email: '',
     phone: '',
   });
+
+  // Event modal state
+  const [showEventModal, setShowEventModal] = useState(false);
 
   // Phase display helpers
   const phaseLabels: Record<string, string> = {
@@ -433,12 +437,23 @@ function GroupDetailContent() {
             <h2 className="text-lg font-semibold text-navy">
               Disciples ({group.disciples.length})
             </h2>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="bg-gold hover:bg-gold/90 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors"
-            >
-              + Add Disciple
-            </button>
+            <div className="flex items-center gap-3">
+              <button
+                onClick={() => setShowEventModal(true)}
+                className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors flex items-center gap-2"
+              >
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                </svg>
+                Schedule Meeting
+              </button>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="bg-gold hover:bg-gold/90 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors"
+              >
+                + Add Disciple
+              </button>
+            </div>
           </div>
 
           {group.disciples.length === 0 ? (
@@ -759,6 +774,18 @@ function GroupDetailContent() {
             </form>
           </div>
         </div>
+      )}
+
+      {/* Event Modal */}
+      {showEventModal && (
+        <EventModal
+          groupId={groupId}
+          onClose={() => setShowEventModal(false)}
+          onSuccess={() => {
+            // Event created successfully
+            setShowEventModal(false);
+          }}
+        />
       )}
     </div>
   );

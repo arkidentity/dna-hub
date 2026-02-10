@@ -232,6 +232,45 @@ export interface GlobalResource {
   created_at: string;
 }
 
+// DNA Calendar Event
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  description?: string | null;
+  location?: string | null;
+  start_time: string;
+  end_time?: string | null;
+  event_type: 'group_meeting' | 'cohort_event' | 'church_event';
+  group_id?: string | null;
+  cohort_id?: string | null;
+  church_id?: string | null;
+  is_recurring: boolean;
+  recurrence_pattern?: RecurrencePattern | null;
+  parent_event_id?: string | null;
+  created_by?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface RecurrencePattern {
+  frequency: 'weekly' | 'biweekly' | 'monthly';
+  interval: number;
+  day_of_week?: number;
+  end_date: string;
+}
+
+// DNA Cohort
+export interface Cohort {
+  id: string;
+  church_id: string;
+  name: string;
+  generation?: number | null;
+  status: 'active' | 'archived';
+  started_at?: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 // Extended types for UI
 export interface MilestoneWithProgress extends Milestone {
   progress?: ChurchProgress;
