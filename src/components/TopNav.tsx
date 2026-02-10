@@ -22,13 +22,13 @@ export default async function TopNav() {
         <div className="flex justify-between h-16">
           {/* Left: Logo */}
           <div className="flex items-center gap-3">
-            <Link href="/" className="flex items-center gap-2 hover:opacity-90 transition-opacity">
+            <Link href="/" className="flex items-center gap-3 hover:opacity-90 transition-opacity">
               <img
                 src="/dna-logo-gold.png"
                 alt="DNA Logo"
-                className="h-8 w-auto"
+                className="h-10 w-auto"
               />
-              <span className="text-lg font-semibold text-white">
+              <span className="text-xl font-semibold text-white">
                 Discipleship
               </span>
             </Link>

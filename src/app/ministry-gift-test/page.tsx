@@ -13,35 +13,30 @@
 import SpiritualGiftsLeaderForm from '@/components/spiritual-gifts/SpiritualGiftsLeaderForm';
 
 export const metadata = {
-  title: 'Stop Guessing Which Team Members Belong in Which Roles | DNA Discipleship',
-  description: 'When your team serves outside their spiritual gifting, everyone loses. Place every team member in their sweet spot with our biblical assessment.',
+  title: 'Stop Guessing Where Your People Should Serve | DNA Discipleship',
+  description: 'When your team serves outside their gifting, everyone loses. Place every team member in their sweet spot with our biblical ministry gift test.',
 };
 
-export default function SpiritualGiftsLeadersPage() {
+export default function MinistryGiftTestPage() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
       {/* Hero Section - Character + Problem */}
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-5xl mx-auto">
-          <p className="text-sm uppercase tracking-wide text-[var(--gold)] font-semibold mb-4 text-center">
-            For Pastors & Church Leaders
-          </p>
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-[var(--navy)] mb-6 text-center leading-tight">
-            Stop Guessing Which Team Members<br />
-            <span className="text-[var(--teal)]">Belong in Which Roles</span>
+            Stop Guessing Where Your<br />
+            <span className="text-[var(--teal)]">People Should Serve</span>
           </h1>
 
           <div className="max-w-3xl mx-auto text-center mb-12">
             <p className="text-xl text-gray-700 mb-6 leading-relaxed">
-              When Sarah leads worship, she&apos;s exhausted by Sunday afternoon.<br />
-              When Tom runs hospitality, he dreads coming to church.<br />
-              When Jessica teaches kids, she feels like she&apos;s failing.
+              When Nicole organizes events, she gets drained.
             </p>
             <p className="text-2xl font-semibold text-[var(--navy)] mb-4">
-              It&apos;s not because they&apos;re lazy.
+              It&apos;s not because she&apos;s lazy.
             </p>
             <p className="text-xl text-gray-700">
-              It&apos;s because they&apos;re serving <strong>outside their God-given design</strong>.
+              It&apos;s because she&apos;s serving <strong>outside her God-given design</strong>.
             </p>
           </div>
 
@@ -50,10 +45,10 @@ export default function SpiritualGiftsLeadersPage() {
               href="#get-access"
               className="inline-block bg-[var(--gold)] text-white px-10 py-5 rounded-lg font-bold text-xl hover:opacity-90 transition-opacity shadow-xl"
             >
-              Request Free Team Assessment
+              Request Ministry Gift Test
             </a>
             <p className="text-sm text-gray-500 mt-4">
-              ✓ No credit card required &nbsp;•&nbsp; ✓ Setup in under 5 minutes
+              ✓ Setup in under 5 minutes
             </p>
           </div>
         </div>
@@ -63,7 +58,7 @@ export default function SpiritualGiftsLeadersPage() {
       <section className="py-16 px-4 sm:px-6 lg:px-8 bg-white border-t border-b border-gray-200">
         <div className="max-w-4xl mx-auto">
           <h2 className="text-3xl font-bold text-[var(--navy)] text-center mb-12">
-            Here's What Happens When You Get This Wrong
+            What happens when people serve outside their gifting?
           </h2>
 
           <div className="grid md:grid-cols-2 gap-8 mb-12">
@@ -112,15 +107,12 @@ export default function SpiritualGiftsLeadersPage() {
       <section className="py-16 px-4 sm:px-6 lg:px-8">
         <div className="max-w-4xl mx-auto text-center">
           <h2 className="text-3xl font-bold text-[var(--navy)] mb-6">
-            We've Been There
+            Not another personality test.
           </h2>
           <p className="text-xl text-gray-700 mb-8 leading-relaxed max-w-3xl mx-auto">
-            At DNA Discipleship, we've helped <strong>hundreds of churches</strong> discover and deploy their teams
-            according to biblical gifting patterns. We specialize in equipping leaders to build
+            At DNA Discipleship, we help churches discover and deploy their teams
+            according to their biblical gifting. We specialize in equipping leaders to build
             multiplication movements—not burn people out.
-          </p>
-          <p className="text-lg text-gray-600 italic">
-            "            &quot;This isn&apos;t another personality test. This is your team blueprint.&quot;"
           </p>
         </div>
       </section>
@@ -175,7 +167,7 @@ export default function SpiritualGiftsLeadersPage() {
                 step: '3',
                 title: 'View Results',
                 time: 'Instant',
-                desc: 'See your team&apos;s spiritual gifts dashboard. Know who belongs where—finally.',
+                desc: 'See your team\'s spiritual gifts dashboard. Know who belongs where—finally.',
               },
             ].map((item) => (
               <div key={item.step} className="text-center">
