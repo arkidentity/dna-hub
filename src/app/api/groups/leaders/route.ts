@@ -21,22 +21,27 @@ export async function GET(request: NextRequest) {
 
     if (!currentLeader) return NextResponse.json({ error: 'DNA leader not found' }, { status: 404 });
 
-    // Get active DNA leaders, optionally filtered by church
     const { searchParams } = new URL(request.url);
-    const churchFilter = searchParams.get('church_id');
+    const emailSearch = searchParams.get('email')?.toLowerCase().trim();
+
+    // Independent leaders (no church_id) only get results when searching by email
+    if (!currentLeader.church_id && !emailSearch) {
+      return NextResponse.json({ leaders: [] });
+    }
 
     let query = supabase
       .from('dna_leaders')
       .select('id, name, email, church_id')
       .eq('is_active', true)
-      .neq('id', currentLeader.id) // Exclude self
-      .not('activated_at', 'is', null) // Only activated leaders
+      .neq('id', currentLeader.id)
+      .not('activated_at', 'is', null)
       .order('name', { ascending: true });
 
-    // Filter by church if provided, or default to same church
-    if (churchFilter) {
-      query = query.eq('church_id', churchFilter);
-    } else if (currentLeader.church_id) {
+    if (emailSearch) {
+      // Email search: look up by exact email across the whole network
+      query = query.ilike('email', emailSearch);
+    } else {
+      // Church leaders: default to same church
       query = query.eq('church_id', currentLeader.church_id);
     }
 

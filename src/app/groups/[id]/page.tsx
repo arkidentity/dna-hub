@@ -61,6 +61,8 @@ function GroupDetailContent() {
   const [coLeaderError, setCoLeaderError] = useState<string | null>(null);
   const [settingCoLeader, setSettingCoLeader] = useState(false);
   const [removingCoLeader, setRemovingCoLeader] = useState(false);
+  const [leaderEmailSearch, setLeaderEmailSearch] = useState('');
+  const [searchingLeader, setSearchingLeader] = useState(false);
 
   // Add disciple modal state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -126,6 +128,7 @@ function GroupDetailContent() {
     setShowCoLeaderModal(true);
     setCoLeaderError(null);
     setSelectedLeaderId('');
+    setLeaderEmailSearch('');
     setLoadingLeaders(true);
 
     try {
@@ -139,6 +142,27 @@ function GroupDetailContent() {
       setCoLeaderError('Failed to load available leaders');
     }
     setLoadingLeaders(false);
+  };
+
+  const handleLeaderEmailSearch = async (email: string) => {
+    setLeaderEmailSearch(email);
+    setSelectedLeaderId('');
+    if (!email.trim()) {
+      // Reload default list
+      const response = await fetch('/api/groups/leaders');
+      const data = await response.json();
+      if (response.ok && data.leaders) setAvailableLeaders(data.leaders);
+      return;
+    }
+    setSearchingLeader(true);
+    try {
+      const response = await fetch(`/api/groups/leaders?email=${encodeURIComponent(email.trim())}`);
+      const data = await response.json();
+      if (response.ok && data.leaders) setAvailableLeaders(data.leaders);
+    } catch (err) {
+      console.error('Leader search error:', err);
+    }
+    setSearchingLeader(false);
   };
 
   const handleSetCoLeader = async () => {
@@ -635,28 +659,40 @@ function GroupDetailContent() {
                 <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold mx-auto"></div>
                 <p className="text-sm text-gray-500 mt-2">Loading leaders...</p>
               </div>
-            ) : availableLeaders.length === 0 ? (
-              <div className="text-center py-8">
-                <p className="text-gray-600">No available DNA leaders found.</p>
-                <p className="text-sm text-gray-400 mt-1">Leaders must be active and from the same church.</p>
-              </div>
             ) : (
               <div>
                 <label className="block text-sm font-medium text-navy mb-2">
-                  Select a DNA Leader
+                  Search by email
                 </label>
-                <select
-                  value={selectedLeaderId}
-                  onChange={(e) => setSelectedLeaderId(e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold focus:border-gold"
-                >
-                  <option value="">Choose a leader...</option>
-                  {availableLeaders.map(leader => (
-                    <option key={leader.id} value={leader.id}>
-                      {leader.name} ({leader.email})
-                    </option>
-                  ))}
-                </select>
+                <input
+                  type="email"
+                  value={leaderEmailSearch}
+                  onChange={(e) => handleLeaderEmailSearch(e.target.value)}
+                  placeholder="Enter co-leader's email address"
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold focus:border-gold mb-3"
+                />
+
+                {searchingLeader ? (
+                  <p className="text-sm text-gray-400 py-2">Searching...</p>
+                ) : availableLeaders.length === 0 ? (
+                  <p className="text-sm text-gray-400 py-2">
+                    {leaderEmailSearch.trim() ? 'No active leader found with that email.' : 'No other leaders in your church yet.'}
+                  </p>
+                ) : (
+                  <div className="border border-gray-200 rounded-lg divide-y max-h-48 overflow-y-auto">
+                    {availableLeaders.map(leader => (
+                      <button
+                        key={leader.id}
+                        type="button"
+                        onClick={() => setSelectedLeaderId(leader.id === selectedLeaderId ? '' : leader.id)}
+                        className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${selectedLeaderId === leader.id ? 'bg-gold/10 border-l-2 border-gold' : ''}`}
+                      >
+                        <p className="font-medium text-navy text-sm">{leader.name}</p>
+                        <p className="text-xs text-gray-500">{leader.email}</p>
+                      </button>
+                    ))}
+                  </div>
+                )}
 
                 <div className="flex justify-end gap-3 mt-6">
                   <button
@@ -671,7 +707,7 @@ function GroupDetailContent() {
                     disabled={!selectedLeaderId || settingCoLeader}
                     className="bg-gold hover:bg-gold/90 text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {settingCoLeader ? 'Inviting...' : 'Set Co-Leader'}
+                    {settingCoLeader ? 'Setting...' : 'Set Co-Leader'}
                   </button>
                 </div>
               </div>
