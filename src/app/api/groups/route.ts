@@ -70,9 +70,9 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (insertError) {
-      console.error('[Groups] Insert error:', insertError);
+      console.error('[Groups] Insert error:', insertError.code, insertError.message, insertError.details, insertError.hint);
       return NextResponse.json(
-        { error: 'Failed to create group' },
+        { error: `Failed to create group: ${insertError.message}` },
         { status: 500 }
       );
     }

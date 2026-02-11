@@ -58,6 +58,20 @@ export async function POST(
       return NextResponse.json({ error: 'Not authorized to add disciples to this group' }, { status: 403 });
     }
 
+    // Enforce max 6 active disciples per group
+    const { count: activeCount } = await supabase
+      .from('group_disciples')
+      .select('id', { count: 'exact', head: true })
+      .eq('group_id', groupId)
+      .eq('current_status', 'active');
+
+    if ((activeCount ?? 0) >= 6) {
+      return NextResponse.json(
+        { error: 'This group has reached the maximum of 6 disciples.' },
+        { status: 400 }
+      );
+    }
+
     const body = await request.json();
     const { name, email, phone } = body;
 
