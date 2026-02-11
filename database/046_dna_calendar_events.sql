@@ -59,8 +59,7 @@ CREATE INDEX IF NOT EXISTS idx_dna_calendar_events_parent ON dna_calendar_events
 
 -- Index for common query: get upcoming events
 CREATE INDEX IF NOT EXISTS idx_dna_calendar_events_upcoming
-  ON dna_calendar_events(start_time)
-  WHERE start_time >= NOW();
+  ON dna_calendar_events(start_time);
 
 -- =====================
 -- UPDATE TRIGGER
@@ -83,16 +82,16 @@ CREATE POLICY "Group members can view group meeting events"
     AND group_id IN (
       -- Leaders can see their group events
       SELECT id FROM dna_groups WHERE leader_id IN (
-        SELECT id FROM dna_leaders WHERE account_id = auth.uid()
+        SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email'
       )
       UNION
       -- Co-leaders can see their group events
-      SELECT group_id FROM dna_group_co_leaders WHERE co_leader_id IN (
-        SELECT id FROM dna_leaders WHERE account_id = auth.uid()
+      SELECT id FROM dna_groups WHERE co_leader_id IN (
+        SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email'
       )
       UNION
       -- Disciples can see their group events
-      SELECT group_id FROM dna_disciples WHERE account_id = auth.uid()
+      SELECT gd.group_id FROM group_disciples gd JOIN disciples d ON d.id = gd.disciple_id JOIN disciple_app_accounts daa ON daa.disciple_id = d.id WHERE daa.id = auth.uid()
     )
   );
 
@@ -103,7 +102,7 @@ CREATE POLICY "Cohort members can view cohort events"
     event_type = 'cohort_event'
     AND cohort_id IN (
       SELECT cohort_id FROM dna_cohort_members WHERE leader_id IN (
-        SELECT id FROM dna_leaders WHERE account_id = auth.uid()
+        SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email'
       )
     )
   );
@@ -116,15 +115,17 @@ CREATE POLICY "Church members can view church events"
     AND (
       -- DNA leaders at this church
       church_id IN (
-        SELECT church_id FROM dna_leaders WHERE account_id = auth.uid()
+        SELECT church_id FROM dna_leaders WHERE email = auth.jwt()->>'email'
       )
       OR
       -- Disciples at this church (via their groups)
       church_id IN (
         SELECT g.church_id
         FROM dna_groups g
-        JOIN dna_disciples d ON d.group_id = g.id
-        WHERE d.account_id = auth.uid()
+        JOIN group_disciples gd ON gd.group_id = g.id
+        JOIN disciples disc ON disc.id = gd.disciple_id
+        JOIN disciple_app_accounts daa ON daa.disciple_id = disc.id
+        WHERE daa.id = auth.uid()
       )
     )
   );
@@ -136,11 +137,11 @@ CREATE POLICY "DNA leaders can create group meeting events"
     event_type = 'group_meeting'
     AND group_id IN (
       SELECT id FROM dna_groups WHERE leader_id IN (
-        SELECT id FROM dna_leaders WHERE account_id = auth.uid()
+        SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email'
       )
       UNION
-      SELECT group_id FROM dna_group_co_leaders WHERE co_leader_id IN (
-        SELECT id FROM dna_leaders WHERE account_id = auth.uid()
+      SELECT id FROM dna_groups WHERE co_leader_id IN (
+        SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email'
       )
     )
   );
@@ -154,7 +155,7 @@ CREATE POLICY "Trainers and church admins can create cohort events"
       -- Cohort trainer
       cohort_id IN (
         SELECT cohort_id FROM dna_cohort_members
-        WHERE leader_id IN (SELECT id FROM dna_leaders WHERE account_id = auth.uid())
+        WHERE leader_id IN (SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email')
         AND role = 'trainer'
       )
       OR
@@ -162,7 +163,7 @@ CREATE POLICY "Trainers and church admins can create cohort events"
       EXISTS (
         SELECT 1 FROM church_leaders cl
         JOIN dna_cohorts c ON c.church_id = cl.church_id
-        WHERE cl.account_id = auth.uid()
+        WHERE cl.email = auth.jwt()->>'email'
         AND c.id = cohort_id
       )
     )
@@ -174,19 +175,19 @@ CREATE POLICY "Church admins can create church events"
   WITH CHECK (
     event_type = 'church_event'
     AND church_id IN (
-      SELECT church_id FROM church_leaders WHERE account_id = auth.uid()
+      SELECT church_id FROM church_leaders WHERE email = auth.jwt()->>'email'
     )
   );
 
 -- Event creators can update their own events
 CREATE POLICY "Event creators can update their events"
   ON dna_calendar_events FOR UPDATE
-  USING (created_by IN (SELECT id FROM dna_leaders WHERE account_id = auth.uid()));
+  USING (created_by IN (SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email'));
 
 -- Event creators can delete their own events
 CREATE POLICY "Event creators can delete their events"
   ON dna_calendar_events FOR DELETE
-  USING (created_by IN (SELECT id FROM dna_leaders WHERE account_id = auth.uid()));
+  USING (created_by IN (SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email'));
 
 -- Service role has full access
 CREATE POLICY "Service role has full access to calendar events"
@@ -237,34 +238,36 @@ BEGIN
       -- Group meetings for groups I'm in
       (e.event_type = 'group_meeting' AND e.group_id IN (
         SELECT g.id FROM dna_groups g WHERE g.leader_id IN (
-          SELECT id FROM dna_leaders WHERE account_id = auth.uid()
+          SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email'
         )
         UNION
-        SELECT gcl.group_id FROM dna_group_co_leaders gcl WHERE gcl.co_leader_id IN (
-          SELECT id FROM dna_leaders WHERE account_id = auth.uid()
+        SELECT id FROM dna_groups WHERE co_leader_id IN (
+          SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email'
         )
         UNION
-        SELECT d.group_id FROM dna_disciples d WHERE d.account_id = auth.uid()
+        SELECT gd.group_id FROM group_disciples gd JOIN disciples d ON d.id = gd.disciple_id JOIN disciple_app_accounts daa ON daa.disciple_id = d.id WHERE daa.id = auth.uid()
       ))
       OR
       -- Cohort events for cohorts I'm in
       (e.event_type = 'cohort_event' AND e.cohort_id IN (
         SELECT cohort_id FROM dna_cohort_members WHERE leader_id IN (
-          SELECT id FROM dna_leaders WHERE account_id = auth.uid()
+          SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email'
         )
       ))
       OR
       -- Church events for my church
       (e.event_type = 'church_event' AND (
         e.church_id IN (
-          SELECT church_id FROM dna_leaders WHERE account_id = auth.uid()
+          SELECT church_id FROM dna_leaders WHERE email = auth.jwt()->>'email'
         )
         OR
         e.church_id IN (
           SELECT g.church_id
           FROM dna_groups g
-          JOIN dna_disciples d ON d.group_id = g.id
-          WHERE d.account_id = auth.uid()
+          JOIN group_disciples gd ON gd.group_id = g.id
+          JOIN disciples disc ON disc.id = gd.disciple_id
+          JOIN disciple_app_accounts daa ON daa.disciple_id = disc.id
+          WHERE daa.id = auth.uid()
         )
       ))
     )

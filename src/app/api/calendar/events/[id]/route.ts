@@ -19,7 +19,7 @@ export async function DELETE(
     const { data: leader } = await supabase
       .from('dna_leaders')
       .select('id')
-      .eq('account_id', session.userId)
+      .eq('email', session.email)
       .single();
 
     if (!leader) {

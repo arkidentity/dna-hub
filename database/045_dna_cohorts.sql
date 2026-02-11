@@ -112,10 +112,10 @@ CREATE POLICY "Church leaders can view their cohorts"
   ON dna_cohorts FOR SELECT
   USING (
     church_id IN (
-      SELECT church_id FROM dna_leaders WHERE account_id = auth.uid()
+      SELECT church_id FROM dna_leaders WHERE email = auth.jwt()->>'email'
     )
     OR EXISTS (
-      SELECT 1 FROM church_leaders WHERE account_id = auth.uid() AND church_id = dna_cohorts.church_id
+      SELECT 1 FROM church_leaders WHERE email = auth.jwt()->>'email' AND church_id = dna_cohorts.church_id
     )
   );
 
@@ -131,7 +131,7 @@ CREATE POLICY "Cohort members can view their cohort members"
   USING (
     cohort_id IN (
       SELECT cohort_id FROM dna_cohort_members WHERE leader_id IN (
-        SELECT id FROM dna_leaders WHERE account_id = auth.uid()
+        SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email'
       )
     )
   );
@@ -148,7 +148,7 @@ CREATE POLICY "Cohort members can view posts in their cohort"
   USING (
     cohort_id IN (
       SELECT cohort_id FROM dna_cohort_members WHERE leader_id IN (
-        SELECT id FROM dna_leaders WHERE account_id = auth.uid()
+        SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email'
       )
     )
   );
@@ -160,13 +160,13 @@ CREATE POLICY "Trainers can create posts in their cohort"
       SELECT cohort_id FROM dna_cohort_members
       WHERE leader_id = author_id
       AND role = 'trainer'
-      AND leader_id IN (SELECT id FROM dna_leaders WHERE account_id = auth.uid())
+      AND leader_id IN (SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email')
     )
   );
 
 CREATE POLICY "Trainers can update their own posts"
   ON dna_cohort_posts FOR UPDATE
-  USING (author_id IN (SELECT id FROM dna_leaders WHERE account_id = auth.uid()));
+  USING (author_id IN (SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email'));
 
 CREATE POLICY "Service role has full access to cohort posts"
   ON dna_cohort_posts FOR ALL
@@ -180,7 +180,7 @@ CREATE POLICY "Cohort members can view discussion in their cohort"
   USING (
     cohort_id IN (
       SELECT cohort_id FROM dna_cohort_members WHERE leader_id IN (
-        SELECT id FROM dna_leaders WHERE account_id = auth.uid()
+        SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email'
       )
     )
   );
@@ -190,14 +190,14 @@ CREATE POLICY "Cohort members can post in discussion"
   WITH CHECK (
     cohort_id IN (
       SELECT cohort_id FROM dna_cohort_members WHERE leader_id IN (
-        SELECT id FROM dna_leaders WHERE account_id = auth.uid()
+        SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email'
       )
     )
   );
 
 CREATE POLICY "Authors can update their own discussion posts"
   ON dna_cohort_discussion FOR UPDATE
-  USING (author_id IN (SELECT id FROM dna_leaders WHERE account_id = auth.uid()));
+  USING (author_id IN (SELECT id FROM dna_leaders WHERE email = auth.jwt()->>'email'));
 
 CREATE POLICY "Service role has full access to cohort discussion"
   ON dna_cohort_discussion FOR ALL
