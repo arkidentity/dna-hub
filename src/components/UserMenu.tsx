@@ -34,13 +34,13 @@ export default function UserMenu({ session }: UserMenuProps) {
     }
   }, [isOpen])
 
-  // Build dashboard list based on user roles
+  // Build dashboard list based on user roles (order: Church, Groups, Cohort, Training)
   const dashboards: Dashboard[] = []
 
-  // Cohort - for church leaders
+  // Church - for church leaders
   if (session.roles.some(r => r.role === 'church_leader')) {
     dashboards.push({
-      name: 'Cohort',
+      name: 'Church',
       href: '/dashboard',
       active: pathname.startsWith('/dashboard')
     })
@@ -55,6 +55,7 @@ export default function UserMenu({ session }: UserMenuProps) {
     })
   }
 
+  // Cohort - for cohort members (future role, reserved)
   // Training - for training participants
   if (session.roles.some(r => r.role === 'training_participant')) {
     dashboards.push({
