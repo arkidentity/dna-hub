@@ -4,6 +4,7 @@ import { useState, useEffect, Suspense } from 'react';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import EventModal from '@/components/groups/EventModal';
+import GroupMeetings from '@/components/groups/GroupMeetings';
 
 interface Disciple {
   id: string;
@@ -82,6 +83,7 @@ function GroupDetailContent() {
 
   // Event modal state
   const [showEventModal, setShowEventModal] = useState(false);
+  const [meetingsKey, setMeetingsKey] = useState(0);
 
   // Phase display helpers
   const phaseLabels: Record<string, string> = {
@@ -475,6 +477,13 @@ function GroupDetailContent() {
           </div>
         </div>
 
+        {/* Scheduled Meetings */}
+        <GroupMeetings
+          key={meetingsKey}
+          groupId={groupId}
+          onScheduleNew={() => setShowEventModal(true)}
+        />
+
         {/* Disciples section */}
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
@@ -482,15 +491,6 @@ function GroupDetailContent() {
               Disciples ({group.disciples.length})
             </h2>
             <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowEventModal(true)}
-                className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors flex items-center gap-2"
-              >
-                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                </svg>
-                Schedule Meeting
-              </button>
               <button
                 onClick={() => setShowAddModal(true)}
                 className="bg-gold hover:bg-gold/90 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors"
@@ -838,8 +838,8 @@ function GroupDetailContent() {
           groupId={groupId}
           onClose={() => setShowEventModal(false)}
           onSuccess={() => {
-            // Event created successfully
             setShowEventModal(false);
+            setMeetingsKey(k => k + 1);
           }}
         />
       )}

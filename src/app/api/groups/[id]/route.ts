@@ -63,7 +63,7 @@ export async function GET(
 
     if (groupError) {
       console.error('[Groups] Group query error:', groupError);
-      return NextResponse.json({ error: 'Failed to load group', detail: groupError.message }, { status: 500 });
+      return NextResponse.json({ error: 'Failed to load group' }, { status: 500 });
     }
 
     if (!group) {

@@ -2,7 +2,9 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
 import { getUnifiedSession } from '@/lib/unified-auth';
 
-// GET: Fetch calendar events for current user
+// GET: Fetch calendar events
+// Supports ?group_id=X&start=ISO&end=ISO for group-scoped fetches (hub leader view)
+// Falls back to RPC for general user-scoped fetches
 export async function GET(request: NextRequest) {
   try {
     const session = await getUnifiedSession();
@@ -15,8 +17,30 @@ export async function GET(request: NextRequest) {
 
     const startDate = searchParams.get('start') || new Date().toISOString();
     const endDate = searchParams.get('end') || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString();
+    const groupId = searchParams.get('group_id');
 
-    // Use the helper function from the migration
+    if (groupId) {
+      // Group-scoped fetch — direct query, admin client, no JWT needed
+      // Returns instances only (not parent recurring records)
+      const { data: events, error } = await supabase
+        .from('dna_calendar_events')
+        .select('id, title, description, location, start_time, end_time, event_type, is_recurring, parent_event_id, recurrence_pattern, created_at')
+        .eq('group_id', groupId)
+        .eq('event_type', 'group_meeting')
+        .eq('is_recurring', false)  // instances only — parent records have is_recurring=true
+        .gte('start_time', startDate)
+        .lte('start_time', endDate)
+        .order('start_time', { ascending: true });
+
+      if (error) {
+        console.error('[CALENDAR] Group fetch error:', error);
+        return NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 });
+      }
+
+      return NextResponse.json({ events });
+    }
+
+    // General fetch via RPC (works for disciple-facing Daily DNA app)
     const { data: events, error } = await supabase
       .rpc('get_my_calendar_events', {
         start_date: startDate,
