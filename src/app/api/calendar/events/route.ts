@@ -173,7 +173,12 @@ function generateRecurringInstances(
   const instances: Array<{ start: string; end: string | null }> = [];
   const start = new Date(startTime);
   const end = endTime ? new Date(endTime) : null;
-  const endDate = new Date(pattern.end_date);
+  // end_date from the form is "YYYY-MM-DD" (no time) — treat as end of that day
+  // to avoid timezone issues where midnight UTC < start_time UTC
+  const endDateStr = pattern.end_date.includes('T')
+    ? pattern.end_date
+    : pattern.end_date + 'T23:59:59';
+  const endDate = new Date(endDateStr);
   const duration = end ? end.getTime() - start.getTime() : 0;
 
   let current = new Date(start);

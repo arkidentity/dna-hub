@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { X, Calendar, Clock, MapPin, Loader2, RefreshCw } from 'lucide-react';
 
 interface EventModalProps {
@@ -24,9 +24,12 @@ export default function EventModal({ groupId, onClose, onSuccess }: EventModalPr
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const submittingRef = useRef(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
     setSaving(true);
     setError(null);
 
@@ -72,6 +75,7 @@ export default function EventModal({ groupId, onClose, onSuccess }: EventModalPr
       setError(err instanceof Error ? err.message : 'Failed to create event');
     } finally {
       setSaving(false);
+      submittingRef.current = false;
     }
   };
 

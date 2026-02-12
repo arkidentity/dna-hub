@@ -61,12 +61,18 @@ export async function GET(
       .eq('id', groupId)
       .single();
 
-    if (groupError || !group) {
+    if (groupError) {
+      console.error('[Groups] Group query error:', groupError);
+      return NextResponse.json({ error: 'Failed to load group', detail: groupError.message }, { status: 500 });
+    }
+
+    if (!group) {
       return NextResponse.json({ error: 'Group not found' }, { status: 404 });
     }
 
     // Verify the current user is the leader or co-leader
     if (group.leader_id !== leaderId && group.co_leader_id !== leaderId) {
+      console.error('[Groups] Auth mismatch — group.leader_id:', group.leader_id, 'group.co_leader_id:', group.co_leader_id, 'leaderId:', leaderId);
       return NextResponse.json({ error: 'Not authorized to view this group' }, { status: 403 });
     }
 

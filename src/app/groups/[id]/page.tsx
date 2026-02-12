@@ -230,13 +230,13 @@ function GroupDetailContent() {
           return;
         }
 
+        const data = await response.json();
+
         if (response.status === 404) {
-          setError('Group not found');
+          setError(data.error || 'Group not found');
           setLoading(false);
           return;
         }
-
-        const data = await response.json();
 
         if (!response.ok || data.error) {
           setError(data.error || 'Failed to load group');
