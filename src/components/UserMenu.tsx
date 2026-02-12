@@ -55,7 +55,15 @@ export default function UserMenu({ session }: UserMenuProps) {
     })
   }
 
-  // Cohort - for cohort members (future role, reserved)
+  // Cohort - visible to DNA leaders and church leaders
+  if (session.roles.some(r => r.role === 'dna_leader' || r.role === 'church_leader')) {
+    dashboards.push({
+      name: 'Cohort',
+      href: '/cohort',
+      active: pathname.startsWith('/cohort')
+    })
+  }
+
   // Training - for training participants
   if (session.roles.some(r => r.role === 'training_participant')) {
     dashboards.push({

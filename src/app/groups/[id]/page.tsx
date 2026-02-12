@@ -477,13 +477,6 @@ function GroupDetailContent() {
           </div>
         </div>
 
-        {/* Scheduled Meetings */}
-        <GroupMeetings
-          key={meetingsKey}
-          groupId={groupId}
-          onScheduleNew={() => setShowEventModal(true)}
-        />
-
         {/* Disciples section */}
         <div className="bg-white rounded-lg shadow">
           <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
@@ -595,6 +588,14 @@ function GroupDetailContent() {
             </div>
           )}
         </div>
+
+        {/* Scheduled Meetings */}
+        <GroupMeetings
+          key={meetingsKey}
+          groupId={groupId}
+          onScheduleNew={() => setShowEventModal(true)}
+        />
+
       </main>
 
       {/* Advance Phase Modal */}

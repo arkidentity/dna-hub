@@ -57,6 +57,7 @@ export default function GroupMeetings({ groupId, onScheduleNew }: GroupMeetingsP
   const [editingEvent, setEditingEvent] = useState<GroupEvent | null>(null);
   const [editScope, setEditScope] = useState<DeleteScope>('this');
   const [editForm, setEditForm] = useState<EditForm>({ title: '', description: '', location: '', date: '', time: '', duration: '60' });
+  const [showAll, setShowAll] = useState(false);
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
   const savingRef = useRef(false);
@@ -181,12 +182,12 @@ export default function GroupMeetings({ groupId, onScheduleNew }: GroupMeetingsP
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
           <h2 className="text-lg font-semibold text-navy flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-purple-600" />
+            <Calendar className="w-5 h-5 text-teal" />
             Scheduled Meetings
           </h2>
           <button
             onClick={onScheduleNew}
-            className="bg-purple-600 hover:bg-purple-700 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors"
+            className="bg-teal hover:bg-teal-light text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors"
           >
             + Schedule Meeting
           </button>
@@ -204,54 +205,67 @@ export default function GroupMeetings({ groupId, onScheduleNew }: GroupMeetingsP
             No meetings scheduled yet.
           </div>
         ) : (
-          <div className="divide-y divide-gray-100">
-            {events.map(event => (
-              <div key={event.id} className="px-6 py-4 flex items-start justify-between gap-4">
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className="font-medium text-navy text-sm">{event.title}</span>
-                    {isRecurring(event) && (
-                      <span className="inline-flex items-center gap-1 text-xs text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
-                        <RefreshCw className="w-3 h-3" />
-                        Recurring
-                      </span>
-                    )}
-                  </div>
-                  <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 flex-wrap">
-                    <span className="flex items-center gap-1">
-                      <Clock className="w-3 h-3" />
-                      {formatEventDate(event.start_time)} &middot; {formatEventTime(event.start_time, event.end_time)}
-                    </span>
-                    {event.location && (
+          <>
+            <div className="divide-y divide-gray-100">
+              {(showAll ? events : events.slice(0, 5)).map(event => (
+                <div key={event.id} className="px-6 py-4 flex items-start justify-between gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-medium text-navy text-sm">{event.title}</span>
+                      {isRecurring(event) && (
+                        <span className="inline-flex items-center gap-1 text-xs text-teal bg-teal/10 px-2 py-0.5 rounded-full">
+                          <RefreshCw className="w-3 h-3" />
+                          Recurring
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 flex-wrap">
                       <span className="flex items-center gap-1">
-                        <MapPin className="w-3 h-3" />
-                        {event.location}
+                        <Clock className="w-3 h-3" />
+                        {formatEventDate(event.start_time)} &middot; {formatEventTime(event.start_time, event.end_time)}
                       </span>
+                      {event.location && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="w-3 h-3" />
+                          {event.location}
+                        </span>
+                      )}
+                    </div>
+                    {event.description && (
+                      <p className="text-xs text-gray-400 mt-1 truncate">{event.description}</p>
                     )}
                   </div>
-                  {event.description && (
-                    <p className="text-xs text-gray-400 mt-1 truncate">{event.description}</p>
-                  )}
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => openEdit(event)}
+                      className="p-1.5 text-gray-400 hover:text-navy rounded transition-colors"
+                      title="Edit"
+                    >
+                      <Edit2 className="w-4 h-4" />
+                    </button>
+                    <button
+                      onClick={() => openDelete(event)}
+                      className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors"
+                      title="Delete"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 shrink-0">
-                  <button
-                    onClick={() => openEdit(event)}
-                    className="p-1.5 text-gray-400 hover:text-navy rounded transition-colors"
-                    title="Edit"
-                  >
-                    <Edit2 className="w-4 h-4" />
-                  </button>
-                  <button
-                    onClick={() => openDelete(event)}
-                    className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors"
-                    title="Delete"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </button>
-                </div>
+              ))}
+            </div>
+            {events.length > 5 && (
+              <div className="px-6 py-3 border-t border-gray-100">
+                <button
+                  onClick={() => setShowAll(v => !v)}
+                  className="text-sm text-teal hover:text-teal-light font-medium flex items-center gap-1 transition-colors"
+                >
+                  <ChevronDown className={`w-4 h-4 transition-transform ${showAll ? 'rotate-180' : ''}`} />
+                  {showAll ? 'Show less' : `Show ${events.length - 5} more meeting${events.length - 5 === 1 ? '' : 's'}`}
+                </button>
               </div>
-            ))}
-          </div>
+            )}
+          </>
         )}
       </div>
 

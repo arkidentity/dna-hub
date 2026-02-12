@@ -85,7 +85,7 @@ export default function EventModal({ groupId, onClose, onSuccess }: EventModalPr
         {/* Header */}
         <div className="sticky top-0 bg-white border-b border-card-border px-6 py-4 flex items-center justify-between">
           <h3 className="text-xl font-semibold text-navy flex items-center gap-2">
-            <Calendar className="w-5 h-5 text-purple-600" />
+            <Calendar className="w-5 h-5 text-teal" />
             Schedule Meeting
           </h3>
           <button onClick={onClose} className="p-1 text-gray-400 hover:text-navy transition-colors">
