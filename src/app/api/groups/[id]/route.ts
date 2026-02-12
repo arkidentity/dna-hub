@@ -54,6 +54,8 @@ export async function GET(
         is_active,
         leader_id,
         co_leader_id,
+        pending_co_leader_id,
+        co_leader_invited_at,
         created_at
       `)
       .eq('id', groupId)
@@ -84,6 +86,17 @@ export async function GET(
         .eq('id', group.co_leader_id)
         .single();
       coLeader = coLeaderData;
+    }
+
+    // Get pending co-leader info if exists
+    let pendingCoLeader = null;
+    if (group.pending_co_leader_id) {
+      const { data: pendingData } = await supabase
+        .from('dna_leaders')
+        .select('id, name, email')
+        .eq('id', group.pending_co_leader_id)
+        .single();
+      pendingCoLeader = pendingData;
     }
 
     // Get disciples in this group (include app_account_id for app connection status)
@@ -189,6 +202,8 @@ export async function GET(
         is_active: group.is_active,
         leader,
         co_leader: coLeader,
+        pending_co_leader: pendingCoLeader,
+        co_leader_invited_at: group.co_leader_invited_at || null,
         disciples,
       },
     });

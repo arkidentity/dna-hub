@@ -46,7 +46,7 @@ export default function Home() {
               href="/login"
               className="text-sm text-gold-light hover:text-gold transition-colors"
             >
-              Church Login
+              DNA Login
             </Link>
           </div>
         </header>
@@ -59,7 +59,7 @@ export default function Home() {
           <h1 className="text-3xl font-bold text-navy mb-4">Check Your Email</h1>
 
           <p className="text-foreground-muted mb-8">
-            The DNA Manual is on the way to <strong className="text-navy">{email}</strong>.
+            The Multiplication Manual is on the way to <strong className="text-navy">{email}</strong>.
             <br />
             If you don&apos;t see the email in 2 minutes, check your spam folder.
           </p>
@@ -68,7 +68,7 @@ export default function Home() {
             <h3 className="font-semibold text-navy mb-3">What you received:</h3>
             <div className="flex items-center gap-3 text-success">
               <CheckCircle className="w-5 h-5" />
-              <span>DNA Discipleship Manual (PDF)</span>
+              <span>DNA Multiplication Manual (PDF)</span>
             </div>
           </div>
 
@@ -154,7 +154,7 @@ export default function Home() {
             href="/login"
             className="text-sm text-gold-light hover:text-gold transition-colors"
           >
-            Church Login
+            DNA Login
           </Link>
         </div>
       </header>
@@ -187,7 +187,7 @@ export default function Home() {
 
           {/* Email Capture Form */}
           <div className="card max-w-md mx-auto">
-            <h2 className="text-xl font-semibold text-navy mb-4">Get the DNA Manual (Free)</h2>
+            <h2 className="text-xl font-semibold text-navy mb-4">Get the Multiplication Manual (Free)</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <input
@@ -222,7 +222,7 @@ export default function Home() {
               </button>
             </form>
             <p className="text-xs text-foreground-muted mt-3">
-              We&apos;ll email you the DNA Manual immediately. No spam—just helpful content from ARK Identity.
+              We&apos;ll email you the Multiplication Manual immediately. No spam—just helpful content from ARK Identity.
             </p>
           </div>
         </section>
@@ -264,7 +264,7 @@ export default function Home() {
         {/* What You Get */}
         <section className="py-16 border-t border-card-border">
           <h2 className="text-2xl md:text-3xl font-semibold text-navy text-center mb-4">
-            Start with the DNA Manual
+            Start with the Multiplication Manual
           </h2>
           <p className="text-foreground-muted text-center max-w-2xl mx-auto mb-10">
             The foundation of everything. This 6-session training covers the heart, theology, and practice of multiplication discipleship.
@@ -276,7 +276,7 @@ export default function Home() {
                 <BookOpen className="w-8 h-8 text-gold" />
               </div>
               <div>
-                <h3 className="font-semibold text-navy text-lg mb-2">DNA Discipleship Manual</h3>
+                <h3 className="font-semibold text-navy text-lg mb-2">DNA Multiplication Manual</h3>
                 <p className="text-foreground-muted text-sm mb-4">6 sessions • 49 pages</p>
                 <ul className="space-y-2 text-sm">
                   <li className="flex items-start gap-2">
@@ -314,7 +314,7 @@ export default function Home() {
           <div className="card bg-navy text-white text-center py-12 px-8">
             <h2 className="text-2xl md:text-3xl font-semibold text-white mb-4">Ready to Make Disciples?</h2>
             <p className="text-gray-300 mb-8 max-w-xl mx-auto">
-              Get the DNA Manual and see if multiplication discipleship is right for your church.
+              Get the Multiplication Manual and see if multiplication discipleship is right for your church.
             </p>
             <a
               href="#"

@@ -444,7 +444,7 @@ export default function DashboardPage() {
               { id: 'overview', label: 'Overview', icon: LayoutDashboard },
               { id: 'journey', label: 'DNA Journey', icon: Map },
               { id: 'team', label: 'Team', icon: UserCog },
-              { id: 'groups', label: 'DNA Groups', icon: Users },
+              { id: 'groups', label: 'DNA Leaders', icon: Users },
             ].map((tab) => (
               <button
                 key={tab.id}

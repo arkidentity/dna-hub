@@ -37,28 +37,28 @@ export default function UserMenu({ session }: UserMenuProps) {
   // Build dashboard list based on user roles
   const dashboards: Dashboard[] = []
 
-  // My Church - for church leaders
+  // Cohort - for church leaders
   if (session.roles.some(r => r.role === 'church_leader')) {
     dashboards.push({
-      name: 'My Church',
+      name: 'Cohort',
       href: '/dashboard',
       active: pathname.startsWith('/dashboard')
     })
   }
 
-  // My Groups - for DNA leaders
+  // Groups - for DNA leaders
   if (session.roles.some(r => r.role === 'dna_leader')) {
     dashboards.push({
-      name: 'My Groups',
+      name: 'Groups',
       href: '/groups',
       active: pathname.startsWith('/groups') && !pathname.startsWith('/groups/signup')
     })
   }
 
-  // DNA Training - for training participants
+  // Training - for training participants
   if (session.roles.some(r => r.role === 'training_participant')) {
     dashboards.push({
-      name: 'DNA Training',
+      name: 'Training',
       href: '/training',
       active: pathname.startsWith('/training') && !pathname.startsWith('/training/signup')
     })

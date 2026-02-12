@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
 import { getUnifiedSession, hasRole } from '@/lib/unified-auth';
+import { sendCoLeaderInvitationEmail } from '@/lib/email';
 
 // POST /api/groups/[id]/co-leader
-// Set a co-leader for the group (primary leader only)
+// Send an invitation to a potential co-leader (primary leader only)
 export async function POST(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -19,7 +20,7 @@ export async function POST(
     // Get current DNA leader
     const { data: dnaLeader } = await supabase
       .from('dna_leaders')
-      .select('id')
+      .select('id, name, email')
       .eq('email', session.email)
       .single();
 
@@ -28,7 +29,7 @@ export async function POST(
     // Get group and verify primary leader
     const { data: group } = await supabase
       .from('dna_groups')
-      .select('id, leader_id, co_leader_id')
+      .select('id, group_name, leader_id, co_leader_id, pending_co_leader_id')
       .eq('id', groupId)
       .single();
 
@@ -41,6 +42,10 @@ export async function POST(
       return NextResponse.json({ error: 'Group already has a co-leader. Remove the current one first.' }, { status: 400 });
     }
 
+    if (group.pending_co_leader_id) {
+      return NextResponse.json({ error: 'A co-leader invitation is already pending. Cancel it first.' }, { status: 400 });
+    }
+
     const body = await request.json();
     const { leader_id } = body;
 
@@ -49,35 +54,71 @@ export async function POST(
     }
 
     if (leader_id === dnaLeader.id) {
-      return NextResponse.json({ error: 'Cannot set yourself as co-leader' }, { status: 400 });
+      return NextResponse.json({ error: 'Cannot invite yourself as co-leader' }, { status: 400 });
     }
 
-    // Verify the co-leader exists and is active
-    const { data: coLeader } = await supabase
+    // Verify the invited leader exists and is active
+    const { data: invitedLeader } = await supabase
       .from('dna_leaders')
       .select('id, name, email')
       .eq('id', leader_id)
       .eq('is_active', true)
       .single();
 
-    if (!coLeader) {
+    if (!invitedLeader) {
       return NextResponse.json({ error: 'Leader not found or not active' }, { status: 404 });
     }
 
-    // Set co-leader
-    const { error: updateError } = await supabase
+    // Cancel any previous pending invitations for this group
+    await supabase
+      .from('co_leader_invitations')
+      .update({ status: 'cancelled' })
+      .eq('group_id', groupId)
+      .eq('status', 'pending');
+
+    // Create new invitation
+    const { data: invitation, error: inviteError } = await supabase
+      .from('co_leader_invitations')
+      .insert({
+        group_id: groupId,
+        invited_leader_id: leader_id,
+        invited_by_leader_id: dnaLeader.id,
+      })
+      .select('id, token')
+      .single();
+
+    if (inviteError || !invitation) {
+      console.error('[Co-Leader] Invitation create error:', inviteError);
+      return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 });
+    }
+
+    // Mark pending on the group
+    await supabase
       .from('dna_groups')
-      .update({ co_leader_id: leader_id })
+      .update({
+        pending_co_leader_id: leader_id,
+        co_leader_invited_at: new Date().toISOString(),
+      })
       .eq('id', groupId);
 
-    if (updateError) {
-      console.error('[Co-Leader] Set error:', updateError);
-      return NextResponse.json({ error: 'Failed to set co-leader' }, { status: 500 });
-    }
+    // Send invitation email
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://hub.arkidentity.com';
+    const acceptUrl = `${baseUrl}/groups/invitations/${invitation.token}/accept`;
+    const declineUrl = `${baseUrl}/groups/invitations/${invitation.token}/decline`;
+
+    await sendCoLeaderInvitationEmail(
+      invitedLeader.email,
+      invitedLeader.name || invitedLeader.email,
+      group.group_name,
+      dnaLeader.name || dnaLeader.email,
+      acceptUrl,
+      declineUrl
+    );
 
     return NextResponse.json({
       success: true,
-      co_leader: { id: coLeader.id, name: coLeader.name, email: coLeader.email },
+      message: `Invitation sent to ${invitedLeader.name || invitedLeader.email}`,
+      pending_co_leader: { id: invitedLeader.id, name: invitedLeader.name, email: invitedLeader.email },
     });
 
   } catch (error) {
@@ -87,7 +128,7 @@ export async function POST(
 }
 
 // DELETE /api/groups/[id]/co-leader
-// Remove the co-leader from the group (primary leader only)
+// Remove or cancel: removes an active co-leader OR cancels a pending invitation (primary leader only)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -112,7 +153,7 @@ export async function DELETE(
     // Get group and verify primary leader
     const { data: group } = await supabase
       .from('dna_groups')
-      .select('id, leader_id, co_leader_id')
+      .select('id, leader_id, co_leader_id, pending_co_leader_id')
       .eq('id', groupId)
       .single();
 
@@ -121,14 +162,21 @@ export async function DELETE(
       return NextResponse.json({ error: 'Only the primary leader can remove co-leaders' }, { status: 403 });
     }
 
-    if (!group.co_leader_id) {
-      return NextResponse.json({ error: 'Group has no co-leader' }, { status: 400 });
+    if (!group.co_leader_id && !group.pending_co_leader_id) {
+      return NextResponse.json({ error: 'Group has no co-leader or pending invitation' }, { status: 400 });
     }
 
-    // Remove co-leader
+    // Cancel any pending invitations
+    await supabase
+      .from('co_leader_invitations')
+      .update({ status: 'cancelled' })
+      .eq('group_id', groupId)
+      .eq('status', 'pending');
+
+    // Remove co-leader and pending state
     const { error: updateError } = await supabase
       .from('dna_groups')
-      .update({ co_leader_id: null })
+      .update({ co_leader_id: null, pending_co_leader_id: null, co_leader_invited_at: null })
       .eq('id', groupId);
 
     if (updateError) {

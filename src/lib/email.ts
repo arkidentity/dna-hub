@@ -1411,3 +1411,60 @@ export async function sendDailyDNAInvitationEmail(
     notificationType: 'daily_dna_invitation'
   });
 }
+
+// Co-Leader Invitation Email
+// Sent to a DNA leader when they are invited to be a co-leader for a group
+export async function sendCoLeaderInvitationEmail(
+  to: string,
+  leaderName: string,
+  groupName: string,
+  inviterName: string,
+  acceptUrl: string,
+  declineUrl: string
+) {
+  const subject = `${inviterName} invited you to co-lead "${groupName}"`;
+
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #1A2332; padding: 24px; border-radius: 12px 12px 0 0; text-align: center;">
+        <p style="color: #D4A853; font-weight: 600; letter-spacing: 2px; margin: 0; font-size: 14px;">DNA DISCIPLESHIP</p>
+      </div>
+      <div style="background: #242D3D; padding: 32px; border-radius: 0 0 12px 12px;">
+        <h1 style="color: #FFFFFF; font-size: 24px; margin: 0 0 16px 0;">Co-Leader Invitation</h1>
+        <p style="color: #CBD5E0; font-size: 16px; line-height: 1.6;">
+          Hi ${leaderName},
+        </p>
+        <p style="color: #CBD5E0; font-size: 16px; line-height: 1.6;">
+          <strong style="color: #FFFFFF;">${inviterName}</strong> has invited you to co-lead the DNA group
+          <strong style="color: #D4A853;">${groupName}</strong>.
+        </p>
+        <p style="color: #A0AEC0; font-size: 14px; line-height: 1.6; margin-bottom: 32px;">
+          As co-leader, you'll have full access to manage the group alongside the primary leader — including
+          tracking disciples, managing phases, and scheduling events.
+        </p>
+
+        <div style="text-align: center; margin-bottom: 24px;">
+          <a href="${acceptUrl}"
+             style="display: inline-block; padding: 14px 32px; background: #D4A853; color: #1A2332; border-radius: 8px; font-weight: 600; font-size: 16px; text-decoration: none; margin-right: 12px;">
+            Accept
+          </a>
+          <a href="${declineUrl}"
+             style="display: inline-block; padding: 14px 32px; background: transparent; color: #A0AEC0; border-radius: 8px; font-weight: 600; font-size: 16px; text-decoration: none; border: 1px solid #3D4A5C;">
+            Decline
+          </a>
+        </div>
+
+        <p style="color: #5A6577; font-size: 13px; text-align: center;">
+          This invitation expires in 7 days. If you didn't expect this email, you can safely ignore it.
+        </p>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    notificationType: 'co_leader_invitation'
+  });
+}

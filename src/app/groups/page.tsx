@@ -43,11 +43,20 @@ function DNALeaderDashboardContent() {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<DashboardData | null>(null);
   const [showWelcome, setShowWelcome] = useState(isWelcome);
+  const [pendingInvitations, setPendingInvitations] = useState<Array<{
+    id: string;
+    token: string;
+    group: { id: string; group_name: string };
+    invited_by: { id: string; name: string; email: string };
+  }>>([]);
 
   useEffect(() => {
     async function fetchDashboard() {
       try {
-        const response = await fetch('/api/groups/dashboard');
+        const [response, invitationsResponse] = await Promise.all([
+          fetch('/api/groups/dashboard'),
+          fetch('/api/groups/invitations'),
+        ]);
 
         if (response.status === 401) {
           router.push('/login');
@@ -63,6 +72,12 @@ function DNALeaderDashboardContent() {
         }
 
         setData(result);
+
+        if (invitationsResponse.ok) {
+          const invData = await invitationsResponse.json();
+          setPendingInvitations(invData.invitations || []);
+        }
+
         setLoading(false);
       } catch (err) {
         console.error('Dashboard fetch error:', err);
@@ -177,6 +192,33 @@ function DNALeaderDashboardContent() {
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Pending co-leader invitations */}
+      {pendingInvitations.length > 0 && (
+        <div className="bg-yellow-50 border-b border-yellow-200">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <p className="font-semibold text-yellow-800 mb-2">
+              You have {pendingInvitations.length} pending co-leader invitation{pendingInvitations.length > 1 ? 's' : ''}:
+            </p>
+            <div className="space-y-2">
+              {pendingInvitations.map(inv => (
+                <div key={inv.id} className="flex items-center justify-between bg-white rounded-lg px-4 py-3 border border-yellow-200">
+                  <p className="text-sm text-gray-700">
+                    <span className="font-medium">{inv.invited_by.name || inv.invited_by.email}</span>
+                    {' '}invited you to co-lead <span className="font-medium text-navy">{(inv.group as { id: string; group_name: string }).group_name}</span>
+                  </p>
+                  <Link
+                    href={`/groups/invitations/${inv.token}`}
+                    className="text-sm font-medium text-gold hover:text-gold/80 ml-4 whitespace-nowrap"
+                  >
+                    Respond →
+                  </Link>
+                </div>
+              ))}
             </div>
           </div>
         </div>

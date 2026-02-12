@@ -97,6 +97,7 @@ export default function TrainingDashboard() {
 
   const firstName = user.name?.split(' ')[0] || 'there';
   const flowAssessmentComplete = user.flowAssessment?.completed || false;
+  const manualUnlocked = user.unlocks.manual_session_1 || false;
 
   return (
     <div className="training-page">
@@ -174,10 +175,10 @@ export default function TrainingDashboard() {
               </div>
             </div>
 
-            {/* DNA Manual Card */}
-            <div className={`journey-card ${!flowAssessmentComplete ? 'locked' : user.journey.milestones.manual_complete?.completed ? 'completed' : 'unlocked'}`}>
+            {/* Multiplication Manual Card */}
+            <div className={`journey-card ${!manualUnlocked ? 'locked' : user.journey.milestones.manual_complete?.completed ? 'completed' : 'unlocked'}`}>
               <div className="card-icon">
-                {!flowAssessmentComplete ? (
+                {!manualUnlocked ? (
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
                     <path d="M7 11V7a5 5 0 0 1 10 0v4" />
@@ -190,15 +191,15 @@ export default function TrainingDashboard() {
                 )}
               </div>
               <div className="card-content">
-                <h4>DNA Manual</h4>
+                <h4>Multiplication Manual</h4>
                 <p>
-                  {!flowAssessmentComplete
+                  {!manualUnlocked
                     ? 'Complete the Flow Assessment to unlock'
                     : '6 sessions covering the heart and theology of multiplication discipleship.'}
                 </p>
               </div>
               <div className="card-action">
-                {flowAssessmentComplete ? (
+                {manualUnlocked ? (
                   <Link href="/training/manual" className="btn-primary">
                     Start Manual
                   </Link>
@@ -219,7 +220,7 @@ export default function TrainingDashboard() {
                 <h4>Launch Guide</h4>
                 <p>
                   {!user.journey.milestones.manual_complete?.completed
-                    ? 'Complete the DNA Manual to unlock'
+                    ? 'Complete the Multiplication Manual to unlock'
                     : '5 phases to prepare for launching your first DNA group.'}
                 </p>
               </div>

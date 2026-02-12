@@ -34,6 +34,12 @@ interface GroupData {
     id: string;
     name: string;
   } | null;
+  pending_co_leader?: {
+    id: string;
+    name: string;
+    email: string;
+  } | null;
+  co_leader_invited_at?: string | null;
   disciples: Disciple[];
 }
 
@@ -184,9 +190,9 @@ function GroupDetailContent() {
         return;
       }
 
-      // Update group with new co-leader
+      // Update group with pending co-leader (awaiting acceptance)
       if (group) {
-        setGroup({ ...group, co_leader: data.co_leader });
+        setGroup({ ...group, pending_co_leader: data.pending_co_leader, co_leader_invited_at: new Date().toISOString() });
       }
       setShowCoLeaderModal(false);
     } catch (err) {
@@ -206,7 +212,7 @@ function GroupDetailContent() {
       });
 
       if (response.ok && group) {
-        setGroup({ ...group, co_leader: null });
+        setGroup({ ...group, co_leader: null, pending_co_leader: null, co_leader_invited_at: null });
       }
     } catch (err) {
       console.error('Remove co-leader error:', err);
@@ -369,6 +375,20 @@ function GroupDetailContent() {
                       className="text-xs text-white/50 hover:text-red-300 transition-colors"
                     >
                       {removingCoLeader ? 'Removing...' : '(Remove)'}
+                    </button>
+                  </>
+                ) : group.pending_co_leader ? (
+                  <>
+                    <span className="text-white/70 text-sm">
+                      Co-Leader: <span className="text-yellow-300 font-medium">{group.pending_co_leader.name || group.pending_co_leader.email}</span>
+                      <span className="ml-1 text-yellow-400 text-xs">(Invitation Pending)</span>
+                    </span>
+                    <button
+                      onClick={handleRemoveCoLeader}
+                      disabled={removingCoLeader}
+                      className="text-xs text-white/50 hover:text-red-300 transition-colors"
+                    >
+                      {removingCoLeader ? 'Cancelling...' : '(Cancel)'}
                     </button>
                   </>
                 ) : (
@@ -707,7 +727,7 @@ function GroupDetailContent() {
                     disabled={!selectedLeaderId || settingCoLeader}
                     className="bg-gold hover:bg-gold/90 text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {settingCoLeader ? 'Setting...' : 'Set Co-Leader'}
+                    {settingCoLeader ? 'Sending...' : 'Send Invitation'}
                   </button>
                 </div>
               </div>
