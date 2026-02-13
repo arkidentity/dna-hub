@@ -77,7 +77,7 @@ export default function MinistryGiftTestPage() {
                 step: '1',
                 title: 'Request Team Access',
                 time: '2 minutes',
-                desc: 'Fill out the form below. We\'ll send assessment links to your team within 24 hours.',
+                desc: 'Fill out the form below. You\'ll get instant access — check your email for a magic link.',
               },
               {
                 step: '2',

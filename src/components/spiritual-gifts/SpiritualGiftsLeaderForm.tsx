@@ -69,11 +69,11 @@ export default function SpiritualGiftsLeaderForm() {
             />
           </svg>
         </div>
-        <h3 className="text-xl font-bold text-gray-900 mb-2">Request Received!</h3>
+        <h3 className="text-xl font-bold text-gray-900 mb-2">Your Dashboard is Ready!</h3>
         <p className="text-gray-600 mb-4">
-          We'll be in touch within 24 hours with access details for your team.
+          Check your inbox — we just sent you a magic link to access your team dashboard instantly.
         </p>
-        <p className="text-sm text-gray-500 mb-6">Check your email (including spam folder).</p>
+        <p className="text-sm text-gray-500 mb-6">Check your email (including spam folder). The link expires in 7 days.</p>
 
         {/* CTA to try it themselves */}
         <div className="bg-blue-50 border-2 border-blue-200 rounded-xl p-6 mt-6">
