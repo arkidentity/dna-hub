@@ -2,7 +2,6 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
-// Cover image should be placed at /public/manual-cover.png
 import { useRouter } from 'next/navigation';
 import { useManualForm } from '@/hooks/useManualForm';
 
@@ -30,22 +29,38 @@ export default function Manual() {
   return (
     <section
       id="manual"
-      style={{ background: 'var(--lp-warm-white)', padding: '6rem 5rem' }}
+      style={{ background: 'var(--lp-accent)', padding: '6rem 5rem' }}
       className="lp-manual"
     >
       <div
         style={{
-          maxWidth: '1000px',
+          maxWidth: '1100px',
           margin: '0 auto',
           display: 'grid',
           gridTemplateColumns: '1fr 1fr',
           gap: '5rem',
-          alignItems: 'center',
+          alignItems: 'start',
         }}
         className="lp-manual-inner"
       >
-        {/* Left */}
+        {/* Left — cover + copy */}
         <div className="fade-in">
+          {/* Cover image */}
+          <div style={{ marginBottom: '2.5rem' }}>
+            <Image
+              src="/manual-cover.png"
+              alt="DNA Multiplication Manual Cover"
+              width={200}
+              height={282}
+              style={{
+                width: '200px',
+                height: 'auto',
+                display: 'block',
+                boxShadow: '0 12px 48px rgba(0,0,0,0.5)',
+              }}
+            />
+          </div>
+
           <div
             style={{
               fontSize: '0.72rem',
@@ -65,16 +80,17 @@ export default function Manual() {
               fontWeight: 900,
               lineHeight: 1.15,
               marginBottom: '1rem',
+              color: '#fff',
             }}
           >
             The{' '}
             <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>Multiplication Manual</em>{' '}
             is free. Start with this.
           </h2>
-          <p style={{ fontSize: '1rem', lineHeight: 1.75, color: 'var(--lp-mid)', marginBottom: '1.75rem' }}>
+          <p style={{ fontSize: '1rem', lineHeight: 1.75, color: 'rgba(247,244,239,0.65)', marginBottom: '1.75rem' }}>
             Before you launch anything, read this. Six sessions that give your leaders the &ldquo;why&rdquo; that makes the &ldquo;how&rdquo; stick — and the conviction to actually start.
           </p>
-          <ul style={{ listStyle: 'none', marginBottom: '2.5rem' }}>
+          <ul style={{ listStyle: 'none' }}>
             {contents.map((item) => (
               <li
                 key={item}
@@ -82,9 +98,9 @@ export default function Manual() {
                   display: 'flex',
                   gap: '0.75rem',
                   padding: '0.6rem 0',
-                  borderBottom: '1px solid var(--lp-rule)',
-                  fontSize: '0.9rem',
-                  color: 'var(--lp-charcoal)',
+                  borderBottom: '1px solid rgba(247,244,239,0.1)',
+                  fontSize: '0.92rem',
+                  color: 'rgba(247,244,239,0.75)',
                   alignItems: 'flex-start',
                 }}
               >
@@ -95,15 +111,16 @@ export default function Manual() {
           </ul>
         </div>
 
-        {/* Right — card with form */}
+        {/* Right — form card */}
         <div
           className="fade-in"
           style={{
-            background: 'var(--lp-ink)',
+            background: 'var(--lp-accent-light)',
             color: 'var(--lp-paper)',
             padding: '3rem',
             position: 'relative',
             overflow: 'hidden',
+            border: '1px solid rgba(247,244,239,0.08)',
           }}
         >
           <div
@@ -114,24 +131,9 @@ export default function Manual() {
               width: '200px',
               height: '200px',
               borderRadius: '50%',
-              background: 'radial-gradient(circle, rgba(200,146,42,0.15) 0%, transparent 70%)',
+              background: 'radial-gradient(circle, rgba(200,146,42,0.12) 0%, transparent 70%)',
             }}
           />
-          {/* Cover image */}
-          <div style={{ position: 'relative', zIndex: 1, marginBottom: '1.75rem' }}>
-            <Image
-              src="/manual-cover.png"
-              alt="DNA Multiplication Manual Cover"
-              width={160}
-              height={226}
-              style={{
-                width: '160px',
-                height: 'auto',
-                display: 'block',
-                boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
-              }}
-            />
-          </div>
           <div
             style={{
               fontSize: '0.7rem',
@@ -159,14 +161,14 @@ export default function Manual() {
             DNA Multiplication Manual
           </div>
           <div
+            className="lp-form-hint"
             style={{
               fontSize: '0.875rem',
-              color: 'rgba(247,244,239,0.55)',
+              color: 'rgba(247,244,239,0.5)',
               marginBottom: '2rem',
               position: 'relative',
               zIndex: 1,
             }}
-            className="lp-form-hint"
           >
             6 sessions · 49 pages · Sent immediately
           </div>
@@ -228,7 +230,7 @@ export default function Manual() {
               type="submit"
               disabled={state === 'submitting' || state === 'success'}
               style={{
-                background: state === 'success' ? 'var(--lp-accent-light)' : 'var(--lp-gold)',
+                background: state === 'success' ? '#3a5a4a' : 'var(--lp-gold)',
                 color: state === 'success' ? '#fff' : 'var(--lp-ink)',
                 border: 'none',
                 padding: '1rem',
@@ -246,7 +248,7 @@ export default function Manual() {
               {state === 'submitting' ? 'Sending…' : state === 'success' ? '✓ Check your inbox!' : 'Send Me the Manual →'}
             </button>
             {state === 'error' && (
-              <span style={{ fontSize: '0.78rem', color: '#f87171' }}>{errorMsg}</span>
+              <span style={{ fontSize: '0.875rem', color: '#f87171' }}>{errorMsg}</span>
             )}
             <span className="lp-form-hint" style={{ fontSize: '0.875rem', color: 'rgba(247,244,239,0.45)', marginTop: '0.25rem' }}>
               No spam. Unsubscribe anytime.

@@ -58,18 +58,6 @@ export default function Hero() {
         DNA isn&apos;t accidental discipleship — it&apos;s loving people with a plan. A proven, three-phase process that takes ordinary believers from &ldquo;wanting to make disciples&rdquo; to naturally multiplying year after year.
       </p>
 
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '1.5rem',
-        }}
-      >
-        <span style={{ display: 'block', width: '2rem', height: '1px', background: 'var(--lp-rule)' }} />
-        <span style={{ fontSize: '0.9rem', color: 'var(--lp-mid)', lineHeight: 1.5 }}>
-          Used in churches across the U.S. — start with the free manual below.
-        </span>
-      </div>
     </section>
   );
 }
