@@ -54,7 +54,7 @@ export default function Problem() {
               marginBottom: '1.5rem',
             }}
           >
-            Everyone agrees on multiplication. No one knows how to do it.
+            Everyone agrees on multiplication. But how do we actually do it?
           </h2>
           <div style={{ fontSize: '1.05rem', lineHeight: 1.8, color: 'rgba(247,244,239,0.7)' }}>
             <p>

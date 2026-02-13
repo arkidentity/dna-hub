@@ -53,11 +53,13 @@ export default function Manual() {
                 alt="DNA Multiplication Manual Cover"
                 width={160}
                 height={226}
+                placeholder="empty"
                 style={{
                   width: '160px',
                   height: 'auto',
                   display: 'block',
                   boxShadow: '0 12px 48px rgba(0,0,0,0.5)',
+                  background: 'transparent',
                 }}
               />
             </div>

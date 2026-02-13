@@ -59,9 +59,11 @@ export default function Home() {
           .lp-site-footer { flex-direction: column !important; gap: 1rem !important; padding: 2rem 1.5rem !important; text-align: center !important; }
         }
         /* Minimum readable font size for small print across all screen sizes */
-        .lp-trust-line, .lp-form-hint { font-size: 0.875rem !important; }
+        .lp-trust-line, .lp-form-hint { font-size: 0.9rem !important; }
         @media (max-width: 600px) {
-          .lp-trust-line, .lp-form-hint { font-size: 0.9rem !important; }
+          .lp-trust-line, .lp-form-hint { font-size: 1rem !important; }
+          .hero-section { padding: 6rem 1.5rem 0 !important; }
+          .lp-manual { padding: 4rem 1.5rem !important; }
         }
       `}</style>
     </div>

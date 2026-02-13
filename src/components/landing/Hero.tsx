@@ -9,7 +9,9 @@ export default function Hero() {
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
-        maxWidth: '860px',
+        maxWidth: '1100px',
+        margin: '0 auto',
+        width: '100%',
       }}
       className="hero-section"
     >
