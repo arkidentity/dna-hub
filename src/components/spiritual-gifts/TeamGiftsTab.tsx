@@ -24,6 +24,7 @@ interface TeamMember {
 
 interface TeamGiftsTabProps {
   churchId: string;
+  subdomain?: string | null;
 }
 
 // Tier labels
@@ -49,13 +50,16 @@ function GiftBadge({ gift, score, tier }: { gift: string | null; score: number |
   );
 }
 
-export default function TeamGiftsTab({ churchId }: TeamGiftsTabProps) {
+export default function TeamGiftsTab({ churchId, subdomain }: TeamGiftsTabProps) {
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const inviteLink = `https://dailydna.app/gifts?church=${churchId}`;
+  const baseUrl = subdomain
+    ? `https://${subdomain}.dailydna.app`
+    : 'https://dailydna.app';
+  const inviteLink = `${baseUrl}/gifts?church=${churchId}`;
 
   const fetchTeam = useCallback(async () => {
     setLoading(true);

@@ -531,7 +531,7 @@ export default function DashboardPage() {
         )}
 
         {activeTab === 'gifts' && (
-          <TeamGiftsTab churchId={church.id} />
+          <TeamGiftsTab churchId={church.id} subdomain={church.subdomain} />
         )}
 
         {/* Help Section */}
