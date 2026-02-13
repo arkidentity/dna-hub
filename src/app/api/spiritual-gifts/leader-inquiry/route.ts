@@ -177,41 +177,71 @@ export async function POST(request: NextRequest) {
       await resend.emails.send({
         from: 'DNA Discipleship <noreply@dnadiscipleship.com>',
         to: normalizedEmail,
-        subject: `Your Ministry Gifts Dashboard is Ready, ${firstName}!`,
+        subject: `${firstName}, your Ministry Gifts dashboard is ready`,
         html: `
-          <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; color: #1e293b;">
-            <h1 style="color: #1e3a5f;">Welcome to DNA Discipleship, ${firstName}!</h1>
+          <div style="font-family: 'DM Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f7f4ef; color: #0f0e0c;">
 
-            <p style="font-size: 16px; line-height: 1.6;">
-              Your team dashboard for <strong>${churchName}</strong> has been created and is ready to use.
-            </p>
-
-            <div style="background: #f0f9ff; border: 2px solid #0ea5e9; border-radius: 12px; padding: 24px; margin: 28px 0; text-align: center;">
-              <h2 style="color: #0c4a6e; margin-top: 0;">Access Your Dashboard</h2>
-              <p style="color: #475569; margin-bottom: 20px;">
-                Click the button below to log in — no password needed. This link expires in 7 days.
-              </p>
-              <a href="${magicLink}" style="display: inline-block; background: #1e3a5f; color: white; padding: 14px 32px; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 16px;">
-                Access My Dashboard →
-              </a>
+            <!-- Header -->
+            <div style="background: #1A2332; padding: 24px 32px; display: flex; align-items: center;">
+              <span style="font-family: Georgia, serif; font-size: 1.1rem; font-weight: 700; color: #c8922a; letter-spacing: 0.08em; text-transform: uppercase;">DNA Discipleship</span>
             </div>
 
-            <h2 style="color: #1e3a5f;">What's Next?</h2>
-            <ol style="font-size: 15px; line-height: 2;">
-              <li>Take the assessment yourself at <a href="https://dailydna.app/gifts" style="color: #0ea5e9;">dailydna.app/gifts</a></li>
-              <li>Share the link with your team members</li>
-              <li>View everyone's results in your dashboard</li>
-              <li>Place each person in their ministry sweet spot</li>
-            </ol>
+            <!-- Body -->
+            <div style="padding: 40px 32px;">
+              <p style="font-size: 0.8rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #c8922a; margin: 0 0 1rem 0;">You're in, ${firstName}</p>
 
-            <p style="margin-top: 32px; color: #64748b; font-size: 14px;">
-              Questions? Reply to this email or reach us at
-              <a href="mailto:support@dnadiscipleship.com" style="color: #0ea5e9;">support@dnadiscipleship.com</a>
-            </p>
+              <h1 style="font-family: Georgia, 'Playfair Display', serif; font-size: 2rem; font-weight: 900; line-height: 1.15; color: #0f0e0c; margin: 0 0 1.25rem 0;">
+                Your team dashboard<br/>is ready to use.
+              </h1>
 
-            <p style="color: #94a3b8; font-size: 12px;">
-              DNA Discipleship — Building disciple-makers, one leader at a time
-            </p>
+              <p style="font-size: 1rem; line-height: 1.75; color: #6b6560; margin: 0 0 2rem 0;">
+                We've set up a church dashboard for <strong style="color: #0f0e0c;">${churchName}</strong>. Your unique assessment link is waiting inside — send it to as many leaders as you need. Results flow directly to your dashboard as each person completes the assessment.
+              </p>
+
+              <!-- CTA -->
+              <div style="background: #1A2332; padding: 28px 32px; margin: 0 0 2rem 0; text-align: center;">
+                <p style="font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; color: #c8922a; margin: 0 0 0.75rem 0;">One-click login — no password needed</p>
+                <a href="${magicLink}" style="display: inline-block; background: #c8922a; color: #0f0e0c; padding: 14px 32px; text-decoration: none; font-weight: 700; font-size: 0.95rem; letter-spacing: 0.04em;">
+                  Access My Dashboard →
+                </a>
+                <p style="font-size: 0.78rem; color: rgba(247,244,239,0.4); margin: 1rem 0 0 0;">This link expires in 7 days.</p>
+              </div>
+
+              <!-- Next steps -->
+              <p style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #c8922a; margin: 0 0 1rem 0;">What to do next</p>
+              <table style="width: 100%; border-collapse: collapse;">
+                ${[
+                  ['Take the assessment yourself', 'Visit dailydna.app/gifts to complete your own profile first.'],
+                  ['Send the link to your team', 'Your dashboard includes a unique link — forward it to leaders, volunteers, anyone you want assessed.'],
+                  ['Review results as they come in', 'Every completed assessment flows directly to your dashboard in real time.'],
+                  ['Place people in their sweet spot', 'Use the gift profiles to match each person to the role they were built for.'],
+                ].map(([title, body], i) => `
+                  <tr>
+                    <td style="padding: 0.85rem 0; border-bottom: 1px solid #ddd8cf; vertical-align: top; width: 24px;">
+                      <span style="font-family: Georgia, serif; font-size: 1.1rem; font-weight: 900; color: #ddd8cf; line-height: 1;">${String(i + 1).padStart(2, '0')}</span>
+                    </td>
+                    <td style="padding: 0.85rem 0 0.85rem 1rem; border-bottom: 1px solid #ddd8cf;">
+                      <strong style="font-size: 0.92rem; color: #0f0e0c;">${title}</strong><br/>
+                      <span style="font-size: 0.85rem; color: #6b6560; line-height: 1.6;">${body}</span>
+                    </td>
+                  </tr>
+                `).join('')}
+              </table>
+
+              <p style="font-size: 0.88rem; color: #6b6560; line-height: 1.7; margin: 2rem 0 0 0;">
+                Questions? Just reply to this email — we read every one.<br/>
+                <a href="mailto:travis@arkidentity.com" style="color: #c8922a; text-decoration: none;">travis@arkidentity.com</a>
+              </p>
+            </div>
+
+            <!-- Footer -->
+            <div style="background: #2a2825; padding: 20px 32px; text-align: center;">
+              <p style="font-size: 0.75rem; color: rgba(247,244,239,0.35); margin: 0;">
+                DNA Discipleship &mdash; A ministry of ARK Identity Discipleship<br/>
+                <a href="https://dnadiscipleship.com" style="color: rgba(247,244,239,0.35); text-decoration: none;">dnadiscipleship.com</a>
+              </p>
+            </div>
+
           </div>
         `,
       }).catch((err) => console.error('Welcome email error:', err));
