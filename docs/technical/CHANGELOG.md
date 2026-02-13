@@ -2,6 +2,102 @@
 
 All notable changes to DNA Hub are documented here.
 
+## [2026-02-12] Global Resources Admin UI
+
+### Added
+
+#### Global Resources — Full CRUD (Admin)
+- **`GET /api/admin/resources`** — fetch all resources (admin only)
+- **`POST /api/admin/resources`** — create resource with validation
+- **`PUT /api/admin/resources/[id]`** — update resource properties
+- **`DELETE /api/admin/resources/[id]`** — delete resource + Supabase Storage cleanup
+- **`POST /api/admin/resources/upload`** — PDF upload to `global-resources` Storage bucket (10MB max, PDF only, timestamped filename, returns public URL)
+- **`ResourcesTab`** (`/src/components/admin/ResourcesTab.tsx`) — full CRUD UI in `/admin` dashboard
+  - Stats cards: total resources, active count, type breakdown
+  - Add/edit modal with file upload, type selection (PDF/video/link), category, display order, active toggle
+  - Delete confirmation with Storage cleanup
+  - View, edit, delete, toggle visibility per resource
+
+| File | Change |
+|------|--------|
+| `/src/app/api/admin/resources/route.ts` | New — GET + POST |
+| `/src/app/api/admin/resources/[id]/route.ts` | New — PUT + DELETE |
+| `/src/app/api/admin/resources/upload/route.ts` | New — PDF file upload |
+| `/src/components/admin/ResourcesTab.tsx` | New — admin CRUD component |
+| `/src/app/admin/page.tsx` | Updated — Resources tab integrated |
+
+---
+
+## [2026-02-12] Groups Calendar — Full Build + Bug Fixes
+
+### Added
+
+#### Calendar — Create / View / Edit / Delete (Migrations 046, 048, 049)
+- **New table:** `dna_calendar_events` (Migration 046) — stores single + recurring group meetings, cohort events, church events. Full RLS policy set.
+- **New RPC:** `get_my_calendar_events(start_date, end_date)` — SECURITY DEFINER, JWT-scoped visibility, instances-only filter (Migration 048).
+- **Co-leader invitations** (Migration 049) — `co_leader_invitations` table + `pending_co_leader_id` / `co_leader_invited_at` on `dna_groups`.
+- **`POST /api/calendar/events`** — create single or recurring event. End date timezone-safe.
+- **`GET /api/calendar/events?group_id=X`** — group-scoped direct query (admin client).
+- **`PATCH /api/calendar/events/[id]`** — edit with scope: `this` / `this_and_future` / `all`.
+- **`DELETE /api/calendar/events/[id]?scope=X`** — delete with same three scopes.
+- **`EventModal`** (`/src/components/groups/EventModal.tsx`) — create meetings, recurring support, double-submit guard.
+- **`GroupMeetings`** (`/src/components/groups/GroupMeetings.tsx`) — meeting list + edit + delete modals on group detail page. 5-event collapse/expand, teal theme.
+- **Daily DNA `UpcomingEvents`** — upcoming 5 events widget on groups page.
+- **Daily DNA `/groups/calendar`** — full month grid calendar page.
+
+#### Navigation
+- **`UserMenu.tsx`** — Cohort added to "My Dashboards" dropdown for `dna_leader` + `church_leader`. Order: Church → Groups → Cohort → Training.
+
+### Fixed
+- `GET /api/groups/[id]` — DB errors now return 500 with real message (no longer masked as 404).
+- Recurring event duplication — `end_date` timezone fix (`T23:59:59` appended to date-only strings).
+- Double-submit guard on `EventModal` via `useRef`.
+
+### Changed
+- Group detail page layout: Phase Progress → Disciples → Scheduled Meetings.
+- "Schedule Meeting" button moved into `GroupMeetings` card header.
+
+| File | Change |
+|------|--------|
+| `database/046_dna_calendar_events.sql` | New — calendar table + RLS |
+| `database/048_fix_get_my_calendar_events.sql` | New — fixed RPC |
+| `database/049_co_leader_invitations.sql` | New — co-leader invitations |
+| `/src/app/api/calendar/events/route.ts` | group_id filter + timezone fix |
+| `/src/app/api/calendar/events/[id]/route.ts` | Scoped PATCH + DELETE |
+| `/src/app/api/groups/[id]/route.ts` | Better error handling |
+| `/src/app/groups/[id]/page.tsx` | Layout reorder + GroupMeetings |
+| `/src/components/groups/EventModal.tsx` | Double-submit guard, teal color |
+| `/src/components/groups/GroupMeetings.tsx` | New component |
+| `/src/components/UserMenu.tsx` | Cohort in dropdown |
+
+---
+
+## [2026-02-10] Life Assessment Sync + Leader View
+
+### Added
+- Life Assessment Supabase sync (`/dna-app/daily-dna/lib/assessmentSync.ts`) — push-only, upsert on `(account_id, assessment_type)`
+- Life Assessment PDF (`/dna-app/daily-dna/lib/assessmentPdf.tsx`) — W1/W12 scores + growth comparison + reflection answers
+- Life Assessment inline card on disciple profile (7 scored categories, score bars, delta pills, reflection answers)
+- `LifeAssessmentResult` type in `/src/lib/types.ts`
+
+---
+
+## [2026-02-09] Spiritual Gifts Assessment (Migration 044)
+
+### Added
+- 96-question assessment (3 tiers), 2-page PDF, cloud sync, auth gate at `/gifts`
+- Pastor landing page at `/ministry-gift-test` with lead capture + Resend email
+- Migration 044: `spiritual_gifts_leader_inquiries`
+
+---
+
+## [2026-02-09] DNA Groups Co-Leader Fix (Migration 043)
+
+### Fixed
+- Migration 043: `get_my_group_ids()` now includes leaders' own groups for chat access
+
+---
+
 ## [2026-02-04] Fix milestone_resources Foreign Key (Migration 033)
 
 ### Fixed

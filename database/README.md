@@ -42,6 +42,23 @@ Files are numbered in the order they should be run:
 | 031 | `cleanup-dam-assessment-strategy-calls.sql` | Fix Dam→Flow Assessment text + Remove default strategy call milestones |
 | 032 | `template_milestones.sql` | Template-based milestone system - church-specific editable milestones |
 | 033 | `fix_milestone_resources.sql` | Fix milestone_resources FK to reference template_milestones |
+| 034 | `daily-dna-app.sql` | Daily DNA app tables (disciples, journal, prayer, testimonies, progress) |
+| 035 | `group_chat.sql` | DNA Groups chat system |
+| 036 | `auto_link_disciple_accounts.sql` | Auto-link disciple app accounts to disciple records |
+| 037 | `disciple_app_rls_policies.sql` | RLS policies for disciple app tables |
+| 038 | `retrolink_existing_app_accounts.sql` | Retroactively link existing disciple accounts |
+| 039 | `fix_group_chat_rls.sql` | Fix group chat RLS policies |
+| 040 | `fix_rls_circular_deps.sql` | Fix circular dependencies in RLS policies |
+| 041 | `rls_include_leader_app_accounts.sql` | Include leader app accounts in RLS |
+| 042 | `fix_disciples_rls.sql` | Fix disciples RLS policies |
+| 043 | `fix_get_my_group_ids_for_leaders.sql` | Fix get_my_group_ids for leaders |
+| 044 | `spiritual-gifts-leader-inquiries.sql` | Spiritual gifts leader inquiry tracking |
+| 045 | `dna_cohorts.sql` | DNA Cohort tables (posts, comments, reactions) |
+| 046 | `dna_calendar_events.sql` | DNA Groups calendar events system |
+| 047 | `fix_promote_to_dna_leader_trigger.sql` | Fix promote_to_dna_leader trigger email resolution |
+| 048 | `fix_get_my_calendar_events.sql` | Fix get_my_calendar_events RPC function |
+| 049 | `co_leader_invitations.sql` | Co-leader invitation system |
+| 050 | `upsert_testimony.sql` | Testimony sync RPC function for Daily DNA app |
 
 ## Running Migrations
 

@@ -12,8 +12,9 @@ import {
   Download,
   UserCheck,
   BookOpen,
+  Palette,
 } from 'lucide-react';
-import { DNALeadersTab, ChurchesTab, ResourcesTab } from '@/components/admin';
+import { DNALeadersTab, ChurchesTab, ResourcesTab, BrandingTab } from '@/components/admin';
 
 interface ChurchSummary {
   id: string;
@@ -43,7 +44,7 @@ interface AdminStats {
 
 export default function AdminPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'churches' | 'dna-leaders' | 'resources'>('churches');
+  const [activeTab, setActiveTab] = useState<'churches' | 'dna-leaders' | 'resources' | 'branding'>('churches');
   const [churches, setChurches] = useState<ChurchSummary[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -165,6 +166,7 @@ export default function AdminPage() {
               { id: 'churches', label: 'Churches', icon: Building2 },
               { id: 'dna-leaders', label: 'DNA Leaders', icon: UserCheck },
               { id: 'resources', label: 'Resources', icon: BookOpen },
+              { id: 'branding', label: 'Branding', icon: Palette },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -198,6 +200,9 @@ export default function AdminPage() {
 
         {/* Resources Tab */}
         {activeTab === 'resources' && <ResourcesTab />}
+
+        {/* Branding Tab */}
+        {activeTab === 'branding' && <BrandingTab />}
       </main>
     </div>
   );

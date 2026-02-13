@@ -1,0 +1,161 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { getSupabaseAdmin } from '@/lib/auth';
+import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
+
+// ============================================
+// GET — Fetch branding settings for a church
+// ============================================
+
+export async function GET(request: NextRequest) {
+  try {
+    const session = await getUnifiedSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!isAdmin(session)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+    const { searchParams } = new URL(request.url);
+    const churchId = searchParams.get('church_id');
+
+    if (!churchId) {
+      return NextResponse.json({ error: 'church_id is required' }, { status: 400 });
+    }
+
+    const supabase = getSupabaseAdmin();
+
+    // Fetch church branding fields + extended settings
+    const { data: church, error: churchError } = await supabase
+      .from('churches')
+      .select('id, name, logo_url, subdomain, primary_color, accent_color')
+      .eq('id', churchId)
+      .single();
+
+    if (churchError) {
+      console.error('[ADMIN] Branding fetch error:', churchError);
+      return NextResponse.json({ error: 'Church not found' }, { status: 404 });
+    }
+
+    const { data: settings } = await supabase
+      .from('church_branding_settings')
+      .select('app_title, app_description, theme_color')
+      .eq('church_id', churchId)
+      .single();
+
+    return NextResponse.json({
+      branding: {
+        ...church,
+        app_title: settings?.app_title ?? 'DNA Daily',
+        app_description: settings?.app_description ?? 'Daily discipleship tools',
+        theme_color: settings?.theme_color ?? church.primary_color ?? '#143348',
+      },
+    });
+  } catch (error) {
+    console.error('[ADMIN] Branding GET error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// ============================================
+// POST — Save branding settings for a church
+// ============================================
+
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getUnifiedSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!isAdmin(session)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+    const supabase = getSupabaseAdmin();
+    const body = await request.json();
+
+    const {
+      church_id,
+      subdomain,
+      primary_color,
+      accent_color,
+      logo_url,
+      app_title,
+      app_description,
+      theme_color,
+    } = body;
+
+    if (!church_id) {
+      return NextResponse.json({ error: 'church_id is required' }, { status: 400 });
+    }
+
+    // Validate subdomain format (lowercase letters, numbers, hyphens only)
+    if (subdomain && !/^[a-z0-9-]+$/.test(subdomain)) {
+      return NextResponse.json(
+        { error: 'Subdomain can only contain lowercase letters, numbers, and hyphens' },
+        { status: 400 }
+      );
+    }
+
+    // Validate hex colors
+    const hexColorRegex = /^#[0-9A-Fa-f]{6}$/;
+    if (primary_color && !hexColorRegex.test(primary_color)) {
+      return NextResponse.json({ error: 'Invalid primary_color format (use #rrggbb)' }, { status: 400 });
+    }
+    if (accent_color && !hexColorRegex.test(accent_color)) {
+      return NextResponse.json({ error: 'Invalid accent_color format (use #rrggbb)' }, { status: 400 });
+    }
+
+    // Check subdomain uniqueness (if provided and changed)
+    if (subdomain) {
+      const { data: existing } = await supabase
+        .from('churches')
+        .select('id')
+        .eq('subdomain', subdomain)
+        .neq('id', church_id)
+        .single();
+
+      if (existing) {
+        return NextResponse.json(
+          { error: 'This subdomain is already taken by another church' },
+          { status: 409 }
+        );
+      }
+    }
+
+    // Update churches table (core branding fields)
+    const { error: churchError } = await supabase
+      .from('churches')
+      .update({
+        subdomain: subdomain || null,
+        primary_color: primary_color || '#143348',
+        accent_color: accent_color || '#e8b562',
+        logo_url: logo_url ?? undefined,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', church_id);
+
+    if (churchError) {
+      console.error('[ADMIN] Church update error:', churchError);
+      return NextResponse.json({ error: 'Failed to update church branding' }, { status: 500 });
+    }
+
+    // Upsert church_branding_settings (extended config)
+    if (app_title || app_description || theme_color) {
+      const { error: settingsError } = await supabase
+        .from('church_branding_settings')
+        .upsert(
+          {
+            church_id,
+            app_title: app_title || 'DNA Daily',
+            app_description: app_description || 'Daily discipleship tools',
+            theme_color: theme_color || primary_color || '#143348',
+            updated_at: new Date().toISOString(),
+          },
+          { onConflict: 'church_id' }
+        );
+
+      if (settingsError) {
+        console.error('[ADMIN] Branding settings upsert error:', settingsError);
+        // Non-fatal — core fields already saved
+      }
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('[ADMIN] Branding POST error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

@@ -219,6 +219,19 @@ export interface MilestoneResource {
   resource_type?: string | null;
 }
 
+// Church white-label branding settings
+export interface ChurchBranding {
+  id: string;
+  name: string;
+  logo_url: string | null;
+  subdomain: string | null;
+  primary_color: string;
+  accent_color: string;
+  app_title: string;
+  app_description: string;
+  theme_color: string;
+}
+
 // Global resource (general resources for all churches)
 export interface GlobalResource {
   id: string;

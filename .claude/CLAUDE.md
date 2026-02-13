@@ -69,15 +69,25 @@ awaiting_agreement → awaiting_strategy → active → completed
 - **Login**: `/src/app/login/page.tsx`
 - **Dashboard**: `/src/app/dashboard/page.tsx` (Church leaders)
 - **Groups**: `/src/app/groups/page.tsx` (DNA leaders)
+- **Group Detail**: `/src/app/groups/[id]/page.tsx` (Phase progress, disciples, scheduled meetings)
+- **Cohort**: `/src/app/cohort/page.tsx` (DNA leaders + church leaders)
 - **Training**: `/src/app/training/page.tsx` (Training participants)
 - **Admin**: `/src/app/admin/page.tsx`
 - **Unauthorized**: `/src/app/unauthorized/page.tsx`
+
+### Key Components
+- **`GroupMeetings`**: `/src/components/groups/GroupMeetings.tsx` — meeting list + edit/delete modals
+- **`EventModal`**: `/src/components/groups/EventModal.tsx` — create meeting modal
+- **`UserMenu`**: `/src/components/UserMenu.tsx` — dashboard dropdown (Church/Groups/Cohort/Training)
+- **`ResourcesTab`**: `/src/components/admin/ResourcesTab.tsx` — global resources CRUD (admin)
 
 ### API Routes
 - **Auth**: `/api/auth/magic-link`, `/api/auth/verify`, `/api/auth/logout`
 - **Dashboard**: `/api/dashboard`, `/api/progress`
 - **Admin**: `/api/admin/churches`, `/api/admin/church/[id]`
+- **Resources**: `/api/admin/resources` (GET+POST), `/api/admin/resources/[id]` (PUT+DELETE), `/api/admin/resources/upload` (POST)
 - **Groups**: `/api/groups`, `/api/groups/[id]`, `/api/groups/dashboard`
+- **Calendar**: `/api/calendar/events` (GET+POST), `/api/calendar/events/[id]` (PATCH+DELETE w/ scope)
 - **Training**: `/api/training/dashboard`, `/api/training/assessment/*`
 
 ## Coding Conventions
@@ -252,17 +262,20 @@ npm run lint     # Run ESLint
 - Groups & Chat Phase 1 live (real-time group chat)
 - Account syncing to Hub working
 
-**Active Priorities (Feb 8, 2026):**
-- ~~Spiritual Gifts Assessment~~ ✅ Core built in Daily DNA app (96 questions, scoring, results, `/tools/spiritual-gifts` + `/gifts`). Remaining: PDF, cloud sync, email capture, Hub landing page.
-- Groups Calendar (Supabase source of truth, Resend email reminders, .ics links)
-- Assessments tab on disciple profile (Life Assessment scores + Spiritual Gifts results)
-- Global Resources Admin UI
+**Active Priorities (Feb 12, 2026):**
+- ~~Groups Calendar~~ ✅ COMPLETE — create/edit/delete (scoped), `GroupMeetings` component, Daily DNA calendar widget + full page
+- ~~Co-leader invitations~~ ✅ COMPLETE — Migration 049
+- ~~Cohort in nav dropdown~~ ✅ COMPLETE — `UserMenu` shows Cohort for `dna_leader` + `church_leader`
+- ~~Global Resources Admin UI~~ ✅ COMPLETE — CRUD + file upload, `ResourcesTab` in `/admin`
+- Testimony Builder cloud sync
 - Pathway locking (locked unless in DNA group, unlock by phase/month)
-- Fix Week 8 → Week 12 across all Life Assessment references
+- Calendar email reminders (Resend + .ics, 24hr before events)
 - See `/docs/planning/NEXT-STEPS.md` for full roadmap
 
-**Key Decisions (Feb 8, 2026):**
+**Key Decisions (Feb 2026):**
 - No Google Calendar API — using Supabase + Resend + .ics
+- Calendar management is Hub-only; Daily DNA is read-only for disciples
+- Recurring event edit/delete: 3 scopes — `this` / `this_and_future` / `all`
 - Tool assignment simplified to phase-locking by month
 - Testimonies private unless shared in group chat
 - Training should bridge to Groups dashboard
