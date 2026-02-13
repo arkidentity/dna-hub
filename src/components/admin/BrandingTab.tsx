@@ -412,7 +412,7 @@ export default function BrandingTab() {
 
             {/* App Metadata */}
             <div className="bg-white rounded-xl border border-card-border p-5">
-              <h3 className="font-medium text-navy mb-4">App Metadata</h3>
+              <h3 className="font-medium text-navy mb-4">App Name &amp; Description</h3>
               <div className="space-y-4">
                 <div>
                   <label className="block text-sm text-foreground-muted mb-1">App Title</label>
@@ -423,7 +423,7 @@ export default function BrandingTab() {
                     placeholder="DNA Daily"
                     className="w-full border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold"
                   />
-                  <p className="text-xs text-foreground-muted mt-1">Shown in browser tab and PWA home screen</p>
+                  <p className="text-xs text-foreground-muted mt-1">Replaces "DAILY DNA" in the app header, browser tab, and PWA home screen</p>
                 </div>
                 <div>
                   <label className="block text-sm text-foreground-muted mb-1">App Description</label>
