@@ -230,6 +230,7 @@ export interface ChurchBranding {
   app_title: string;
   app_description: string;
   theme_color: string;
+  header_style: 'text' | 'logo';
 }
 
 // Global resource (general resources for all churches)

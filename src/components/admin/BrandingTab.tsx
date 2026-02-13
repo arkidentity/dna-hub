@@ -41,6 +41,7 @@ export default function BrandingTab() {
     logo_url: '' as string | null,
     app_title: 'DNA Daily',
     app_description: 'Daily discipleship tools',
+    header_style: 'text' as 'text' | 'logo',
   });
 
   // ============================================
@@ -90,6 +91,7 @@ export default function BrandingTab() {
         logo_url: b.logo_url ?? null,
         app_title: b.app_title ?? 'DNA Daily',
         app_description: b.app_description ?? 'Daily discipleship tools',
+        header_style: (b.header_style ?? 'text') as 'text' | 'logo',
       });
     } catch (err) {
       setError('Failed to load branding settings');
@@ -425,6 +427,42 @@ export default function BrandingTab() {
                   />
                   <p className="text-xs text-foreground-muted mt-1">Replaces "DAILY DNA" in the app header, browser tab, and PWA home screen</p>
                 </div>
+
+                {/* Header style toggle — only shown when a logo has been uploaded */}
+                {form.logo_url && (
+                  <div>
+                    <label className="block text-sm text-foreground-muted mb-2">App Header Style</label>
+                    <div className="flex rounded-lg border border-card-border overflow-hidden">
+                      <button
+                        type="button"
+                        onClick={() => setForm(prev => ({ ...prev, header_style: 'text' }))}
+                        className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors ${
+                          form.header_style === 'text'
+                            ? 'bg-navy text-white'
+                            : 'bg-white text-foreground-muted hover:bg-gray-50'
+                        }`}
+                      >
+                        Text Title
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setForm(prev => ({ ...prev, header_style: 'logo' }))}
+                        className={`flex-1 px-4 py-2.5 text-sm font-medium transition-colors border-l border-card-border ${
+                          form.header_style === 'logo'
+                            ? 'bg-navy text-white'
+                            : 'bg-white text-foreground-muted hover:bg-gray-50'
+                        }`}
+                      >
+                        Church Logo
+                      </button>
+                    </div>
+                    <p className="text-xs text-foreground-muted mt-1">
+                      {form.header_style === 'logo'
+                        ? 'Your uploaded logo will appear in the Pathway and Journal headers'
+                        : 'App title text will appear in the Pathway and Journal headers'}
+                    </p>
+                  </div>
+                )}
                 <div>
                   <label className="block text-sm text-foreground-muted mb-1">App Description</label>
                   <input

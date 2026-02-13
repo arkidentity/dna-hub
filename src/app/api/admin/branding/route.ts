@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     const { data: settings } = await supabase
       .from('church_branding_settings')
-      .select('app_title, app_description, theme_color')
+      .select('app_title, app_description, theme_color, header_style')
       .eq('church_id', churchId)
       .single();
 
@@ -45,6 +45,7 @@ export async function GET(request: NextRequest) {
         app_title: settings?.app_title ?? 'DNA Daily',
         app_description: settings?.app_description ?? 'Daily discipleship tools',
         theme_color: settings?.theme_color ?? church.primary_color ?? '#143348',
+        header_style: settings?.header_style ?? 'text',
       },
     });
   } catch (error) {
@@ -75,6 +76,7 @@ export async function POST(request: NextRequest) {
       app_title,
       app_description,
       theme_color,
+      header_style,
     } = body;
 
     if (!church_id) {
@@ -133,7 +135,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Upsert church_branding_settings (extended config)
-    if (app_title || app_description || theme_color) {
+    if (app_title || app_description || theme_color || header_style) {
       const { error: settingsError } = await supabase
         .from('church_branding_settings')
         .upsert(
@@ -142,6 +144,7 @@ export async function POST(request: NextRequest) {
             app_title: app_title || 'DNA Daily',
             app_description: app_description || 'Daily discipleship tools',
             theme_color: theme_color || primary_color || '#143348',
+            header_style: header_style || 'text',
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'church_id' }
