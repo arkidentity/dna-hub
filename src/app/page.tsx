@@ -29,10 +29,10 @@ export default function Home() {
     >
       <LandingNav />
       <Hero />
+      <Manual />
       <Problem />
       <WhatDNA />
       <Tools />
-      <Manual />
       <Phases />
       <Partner />
       <Pullquote />
