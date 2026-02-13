@@ -29,7 +29,7 @@ export default function Manual() {
   return (
     <section
       id="manual"
-      style={{ background: 'var(--lp-accent)', padding: '6rem 5rem' }}
+      style={{ background: 'var(--lp-accent)', padding: '5rem 5rem 6rem' }}
       className="lp-manual"
     >
       <div
@@ -45,49 +45,52 @@ export default function Manual() {
       >
         {/* Left — cover + copy */}
         <div className="fade-in">
-          {/* Cover image */}
-          <div style={{ marginBottom: '2.5rem' }}>
-            <Image
-              src="/manual-cover.png"
-              alt="DNA Multiplication Manual Cover"
-              width={200}
-              height={282}
-              style={{
-                width: '200px',
-                height: 'auto',
-                display: 'block',
-                boxShadow: '0 12px 48px rgba(0,0,0,0.5)',
-              }}
-            />
+          {/* Cover + headline side by side */}
+          <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start', marginBottom: '2rem' }}>
+            <div style={{ flexShrink: 0 }}>
+              <Image
+                src="/manual-cover.png"
+                alt="DNA Multiplication Manual Cover"
+                width={160}
+                height={226}
+                style={{
+                  width: '160px',
+                  height: 'auto',
+                  display: 'block',
+                  boxShadow: '0 12px 48px rgba(0,0,0,0.5)',
+                }}
+              />
+            </div>
+            <div style={{ paddingTop: '0.5rem' }}>
+              <div
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: 600,
+                  letterSpacing: '0.2em',
+                  textTransform: 'uppercase',
+                  color: 'var(--lp-gold)',
+                  marginBottom: '1rem',
+                }}
+              >
+                Start Here
+              </div>
+              <h2
+                style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: 'clamp(1.6rem, 2.5vw, 2.4rem)',
+                  fontWeight: 900,
+                  lineHeight: 1.15,
+                  color: '#fff',
+                }}
+              >
+                The{' '}
+                <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>DNA Multiplication Manual</em>{' '}
+                is free. Start with this.
+              </h2>
+            </div>
           </div>
 
-          <div
-            style={{
-              fontSize: '0.72rem',
-              fontWeight: 600,
-              letterSpacing: '0.2em',
-              textTransform: 'uppercase',
-              color: 'var(--lp-gold)',
-              marginBottom: '1.25rem',
-            }}
-          >
-            Start Here
-          </div>
-          <h2
-            style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: 'clamp(2rem, 3vw, 2.8rem)',
-              fontWeight: 900,
-              lineHeight: 1.15,
-              marginBottom: '1rem',
-              color: '#fff',
-            }}
-          >
-            The{' '}
-            <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>Multiplication Manual</em>{' '}
-            is free. Start with this.
-          </h2>
-          <p style={{ fontSize: '1rem', lineHeight: 1.75, color: 'rgba(247,244,239,0.65)', marginBottom: '1.75rem' }}>
+          <p style={{ fontSize: '1.1rem', lineHeight: 1.8, color: 'rgba(247,244,239,0.7)', marginBottom: '1.75rem' }}>
             Before you launch anything, read this. Six sessions that give your leaders the &ldquo;why&rdquo; that makes the &ldquo;how&rdquo; stick — and the conviction to actually start.
           </p>
           <ul style={{ listStyle: 'none' }}>

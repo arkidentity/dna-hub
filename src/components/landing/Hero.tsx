@@ -5,7 +5,7 @@ export default function Hero() {
     <section
       style={{
         background: 'var(--lp-paper)',
-        padding: '9rem 5rem 6rem',
+        padding: '9rem 5rem 0',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'flex-start',
