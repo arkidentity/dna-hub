@@ -7,7 +7,6 @@ import Problem from '@/components/landing/Problem';
 import WhatDNA from '@/components/landing/WhatDNA';
 import Tools from '@/components/landing/Tools';
 import Phases from '@/components/landing/Phases';
-import Manual from '@/components/landing/Manual';
 import Partner from '@/components/landing/Partner';
 import Pullquote from '@/components/landing/Pullquote';
 import FAQ from '@/components/landing/FAQ';
@@ -33,7 +32,6 @@ export default function Home() {
       <WhatDNA />
       <Tools />
       <Phases />
-      <Manual />
       <Partner />
       <Pullquote />
       <FAQ />
@@ -49,7 +47,7 @@ export default function Home() {
           .lp-problem, .lp-what, .lp-tools, .lp-phases, .lp-manual, .lp-partner, .lp-faq {
             padding: 4rem 2rem !important;
           }
-          .lp-problem-inner, .lp-manual-inner { grid-template-columns: 1fr !important; gap: 3rem !important; }
+          .lp-problem-inner { grid-template-columns: 1fr !important; gap: 3rem !important; }
           .lp-what-header { grid-template-columns: 1fr !important; gap: 2rem !important; }
           #lp-pillars, #lp-partner-steps { grid-template-columns: 1fr !important; }
           .lp-pillar { border-right: none !important; border-bottom: 1px solid var(--lp-rule) !important; }

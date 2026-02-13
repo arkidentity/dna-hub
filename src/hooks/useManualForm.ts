@@ -4,7 +4,7 @@ import { useState } from 'react';
 
 export type ManualFormState = 'idle' | 'submitting' | 'success' | 'error';
 
-export function useManualForm() {
+export function useManualForm(onSuccess?: () => void) {
   const [state, setState] = useState<ManualFormState>('idle');
   const [errorMsg, setErrorMsg] = useState('');
 
@@ -22,6 +22,7 @@ export function useManualForm() {
         throw new Error(data.error || 'Something went wrong');
       }
       setState('success');
+      onSuccess?.();
     } catch (err) {
       setErrorMsg(err instanceof Error ? err.message : 'Something went wrong');
       setState('error');

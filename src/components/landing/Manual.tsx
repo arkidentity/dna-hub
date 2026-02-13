@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useManualForm } from '@/hooks/useManualForm';
 
 const contents = [
@@ -17,7 +18,8 @@ export default function Manual() {
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
   const [church, setChurch] = useState('');
-  const { state, errorMsg, submit } = useManualForm();
+  const router = useRouter();
+  const { state, errorMsg, submit } = useManualForm(() => router.push('/thank-you'));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

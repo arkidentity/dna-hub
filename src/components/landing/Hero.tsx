@@ -2,20 +2,24 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { useManualForm } from '@/hooks/useManualForm';
 
 export default function Hero() {
   const [firstName, setFirstName] = useState('');
   const [email, setEmail] = useState('');
-  const { state, errorMsg, submit } = useManualForm();
+  const [church, setChurch] = useState('');
+  const router = useRouter();
+  const { state, errorMsg, submit } = useManualForm(() => router.push('/thank-you'));
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    await submit(email, firstName);
+    await submit(email, firstName, church);
   }
 
   return (
     <section
+      id="manual"
       style={{
         minHeight: '100vh',
         display: 'grid',
@@ -61,9 +65,9 @@ export default function Hero() {
             fontWeight: 900,
           }}
         >
-          Your church wants<br />
-          to multiply.<br />
-          <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>Nobody knows how.</em>
+          Your church was<br />
+          made to multiply.<br />
+          <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>Give your people a system worth following.</em>
         </h1>
 
         <p
@@ -75,80 +79,32 @@ export default function Hero() {
             marginBottom: '2.5rem',
           }}
         >
-          DNA isn&apos;t accidental discipleship — it&apos;s loving people with a plan. A complete system that takes ordinary believers from &ldquo;wanting to make disciples&rdquo; to actually doing it. Reproducibly.
+          DNA isn&apos;t accidental discipleship — it&apos;s loving people with a plan. A proven, three-phase process that takes ordinary believers from &ldquo;wanting to make disciples&rdquo; to naturally multiplying year after year.
         </p>
 
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxWidth: '420px' }}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '1.5rem',
+            paddingTop: '0.5rem',
+          }}
         >
-          <input
-            type="text"
-            placeholder="Your first name"
-            required
-            value={firstName}
-            onChange={(e) => setFirstName(e.target.value)}
+          <span
             style={{
-              padding: '0.9rem 1.25rem',
-              border: '1.5px solid var(--lp-rule)',
-              background: 'var(--lp-warm-white)',
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: '0.95rem',
-              color: 'var(--lp-ink)',
-              outline: 'none',
-              borderRadius: 0,
+              display: 'block',
+              width: '2rem',
+              height: '1px',
+              background: 'var(--lp-rule)',
             }}
           />
-          <div style={{ display: 'flex', gap: '0.5rem' }}>
-            <input
-              type="email"
-              placeholder="Your email address"
-              required
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              style={{
-                flex: 1,
-                padding: '0.9rem 1.25rem',
-                border: '1.5px solid var(--lp-rule)',
-                background: 'var(--lp-warm-white)',
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: '0.95rem',
-                color: 'var(--lp-ink)',
-                outline: 'none',
-                borderRadius: 0,
-              }}
-            />
-            <button
-              type="submit"
-              disabled={state === 'submitting' || state === 'success'}
-              style={{
-                background: state === 'success' ? 'var(--lp-accent-light)' : 'var(--lp-gold)',
-                color: state === 'success' ? '#fff' : 'var(--lp-ink)',
-                border: 'none',
-                padding: '0.9rem 1.75rem',
-                fontFamily: "'DM Sans', sans-serif",
-                fontSize: '0.9rem',
-                fontWeight: 600,
-                letterSpacing: '0.04em',
-                cursor: 'pointer',
-                whiteSpace: 'nowrap',
-                borderRadius: 0,
-                transition: 'background 0.2s',
-              }}
-            >
-              {state === 'submitting' ? 'Sending…' : state === 'success' ? '✓ Check your inbox!' : 'Get the Manual'}
-            </button>
-          </div>
-          {state === 'error' && (
-            <span style={{ fontSize: '0.78rem', color: '#c0392b' }}>{errorMsg}</span>
-          )}
-          <span style={{ fontSize: '0.78rem', color: 'var(--lp-mid)' }}>
-            Free. No spam. Sent immediately to your inbox.
+          <span style={{ fontSize: '0.82rem', color: 'var(--lp-mid)', lineHeight: 1.5 }}>
+            Used in churches across the U.S. — start with the free manual →
           </span>
-        </form>
+        </div>
       </div>
 
-      {/* Right */}
+      {/* Right — Manual card */}
       <div
         style={{
           background: 'var(--lp-accent)',
@@ -157,6 +113,7 @@ export default function Hero() {
           justifyContent: 'center',
           position: 'relative',
           overflow: 'hidden',
+          padding: '5rem 4rem',
         }}
         className="hero-right"
       >
@@ -174,86 +131,131 @@ export default function Hero() {
           style={{
             position: 'relative',
             zIndex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: '2.5rem',
-            padding: '3rem',
             width: '100%',
+            maxWidth: '400px',
           }}
         >
           <Image
             src="/dna-logo-gold.png"
             alt="DNA"
-            width={100}
-            height={100}
-            style={{ width: '100px', height: '100px', opacity: 0.9 }}
+            width={56}
+            height={56}
+            style={{ width: '56px', height: '56px', marginBottom: '1.75rem', opacity: 0.9 }}
           />
-
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 0, width: '100%', maxWidth: '300px' }}>
-            {[
-              { num: '01', name: 'Foundation', desc: '90 days of tools, habits & transformation', delay: '0.15s' },
-              { num: '02', name: 'Growth', desc: 'Disciples take ownership & lead', delay: '0.35s' },
-              { num: '03', name: 'Multiplication', desc: 'One group becomes two. The cycle continues.', delay: '0.55s' },
-            ].map((phase, i) => (
-              <div key={phase.num}>
-                {i > 0 && (
-                  <div
-                    style={{
-                      width: '1px',
-                      height: '1.25rem',
-                      background: 'rgba(200,146,42,0.35)',
-                      marginLeft: 'calc(1.5rem - 0.5px)',
-                    }}
-                  />
-                )}
-                <div
-                  style={{
-                    display: 'flex',
-                    alignItems: 'flex-start',
-                    gap: '1rem',
-                    padding: '1rem 0',
-                    opacity: 0,
-                    animation: `lp-fadeSlideIn 0.5s ${phase.delay} forwards`,
-                  }}
-                >
-                  <div
-                    style={{
-                      width: '3rem',
-                      height: '3rem',
-                      border: '1.5px solid rgba(200,146,42,0.5)',
-                      borderRadius: '50%',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      fontSize: '0.75rem',
-                      fontWeight: 600,
-                      color: 'var(--lp-gold-light)',
-                      flexShrink: 0,
-                    }}
-                  >
-                    {phase.num}
-                  </div>
-                  <div>
-                    <div
-                      style={{
-                        fontFamily: "'Playfair Display', serif",
-                        fontSize: '1rem',
-                        fontWeight: 700,
-                        color: '#fff',
-                        marginBottom: '0.15rem',
-                      }}
-                    >
-                      {phase.name}
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)', lineHeight: 1.4 }}>
-                      {phase.desc}
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
+          <div
+            style={{
+              fontSize: '0.7rem',
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              color: 'var(--lp-gold)',
+              marginBottom: '1rem',
+            }}
+          >
+            Free Download
           </div>
+          <div
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: '1.6rem',
+              fontWeight: 700,
+              color: '#fff',
+              marginBottom: '0.5rem',
+              lineHeight: 1.25,
+            }}
+          >
+            DNA Multiplication Manual
+          </div>
+          <div
+            style={{
+              fontSize: '0.82rem',
+              color: 'rgba(247,244,239,0.45)',
+              marginBottom: '2rem',
+            }}
+          >
+            6 sessions · 49 pages · Sent immediately
+          </div>
+          <form
+            onSubmit={handleSubmit}
+            style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}
+          >
+            <input
+              type="text"
+              placeholder="Your first name"
+              required
+              value={firstName}
+              onChange={(e) => setFirstName(e.target.value)}
+              style={{
+                padding: '0.85rem 1.1rem',
+                background: 'rgba(247,244,239,0.07)',
+                border: '1px solid rgba(247,244,239,0.18)',
+                color: 'var(--lp-paper)',
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: '0.92rem',
+                outline: 'none',
+                borderRadius: 0,
+              }}
+            />
+            <input
+              type="email"
+              placeholder="Your email address"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{
+                padding: '0.85rem 1.1rem',
+                background: 'rgba(247,244,239,0.07)',
+                border: '1px solid rgba(247,244,239,0.18)',
+                color: 'var(--lp-paper)',
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: '0.92rem',
+                outline: 'none',
+                borderRadius: 0,
+              }}
+            />
+            <input
+              type="text"
+              placeholder="Church name (optional)"
+              value={church}
+              onChange={(e) => setChurch(e.target.value)}
+              style={{
+                padding: '0.85rem 1.1rem',
+                background: 'rgba(247,244,239,0.07)',
+                border: '1px solid rgba(247,244,239,0.18)',
+                color: 'var(--lp-paper)',
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: '0.92rem',
+                outline: 'none',
+                borderRadius: 0,
+              }}
+            />
+            <button
+              type="submit"
+              disabled={state === 'submitting' || state === 'success'}
+              style={{
+                background: state === 'success' ? 'var(--lp-accent-light)' : 'var(--lp-gold)',
+                color: state === 'success' ? '#fff' : 'var(--lp-ink)',
+                border: 'none',
+                padding: '1rem',
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: '0.9rem',
+                fontWeight: 600,
+                letterSpacing: '0.04em',
+                cursor: 'pointer',
+                width: '100%',
+                textAlign: 'center',
+                borderRadius: 0,
+                transition: 'background 0.2s',
+              }}
+            >
+              {state === 'submitting' ? 'Sending…' : state === 'success' ? '✓ Check your inbox!' : 'Get the Free Manual →'}
+            </button>
+            {state === 'error' && (
+              <span style={{ fontSize: '0.78rem', color: '#f87171' }}>{errorMsg}</span>
+            )}
+            <span style={{ fontSize: '0.75rem', color: 'rgba(247,244,239,0.35)', marginTop: '0.25rem' }}>
+              Free. No spam. Sent immediately to your inbox.
+            </span>
+          </form>
         </div>
       </div>
     </section>

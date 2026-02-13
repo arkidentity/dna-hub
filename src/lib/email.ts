@@ -230,55 +230,96 @@ export async function sendMagicLinkEmail(
 
 // DNA Manual delivery email
 export async function sendDNAManualEmail(to: string, firstName: string) {
-  // TODO: Replace with actual hosted PDF URL when available
   const manualUrl = process.env.DNA_MANUAL_URL || 'https://arkidentity.com/dna-manual.pdf';
   const assessmentUrl = process.env.NEXT_PUBLIC_APP_URL
     ? `${process.env.NEXT_PUBLIC_APP_URL}/assessment`
     : 'https://dnadiscipleship.com/assessment';
 
-  const subject = 'Your DNA Manual is here';
+  const subject = `${firstName}, here's the DNA Multiplication Manual`;
   const html = `
-    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
-      <h2 style="color: #1A2332;">Hey ${firstName},</h2>
+    <div style="font-family: Georgia, 'Times New Roman', serif; max-width: 580px; margin: 0 auto; background: #f7f4ef; color: #0f0e0c;">
 
-      <p>Thanks for your interest in DNA Discipleship!</p>
-
-      <div style="background: #F4E7D7; padding: 24px; border-radius: 8px; margin: 24px 0; text-align: center;">
-        <p style="margin: 0 0 16px 0; font-weight: 600; color: #1A2332;">Here's your resource:</p>
-        <a href="${manualUrl}"
-           style="background: #D4A853; color: white; padding: 16px 32px;
-                  border-radius: 8px; text-decoration: none; font-weight: 500;
-                  display: inline-block;">
-          Download DNA Manual (PDF)
-        </a>
+      <!-- Header bar -->
+      <div style="background: #1a3a2a; padding: 20px 32px; display: flex; align-items: center;">
+        <span style="font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #c8922a;">DNA Discipleship</span>
       </div>
 
-      <h3 style="color: #1A2332; margin-top: 32px;">Where to start:</h3>
-      <p>Read the DNA Manual first (6 sessions, ~49 pages). It covers the heart and theology behind multiplication discipleship.</p>
-      <p>This will help you decide if DNA is right for your church.</p>
+      <!-- Body -->
+      <div style="padding: 40px 32px; background: #fdfbf7;">
 
-      <hr style="border: none; border-top: 1px solid #E8DDD0; margin: 32px 0;" />
+        <p style="font-family: system-ui, sans-serif; font-size: 16px; line-height: 1.6; color: #0f0e0c; margin: 0 0 20px 0;">
+          Hey ${firstName},
+        </p>
 
-      <h3 style="color: #1A2332;">Ready to explore further?</h3>
-      <p>Take our 5-minute Church Assessment to see if DNA is a good fit:</p>
+        <p style="font-family: system-ui, sans-serif; font-size: 16px; line-height: 1.6; color: #6b6560; margin: 0 0 32px 0;">
+          The Multiplication Manual is attached below. Six sessions. Forty-nine pages. The biblical case and the practical framework for moving your church from <em>wanting</em> to make disciples to actually doing it — reproducibly.
+        </p>
 
-      <div style="text-align: center; margin: 24px 0;">
+        <!-- Download CTA -->
+        <div style="background: #1a3a2a; padding: 28px 32px; margin: 0 0 32px 0; text-align: center;">
+          <p style="font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: #c8922a; margin: 0 0 12px 0;">Free Download</p>
+          <p style="font-family: Georgia, serif; font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 6px 0;">DNA Multiplication Manual</p>
+          <p style="font-family: system-ui, sans-serif; font-size: 13px; color: rgba(255,255,255,0.45); margin: 0 0 20px 0;">6 sessions &middot; 49 pages</p>
+          <a href="${manualUrl}"
+             style="background: #c8922a; color: #0f0e0c; padding: 14px 28px;
+                    text-decoration: none; font-family: system-ui, sans-serif;
+                    font-size: 14px; font-weight: 600; letter-spacing: 0.04em;
+                    display: inline-block;">
+            Download the Manual (PDF)
+          </a>
+        </div>
+
+        <!-- What's inside -->
+        <p style="font-family: system-ui, sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #c8922a; margin: 0 0 12px 0;">What's inside</p>
+        <ul style="list-style: none; padding: 0; margin: 0 0 32px 0;">
+          ${[
+            'The biblical case for multiplication — not just addition',
+            'The complete 3-phase DNA process explained',
+            'How to identify and invite the right disciples',
+            'What makes a disciple actually ready to multiply',
+            'The most common mistakes — and how to avoid them',
+            'How to cast vision for multiplication in your church',
+          ].map(item => `
+          <li style="font-family: system-ui, sans-serif; font-size: 14px; color: #6b6560; padding: 8px 0; border-bottom: 1px solid #ddd8cf; display: flex; gap: 10px; align-items: flex-start;">
+            <span style="color: #c8922a; font-weight: 700; flex-shrink: 0;">→</span> ${item}
+          </li>`).join('')}
+        </ul>
+
+        <hr style="border: none; border-top: 1px solid #ddd8cf; margin: 32px 0;" />
+
+        <!-- Assessment nudge -->
+        <p style="font-family: Georgia, serif; font-size: 18px; font-weight: 700; color: #0f0e0c; margin: 0 0 10px 0;">
+          While you read — one question worth asking:
+        </p>
+        <p style="font-family: system-ui, sans-serif; font-size: 15px; line-height: 1.7; color: #6b6560; margin: 0 0 20px 0;">
+          Does your church have the infrastructure to actually launch this? The Discipleship Infrastructure Assessment takes 5 minutes and tells you honestly where you stand — and what to address before you try.
+        </p>
         <a href="${assessmentUrl}"
-           style="background: #2D6A6A; color: white; padding: 14px 28px;
-                  border-radius: 8px; text-decoration: none; font-weight: 500;
+           style="background: #1a3a2a; color: #fff; padding: 12px 24px;
+                  text-decoration: none; font-family: system-ui, sans-serif;
+                  font-size: 13px; font-weight: 500; letter-spacing: 0.03em;
                   display: inline-block;">
-          See If DNA Is Right for Your Church
+          Take the 5-Minute Assessment →
         </a>
+
+        <p style="font-family: system-ui, sans-serif; font-size: 15px; line-height: 1.6; color: #0f0e0c; margin: 40px 0 4px 0;">
+          Travis
+        </p>
+        <p style="font-family: system-ui, sans-serif; font-size: 13px; color: #6b6560; margin: 0;">
+          ARK Identity Discipleship
+        </p>
+
+        <p style="font-family: system-ui, sans-serif; font-size: 13px; color: #6b6560; margin: 24px 0 0 0; padding-top: 24px; border-top: 1px solid #ddd8cf;">
+          P.S. Have questions? Hit reply. I read every email.
+        </p>
       </div>
 
-      <p>We'll give you personalized next steps based on your answers.</p>
-
-      <p style="margin-top: 32px;">Travis<br>
-      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
-
-      <p style="color: #5A6577; font-size: 14px; margin-top: 24px;">
-        P.S. Have questions? Just hit reply. I read every email.
-      </p>
+      <!-- Footer -->
+      <div style="background: #2a2825; padding: 16px 32px; text-align: center;">
+        <p style="font-family: system-ui, sans-serif; font-size: 11px; color: rgba(247,244,239,0.35); margin: 0;">
+          DNA Discipleship &middot; A ministry of ARK Identity Discipleship
+        </p>
+      </div>
     </div>
   `;
 
