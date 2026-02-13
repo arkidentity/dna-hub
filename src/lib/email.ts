@@ -240,7 +240,7 @@ export async function sendDNAManualEmail(to: string, firstName: string) {
     <div style="font-family: Georgia, 'Times New Roman', serif; max-width: 580px; margin: 0 auto; background: #f7f4ef; color: #0f0e0c;">
 
       <!-- Header bar -->
-      <div style="background: #1a3a2a; padding: 20px 32px; display: flex; align-items: center;">
+      <div style="background: #1A2332; padding: 20px 32px; display: flex; align-items: center;">
         <span style="font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #c8922a;">DNA Discipleship</span>
       </div>
 
@@ -256,7 +256,7 @@ export async function sendDNAManualEmail(to: string, firstName: string) {
         </p>
 
         <!-- Download CTA -->
-        <div style="background: #1a3a2a; padding: 28px 32px; margin: 0 0 32px 0; text-align: center;">
+        <div style="background: #1A2332; padding: 28px 32px; margin: 0 0 32px 0; text-align: center;">
           <p style="font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: #c8922a; margin: 0 0 12px 0;">Free Download</p>
           <p style="font-family: Georgia, serif; font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 6px 0;">DNA Multiplication Manual</p>
           <p style="font-family: system-ui, sans-serif; font-size: 13px; color: rgba(255,255,255,0.45); margin: 0 0 20px 0;">6 sessions &middot; 49 pages</p>
@@ -295,7 +295,7 @@ export async function sendDNAManualEmail(to: string, firstName: string) {
           Does your church have the infrastructure to actually launch this? The Discipleship Infrastructure Assessment takes 5 minutes and tells you honestly where you stand — and what to address before you try.
         </p>
         <a href="${assessmentUrl}"
-           style="background: #1a3a2a; color: #fff; padding: 12px 24px;
+           style="background: #1A2332; color: #fff; padding: 12px 24px;
                   text-decoration: none; font-family: system-ui, sans-serif;
                   font-size: 13px; font-weight: 500; letter-spacing: 0.03em;
                   display: inline-block;">

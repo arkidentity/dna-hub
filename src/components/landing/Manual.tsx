@@ -2,6 +2,7 @@
 
 import Image from 'next/image';
 import { useState } from 'react';
+// Cover image should be placed at /public/manual-cover.png
 import { useRouter } from 'next/navigation';
 import { useManualForm } from '@/hooks/useManualForm';
 
@@ -116,13 +117,21 @@ export default function Manual() {
               background: 'radial-gradient(circle, rgba(200,146,42,0.15) 0%, transparent 70%)',
             }}
           />
-          <Image
-            src="/dna-logo-gold.png"
-            alt="DNA"
-            width={48}
-            height={48}
-            style={{ width: '48px', height: '48px', marginBottom: '1.5rem', opacity: 0.9, position: 'relative', zIndex: 1 }}
-          />
+          {/* Cover image */}
+          <div style={{ position: 'relative', zIndex: 1, marginBottom: '1.75rem' }}>
+            <Image
+              src="/manual-cover.png"
+              alt="DNA Multiplication Manual Cover"
+              width={160}
+              height={226}
+              style={{
+                width: '160px',
+                height: 'auto',
+                display: 'block',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.45)',
+              }}
+            />
+          </div>
           <div
             style={{
               fontSize: '0.7rem',
@@ -151,12 +160,13 @@ export default function Manual() {
           </div>
           <div
             style={{
-              fontSize: '0.82rem',
-              color: 'rgba(247,244,239,0.45)',
+              fontSize: '0.875rem',
+              color: 'rgba(247,244,239,0.55)',
               marginBottom: '2rem',
               position: 'relative',
               zIndex: 1,
             }}
+            className="lp-form-hint"
           >
             6 sessions · 49 pages · Sent immediately
           </div>
@@ -238,7 +248,7 @@ export default function Manual() {
             {state === 'error' && (
               <span style={{ fontSize: '0.78rem', color: '#f87171' }}>{errorMsg}</span>
             )}
-            <span style={{ fontSize: '0.75rem', color: 'rgba(247,244,239,0.35)', marginTop: '0.25rem' }}>
+            <span className="lp-form-hint" style={{ fontSize: '0.875rem', color: 'rgba(247,244,239,0.45)', marginTop: '0.25rem' }}>
               No spam. Unsubscribe anytime.
             </span>
           </form>

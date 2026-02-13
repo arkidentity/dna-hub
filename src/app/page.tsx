@@ -7,6 +7,7 @@ import Problem from '@/components/landing/Problem';
 import WhatDNA from '@/components/landing/WhatDNA';
 import Tools from '@/components/landing/Tools';
 import Phases from '@/components/landing/Phases';
+import Manual from '@/components/landing/Manual';
 import Partner from '@/components/landing/Partner';
 import Pullquote from '@/components/landing/Pullquote';
 import FAQ from '@/components/landing/FAQ';
@@ -31,6 +32,7 @@ export default function Home() {
       <Problem />
       <WhatDNA />
       <Tools />
+      <Manual />
       <Phases />
       <Partner />
       <Pullquote />
@@ -41,13 +43,11 @@ export default function Home() {
       {/* Responsive overrides */}
       <style>{`
         @media (max-width: 900px) {
-          .hero-section { grid-template-columns: 1fr !important; min-height: auto !important; }
-          .hero-right { min-height: 380px; }
-          .hero-left { padding: 4rem 2rem !important; }
+          .hero-section { padding: 7rem 2rem 4rem !important; max-width: 100% !important; }
           .lp-problem, .lp-what, .lp-tools, .lp-phases, .lp-manual, .lp-partner, .lp-faq {
             padding: 4rem 2rem !important;
           }
-          .lp-problem-inner { grid-template-columns: 1fr !important; gap: 3rem !important; }
+          .lp-problem-inner, .lp-manual-inner { grid-template-columns: 1fr !important; gap: 3rem !important; }
           .lp-what-header { grid-template-columns: 1fr !important; gap: 2rem !important; }
           #lp-pillars, #lp-partner-steps { grid-template-columns: 1fr !important; }
           .lp-pillar { border-right: none !important; border-bottom: 1px solid var(--lp-rule) !important; }
@@ -57,6 +57,11 @@ export default function Home() {
           .lp-footer-form { flex-direction: column !important; }
           nav { padding: 1rem 1.5rem !important; }
           .lp-site-footer { flex-direction: column !important; gap: 1rem !important; padding: 2rem 1.5rem !important; text-align: center !important; }
+        }
+        /* Minimum readable font size for small print across all screen sizes */
+        .lp-trust-line, .lp-form-hint { font-size: 0.875rem !important; }
+        @media (max-width: 600px) {
+          .lp-trust-line, .lp-form-hint { font-size: 0.9rem !important; }
         }
       `}</style>
     </div>

@@ -92,7 +92,7 @@ export default function FooterCTA() {
       {state === 'error' && (
         <p style={{ fontSize: '0.78rem', color: '#f87171', marginBottom: '0.25rem' }}>{errorMsg}</p>
       )}
-      <p style={{ fontSize: '0.78rem', color: 'rgba(247,244,239,0.28)' }}>
+      <p className="lp-form-hint" style={{ fontSize: '0.875rem', color: 'rgba(247,244,239,0.45)' }}>
         Free. No spam. Sent immediately.
       </p>
     </section>
