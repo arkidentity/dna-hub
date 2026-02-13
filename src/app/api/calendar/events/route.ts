@@ -22,22 +22,48 @@ export async function GET(request: NextRequest) {
     if (groupId) {
       // Group-scoped fetch — direct query, admin client, no JWT needed
       // Returns instances only (not parent recurring records)
-      const { data: events, error } = await supabase
+      // Fetch all non-parent rows:
+      //   - Single events: is_recurring=false, parent_event_id=null
+      //   - Recurring instances: is_recurring=false, parent_event_id=<uuid>
+      // Exclude parent/template rows: is_recurring=true, parent_event_id=null
+      const { data: rawEvents, error } = await supabase
         .from('dna_calendar_events')
         .select('id, title, description, location, start_time, end_time, event_type, is_recurring, parent_event_id, recurrence_pattern, created_at')
         .eq('group_id', groupId)
         .eq('event_type', 'group_meeting')
-        .eq('is_recurring', false)  // instances only — parent records have is_recurring=true
+        .eq('is_recurring', false)  // excludes parent/template rows
         .gte('start_time', startDate)
         .lte('start_time', endDate)
         .order('start_time', { ascending: true });
+
+      // Deduplicate: for any two rows with the same start_time+title,
+      // prefer the instance row (has parent_event_id) over the orphan parent row
+      // (parent stored with is_recurring=false — legacy bad data or race condition).
+      // Build a map keyed by start_time__title; prefer rows with parent_event_id.
+      type RawEvent = NonNullable<typeof rawEvents>[0];
+      const eventMap = new Map<string, RawEvent>();
+      for (const e of (rawEvents || [])) {
+        const key = `${e.start_time}__${e.title}`;
+        const existing = eventMap.get(key);
+        if (!existing) {
+          eventMap.set(key, e);
+        } else {
+          // If new row has a parent_event_id (true instance), it wins
+          if (e.parent_event_id && !existing.parent_event_id) {
+            eventMap.set(key, e);
+          }
+        }
+      }
+      const events = Array.from(eventMap.values()).sort(
+        (a, b) => new Date(a.start_time).getTime() - new Date(b.start_time).getTime()
+      );
 
       if (error) {
         console.error('[CALENDAR] Group fetch error:', error);
         return NextResponse.json({ error: 'Failed to fetch events' }, { status: 500 });
       }
 
-      return NextResponse.json({ events });
+      return NextResponse.json({ events: events });
     }
 
     // General fetch via RPC (works for disciple-facing Daily DNA app)
@@ -145,6 +171,8 @@ export async function POST(request: NextRequest) {
         created_by: leader.id,
       }));
 
+      console.log(`[CALENDAR] Creating ${instanceRecords.length} instances. First: ${instanceRecords[0]?.start_time}, Parent ID: ${parentEvent.id}`);
+
       const { error: instancesError } = await supabase
         .from('dna_calendar_events')
         .insert(instanceRecords);
@@ -154,6 +182,7 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Failed to create recurring events' }, { status: 500 });
       }
 
+      console.log(`[CALENDAR] Successfully created parent ${parentEvent.id} + ${instanceRecords.length} instances`);
       return NextResponse.json({ event: parentEvent, instanceCount: instances.length });
     }
 

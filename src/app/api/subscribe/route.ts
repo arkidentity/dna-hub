@@ -6,12 +6,14 @@ export async function POST(request: NextRequest) {
   try {
     const { email, firstName } = await request.json();
 
-    if (!email || !firstName) {
+    if (!email) {
       return NextResponse.json(
-        { error: 'Email and first name are required' },
+        { error: 'Email is required' },
         { status: 400 }
       );
     }
+
+    const resolvedFirstName = firstName || 'Friend';
 
     const supabase = getSupabaseAdmin();
 
@@ -24,7 +26,7 @@ export async function POST(request: NextRequest) {
 
     if (existing) {
       // Still send the email even if already subscribed
-      await sendDNAManualEmail(email, firstName);
+      await sendDNAManualEmail(email, resolvedFirstName);
       return NextResponse.json({ success: true, message: 'Email resent' });
     }
 
@@ -33,7 +35,7 @@ export async function POST(request: NextRequest) {
       .from('email_subscribers')
       .insert({
         email: email.toLowerCase(),
-        first_name: firstName,
+        first_name: resolvedFirstName,
         subscribed_at: new Date().toISOString(),
         manual_sent: true,
         assessment_started: false,
@@ -45,7 +47,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Send the DNA Manual email
-    const emailResult = await sendDNAManualEmail(email, firstName);
+    const emailResult = await sendDNAManualEmail(email, resolvedFirstName);
 
     if (!emailResult.success) {
       console.error('[SUBSCRIBE] Email send failed:', emailResult.error);
