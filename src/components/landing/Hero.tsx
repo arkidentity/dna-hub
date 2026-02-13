@@ -45,7 +45,7 @@ export default function Hero() {
       >
         Your church was<br />
         made to multiply.<br />
-        <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>Give your people a<br />system worth following.</em>
+        <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>Give them a plan.<br />Watch it grow.</em>
       </h1>
 
       <p
