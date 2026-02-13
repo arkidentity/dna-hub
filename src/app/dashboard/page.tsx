@@ -11,6 +11,7 @@ import {
   AlertCircle,
   RefreshCw,
   UserCog,
+  Sparkles,
 } from 'lucide-react';
 import { PhaseWithMilestones, MilestoneWithProgress, Church, ChurchLeader, FunnelDocument, ScheduledCall, GlobalResource } from '@/lib/types';
 import {
@@ -19,6 +20,7 @@ import {
   GroupsTab,
   TeamTab,
 } from '@/components/dashboard';
+import TeamGiftsTab from '@/components/spiritual-gifts/TeamGiftsTab';
 
 interface DashboardData {
   church: Church;
@@ -34,7 +36,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'team' | 'groups'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'team' | 'groups' | 'gifts'>('overview');
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [compactView, setCompactView] = useState(() => {
     if (typeof window !== 'undefined') {
@@ -445,6 +447,7 @@ export default function DashboardPage() {
               { id: 'journey', label: 'DNA Journey', icon: Map },
               { id: 'team', label: 'Team', icon: UserCog },
               { id: 'groups', label: 'DNA Leaders', icon: Users },
+              { id: 'gifts', label: 'Ministry Gifts', icon: Sparkles },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -525,6 +528,10 @@ export default function DashboardPage() {
             churchName={church.name}
             isAdmin={isAdmin}
           />
+        )}
+
+        {activeTab === 'gifts' && (
+          <TeamGiftsTab churchId={church.id} />
         )}
 
         {/* Help Section */}
