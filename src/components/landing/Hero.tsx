@@ -35,17 +35,17 @@ export default function Hero() {
       <h1
         style={{
           fontFamily: "'Playfair Display', serif",
-          fontSize: 'clamp(3rem, 6vw, 5.5rem)',
-          lineHeight: 1.0,
+          fontSize: 'clamp(3rem, 5.5vw, 4.75rem)',
+          lineHeight: 1.05,
           color: 'var(--lp-ink)',
           marginBottom: '2rem',
           fontWeight: 900,
-          maxWidth: '820px',
+          maxWidth: '680px',
         }}
       >
-        Your church was<br />
-        made to multiply.<br />
-        <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>Give them a plan.<br />Watch it grow.</em>
+        Your church was made to multiply.<br />
+        <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>Give them a plan.</em><br />
+        <em style={{ fontStyle: 'italic', color: 'var(--lp-green)' }}>Watch it grow.</em>
       </h1>
 
       <p
