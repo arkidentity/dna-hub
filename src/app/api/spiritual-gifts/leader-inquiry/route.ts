@@ -183,12 +183,12 @@ export async function POST(request: NextRequest) {
 
             <!-- Header -->
             <div style="background: #1A2332; padding: 24px 32px; display: flex; align-items: center;">
-              <span style="font-family: Georgia, serif; font-size: 1.1rem; font-weight: 700; color: #c8922a; letter-spacing: 0.08em; text-transform: uppercase;">DNA Discipleship</span>
+              <span style="font-family: Georgia, serif; font-size: 1.1rem; font-weight: 700; color: #D4A853; letter-spacing: 0.08em; text-transform: uppercase;">DNA Discipleship</span>
             </div>
 
             <!-- Body -->
             <div style="padding: 40px 32px;">
-              <p style="font-size: 0.8rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #c8922a; margin: 0 0 1rem 0;">You're in, ${firstName}</p>
+              <p style="font-size: 0.8rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #D4A853; margin: 0 0 1rem 0;">You're in, ${firstName}</p>
 
               <h1 style="font-family: Georgia, 'Playfair Display', serif; font-size: 2rem; font-weight: 900; line-height: 1.15; color: #0f0e0c; margin: 0 0 1.25rem 0;">
                 Your team dashboard<br/>is ready to use.
@@ -200,15 +200,15 @@ export async function POST(request: NextRequest) {
 
               <!-- CTA -->
               <div style="background: #1A2332; padding: 28px 32px; margin: 0 0 2rem 0; text-align: center;">
-                <p style="font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; color: #c8922a; margin: 0 0 0.75rem 0;">One-click login — no password needed</p>
-                <a href="${magicLink}" style="display: inline-block; background: #c8922a; color: #0f0e0c; padding: 14px 32px; text-decoration: none; font-weight: 700; font-size: 0.95rem; letter-spacing: 0.04em;">
+                <p style="font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A853; margin: 0 0 0.75rem 0;">One-click login — no password needed</p>
+                <a href="${magicLink}" style="display: inline-block; background: #D4A853; color: #0f0e0c; padding: 14px 32px; text-decoration: none; font-weight: 700; font-size: 0.95rem; letter-spacing: 0.04em;">
                   Access My Dashboard →
                 </a>
                 <p style="font-size: 0.78rem; color: rgba(247,244,239,0.4); margin: 1rem 0 0 0;">This link expires in 7 days.</p>
               </div>
 
               <!-- Next steps -->
-              <p style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #c8922a; margin: 0 0 1rem 0;">What to do next</p>
+              <p style="font-size: 0.75rem; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #D4A853; margin: 0 0 1rem 0;">What to do next</p>
               <table style="width: 100%; border-collapse: collapse;">
                 ${[
                   ['Take the assessment yourself', 'Visit dailydna.app/gifts to complete your own profile first.'],
@@ -230,7 +230,7 @@ export async function POST(request: NextRequest) {
 
               <p style="font-size: 0.88rem; color: #6b6560; line-height: 1.7; margin: 2rem 0 0 0;">
                 Questions? Just reply to this email — we read every one.<br/>
-                <a href="mailto:travis@arkidentity.com" style="color: #c8922a; text-decoration: none;">travis@arkidentity.com</a>
+                <a href="mailto:travis@arkidentity.com" style="color: #D4A853; text-decoration: none;">travis@arkidentity.com</a>
               </p>
             </div>
 

@@ -241,7 +241,7 @@ export async function sendDNAManualEmail(to: string, firstName: string) {
 
       <!-- Header bar -->
       <div style="background: #1A2332; padding: 20px 32px; display: flex; align-items: center;">
-        <span style="font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #c8922a;">DNA Discipleship</span>
+        <span style="font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #D4A853;">DNA Discipleship</span>
       </div>
 
       <!-- Body -->
@@ -257,11 +257,11 @@ export async function sendDNAManualEmail(to: string, firstName: string) {
 
         <!-- Download CTA -->
         <div style="background: #1A2332; padding: 28px 32px; margin: 0 0 32px 0; text-align: center;">
-          <p style="font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: #c8922a; margin: 0 0 12px 0;">Free Download</p>
+          <p style="font-family: system-ui, sans-serif; font-size: 11px; font-weight: 600; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A853; margin: 0 0 12px 0;">Free Download</p>
           <p style="font-family: Georgia, serif; font-size: 20px; font-weight: 700; color: #fff; margin: 0 0 6px 0;">DNA Multiplication Manual</p>
           <p style="font-family: system-ui, sans-serif; font-size: 13px; color: rgba(255,255,255,0.45); margin: 0 0 20px 0;">6 sessions &middot; 49 pages</p>
           <a href="${manualUrl}"
-             style="background: #c8922a; color: #0f0e0c; padding: 14px 28px;
+             style="background: #D4A853; color: #0f0e0c; padding: 14px 28px;
                     text-decoration: none; font-family: system-ui, sans-serif;
                     font-size: 14px; font-weight: 600; letter-spacing: 0.04em;
                     display: inline-block;">
@@ -270,7 +270,7 @@ export async function sendDNAManualEmail(to: string, firstName: string) {
         </div>
 
         <!-- What's inside -->
-        <p style="font-family: system-ui, sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #c8922a; margin: 0 0 12px 0;">What's inside</p>
+        <p style="font-family: system-ui, sans-serif; font-size: 13px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #D4A853; margin: 0 0 12px 0;">What's inside</p>
         <ul style="list-style: none; padding: 0; margin: 0 0 32px 0;">
           ${[
             'The biblical case for multiplication — not just addition',
@@ -281,7 +281,7 @@ export async function sendDNAManualEmail(to: string, firstName: string) {
             'How to cast vision for multiplication in your church',
           ].map(item => `
           <li style="font-family: system-ui, sans-serif; font-size: 14px; color: #6b6560; padding: 8px 0; border-bottom: 1px solid #ddd8cf; display: flex; gap: 10px; align-items: flex-start;">
-            <span style="color: #c8922a; font-weight: 700; flex-shrink: 0;">→</span> ${item}
+            <span style="color: #D4A853; font-weight: 700; flex-shrink: 0;">→</span> ${item}
           </li>`).join('')}
         </ul>
 

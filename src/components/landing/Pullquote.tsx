@@ -4,13 +4,13 @@ export default function Pullquote() {
   return (
     <section
       style={{
-        background: 'var(--lp-gold)',
+        background: 'var(--lp-green)',
         padding: '5rem',
         textAlign: 'center',
       }}
     >
       <Image
-        src="/dna-logo-black.png"
+        src="/dna-logo-gold.png"
         alt="DNA"
         width={52}
         height={52}
@@ -22,7 +22,7 @@ export default function Pullquote() {
           fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
           fontWeight: 700,
           fontStyle: 'italic',
-          color: 'var(--lp-ink)',
+          color: '#fff',
           maxWidth: '720px',
           margin: '0 auto 1.5rem',
           lineHeight: 1.4,
@@ -33,7 +33,7 @@ export default function Pullquote() {
       <div
         style={{
           fontSize: '0.82rem',
-          color: 'rgba(15,14,12,0.6)',
+          color: 'rgba(255,255,255,0.75)',
           fontWeight: 500,
           letterSpacing: '0.06em',
           textTransform: 'uppercase',

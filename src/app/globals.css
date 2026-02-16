@@ -8,9 +8,9 @@
   --foreground-muted: #5A6577;
 
   /* Accent Colors */
-  --gold: #c8922a;
-  --gold-dark: #9a6e1a;
-  --gold-light: #e8b84b;
+  --gold: #D4A853;
+  --gold-dark: #B8892E;
+  --gold-light: #E8C278;
   --teal: #2D6A6A;
   --teal-light: #3D8A8A;
   --navy: #1A2332;
@@ -129,9 +129,12 @@ input:focus, textarea:focus, select:focus {
   --lp-ink: #0f0e0c;
   --lp-paper: #f7f4ef;
   --lp-warm-white: #fdfbf7;
-  --lp-gold: #c8922a;
-  --lp-gold-light: #e8b84b;
-  --lp-gold-dark: #9a6e1a;
+  --lp-gold: #D4A853;
+  --lp-gold-light: #E8C278;
+  --lp-gold-dark: #B8892E;
+  --lp-green: #4A9E7F;
+  --lp-green-dark: #3A7D64;
+  --lp-green-light: #5DB896;
   --lp-charcoal: #2a2825;
   --lp-mid: #6b6560;
   --lp-rule: #ddd8cf;
