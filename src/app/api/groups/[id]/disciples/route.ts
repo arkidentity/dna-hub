@@ -46,7 +46,7 @@ export async function POST(
     // Verify ownership of the group
     const { data: group, error: groupError } = await supabase
       .from('dna_groups')
-      .select('id, group_name, leader_id, co_leader_id')
+      .select('id, group_name, leader_id, co_leader_id, church_id')
       .eq('id', groupId)
       .single();
 
@@ -156,12 +156,27 @@ export async function POST(
     }
 
     // Send Daily DNA app invitation email (fire-and-forget)
-    sendDailyDNAInvitationEmail(
-      normalizedEmail,
-      name.trim(),
-      session.name || 'Your DNA Leader',
-      group.group_name
-    ).catch(err => console.error('[Disciples] Email send error:', err));
+    // Look up church subdomain if group is part of a church
+    const churchId = (group as any).church_id as string | null;
+    const sendInvite = async () => {
+      let subdomain: string | null = null;
+      if (churchId) {
+        const { data: church } = await supabase
+          .from('churches')
+          .select('subdomain')
+          .eq('id', churchId)
+          .single();
+        subdomain = church?.subdomain ?? null;
+      }
+      await sendDailyDNAInvitationEmail(
+        normalizedEmail,
+        name.trim(),
+        session.name || 'Your DNA Leader',
+        group.group_name,
+        subdomain
+      );
+    };
+    sendInvite().catch(err => console.error('[Disciples] Email send error:', err));
 
     return NextResponse.json({
       success: true,

@@ -39,12 +39,12 @@ const tieredContent: Record<ReadinessLevel, TieredContent> = {
     readinessIcon: <Rocket className="w-8 h-8" />,
     threeStepsPdfUrl: PDF_URLS.threeStepsReady,
     resource: {
-      title: 'Get Your Launch Guide',
-      description: "Everything you need to prepare for a successful DNA launch at your church.",
-      buttonText: 'Download Launch Guide',
-      pdfUrl: PDF_URLS.launchGuide,
+      title: '',
+      description: '',
+      buttonText: '',
+      pdfUrl: '',
     },
-    calendarIncentive: "Book Your Discovery Call and Receive the 8-Week Toolkit",
+    calendarIncentive: "Book Your Discovery Call — Receive the DNA Launch Guide",
   },
   building: {
     readinessHeadline: "You're Building the Foundation",
@@ -57,7 +57,7 @@ const tieredContent: Record<ReadinessLevel, TieredContent> = {
       buttonText: 'Download DNA Manual',
       pdfUrl: PDF_URLS.dnaManual,
     },
-    calendarIncentive: "Book Your Discovery Call and Receive the Launch Guide",
+    calendarIncentive: "Book Your Discovery Call and Receive the DNA Launch Guide",
   },
   exploring: {
     readinessHeadline: "You're in Discovery Mode",
@@ -110,15 +110,19 @@ function ThankYouContent() {
           <p className="text-foreground-muted mb-6">
             Your personalized guide based on where {churchName} is right now.
           </p>
-          <a
-            href={content.threeStepsPdfUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-2 bg-gold hover:bg-gold-dark text-white font-medium px-6 py-3 rounded-lg transition-colors"
-          >
-            <Download className="w-5 h-5" />
-            Download Your 3 Steps Guide (PDF)
-          </a>
+          {content.threeStepsPdfUrl && content.threeStepsPdfUrl !== '#' ? (
+            <a
+              href={content.threeStepsPdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-2 bg-gold hover:bg-gold-dark text-white font-medium px-6 py-3 rounded-lg transition-colors"
+            >
+              <Download className="w-5 h-5" />
+              Download Your 3 Steps Guide (PDF)
+            </a>
+          ) : (
+            <p className="text-foreground-muted text-sm italic">Your guide is being prepared — we&apos;ll send it to you by email.</p>
+          )}
         </div>
 
         {/* Readiness Level Message with Integrated Resource */}
@@ -141,22 +145,26 @@ function ThankYouContent() {
             </div>
           </div>
 
-          {/* Nested Resource Box */}
-          <div className="bg-white rounded-lg p-4 border border-border">
-            <h4 className="font-semibold text-navy mb-1">{content.resource.title}</h4>
-            <p className="text-foreground-muted text-sm mb-3">{content.resource.description}</p>
-            <a
-              href={content.resource.pdfUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`inline-flex items-center gap-2 font-medium transition-colors ${
-                level === 'ready' ? 'text-success hover:text-success/80' : 'text-teal hover:text-teal-light'
-              }`}
-            >
-              <Download className="w-4 h-4" />
-              {content.resource.buttonText}
-            </a>
-          </div>
+          {/* Nested Resource Box — hidden for ready (pushed to discovery call instead) */}
+          {level !== 'ready' && content.resource.title && (
+            <div className="bg-white rounded-lg p-4 border border-border">
+              <h4 className="font-semibold text-navy mb-1">{content.resource.title}</h4>
+              <p className="text-foreground-muted text-sm mb-3">{content.resource.description}</p>
+              {content.resource.pdfUrl && content.resource.pdfUrl !== '#' ? (
+                <a
+                  href={content.resource.pdfUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 font-medium text-teal hover:text-teal-light transition-colors"
+                >
+                  <Download className="w-4 h-4" />
+                  {content.resource.buttonText}
+                </a>
+              ) : (
+                <p className="text-foreground-muted text-sm italic">Coming soon</p>
+              )}
+            </div>
+          )}
         </div>
 
         {/* Embedded Google Calendar */}

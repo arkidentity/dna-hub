@@ -103,8 +103,9 @@ export async function POST(
 
     // Send invitation email
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://hub.arkidentity.com';
-    const acceptUrl = `${baseUrl}/groups/invitations/${invitation.token}/accept`;
-    const declineUrl = `${baseUrl}/groups/invitations/${invitation.token}/decline`;
+    const invitationUrl = `${baseUrl}/groups/invitations/${invitation.token}`;
+    const acceptUrl = invitationUrl;
+    const declineUrl = invitationUrl;
 
     await sendCoLeaderInvitationEmail(
       invitedLeader.email,

@@ -39,18 +39,26 @@ export async function GET(request: NextRequest) {
       // Deduplicate: for any two rows with the same start_time+title,
       // prefer the instance row (has parent_event_id) over the orphan parent row
       // (parent stored with is_recurring=false — legacy bad data or race condition).
-      // Build a map keyed by start_time__title; prefer rows with parent_event_id.
+      // Also remove exact duplicates (same parent_event_id + start_time) keeping newest.
       type RawEvent = NonNullable<typeof rawEvents>[0];
       const eventMap = new Map<string, RawEvent>();
       for (const e of (rawEvents || [])) {
-        const key = `${e.start_time}__${e.title}`;
+        // Use rounded-minute start time to normalize slight timestamp differences
+        const roundedStart = new Date(e.start_time);
+        roundedStart.setSeconds(0, 0);
+        const key = `${roundedStart.toISOString()}__${e.title}`;
         const existing = eventMap.get(key);
         if (!existing) {
           eventMap.set(key, e);
         } else {
-          // If new row has a parent_event_id (true instance), it wins
+          // Prefer rows with parent_event_id (true instance) over orphan rows
           if (e.parent_event_id && !existing.parent_event_id) {
             eventMap.set(key, e);
+          } else if (e.parent_event_id && existing.parent_event_id) {
+            // Both are instances — keep the newer one (by created_at)
+            if (e.created_at > existing.created_at) {
+              eventMap.set(key, e);
+            }
           }
         }
       }

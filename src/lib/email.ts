@@ -1392,9 +1392,11 @@ export async function sendDailyDNAInvitationEmail(
   to: string,
   discipleName: string,
   leaderName: string,
-  groupName: string
+  groupName: string,
+  churchSubdomain?: string | null
 ) {
-  const appUrl = process.env.DAILY_DNA_APP_URL || 'https://dailydna.app';
+  const baseUrl = process.env.DAILY_DNA_APP_URL || 'https://dailydna.app';
+  const appUrl = churchSubdomain ? `https://${churchSubdomain}.dailydna.app` : baseUrl;
 
   const subject = `${leaderName} added you to a DNA group - get the Daily DNA app`;
 

@@ -498,51 +498,65 @@ export default function AdminChurchOverviewTab({
             Assessment Details
           </h3>
           {assessment ? (
-            <div className="space-y-3 text-sm max-h-80 overflow-y-auto">
-              <div>
-                <p className="text-foreground-muted">Submitted</p>
-                <p className="font-medium">{formatDate(assessment.submitted_at)}</p>
+            <div className="space-y-4 text-sm">
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <p className="text-foreground-muted text-xs uppercase tracking-wide mb-0.5">Submitted</p>
+                  <p className="font-medium">{formatDate(assessment.submitted_at)}</p>
+                </div>
+                {assessment.congregation_size && (
+                  <div>
+                    <p className="text-foreground-muted text-xs uppercase tracking-wide mb-0.5">Congregation Size</p>
+                    <p className="font-medium">{assessment.congregation_size}</p>
+                  </div>
+                )}
+                {assessment.pastor_commitment_level && (
+                  <div>
+                    <p className="text-foreground-muted text-xs uppercase tracking-wide mb-0.5">Pastor Commitment</p>
+                    <p className="font-medium capitalize">{assessment.pastor_commitment_level.replace(/_/g, ' ')}</p>
+                  </div>
+                )}
+                {assessment.identified_leaders !== undefined && assessment.identified_leaders !== null && (
+                  <div>
+                    <p className="text-foreground-muted text-xs uppercase tracking-wide mb-0.5">Identified Leaders</p>
+                    <p className="font-medium">{assessment.identified_leaders}</p>
+                  </div>
+                )}
+                {assessment.desired_launch_timeline && (
+                  <div>
+                    <p className="text-foreground-muted text-xs uppercase tracking-wide mb-0.5">Desired Timeline</p>
+                    <p className="font-medium">{assessment.desired_launch_timeline}</p>
+                  </div>
+                )}
               </div>
-              {assessment.congregation_size && (
-                <div>
-                  <p className="text-foreground-muted">Congregation Size</p>
-                  <p className="font-medium">{assessment.congregation_size}</p>
-                </div>
-              )}
-              {assessment.pastor_commitment_level && (
-                <div>
-                  <p className="text-foreground-muted">Pastor Commitment</p>
-                  <p className="font-medium capitalize">{assessment.pastor_commitment_level.replace('_', ' ')}</p>
-                </div>
-              )}
-              {assessment.identified_leaders && (
-                <div>
-                  <p className="text-foreground-muted">Identified Leaders</p>
-                  <p className="font-medium">{assessment.identified_leaders}</p>
-                </div>
-              )}
-              {assessment.desired_launch_timeline && (
-                <div>
-                  <p className="text-foreground-muted">Desired Timeline</p>
-                  <p className="font-medium">{assessment.desired_launch_timeline}</p>
-                </div>
-              )}
               {assessment.why_interested && (
                 <div>
-                  <p className="text-foreground-muted">Why DNA?</p>
-                  <p className="font-medium">{assessment.why_interested}</p>
+                  <p className="text-foreground-muted text-xs uppercase tracking-wide mb-0.5">Why DNA?</p>
+                  <p className="font-medium whitespace-pre-wrap">{assessment.why_interested}</p>
+                </div>
+              )}
+              {assessment.current_discipleship_approach && (
+                <div>
+                  <p className="text-foreground-muted text-xs uppercase tracking-wide mb-0.5">Current Discipleship Approach</p>
+                  <p className="font-medium whitespace-pre-wrap">{assessment.current_discipleship_approach}</p>
                 </div>
               )}
               {assessment.potential_barriers && (
                 <div>
-                  <p className="text-foreground-muted">Potential Barriers</p>
-                  <p className="font-medium">{assessment.potential_barriers}</p>
+                  <p className="text-foreground-muted text-xs uppercase tracking-wide mb-0.5">Potential Barriers</p>
+                  <p className="font-medium whitespace-pre-wrap">{assessment.potential_barriers}</p>
                 </div>
               )}
               {assessment.first_year_goals && (
                 <div>
-                  <p className="text-foreground-muted">First Year Goals</p>
-                  <p className="font-medium">{assessment.first_year_goals}</p>
+                  <p className="text-foreground-muted text-xs uppercase tracking-wide mb-0.5">First Year Goals</p>
+                  <p className="font-medium whitespace-pre-wrap">{assessment.first_year_goals}</p>
+                </div>
+              )}
+              {assessment.additional_questions && (
+                <div>
+                  <p className="text-foreground-muted text-xs uppercase tracking-wide mb-0.5">Additional Questions / Comments</p>
+                  <p className="font-medium whitespace-pre-wrap">{assessment.additional_questions}</p>
                 </div>
               )}
             </div>

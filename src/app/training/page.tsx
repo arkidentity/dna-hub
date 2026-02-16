@@ -114,14 +114,10 @@ export default function TrainingDashboard() {
           {/* Welcome Section */}
           <section className="welcome-section">
             <h2>Welcome back, {firstName}!</h2>
-            <p className="stage-label">
-              Stage: <span>{formatStage(user.journey.current_stage)}</span>
-            </p>
           </section>
 
           {/* Journey Progress */}
           <section className="journey-section">
-            <h3>Your Journey</h3>
 
             {/* Flow Assessment Card */}
             <div className={`journey-card ${flowAssessmentComplete ? 'completed' : 'current'}`}>
@@ -277,7 +273,6 @@ function formatStage(stage: string): string {
     onboarding: 'Getting Started',
     training: 'In Training',
     launching: 'Preparing to Launch',
-    growing: 'Growing',
     multiplying: 'Multiplying'
   };
   return stages[stage] || stage;

@@ -406,10 +406,10 @@ function DiscipleProfileContent() {
             background: 'linear-gradient(135deg, #D4A853 0%, #d4a454 50%, #B8923F 100%)',
           }}>
             <div className="px-6 py-5 flex items-center gap-5">
-              {/* Flame icon */}
-              <div className="flex-shrink-0">
-                <svg viewBox="0 0 24 24" fill="white" className="w-10 h-10 opacity-90">
-                  <path d="M12 23c-4.97 0-9-3.58-9-8 0-2.52 1.17-4.83 3.18-6.46.38-.31.93-.04.93.45v.47c0 1.6 1.22 3.28 2.68 3.68.67.18 1.21-.52.83-1.08-.95-1.41-1.12-3.07-.55-4.6C10.73 5.04 12.75 3 15.18 3c.63 0 1.16.13 1.16.13C17.56 3.47 19 4.92 19 6.84c0 3.08-2.24 5.94-4.73 7.81-.31.23-.4.68-.17.99.23.31.69.39 1 .16C18.38 13.24 21 9.73 21 6.84c0-2.7-1.94-4.95-4.5-5.61 0 0-.83-.23-1.68-.23C11.35 1 8.44 3.67 7.53 7c-.55 2.01-.34 4.11.58 5.91-1.94.45-3.61 2.26-3.61 4.43 0 2.54 2.26 4.66 5 4.66h5c2.74 0 5-2.12 5-4.66 0-1.8-1.09-3.34-2.65-4.1-.27-.13-.55.13-.47.42.5 1.86-.24 3.84-1.88 5.04-.25.18-.25.57.02.73.83.49 1.78.57 2.65.25.77-.28 1.43-.8 1.88-1.47.11-.16.33-.2.49-.1.5.33.89.83 1.06 1.43.18.63.15 1.29-.08 1.89C19.53 21.96 16.86 23 12 23z" />
+              {/* Streak icon — lightning bolt */}
+              <div className="flex-shrink-0 w-12 h-12 rounded-full flex items-center justify-center" style={{ background: 'rgba(255,255,255,0.2)' }}>
+                <svg viewBox="0 0 24 24" fill="white" className="w-7 h-7">
+                  <path d="M13 2L4.5 13.5H11L10 22L19.5 10.5H13L13 2Z" />
                 </svg>
               </div>
               <div className="flex-1">
@@ -430,83 +430,83 @@ function DiscipleProfileContent() {
 
           {/* Growth Areas Grid */}
           <div className="px-6 pb-2">
-            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Growth Areas</h3>
+            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Growth Areas</h3>
           </div>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 px-6 pb-6">
+          <div className="grid grid-cols-3 lg:grid-cols-6 gap-2 px-6 pb-5">
             {/* Journal Entries */}
-            <div className="rounded-xl p-4 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(45, 106, 106, 0.08)' }}>
-              <div className="w-9 h-9 mx-auto mb-2 rounded-lg flex items-center justify-center" style={{ background: 'rgba(45, 106, 106, 0.15)' }}>
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--teal)' }}>
+            <div className="rounded-lg p-3 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(45, 106, 106, 0.08)' }}>
+              <div className="w-7 h-7 mx-auto mb-1.5 rounded-md flex items-center justify-center" style={{ background: 'rgba(45, 106, 106, 0.15)' }}>
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--teal)' }}>
                   <path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z" />
                   <path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z" />
                 </svg>
               </div>
-              <p className="text-2xl font-bold" style={{ color: 'var(--teal)' }}>{journalEntries}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Journal Entries</p>
+              <p className="text-xl font-bold leading-none" style={{ color: 'var(--teal)' }}>{journalEntries}</p>
+              <p className="text-[10px] text-gray-500 mt-0.5 leading-tight">Journal</p>
             </div>
 
             {/* Prayer Sessions */}
-            <div className="rounded-xl p-4 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(95, 12, 11, 0.06)' }}>
-              <div className="w-9 h-9 mx-auto mb-2 rounded-lg flex items-center justify-center" style={{ background: 'rgba(95, 12, 11, 0.12)' }}>
-                <svg className="w-5 h-5 text-[#5f0c0b]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <div className="rounded-lg p-3 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(95, 12, 11, 0.06)' }}>
+              <div className="w-7 h-7 mx-auto mb-1.5 rounded-md flex items-center justify-center" style={{ background: 'rgba(95, 12, 11, 0.12)' }}>
+                <svg className="w-4 h-4 text-[#5f0c0b]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M4.318 6.318a4.5 4.5 0 0 0 0 6.364L12 20.364l7.682-7.682a4.5 4.5 0 0 0-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 0 0-6.364 0z" />
                 </svg>
               </div>
-              <p className="text-2xl font-bold text-[#5f0c0b]">{prayerSessions}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Prayer Sessions</p>
+              <p className="text-xl font-bold leading-none text-[#5f0c0b]">{prayerSessions}</p>
+              <p className="text-[10px] text-gray-500 mt-0.5 leading-tight">Prayer</p>
             </div>
 
             {/* Prayer Cards */}
-            <div className="rounded-xl p-4 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(95, 12, 11, 0.04)' }}>
-              <div className="w-9 h-9 mx-auto mb-2 rounded-lg flex items-center justify-center" style={{ background: 'rgba(95, 12, 11, 0.08)' }}>
-                <svg className="w-5 h-5 text-[#8b2020]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <div className="rounded-lg p-3 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(95, 12, 11, 0.04)' }}>
+              <div className="w-7 h-7 mx-auto mb-1.5 rounded-md flex items-center justify-center" style={{ background: 'rgba(95, 12, 11, 0.08)' }}>
+                <svg className="w-4 h-4 text-[#8b2020]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <rect x="3" y="5" width="18" height="14" rx="2" />
                   <path d="M3 10h18" />
                 </svg>
               </div>
-              <p className="text-2xl font-bold text-[#8b2020]">{prayerCards}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Prayer Cards</p>
+              <p className="text-xl font-bold leading-none text-[#8b2020]">{prayerCards}</p>
+              <p className="text-[10px] text-gray-500 mt-0.5 leading-tight">Prayer Cards</p>
             </div>
 
             {/* Creed Cards */}
-            <div className="rounded-xl p-4 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(212, 168, 83, 0.08)' }}>
-              <div className="w-9 h-9 mx-auto mb-2 rounded-lg flex items-center justify-center" style={{ background: 'rgba(212, 168, 83, 0.15)' }}>
-                <svg className="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--gold)' }}>
+            <div className="rounded-lg p-3 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(212, 168, 83, 0.08)' }}>
+              <div className="w-7 h-7 mx-auto mb-1.5 rounded-md flex items-center justify-center" style={{ background: 'rgba(212, 168, 83, 0.15)' }}>
+                <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{ color: 'var(--gold)' }}>
                   <rect x="3" y="5" width="18" height="14" rx="2" />
                   <path d="M3 10h18" />
                 </svg>
               </div>
-              <p className="text-2xl font-bold" style={{ color: 'var(--gold-dark)' }}>
-                {creedMastered}<span className="text-sm font-normal text-gray-400">/50</span>
+              <p className="text-xl font-bold leading-none" style={{ color: 'var(--gold-dark)' }}>
+                {creedMastered}<span className="text-xs font-normal text-gray-400">/50</span>
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">Creed Cards</p>
+              <p className="text-[10px] text-gray-500 mt-0.5 leading-tight">Creed</p>
             </div>
 
             {/* Testimonies */}
-            <div className="rounded-xl p-4 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(74, 158, 127, 0.06)' }}>
-              <div className="w-9 h-9 mx-auto mb-2 rounded-lg flex items-center justify-center" style={{ background: 'rgba(74, 158, 127, 0.12)' }}>
-                <svg className="w-5 h-5 text-[#4A9E7F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <div className="rounded-lg p-3 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(74, 158, 127, 0.06)' }}>
+              <div className="w-7 h-7 mx-auto mb-1.5 rounded-md flex items-center justify-center" style={{ background: 'rgba(74, 158, 127, 0.12)' }}>
+                <svg className="w-4 h-4 text-[#4A9E7F]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <path d="M12 20h9" />
                   <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z" />
                 </svg>
               </div>
-              <p className="text-2xl font-bold text-[#4A9E7F]">{totalTestimonies}</p>
-              <p className="text-xs text-gray-500 mt-0.5">Testimonies</p>
+              <p className="text-xl font-bold leading-none text-[#4A9E7F]">{totalTestimonies}</p>
+              <p className="text-[10px] text-gray-500 mt-0.5 leading-tight">Testimonies</p>
             </div>
 
             {/* Time Spent */}
-            <div className="rounded-xl p-4 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(59, 130, 246, 0.06)' }}>
-              <div className="w-9 h-9 mx-auto mb-2 rounded-lg flex items-center justify-center" style={{ background: 'rgba(59, 130, 246, 0.12)' }}>
-                <svg className="w-5 h-5 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <div className="rounded-lg p-3 text-center transition-all hover:-translate-y-0.5" style={{ background: 'rgba(59, 130, 246, 0.06)' }}>
+              <div className="w-7 h-7 mx-auto mb-1.5 rounded-md flex items-center justify-center" style={{ background: 'rgba(59, 130, 246, 0.12)' }}>
+                <svg className="w-4 h-4 text-blue-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="10" />
                   <path d="M12 6v6l4 2" />
                 </svg>
               </div>
-              <p className="text-2xl font-bold text-blue-600">
+              <p className="text-xl font-bold leading-none text-blue-600">
                 {progress ? `${Math.floor(progress.total_time_minutes / 60)}` : '0'}
-                <span className="text-sm font-normal text-gray-400">h</span>
+                <span className="text-xs font-normal text-gray-400">h</span>
               </p>
-              <p className="text-xs text-gray-500 mt-0.5">Time Spent</p>
+              <p className="text-[10px] text-gray-500 mt-0.5 leading-tight">Time</p>
             </div>
           </div>
 
