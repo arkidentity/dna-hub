@@ -11,7 +11,11 @@
  */
 
 import { cookies } from 'next/headers'
-import { supabase } from './supabase'
+import { getSupabaseAdmin } from './auth'
+
+// All queries in this module use the admin client — these are server-side only
+// functions that operate on behalf of the authenticated user, not as the user.
+const supabase = getSupabaseAdmin()
 
 export interface UserRole {
   role: 'church_leader' | 'dna_leader' | 'training_participant' | 'admin'
