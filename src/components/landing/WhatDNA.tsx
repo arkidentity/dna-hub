@@ -89,7 +89,7 @@ export default function WhatDNA() {
                   fontFamily: "'Playfair Display', serif",
                   fontSize: '3.5rem',
                   fontWeight: 900,
-                  color: 'var(--lp-rule)',
+                  color: 'var(--lp-green)',
                   lineHeight: 1,
                   marginBottom: '1rem',
                 }}

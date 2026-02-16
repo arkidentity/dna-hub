@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/auth';
 import { cookies } from 'next/headers';
 
 export async function GET(request: NextRequest) {
@@ -10,7 +10,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/login?error=invalid', request.url));
   }
 
-  // Use server-side Supabase client
+  const supabase = getSupabaseAdmin();
 
   // Verify token
   const { data: tokenData, error: tokenError } = await supabase
