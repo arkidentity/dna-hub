@@ -100,7 +100,7 @@ export default function Partner() {
                   fontFamily: "'Playfair Display', serif",
                   fontSize: '2.5rem',
                   fontWeight: 900,
-                  color: 'var(--lp-rule)',
+                  color: 'var(--lp-green)',
                   marginBottom: '0.75rem',
                   lineHeight: 1,
                 }}

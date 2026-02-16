@@ -142,6 +142,13 @@ input:focus, textarea:focus, select:focus {
   --lp-accent-light: #242D3D;
 }
 
+@media (max-width: 640px) {
+  .lp-nav-inner {
+    padding-left: 1.25rem !important;
+    padding-right: 1.25rem !important;
+  }
+}
+
 .landing-page .fade-in {
   opacity: 0;
   transform: translateY(24px);

@@ -65,9 +65,12 @@ export default function Phases() {
               fontWeight: 900,
               color: '#fff',
               marginBottom: '0.75rem',
+              lineHeight: 1.3,
             }}
           >
-            Three phases. Six to twelve months.<br />A disciple-maker on the other side.
+            Three Phases.<br />
+            <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>6 – 12 months.</em><br />
+            <em style={{ fontStyle: 'italic', color: 'var(--lp-green)' }}>A disciple-maker on the other side.</em>
           </h2>
           <p
             style={{

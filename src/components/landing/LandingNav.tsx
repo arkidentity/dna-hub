@@ -17,6 +17,7 @@ export default function LandingNav() {
       }}
     >
       <div
+        className="lp-nav-inner"
         style={{
           maxWidth: '1100px',
           margin: '0 auto',

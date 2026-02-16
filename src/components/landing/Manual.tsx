@@ -235,8 +235,8 @@ export default function Manual() {
               type="submit"
               disabled={state === 'submitting' || state === 'success'}
               style={{
-                background: state === 'success' ? '#3a5a4a' : 'var(--lp-gold)',
-                color: state === 'success' ? '#fff' : 'var(--lp-ink)',
+                background: state === 'success' ? '#3a5a4a' : 'var(--lp-green)',
+                color: '#fff',
                 border: 'none',
                 padding: '1rem',
                 fontFamily: "'DM Sans', sans-serif",
