@@ -114,6 +114,15 @@ const funnels: FunnelSection[] = [
       },
       {
         type: 'page',
+        title: 'Book a Discovery Call',
+        description: 'Dedicated booking page — fires API on load (grants dashboard access + sends magic link email), shows Google Calendar embed + confirmation banner',
+        href: '/assessment/book-call?level=ready&church=Test%20Church&email=test@example.com&name=Test',
+        icon: CheckCircle,
+        color: 'bg-gold/10 text-gold',
+        emails: [{ label: 'Discovery Call — Dashboard Access', emailId: 'discovery-call-access' }],
+      },
+      {
+        type: 'page',
         title: 'Login Page',
         description: 'Magic link login — church leaders enter email to receive access link',
         href: '/login',

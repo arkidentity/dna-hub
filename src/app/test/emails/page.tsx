@@ -99,11 +99,11 @@ const emailTemplates: EmailTemplate[] = [
     subject: 'Your 3 Steps to Becoming a Community That Multiplies',
     trigger: 'Assessment completed with "ready" readiness level',
     recipient: 'user',
-    variables: ['firstName', 'threeStepsUrl', 'launchGuideUrl', 'discoveryCallUrl'],
+    variables: ['firstName', 'threeStepsUrl', 'discoveryCallUrl'],
     html: `
       <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #1A2332;">Hey {{firstName}},</h2>
-        <p>Thanks for completing the DNA Church Assessment!</p>
+        <p>Thanks for completing the DNA Church Readiness Assessment!</p>
         <div style="background: #F4E7D7; padding: 24px; border-radius: 8px; margin: 24px 0; text-align: center;">
           <h3 style="color: #1A2332; margin: 0 0 16px 0;">3 Steps to Becoming a Community That Multiplies</h3>
           <p style="margin: 0 0 20px 0; color: #5A6577;">Your personalized guide based on where your church is right now.</p>
@@ -118,27 +118,21 @@ const emailTemplates: EmailTemplate[] = [
           <h3 style="color: #D4A853; margin: 0 0 12px 0;">You're Ready to Launch!</h3>
           <p style="margin: 0; color: #E8E8E8;">Your church shows strong alignment for DNA implementation. You have the leadership buy-in and foundation in place to move quickly.</p>
         </div>
-        <h3 style="color: #1A2332;">Suggested Next Steps</h3>
-        <div style="background: #F8F9FA; padding: 20px; border-radius: 8px; margin: 16px 0; border-left: 4px solid #2D6A6A;">
-          <h4 style="color: #1A2332; margin: 0 0 8px 0;">Get Your Launch Guide</h4>
-          <p style="color: #5A6577; margin: 0 0 12px 0; font-size: 14px;">Everything you need to prepare for a successful DNA launch at your church.</p>
-          <a href="{{launchGuideUrl}}" style="color: #2D6A6A; text-decoration: none; font-weight: 500;">
-            Download Launch Guide →
-          </a>
-        </div>
-        <div style="background: #1A2332; padding: 20px; border-radius: 8px; margin: 16px 0;">
-          <h4 style="color: white; margin: 0 0 8px 0;">Book Your Discovery Call</h4>
-          <p style="color: #E8E8E8; margin: 0 0 12px 0; font-size: 14px;">A 15-minute conversation to see if DNA is the right fit for your church.</p>
-          <p style="color: #D4A853; margin: 0 0 16px 0; font-size: 14px; font-weight: 500;">Book your Discovery Call now and receive the 90-Day Implementation Toolkit</p>
+        <div style="background: #1A2332; padding: 24px; border-radius: 8px; margin: 16px 0; text-align: center;">
+          <h4 style="color: #D4A853; margin: 0 0 8px 0;">Book Your Discovery Call</h4>
+          <p style="color: #E8E8E8; margin: 0 0 16px 0; font-size: 14px;">Book your Discovery Call to unlock your DNA Church Dashboard — where you'll find the Launch Guide and everything you need to get started.</p>
           <a href="{{discoveryCallUrl}}"
-             style="background: #D4A853; color: white; padding: 12px 24px;
+             style="background: #D4A853; color: white; padding: 14px 28px;
                     border-radius: 8px; text-decoration: none; font-weight: 500;
                     display: inline-block;">
-            Book Discovery Call (15 min)
+            Book a Discovery Call (15 min)
           </a>
         </div>
         <p style="margin-top: 32px;">Travis<br>
         <span style="color: #5A6577;">DNA Discipleship</span></p>
+        <p style="color: #5A6577; font-size: 14px; margin-top: 24px;">
+          P.S. Have questions? Just hit reply. I read every email.
+        </p>
       </div>
     `,
   },
@@ -173,18 +167,21 @@ const emailTemplates: EmailTemplate[] = [
             Download DNA Manual →
           </a>
         </div>
-        <div style="background: #1A2332; padding: 20px; border-radius: 8px; margin: 16px 0;">
-          <h4 style="color: white; margin: 0 0 8px 0;">Book Your Discovery Call</h4>
-          <p style="color: #D4A853; margin: 0 0 16px 0; font-size: 14px; font-weight: 500;">Book your Discovery Call now and receive the Launch Guide</p>
+        <div style="background: #1A2332; padding: 24px; border-radius: 8px; margin: 16px 0; text-align: center;">
+          <h4 style="color: #D4A853; margin: 0 0 8px 0;">Book Your Discovery Call</h4>
+          <p style="color: #E8E8E8; margin: 0 0 16px 0; font-size: 14px;">Book your Discovery Call and we'll unlock the DNA Launch Guide in your Church Dashboard.</p>
           <a href="{{discoveryCallUrl}}"
-             style="background: #D4A853; color: white; padding: 12px 24px;
+             style="background: #D4A853; color: white; padding: 14px 28px;
                     border-radius: 8px; text-decoration: none; font-weight: 500;
                     display: inline-block;">
-            Book Discovery Call (15 min)
+            Book a Discovery Call (15 min)
           </a>
         </div>
         <p style="margin-top: 32px;">Travis<br>
         <span style="color: #5A6577;">DNA Discipleship</span></p>
+        <p style="color: #5A6577; font-size: 14px; margin-top: 24px;">
+          P.S. Have questions? Just hit reply. I read every email.
+        </p>
       </div>
     `,
   },
@@ -219,18 +216,21 @@ const emailTemplates: EmailTemplate[] = [
             Download DNA Manual →
           </a>
         </div>
-        <div style="background: #1A2332; padding: 20px; border-radius: 8px; margin: 16px 0;">
-          <h4 style="color: white; margin: 0 0 8px 0;">Book Your Discovery Call</h4>
-          <p style="color: #D4A853; margin: 0 0 16px 0; font-size: 14px; font-weight: 500;">Let's discuss your path forward together</p>
+        <div style="background: #1A2332; padding: 24px; border-radius: 8px; margin: 16px 0; text-align: center;">
+          <h4 style="color: #D4A853; margin: 0 0 8px 0;">Book Your Discovery Call</h4>
+          <p style="color: #E8E8E8; margin: 0 0 16px 0; font-size: 14px;">Let's discuss your path forward together on a 15-minute Discovery Call.</p>
           <a href="{{discoveryCallUrl}}"
-             style="background: #D4A853; color: white; padding: 12px 24px;
+             style="background: #D4A853; color: white; padding: 14px 28px;
                     border-radius: 8px; text-decoration: none; font-weight: 500;
                     display: inline-block;">
-            Book Discovery Call (15 min)
+            Book a Discovery Call (15 min)
           </a>
         </div>
         <p style="margin-top: 32px;">Travis<br>
         <span style="color: #5A6577;">DNA Discipleship</span></p>
+        <p style="color: #5A6577; font-size: 14px; margin-top: 24px;">
+          P.S. Have questions? Just hit reply. I read every email.
+        </p>
       </div>
     `,
   },

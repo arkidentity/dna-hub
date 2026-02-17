@@ -1,22 +1,17 @@
 'use client';
 
-import { useSearchParams } from 'next/navigation';
-import { CheckCircle, Download, BookOpen, Rocket, Compass, ExternalLink } from 'lucide-react';
-import { Suspense, useState, useCallback } from 'react';
+import { useSearchParams, useRouter } from 'next/navigation';
+import { CheckCircle, Download, BookOpen, Rocket, Compass, ArrowRight } from 'lucide-react';
+import { Suspense } from 'react';
 
 type ReadinessLevel = 'ready' | 'building' | 'exploring';
 
-// PDF URLs - placeholders until actual PDFs are hosted
 const PDF_URLS = {
   threeStepsReady: process.env.NEXT_PUBLIC_THREE_STEPS_READY_URL || '#',
   threeStepsBuilding: process.env.NEXT_PUBLIC_THREE_STEPS_BUILDING_URL || '#',
   threeStepsExploring: process.env.NEXT_PUBLIC_THREE_STEPS_EXPLORING_URL || '#',
-  launchGuide: process.env.NEXT_PUBLIC_LAUNCH_GUIDE_URL || '#',
   dnaManual: process.env.NEXT_PUBLIC_DNA_MANUAL_URL || '#',
 };
-
-// Google Calendar embed URL for Discovery Call (15 min) - configured in .env.local
-const DISCOVERY_CALENDAR_EMBED = process.env.NEXT_PUBLIC_DISCOVERY_CALENDAR_URL || 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ0LdUpKkvo_qoOrtiu6fQfPgkQJUZaG9RxPtYVieJrl1RAFnUmgTN9WATs6jAxSbkdo5M4-bpfI?gv=true';
 
 interface TieredContent {
   readinessHeadline: string;
@@ -29,7 +24,8 @@ interface TieredContent {
     buttonText: string;
     pdfUrl: string;
   };
-  calendarIncentive: string;
+  callHeading: string;
+  callSubtext: string;
 }
 
 const tieredContent: Record<ReadinessLevel, TieredContent> = {
@@ -38,13 +34,9 @@ const tieredContent: Record<ReadinessLevel, TieredContent> = {
     readinessMessage: "Your church shows strong alignment for DNA implementation. You have the leadership buy-in and foundation in place to move quickly.",
     readinessIcon: <Rocket className="w-8 h-8" />,
     threeStepsPdfUrl: PDF_URLS.threeStepsReady,
-    resource: {
-      title: '',
-      description: '',
-      buttonText: '',
-      pdfUrl: '',
-    },
-    calendarIncentive: "Book Your Discovery Call — Receive the DNA Launch Guide",
+    resource: { title: '', description: '', buttonText: '', pdfUrl: '' },
+    callHeading: "Book Your Discovery Call — Receive the DNA Launch Guide",
+    callSubtext: "A 15-minute conversation to talk through DNA and unlock your Church Dashboard with the Launch Guide included.",
   },
   building: {
     readinessHeadline: "You're Building the Foundation",
@@ -57,7 +49,8 @@ const tieredContent: Record<ReadinessLevel, TieredContent> = {
       buttonText: 'Download DNA Manual',
       pdfUrl: PDF_URLS.dnaManual,
     },
-    calendarIncentive: "Book Your Discovery Call and Receive the DNA Launch Guide",
+    callHeading: "Book Your Discovery Call — Receive the DNA Launch Guide",
+    callSubtext: "A 15-minute conversation to talk through where your church is and unlock your Church Dashboard with the Launch Guide.",
   },
   exploring: {
     readinessHeadline: "You're in Discovery Mode",
@@ -70,12 +63,15 @@ const tieredContent: Record<ReadinessLevel, TieredContent> = {
       buttonText: 'Download DNA Manual',
       pdfUrl: PDF_URLS.dnaManual,
     },
-    calendarIncentive: "Book Your Discovery Call",
+    callHeading: "Book a Discovery Call",
+    callSubtext: "A 15-minute conversation to talk through your church's path and whether DNA is the right fit.",
   },
 };
 
 function ThankYouContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
+
   const level = (searchParams.get('level') as ReadinessLevel) || 'building';
   const churchName = searchParams.get('church') || 'your church';
   const email = searchParams.get('email') || '';
@@ -83,29 +79,12 @@ function ThankYouContent() {
 
   const content = tieredContent[level] || tieredContent.building;
 
-  // Track whether the dashboard access email has been triggered
-  const [accessTriggered, setAccessTriggered] = useState(false);
-  const [accessLoading, setAccessLoading] = useState(false);
-
-  // Called when the calendar iframe is interacted with — we don't know exactly when
-  // they book, so we fire the API immediately when they click the booking header/CTA.
-  const handleBookCall = useCallback(async () => {
-    if (accessTriggered || !email) return;
-    setAccessLoading(true);
-
-    try {
-      await fetch('/api/assessment/book-call', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, firstName, churchName, readinessLevel: level }),
-      });
-      setAccessTriggered(true);
-    } catch (err) {
-      console.error('[BOOK-CALL] Failed to trigger access:', err);
-    } finally {
-      setAccessLoading(false);
-    }
-  }, [email, firstName, churchName, level, accessTriggered]);
+  const bookingParams = new URLSearchParams({
+    ...(email && { email }),
+    ...(firstName && { name: firstName }),
+    church: churchName,
+    level,
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -117,6 +96,7 @@ function ThankYouContent() {
       </header>
 
       <main className="max-w-4xl mx-auto px-6 py-12">
+
         {/* Success Message */}
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center w-16 h-16 bg-success/10 rounded-full mb-6">
@@ -151,13 +131,13 @@ function ThankYouContent() {
           )}
         </div>
 
-        {/* Readiness Level Message with Integrated Resource */}
-        <div className={`card mb-8 ${
+        {/* Readiness Level */}
+        <div className={`card mb-8 border ${
           level === 'ready' ? 'bg-success/5 border-success/20' :
           level === 'building' ? 'bg-gold/5 border-gold/20' :
           'bg-teal/5 border-teal/20'
-        } border`}>
-          <div className="flex items-start gap-4 mb-6">
+        }`}>
+          <div className="flex items-start gap-4 mb-4">
             <div className={`flex-shrink-0 w-14 h-14 rounded-full flex items-center justify-center ${
               level === 'ready' ? 'bg-success/10 text-success' :
               level === 'building' ? 'bg-gold/10 text-gold' :
@@ -171,7 +151,7 @@ function ThankYouContent() {
             </div>
           </div>
 
-          {/* Nested Resource Box — hidden for ready (pushed to discovery call instead) */}
+          {/* DNA Manual resource — shown for building/exploring only */}
           {level !== 'ready' && content.resource.title && (
             <div className="bg-white rounded-lg p-4 border border-border">
               <h4 className="font-semibold text-navy mb-1">{content.resource.title}</h4>
@@ -193,71 +173,34 @@ function ThankYouContent() {
           )}
         </div>
 
-        {/* Book a Discovery Call — triggers silent dashboard access grant */}
-        <div className="card">
-          <h3 className="text-xl font-semibold text-navy mb-2 text-center">{content.calendarIncentive}</h3>
-          <p className="text-foreground-muted text-center mb-4">
-            Choose a time that works for you. This is a 15-minute conversation to see if DNA is right for {churchName}.
+        {/* Book a Discovery Call CTA */}
+        <div className="card text-center">
+          <h3 className="text-xl font-semibold text-navy mb-2">{content.callHeading}</h3>
+          <p className="text-foreground-muted mb-6 max-w-lg mx-auto">{content.callSubtext}</p>
+          <button
+            onClick={() => router.push(`/assessment/book-call?${bookingParams.toString()}`)}
+            className="inline-flex items-center gap-2 bg-gold hover:bg-gold-dark text-white font-semibold px-8 py-4 rounded-lg transition-colors text-base"
+          >
+            Book a Discovery Call
+            <ArrowRight className="w-5 h-5" />
+          </button>
+          <p className="text-foreground-muted text-xs mt-3">
+            Free · 15 minutes · Choose a time that works for you
           </p>
-
-          {/* Access confirmation — shows after API fires */}
-          {accessTriggered && (
-            <div className="bg-success/10 border border-success/20 rounded-lg px-4 py-3 mb-4 text-center">
-              <p className="text-success text-sm font-medium">
-                ✓ Check your email — we&apos;ve sent your dashboard access link and the DNA Launch Guide.
-              </p>
-            </div>
-          )}
-
-          {/* CTA to trigger access + open calendar in new tab */}
-          {!accessTriggered && email && (
-            <div className="text-center mb-6">
-              <button
-                onClick={async () => {
-                  await handleBookCall();
-                  window.open(DISCOVERY_CALENDAR_EMBED, '_blank');
-                }}
-                disabled={accessLoading}
-                className="inline-flex items-center gap-2 bg-gold hover:bg-gold-dark disabled:opacity-60 text-white font-semibold px-8 py-4 rounded-lg transition-colors text-base"
-              >
-                {accessLoading ? 'Preparing your access...' : 'Book a Discovery Call'}
-                {!accessLoading && <ExternalLink className="w-4 h-4" />}
-              </button>
-              <p className="text-foreground-muted text-xs mt-2">
-                Opens Google Calendar — your dashboard access link will arrive by email.
-              </p>
-            </div>
-          )}
-
-          {/* Embedded calendar (shown always as fallback; primary is the button above) */}
-          <div className="rounded-lg overflow-hidden border border-border">
-            <iframe
-              src={DISCOVERY_CALENDAR_EMBED}
-              style={{ border: 0 }}
-              width="100%"
-              height="600"
-              frameBorder="0"
-              title="Book Discovery Call"
-              onLoad={() => {
-                // Secondary trigger: if user interacts directly with the embedded calendar
-                // and hasn't already triggered, fire the API when the iframe first loads
-                // (best-effort — we can't detect when they actually book inside the iframe)
-                if (!accessTriggered && email) {
-                  handleBookCall();
-                }
-              }}
-            />
-          </div>
         </div>
 
-        {/* What Happens Next */}
+        {/* Footer note */}
         <div className="mt-10 text-center text-foreground-muted">
           <p className="text-sm">
             <strong>What happens next?</strong> We&apos;ll also review your assessment and reach out within 2 business days.
             <br />
-            Questions? Email <a href="mailto:info@dnadiscipleship.com" className="text-teal hover:text-teal-light">info@dnadiscipleship.com</a>
+            Questions? Email{' '}
+            <a href="mailto:info@dnadiscipleship.com" className="text-teal hover:text-teal-light">
+              info@dnadiscipleship.com
+            </a>
           </p>
         </div>
+
       </main>
     </div>
   );
