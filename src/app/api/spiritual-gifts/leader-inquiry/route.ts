@@ -1,14 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { Resend } from 'resend';
 import { generateToken } from '@/lib/auth';
+import { sendEmail } from '@/lib/email';
 
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
 );
 
-const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null;
 
 export async function POST(request: NextRequest) {
   try {
@@ -172,13 +171,11 @@ export async function POST(request: NextRequest) {
     // =====================================================
     // 8. Send emails
     // =====================================================
-    if (resend) {
-      // Welcome email to pastor with magic link
-      await resend.emails.send({
-        from: 'DNA Discipleship <noreply@dnadiscipleship.com>',
-        to: normalizedEmail,
-        subject: `${firstName}, your Ministry Gifts dashboard is ready`,
-        html: `
+    // Welcome email to pastor with magic link
+    await sendEmail({
+      to: normalizedEmail,
+      subject: `${firstName}, your Ministry Gifts dashboard is ready`,
+      html: `
           <div style="font-family: 'DM Sans', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #f7f4ef; color: #0f0e0c;">
 
             <!-- Header -->
@@ -244,14 +241,13 @@ export async function POST(request: NextRequest) {
 
           </div>
         `,
-      }).catch((err) => console.error('Welcome email error:', err));
+    }).catch((err) => console.error('Welcome email error:', err));
 
-      // Internal notification with direct admin link
-      await resend.emails.send({
-        from: 'DNA Discipleship <noreply@dnadiscipleship.com>',
-        to: 'thearkidentity@gmail.com',
-        subject: `New Ministry Gifts Sign-up: ${churchName}`,
-        html: `
+    // Internal notification with direct admin link
+    await sendEmail({
+      to: 'info@dnadiscipleship.com',
+      subject: `New Ministry Gifts Sign-up: ${churchName}`,
+      html: `
           <div style="font-family: sans-serif;">
             <h2>New Ministry Gifts Team Request — Auto-Provisioned ✅</h2>
             <p><strong>Name:</strong> ${name}</p>
@@ -272,8 +268,7 @@ export async function POST(request: NextRequest) {
             </p>
           </div>
         `,
-      }).catch((err) => console.error('Internal notification email error:', err));
-    }
+    }).catch((err) => console.error('Internal notification email error:', err));
 
     return NextResponse.json({ success: true, churchId: church.id });
   } catch (error) {
