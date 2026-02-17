@@ -51,7 +51,7 @@ export default function UnauthorizedPage() {
 
         <p className="mt-8 text-sm text-foreground-muted">
           If you believe this is an error, please{' '}
-          <a href="mailto:travis@arkidentity.com" className="text-teal hover:text-teal-light">
+          <a href="mailto:info@dnadiscipleship.com" className="text-teal hover:text-teal-light">
             contact support
           </a>
           .

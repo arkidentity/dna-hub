@@ -20,7 +20,7 @@ function generateICS(events: Array<{
   events.forEach((event, index) => {
     const date = new Date(event.date);
     const dateStr = date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
-    const uid = `dna-milestone-${index}-${Date.now()}@arkidentity.com`;
+    const uid = `dna-milestone-${index}-${Date.now()}@dnadiscipleship.com`;
 
     lines.push(
       'BEGIN:VEVENT',

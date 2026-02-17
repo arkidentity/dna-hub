@@ -120,8 +120,8 @@ function DNALeaderSignupContent() {
           <p className="text-gray-600 mb-6">{error}</p>
           <p className="text-sm text-gray-500">
             If you believe this is an error, please contact the person who invited you or email{' '}
-            <a href="mailto:support@arkidentity.com" className="text-teal hover:underline">
-              support@arkidentity.com
+            <a href="mailto:info@dnadiscipleship.com" className="text-teal hover:underline">
+              info@dnadiscipleship.com
             </a>
           </p>
         </div>

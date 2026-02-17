@@ -29,7 +29,7 @@ export default function SiteFooter() {
       <div style={{ display: 'flex', gap: '2rem' }}>
         {[
           { href: '/login', label: 'Login' },
-          { href: 'mailto:travis@arkidentity.com', label: 'Contact' },
+          { href: 'mailto:info@dnadiscipleship.com', label: 'Contact' },
           { href: '/assessment', label: 'Assessment' },
         ].map((link) => (
           <Link

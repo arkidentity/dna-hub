@@ -538,7 +538,7 @@ export default function DashboardPage() {
         <div className="mt-12 text-center text-foreground-muted">
           <p>
             Need help?{' '}
-            <a href="mailto:travis@arkidentity.com" className="text-teal hover:text-teal-light">
+            <a href="mailto:info@dnadiscipleship.com" className="text-teal hover:text-teal-light">
               Email Travis
             </a>{' '}
             or{' '}

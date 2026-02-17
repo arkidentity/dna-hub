@@ -11,7 +11,7 @@ const steps = [
   {
     num: '01',
     title: "Check your inbox — it's there now",
-    text: 'Your church dashboard is live and your unique assessment link is already in your inbox. If you don\'t see it in the next few minutes, check your spam and add travis@arkidentity.com to your contacts.',
+    text: 'Your church dashboard is live and your unique assessment link is already in your inbox. If you don\'t see it in the next few minutes, check your spam and add info@dnadiscipleship.com to your contacts.',
   },
   {
     num: '02',
@@ -190,7 +190,7 @@ export default function GiftTestConfirmationPage() {
               </div>
               <span style={{ color: 'var(--lp-gold)', fontSize: '1rem', flexShrink: 0, marginLeft: '1rem' }}>→</span>
             </Link>
-            <a href="mailto:travis@arkidentity.com" style={{
+            <a href="mailto:info@dnadiscipleship.com" style={{
               background: 'var(--lp-warm-white)',
               border: '1px solid var(--lp-rule)',
               padding: '1.25rem 1.5rem',
@@ -199,7 +199,7 @@ export default function GiftTestConfirmationPage() {
             }}>
               <div>
                 <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '0.2rem' }}>Questions? Email us directly</div>
-                <div style={{ fontSize: '0.82rem', color: 'var(--lp-mid)' }}>travis@arkidentity.com — we respond same day</div>
+                <div style={{ fontSize: '0.82rem', color: 'var(--lp-mid)' }}>info@dnadiscipleship.com — we respond same day</div>
               </div>
               <span style={{ color: 'var(--lp-gold)', fontSize: '1rem', flexShrink: 0, marginLeft: '1rem' }}>→</span>
             </a>
@@ -235,7 +235,7 @@ export default function GiftTestConfirmationPage() {
           </div>
         </div>
         <div style={{ display: 'flex', gap: '2rem' }}>
-          {[['/', 'Home'], ['/login', 'Login'], ['mailto:travis@arkidentity.com', 'Contact']].map(([href, label]) => (
+          {[['/', 'Home'], ['/login', 'Login'], ['mailto:info@dnadiscipleship.com', 'Contact']].map(([href, label]) => (
             <a key={label} href={href} style={{ fontSize: '0.8rem', color: 'rgba(247,244,239,0.35)', textDecoration: 'none' }}>{label}</a>
           ))}
         </div>

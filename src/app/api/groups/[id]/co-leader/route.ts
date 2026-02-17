@@ -102,7 +102,7 @@ export async function POST(
       .eq('id', groupId);
 
     // Send invitation email
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://hub.arkidentity.com';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dnadiscipleship.com';
     const invitationUrl = `${baseUrl}/groups/invitations/${invitation.token}`;
     const acceptUrl = invitationUrl;
     const declineUrl = invitationUrl;

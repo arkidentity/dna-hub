@@ -997,7 +997,7 @@ export default function MinistryGiftTestPage() {
             color: 'rgba(247,244,239,0.4)',
             fontFamily: 'DM Sans, sans-serif',
           }}>
-            DNA Discipleship / A ministry of ARK Identity Discipleship
+            DNA Discipleship · A ministry of ARK Identity Discipleship
           </span>
         </div>
         <div style={{ display: 'flex', gap: '2rem' }}>

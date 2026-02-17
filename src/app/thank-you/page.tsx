@@ -9,7 +9,7 @@ export const metadata: Metadata = {
 };
 
 const ASSESSMENT_URL = '/assessment';
-const DISCOVERY_URL = 'mailto:travis@arkidentity.com?subject=DNA Discovery Call';
+const DISCOVERY_URL = 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ0LdUpKkvo_qoOrtiu6fQfPgkQJUZaG9RxPtYVieJrl1RAFnUmgTN9WATs6jAxSbkdo5M4-bpfI?gv=true';
 
 export default function ThankYou() {
   return (
@@ -182,7 +182,7 @@ export default function ThankYou() {
             marginBottom: '2rem',
           }}
         >
-          The Discipleship Infrastructure Assessment takes 5 minutes and shows you exactly where your church stands — and what to address before you try to build on it.
+          The Church Readiness Assessment takes 5 minutes and shows you exactly where your church stands — and what to address before you try to build on it.
         </p>
 
         {/* Assessment CTA card */}
@@ -215,7 +215,7 @@ export default function ThankYou() {
               lineHeight: 1.3,
             }}
           >
-            Discipleship Infrastructure Assessment
+            Church Readiness Assessment
           </h3>
           <p
             style={{
@@ -267,7 +267,7 @@ export default function ThankYou() {
               transition: 'background 0.2s',
             }}
           >
-            Take the Assessment →
+            Take the Church Assessment →
           </Link>
         </div>
 
@@ -291,10 +291,10 @@ export default function ThankYou() {
                 marginBottom: '0.35rem',
               }}
             >
-              Already read the manual?
+              Ready to have a conversation?
             </div>
             <div style={{ fontSize: '0.85rem', color: 'var(--lp-mid)' }}>
-              Book a 30-minute discovery call — we&apos;ll listen to your context and be honest about fit.
+              Book a 15-minute discovery call — we&apos;ll listen to your context and be honest about fit.
             </div>
           </div>
           <a
@@ -317,7 +317,7 @@ export default function ThankYou() {
               flexShrink: 0,
             }}
           >
-            Book a Call
+            Book a Discovery Call
           </a>
         </div>
       </section>

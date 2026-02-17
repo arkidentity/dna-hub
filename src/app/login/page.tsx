@@ -179,8 +179,8 @@ export default function LoginPage() {
       <footer className="text-center text-foreground-muted py-6 border-t border-card-border">
         <p className="text-sm">
           Questions? Email{' '}
-          <a href="mailto:travis@arkidentity.com" className="text-teal hover:text-teal-light">
-            travis@arkidentity.com
+          <a href="mailto:info@dnadiscipleship.com" className="text-teal hover:text-teal-light">
+            info@dnadiscipleship.com
           </a>
         </p>
       </footer>

@@ -86,7 +86,7 @@ const emailTemplates: EmailTemplate[] = [
         </div>
         <p>We'll give you personalized next steps based on your answers.</p>
         <p style="margin-top: 32px;">Travis<br>
-        <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+        <span style="color: #5A6577;">DNA Discipleship</span></p>
         <p style="color: #5A6577; font-size: 14px; margin-top: 24px;">
           P.S. Have questions? Just hit reply. I read every email.
         </p>
@@ -138,7 +138,7 @@ const emailTemplates: EmailTemplate[] = [
           </a>
         </div>
         <p style="margin-top: 32px;">Travis<br>
-        <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+        <span style="color: #5A6577;">DNA Discipleship</span></p>
       </div>
     `,
   },
@@ -184,7 +184,7 @@ const emailTemplates: EmailTemplate[] = [
           </a>
         </div>
         <p style="margin-top: 32px;">Travis<br>
-        <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+        <span style="color: #5A6577;">DNA Discipleship</span></p>
       </div>
     `,
   },
@@ -230,7 +230,7 @@ const emailTemplates: EmailTemplate[] = [
           </a>
         </div>
         <p style="margin-top: 32px;">Travis<br>
-        <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+        <span style="color: #5A6577;">DNA Discipleship</span></p>
       </div>
     `,
   },
@@ -266,7 +266,7 @@ const emailTemplates: EmailTemplate[] = [
           </a>
         </div>
         <p style="margin-top: 32px;">Travis<br>
-        <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+        <span style="color: #5A6577;">DNA Discipleship</span></p>
       </div>
     `,
   },
@@ -313,7 +313,7 @@ const emailTemplates: EmailTemplate[] = [
           </a>
         </div>
         <p style="margin-top: 32px;">Travis<br>
-        <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+        <span style="color: #5A6577;">DNA Discipleship</span></p>
       </div>
     `,
   },
@@ -353,7 +353,7 @@ const emailTemplates: EmailTemplate[] = [
         </p>
         <p style="margin-top: 32px;">Let's multiply disciples together!</p>
         <p>Travis<br>
-        <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+        <span style="color: #5A6577;">DNA Discipleship</span></p>
       </div>
     `,
   },
@@ -410,7 +410,7 @@ const emailTemplates: EmailTemplate[] = [
           </a>
         </div>
         <p style="margin-top: 32px;">Travis<br>
-        <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+        <span style="color: #5A6577;">DNA Discipleship</span></p>
       </div>
     `,
   },

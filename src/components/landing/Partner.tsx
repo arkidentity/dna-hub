@@ -8,7 +8,7 @@ export default function Partner() {
     },
     {
       n: '02',
-      title: 'Take the Assessment',
+      title: 'Take the Church Assessment',
       text: 'The Discipleship Infrastructure Audit shows where you are and what gaps exist before you try to build on them.',
       arrow: true,
     },
@@ -147,14 +147,14 @@ export default function Partner() {
                 lineHeight: 1.25,
               }}
             >
-              Already read the manual?<br />Let&apos;s talk about your church.
+              Ready to have a conversation?<br />Let&apos;s talk about your church.
             </h3>
             <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.6, maxWidth: '380px' }}>
               30 minutes with a DNA coach. We&apos;ll listen to where you are, share what we&apos;ve seen work in churches like yours, and be honest if DNA isn&apos;t the right fit right now.
             </p>
           </div>
           <a
-            href="mailto:travis@arkidentity.com?subject=DNA Discovery Call"
+            href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ0LdUpKkvo_qoOrtiu6fQfPgkQJUZaG9RxPtYVieJrl1RAFnUmgTN9WATs6jAxSbkdo5M4-bpfI?gv=true"
             style={{
               border: '1.5px solid rgba(255,255,255,0.45)',
               background: 'transparent',

@@ -230,14 +230,14 @@ export async function POST(request: NextRequest) {
 
               <p style="font-size: 0.88rem; color: #6b6560; line-height: 1.7; margin: 2rem 0 0 0;">
                 Questions? Just reply to this email — we read every one.<br/>
-                <a href="mailto:travis@arkidentity.com" style="color: #D4A853; text-decoration: none;">travis@arkidentity.com</a>
+                <a href="mailto:info@dnadiscipleship.com" style="color: #D4A853; text-decoration: none;">info@dnadiscipleship.com</a>
               </p>
             </div>
 
             <!-- Footer -->
             <div style="background: #2a2825; padding: 20px 32px; text-align: center;">
               <p style="font-size: 0.75rem; color: rgba(247,244,239,0.35); margin: 0;">
-                DNA Discipleship &mdash; A ministry of ARK Identity Discipleship<br/>
+                DNA Discipleship &mdash; dnadiscipleship.com<br/>
                 <a href="https://dnadiscipleship.com" style="color: rgba(247,244,239,0.35); text-decoration: none;">dnadiscipleship.com</a>
               </p>
             </div>

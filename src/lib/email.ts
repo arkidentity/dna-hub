@@ -1,8 +1,9 @@
 import { Resend } from 'resend';
 import { getSupabaseAdmin } from './auth';
 
-const FROM_EMAIL = 'DNA Church Hub <notifications@mail.arkidentity.com>';
-const TRAVIS_EMAIL = 'thearkidentity@gmail.com';
+const FROM_EMAIL = 'DNA Discipleship <notifications@mail.dnadiscipleship.com>';
+const REPLY_TO = 'info@dnadiscipleship.com';
+const TRAVIS_EMAIL = 'info@dnadiscipleship.com';
 
 // Calendar URLs - configured in .env.local
 const DISCOVERY_CALL_URL = process.env.DISCOVERY_CALENDAR_URL || 'https://calendar.google.com/calendar/appointments/schedules/AcZssZ0LdUpKkvo_qoOrtiu6fQfPgkQJUZaG9RxPtYVieJrl1RAFnUmgTN9WATs6jAxSbkdo5M4-bpfI?gv=true';
@@ -47,6 +48,7 @@ async function sendEmail({ to, subject, html, churchId, notificationType }: Emai
       to,
       subject,
       html,
+      replyTo: REPLY_TO,
     });
 
     if (error) {
@@ -230,7 +232,7 @@ export async function sendMagicLinkEmail(
 
 // DNA Manual delivery email
 export async function sendDNAManualEmail(to: string, firstName: string) {
-  const manualUrl = process.env.DNA_MANUAL_URL || 'https://arkidentity.com/dna-manual.pdf';
+  const manualUrl = process.env.DNA_MANUAL_URL || 'https://dnadiscipleship.com/dna-manual.pdf';
   const assessmentUrl = process.env.NEXT_PUBLIC_APP_URL
     ? `${process.env.NEXT_PUBLIC_APP_URL}/assessment`
     : 'https://dnadiscipleship.com/assessment';
@@ -292,21 +294,21 @@ export async function sendDNAManualEmail(to: string, firstName: string) {
           While you read — one question worth asking:
         </p>
         <p style="font-family: system-ui, sans-serif; font-size: 15px; line-height: 1.7; color: #6b6560; margin: 0 0 20px 0;">
-          Does your church have the infrastructure to actually launch this? The Discipleship Infrastructure Assessment takes 5 minutes and tells you honestly where you stand — and what to address before you try.
+          Does your church have the infrastructure to actually launch this? The Church Readiness Assessment takes 5 minutes and tells you honestly where you stand — and what to address before you try.
         </p>
         <a href="${assessmentUrl}"
            style="background: #1A2332; color: #fff; padding: 12px 24px;
                   text-decoration: none; font-family: system-ui, sans-serif;
                   font-size: 13px; font-weight: 500; letter-spacing: 0.03em;
                   display: inline-block;">
-          Take the 5-Minute Assessment →
+          Take the Church Readiness Assessment →
         </a>
 
         <p style="font-family: system-ui, sans-serif; font-size: 15px; line-height: 1.6; color: #0f0e0c; margin: 40px 0 4px 0;">
           Travis
         </p>
         <p style="font-family: system-ui, sans-serif; font-size: 13px; color: #6b6560; margin: 0;">
-          ARK Identity Discipleship
+          DNA Discipleship
         </p>
 
         <p style="font-family: system-ui, sans-serif; font-size: 13px; color: #6b6560; margin: 24px 0 0 0; padding-top: 24px; border-top: 1px solid #ddd8cf;">
@@ -317,7 +319,7 @@ export async function sendDNAManualEmail(to: string, firstName: string) {
       <!-- Footer -->
       <div style="background: #2a2825; padding: 16px 32px; text-align: center;">
         <p style="font-family: system-ui, sans-serif; font-size: 11px; color: rgba(247,244,239,0.35); margin: 0;">
-          DNA Discipleship &middot; A ministry of ARK Identity Discipleship
+          DNA Discipleship &middot; dnadiscipleship.com
         </p>
       </div>
     </div>
@@ -370,7 +372,7 @@ export async function sendProposalReadyEmail(
       </div>
 
       <p style="margin-top: 32px;">Travis<br>
-      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+      <span style="color: #5A6577;">DNA Discipleship</span></p>
     </div>
   `;
 
@@ -440,7 +442,7 @@ export async function sendAgreementConfirmedEmail(
       </div>
 
       <p style="margin-top: 32px;">Travis<br>
-      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+      <span style="color: #5A6577;">DNA Discipleship</span></p>
     </div>
   `;
 
@@ -498,7 +500,7 @@ export async function sendDashboardAccessEmail(
       <p style="margin-top: 32px;">Let's multiply disciples together!</p>
 
       <p>Travis<br>
-      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+      <span style="color: #5A6577;">DNA Discipleship</span></p>
     </div>
   `;
 
@@ -550,7 +552,7 @@ export async function sendBookDiscoveryReminder(
       <p style="color: #5A6577;">No pressure—just a friendly conversation to see if we're a good fit to partner together.</p>
 
       <p style="margin-top: 32px;">Travis<br>
-      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+      <span style="color: #5A6577;">DNA Discipleship</span></p>
     </div>
   `;
 
@@ -619,7 +621,7 @@ export async function sendCallReminder24h(
       </p>
 
       <p style="margin-top: 32px;">Travis<br>
-      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+      <span style="color: #5A6577;">DNA Discipleship</span></p>
     </div>
   `;
 
@@ -676,7 +678,7 @@ export async function sendCallMissedEmail(
       <p style="color: #5A6577;">If your schedule has changed and you need more flexibility, just reply to this email and we'll work something out.</p>
 
       <p style="margin-top: 32px;">Travis<br>
-      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+      <span style="color: #5A6577;">DNA Discipleship</span></p>
     </div>
   `;
 
@@ -731,7 +733,7 @@ export async function sendProposalExpiringEmail(
       <p style="color: #5A6577;">If DNA isn't the right fit right now, no worries at all. Just let me know and I'll keep you in the loop for future resources.</p>
 
       <p style="margin-top: 32px;">Travis<br>
-      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+      <span style="color: #5A6577;">DNA Discipleship</span></p>
     </div>
   `;
 
@@ -796,7 +798,7 @@ export async function sendInactiveReminderEmail(
       <p>Just reply to this email if you'd like to hop on a quick call to troubleshoot or adjust your timeline.</p>
 
       <p style="margin-top: 32px;">Travis<br>
-      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+      <span style="color: #5A6577;">DNA Discipleship</span></p>
     </div>
   `;
 
@@ -1268,15 +1270,15 @@ export async function send3StepsEmail(
 ) {
   // PDF URLs - different version for each readiness level
   const threeStepsPdfUrls = {
-    ready: process.env.THREE_STEPS_READY_URL || 'https://arkidentity.com/3-steps-ready.pdf',
-    building: process.env.THREE_STEPS_BUILDING_URL || 'https://arkidentity.com/3-steps-building.pdf',
-    exploring: process.env.THREE_STEPS_EXPLORING_URL || 'https://arkidentity.com/3-steps-exploring.pdf',
+    ready: process.env.THREE_STEPS_READY_URL || 'https://dnadiscipleship.com/3-steps-ready.pdf',
+    building: process.env.THREE_STEPS_BUILDING_URL || 'https://dnadiscipleship.com/3-steps-building.pdf',
+    exploring: process.env.THREE_STEPS_EXPLORING_URL || 'https://dnadiscipleship.com/3-steps-exploring.pdf',
   };
 
   // Additional resource URLs
-  const launchGuideUrl = process.env.LAUNCH_GUIDE_URL || 'https://arkidentity.com/launch-guide.pdf';
-  const dnaManualUrl = process.env.DNA_MANUAL_URL || 'https://arkidentity.com/dna-manual.pdf';
-  const ninetyDayToolkitUrl = process.env.NINETY_DAY_TOOLKIT_URL || process.env.EIGHT_WEEK_TOOLKIT_URL || 'https://arkidentity.com/90-day-toolkit.pdf';
+  const launchGuideUrl = process.env.LAUNCH_GUIDE_URL || 'https://dnadiscipleship.com/launch-guide.pdf';
+  const dnaManualUrl = process.env.DNA_MANUAL_URL || 'https://dnadiscipleship.com/dna-manual.pdf';
+  const ninetyDayToolkitUrl = process.env.NINETY_DAY_TOOLKIT_URL || process.env.EIGHT_WEEK_TOOLKIT_URL || 'https://dnadiscipleship.com/90-day-toolkit.pdf';
 
   // Discovery call booking URL - uses env var defined at top of file
   const discoveryCallUrl = DISCOVERY_CALL_URL;
@@ -1288,12 +1290,12 @@ export async function send3StepsEmail(
     ready: {
       headline: "You're Ready to Launch!",
       message: "Your church shows strong alignment for DNA implementation. You have the leadership buy-in and foundation in place to move quickly.",
-      suggestion1Title: "Get Your Launch Guide",
-      suggestion1Description: "Everything you need to prepare for a successful DNA launch at your church.",
-      suggestion1Url: launchGuideUrl,
-      suggestion1ButtonText: "Download Launch Guide",
+      suggestion1Title: "Access Your Church Dashboard",
+      suggestion1Description: "Your assessment has unlocked access to your DNA Church Dashboard — where you'll find the Launch Guide and next steps.",
+      suggestion1Url: `${process.env.NEXT_PUBLIC_APP_URL || 'https://dnadiscipleship.com'}/login`,
+      suggestion1ButtonText: "Log In to Your Dashboard",
       suggestion2Incentive: "Book your Discovery Call now and receive the 90-Day Implementation Toolkit",
-      cta: "Book Discovery Call (15 min)"
+      cta: "Book a Discovery Call (15 min)"
     },
     building: {
       headline: "You're Building the Foundation",
@@ -1303,7 +1305,7 @@ export async function send3StepsEmail(
       suggestion1Url: dnaManualUrl,
       suggestion1ButtonText: "Download DNA Manual",
       suggestion2Incentive: "Book your Discovery Call now and receive the Launch Guide",
-      cta: "Book Discovery Call (15 min)"
+      cta: "Book a Discovery Call (15 min)"
     },
     exploring: {
       headline: "You're in Discovery Mode",
@@ -1313,7 +1315,7 @@ export async function send3StepsEmail(
       suggestion1Url: dnaManualUrl,
       suggestion1ButtonText: "Download DNA Manual",
       suggestion2Incentive: "Let's discuss your path forward together",
-      cta: "Book Discovery Call (15 min)"
+      cta: "Book a Discovery Call (15 min)"
     }
   };
 
@@ -1366,7 +1368,7 @@ export async function send3StepsEmail(
       </div>
 
       <p style="margin-top: 32px;">Travis<br>
-      <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+      <span style="color: #5A6577;">DNA Discipleship</span></p>
 
       <p style="color: #5A6577; font-size: 14px; margin-top: 24px;">
         P.S. Have questions? Just hit reply. I read every email.

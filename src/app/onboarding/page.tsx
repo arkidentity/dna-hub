@@ -100,7 +100,7 @@ export default function OnboardingPage() {
               </div>
               <div className="flex-shrink-0">
                 <a
-                  href="mailto:travis@arkidentity.com"
+                  href="mailto:info@dnadiscipleship.com"
                   className="btn-secondary inline-flex items-center gap-2"
                 >
                   <MessageCircle className="w-4 h-4" />
@@ -144,7 +144,7 @@ export default function OnboardingPage() {
 
         {/* Footer */}
         <footer className="text-center text-foreground-muted py-8 border-t border-card-border">
-          <p>Questions? Email <a href="mailto:travis@arkidentity.com" className="text-teal hover:text-teal-light">travis@arkidentity.com</a></p>
+          <p>Questions? Email <a href="mailto:info@dnadiscipleship.com" className="text-teal hover:text-teal-light">info@dnadiscipleship.com</a></p>
         </footer>
       </main>
     </div>

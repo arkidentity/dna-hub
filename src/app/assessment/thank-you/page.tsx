@@ -190,7 +190,7 @@ function ThankYouContent() {
           <p className="text-sm">
             <strong>What happens next?</strong> We&apos;ll also review your assessment and reach out within 2 business days.
             <br />
-            Questions? Email <a href="mailto:travis@arkidentity.com" className="text-teal hover:text-teal-light">travis@arkidentity.com</a>
+            Questions? Email <a href="mailto:info@dnadiscipleship.com" className="text-teal hover:text-teal-light">info@dnadiscipleship.com</a>
           </p>
         </div>
       </main>
