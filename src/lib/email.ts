@@ -31,7 +31,7 @@ interface EmailOptions {
   notificationType?: string;
 }
 
-async function sendEmail({ to, subject, html, churchId, notificationType }: EmailOptions) {
+export async function sendEmail({ to, subject, html, churchId, notificationType }: EmailOptions) {
   const resend = getResend();
 
   if (!resend) {
