@@ -13,9 +13,9 @@
 import { cookies } from 'next/headers'
 import { getSupabaseAdmin } from './auth'
 
-// All queries in this module use the admin client — these are server-side only
-// functions that operate on behalf of the authenticated user, not as the user.
-const supabase = getSupabaseAdmin()
+// Lazy accessor — avoids calling getSupabaseAdmin() at module load time,
+// which can throw if env vars aren't ready yet in Next.js edge/SSR contexts.
+const supabase = { from: (table: string) => getSupabaseAdmin().from(table) }
 
 export interface UserRole {
   role: 'church_leader' | 'dna_leader' | 'training_participant' | 'admin'
