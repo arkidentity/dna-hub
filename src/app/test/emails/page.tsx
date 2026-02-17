@@ -2,9 +2,9 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import { ArrowLeft, Mail, ChevronDown, ChevronRight, Send, Users, Bell, Key, FileText, CheckCircle, Rocket, BookOpen, Compass } from 'lucide-react';
+import { ArrowLeft, Mail, ChevronDown, ChevronRight, Send, Users, Bell, Key, FileText, CheckCircle, Rocket, BookOpen, Compass, GraduationCap, UserPlus, Shield } from 'lucide-react';
 
-type EmailCategory = 'user' | 'admin';
+type EmailCategory = 'user' | 'admin' | 'dna';
 
 interface EmailTemplate {
   id: string;
@@ -357,6 +357,115 @@ const emailTemplates: EmailTemplate[] = [
       </div>
     `,
   },
+  // DNA Groups / Training emails
+  {
+    id: 'dna-leader-magic-link',
+    name: 'DNA Leader Magic Link',
+    subject: 'Your DNA Hub Login Link',
+    trigger: 'DNA leader requests login — sends branded version of magic link',
+    recipient: 'dna',
+    variables: ['name', 'magicLink'],
+    html: `
+      <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1A2332;">Hi {{name}},</h2>
+        <p>Click the button below to access your DNA Group dashboard:</p>
+        <div style="text-align: center; margin: 30px 0;">
+          <a href="{{magicLink}}"
+             style="background: #2D6A6A; color: white; padding: 16px 32px;
+                    border-radius: 8px; text-decoration: none; font-weight: 500;
+                    display: inline-block;">
+            Access DNA Hub
+          </a>
+        </div>
+        <p style="color: #5A6577; font-size: 14px;">
+          This link expires in 7 days. If you didn't request this, you can safely ignore this email.
+        </p>
+        <p style="color: #5A6577; font-size: 14px; margin-top: 30px;">
+          — DNA Church Hub
+        </p>
+      </div>
+    `,
+  },
+  {
+    id: 'training-welcome',
+    name: 'Training Welcome',
+    subject: 'Welcome to DNA Training',
+    trigger: 'User is provisioned as a training_participant and gets first access',
+    recipient: 'dna',
+    variables: ['name', 'loginUrl'],
+    html: `
+      <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1A2332;">Welcome to DNA Training, {{name}}!</h2>
+        <div style="background: #1A2332; color: white; padding: 24px; border-radius: 8px; margin: 24px 0; text-align: center;">
+          <h3 style="color: #D4A853; margin: 0 0 8px 0;">Your Training Has Begun</h3>
+          <p style="margin: 0; color: #E8E8E8;">You now have access to the DNA Training platform</p>
+        </div>
+        <p>Your training journey starts with the Flow Assessment — a tool to help you identify what's slowing your discipleship down and build a plan to move forward.</p>
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="{{loginUrl}}"
+             style="background: #D4A853; color: white; padding: 16px 32px;
+                    border-radius: 8px; text-decoration: none; font-weight: 500;
+                    display: inline-block;">
+            Start Training
+          </a>
+        </div>
+        <p style="margin-top: 32px;">Travis<br>
+        <span style="color: #5A6577;">ARK Identity Discipleship</span></p>
+      </div>
+    `,
+  },
+  {
+    id: 'co-leader-invitation',
+    name: 'Co-Leader Invitation',
+    subject: 'You\'ve been invited to co-lead a DNA group',
+    trigger: 'DNA leader invites another leader to co-lead their group',
+    recipient: 'dna',
+    variables: ['inviteeName', 'inviterName', 'groupName', 'inviteUrl'],
+    html: `
+      <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1A2332;">Hi {{inviteeName}},</h2>
+        <p><strong>{{inviterName}}</strong> has invited you to co-lead their DNA group: <strong>{{groupName}}</strong>.</p>
+        <div style="background: #F4E7D7; padding: 24px; border-radius: 8px; margin: 24px 0; text-align: center;">
+          <p style="margin: 0 0 16px 0; color: #1A2332;">As a co-leader, you'll have full access to view and support the disciples in this group.</p>
+          <a href="{{inviteUrl}}"
+             style="background: #2D6A6A; color: white; padding: 14px 28px;
+                    border-radius: 8px; text-decoration: none; font-weight: 500;
+                    display: inline-block;">
+            Accept Co-Leader Invitation
+          </a>
+        </div>
+        <p style="color: #5A6577; font-size: 14px;">This invitation will expire. If you have questions, reply to this email.</p>
+        <p style="margin-top: 32px;">— DNA Church Hub</p>
+      </div>
+    `,
+  },
+  {
+    id: 'dna-leader-direct-invite',
+    name: 'DNA Leader Direct Invite',
+    subject: 'You\'ve been invited to lead a DNA group at {{churchName}}',
+    trigger: 'Church leader directly invites someone to become a DNA group leader',
+    recipient: 'dna',
+    variables: ['leaderName', 'churchName', 'inviteUrl'],
+    html: `
+      <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+        <h2 style="color: #1A2332;">Hi {{leaderName}},</h2>
+        <p>You've been personally invited to lead a DNA discipleship group at <strong>{{churchName}}</strong>.</p>
+        <div style="background: #1A2332; color: white; padding: 24px; border-radius: 8px; margin: 24px 0;">
+          <h3 style="color: #D4A853; margin: 0 0 12px 0;">What is DNA?</h3>
+          <p style="margin: 0; color: #E8E8E8; font-size: 14px;">DNA (Discipleship, Nurture, Accountability) groups are small, multiplying communities of 2-3 people who help each other grow in faith and become disciple-makers themselves.</p>
+        </div>
+        <div style="text-align: center; margin: 32px 0;">
+          <a href="{{inviteUrl}}"
+             style="background: #D4A853; color: white; padding: 16px 32px;
+                    border-radius: 8px; text-decoration: none; font-weight: 500;
+                    display: inline-block;">
+            Accept Invitation & Get Started
+          </a>
+        </div>
+        <p style="margin-top: 32px;">— DNA Church Hub</p>
+      </div>
+    `,
+  },
   // Admin notification emails
   {
     id: 'assessment-notification',
@@ -429,11 +538,12 @@ const emailTemplates: EmailTemplate[] = [
 
 export default function TestEmailsPage() {
   const [expandedEmail, setExpandedEmail] = useState<string | null>(null);
-  const [activeTab, setActiveTab] = useState<'user' | 'admin'>('user');
+  const [activeTab, setActiveTab] = useState<'user' | 'admin' | 'dna'>('user');
 
   const userEmails = emailTemplates.filter(e => e.recipient === 'user');
   const adminEmails = emailTemplates.filter(e => e.recipient === 'admin');
-  const displayEmails = activeTab === 'user' ? userEmails : adminEmails;
+  const dnaEmails = emailTemplates.filter(e => e.recipient === 'dna');
+  const displayEmails = activeTab === 'user' ? userEmails : activeTab === 'dna' ? dnaEmails : adminEmails;
 
   const toggleEmail = (id: string) => {
     setExpandedEmail(expandedEmail === id ? null : id);
@@ -452,6 +562,10 @@ export default function TestEmailsPage() {
       'assessment-notification': Bell,
       'milestone-notification': CheckCircle,
       'phase-completion-notification': CheckCircle,
+      'dna-leader-magic-link': Key,
+      'training-welcome': GraduationCap,
+      'co-leader-invitation': UserPlus,
+      'dna-leader-direct-invite': Shield,
     };
     return icons[id] || Mail;
   };
@@ -481,7 +595,7 @@ export default function TestEmailsPage() {
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-2 mb-6">
+        <div className="flex flex-wrap gap-2 mb-6">
           <button
             onClick={() => setActiveTab('user')}
             className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -493,6 +607,19 @@ export default function TestEmailsPage() {
             <span className="flex items-center gap-2">
               <Users className="w-4 h-4" />
               To Church Leaders ({userEmails.length})
+            </span>
+          </button>
+          <button
+            onClick={() => setActiveTab('dna')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              activeTab === 'dna'
+                ? 'bg-teal text-white'
+                : 'bg-background-secondary text-navy hover:bg-teal/10'
+            }`}
+          >
+            <span className="flex items-center gap-2">
+              <GraduationCap className="w-4 h-4" />
+              DNA Leaders &amp; Training ({dnaEmails.length})
             </span>
           </button>
           <button
@@ -526,7 +653,7 @@ export default function TestEmailsPage() {
                     <div className="flex items-center gap-3">
                       <span className="text-xs text-foreground-muted w-5">{index + 1}.</span>
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
-                        activeTab === 'user' ? 'bg-gold/10 text-gold' : 'bg-navy/10 text-navy'
+                        activeTab === 'user' ? 'bg-gold/10 text-gold' : activeTab === 'dna' ? 'bg-teal/10 text-teal' : 'bg-navy/10 text-navy'
                       }`}>
                         <Icon className="w-5 h-5" />
                       </div>
@@ -616,6 +743,24 @@ export default function TestEmailsPage() {
                 <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">Activated</span>
                 <span>→</span>
                 <span className="bg-teal/10 text-teal px-2 py-1 rounded">Dashboard Access Email</span>
+              </div>
+            </div>
+            <div>
+              <h3 className="font-medium text-navy mb-2">DNA Leader / Training Flow</h3>
+              <div className="flex items-center gap-2 text-sm text-foreground-muted flex-wrap">
+                <span className="bg-teal/10 text-teal px-2 py-1 rounded">Church leader invites</span>
+                <span>→</span>
+                <span className="bg-teal/10 text-teal px-2 py-1 rounded">DNA Leader Direct Invite</span>
+                <span>→</span>
+                <span className="bg-teal/10 text-teal px-2 py-1 rounded">Training Welcome</span>
+                <span className="mx-2">|</span>
+                <span className="bg-teal/10 text-teal px-2 py-1 rounded">Login request</span>
+                <span>→</span>
+                <span className="bg-teal/10 text-teal px-2 py-1 rounded">DNA Leader Magic Link</span>
+                <span className="mx-2">|</span>
+                <span className="bg-teal/10 text-teal px-2 py-1 rounded">Co-leader invite</span>
+                <span>→</span>
+                <span className="bg-teal/10 text-teal px-2 py-1 rounded">Co-Leader Invitation</span>
               </div>
             </div>
             <div>

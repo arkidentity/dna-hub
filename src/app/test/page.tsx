@@ -16,6 +16,10 @@ import {
   Compass,
   ExternalLink,
   Mail,
+  Gift,
+  Star,
+  GraduationCap,
+  UserPlus,
 } from 'lucide-react';
 
 export default function TestIndexPage() {
@@ -94,6 +98,70 @@ export default function TestIndexPage() {
       color: 'bg-gold/10 text-gold',
       requiresAuth: true,
       testHref: '/test/dashboard',
+    },
+  ];
+
+  // Secondary / parallel funnels
+  const secondaryFunnelPages = [
+    {
+      title: 'Manual Signup Thank You',
+      description: 'Post-subscription confirmation for landing page DNA Manual sign-up',
+      href: '/thank-you',
+      icon: CheckCircle,
+      color: 'bg-success/10 text-success',
+      requiresAuth: false,
+    },
+    {
+      title: 'Spiritual Gifts Assessment',
+      description: 'Ministry gift test — public landing and assessment flow',
+      href: '/ministry-gift-test',
+      icon: Gift,
+      color: 'bg-purple-100 text-purple-800',
+      requiresAuth: false,
+    },
+    {
+      title: 'Spiritual Gifts Confirmation',
+      description: 'Post-submission confirmation after completing the Spiritual Gifts test',
+      href: '/ministry-gift-test/confirmation',
+      icon: Star,
+      color: 'bg-purple-100 text-purple-800',
+      requiresAuth: false,
+    },
+    {
+      title: 'Group Signup (Disciple)',
+      description: 'Disciple-facing signup page to join a DNA group',
+      href: '/groups/signup',
+      icon: UserPlus,
+      color: 'bg-teal/10 text-teal',
+      requiresAuth: false,
+    },
+  ];
+
+  // DNA Hub system pages (authenticated user areas)
+  const systemPages = [
+    {
+      title: 'Training Dashboard',
+      description: 'DNA leader training hub — flow assessment, manual sessions, launch guide',
+      href: '/training',
+      icon: GraduationCap,
+      color: 'bg-gold/10 text-gold',
+      requiresAuth: true,
+    },
+    {
+      title: 'Groups Dashboard',
+      description: 'DNA leader groups management — create and manage DNA groups',
+      href: '/groups',
+      icon: Users,
+      color: 'bg-teal/10 text-teal',
+      requiresAuth: true,
+    },
+    {
+      title: 'Cohort',
+      description: 'DNA cohort — feed, members, calendar, discussion',
+      href: '/cohort',
+      icon: BookOpen,
+      color: 'bg-navy/10 text-navy',
+      requiresAuth: true,
     },
   ];
 
@@ -218,9 +286,76 @@ export default function TestIndexPage() {
           })}
         </div>
 
+        {/* Secondary Funnels */}
+        <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+          <span className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center text-purple-800 text-sm font-bold">2</span>
+          Parallel Funnels & Confirmation Pages
+        </h2>
+        <div className="grid gap-3 mb-10">
+          {secondaryFunnelPages.map((page) => {
+            const Icon = page.icon;
+            return (
+              <div key={page.href} className="card hover:shadow-md transition-shadow">
+                <div className="flex items-start gap-4">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${page.color}`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <h3 className="font-semibold text-navy">{page.title}</h3>
+                    <p className="text-sm text-foreground-muted mt-1">{page.description}</p>
+                    <p className="text-xs text-teal mt-1 font-mono">{page.href}</p>
+                  </div>
+                  <Link
+                    href={page.href}
+                    className="flex items-center gap-1 px-3 py-1.5 border border-navy text-navy text-sm rounded hover:bg-navy hover:text-white transition-colors flex-shrink-0"
+                  >
+                    <ExternalLink className="w-4 h-4" />
+                    View
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* System Pages */}
+        <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
+          <span className="w-8 h-8 bg-teal/10 rounded-full flex items-center justify-center text-teal text-sm font-bold">3</span>
+          DNA Hub System (Auth Required)
+        </h2>
+        <div className="grid gap-3 mb-10">
+          {systemPages.map((page) => {
+            const Icon = page.icon;
+            return (
+              <div key={page.href} className="card hover:shadow-md transition-shadow">
+                <div className="flex items-start gap-4">
+                  <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${page.color}`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-navy">{page.title}</h3>
+                      <span className="text-xs bg-orange-100 text-orange-800 px-2 py-0.5 rounded-full">Auth Required</span>
+                    </div>
+                    <p className="text-sm text-foreground-muted mt-1">{page.description}</p>
+                    <p className="text-xs text-teal mt-1 font-mono">{page.href}</p>
+                  </div>
+                  <Link
+                    href={page.href}
+                    className="flex items-center gap-1 px-3 py-1.5 border border-navy text-navy text-sm rounded hover:bg-navy hover:text-white transition-colors flex-shrink-0"
+                  >
+                    <Eye className="w-4 h-4" />
+                    Live
+                  </Link>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
         {/* Admin Pages */}
         <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
-          <span className="w-8 h-8 bg-navy/10 rounded-full flex items-center justify-center text-navy text-sm font-bold">2</span>
+          <span className="w-8 h-8 bg-navy/10 rounded-full flex items-center justify-center text-navy text-sm font-bold">4</span>
           Admin Pages
         </h2>
         <div className="grid gap-3 mb-10">
@@ -273,7 +408,7 @@ export default function TestIndexPage() {
 
         {/* Email Templates */}
         <h2 className="text-lg font-semibold text-navy mb-4 flex items-center gap-2">
-          <span className="w-8 h-8 bg-teal/10 rounded-full flex items-center justify-center text-teal text-sm font-bold">3</span>
+          <span className="w-8 h-8 bg-teal/10 rounded-full flex items-center justify-center text-teal text-sm font-bold">5</span>
           Email Templates
         </h2>
         <div className="grid gap-3 mb-10">
