@@ -885,7 +885,7 @@ export async function sendDNALeaderInvitationEmail(
       </div>
       ` : ''}
 
-      <p>As a DNA leader, you'll guide small groups through an 8-week discipleship journey that transforms lives and multiplies disciples.</p>
+      <p>As a DNA leader, you'll guide small groups through a 90-day discipleship journey that transforms lives and multiplies disciples.</p>
 
       <div style="text-align: center; margin: 32px 0;">
         <a href="${signupUrl}"
@@ -959,7 +959,7 @@ export async function sendDNALeaderDirectInviteEmail(
       </div>
       ` : ''}
 
-      <p>As a DNA leader, you'll guide small groups through an 8-week discipleship journey that transforms lives and multiplies disciples.</p>
+      <p>As a DNA leader, you'll guide small groups through a 90-day discipleship journey that transforms lives and multiplies disciples.</p>
 
       <p><strong>Your account is ready!</strong> Click below to log in and get started:</p>
 
@@ -1276,7 +1276,7 @@ export async function send3StepsEmail(
   // Additional resource URLs
   const launchGuideUrl = process.env.LAUNCH_GUIDE_URL || 'https://arkidentity.com/launch-guide.pdf';
   const dnaManualUrl = process.env.DNA_MANUAL_URL || 'https://arkidentity.com/dna-manual.pdf';
-  const eightWeekToolkitUrl = process.env.EIGHT_WEEK_TOOLKIT_URL || 'https://arkidentity.com/8-week-toolkit.pdf';
+  const ninetyDayToolkitUrl = process.env.NINETY_DAY_TOOLKIT_URL || process.env.EIGHT_WEEK_TOOLKIT_URL || 'https://arkidentity.com/90-day-toolkit.pdf';
 
   // Discovery call booking URL - uses env var defined at top of file
   const discoveryCallUrl = DISCOVERY_CALL_URL;
@@ -1292,7 +1292,7 @@ export async function send3StepsEmail(
       suggestion1Description: "Everything you need to prepare for a successful DNA launch at your church.",
       suggestion1Url: launchGuideUrl,
       suggestion1ButtonText: "Download Launch Guide",
-      suggestion2Incentive: "Book your Discovery Call now and receive the 8-Week Implementation Toolkit",
+      suggestion2Incentive: "Book your Discovery Call now and receive the 90-Day Implementation Toolkit",
       cta: "Book Discovery Call (15 min)"
     },
     building: {

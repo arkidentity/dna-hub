@@ -15,12 +15,12 @@ export default function NewGroupPage() {
   const [startDate, setStartDate] = useState('');
   const [multiplicationDate, setMultiplicationDate] = useState('');
 
-  // Calculate suggested multiplication date (8 weeks from start)
+  // Calculate suggested multiplication date (90 days from start)
   const handleStartDateChange = (date: string) => {
     setStartDate(date);
     if (date) {
       const start = new Date(date);
-      start.setDate(start.getDate() + 56); // 8 weeks
+      start.setDate(start.getDate() + 90); // 90 days
       setMultiplicationDate(start.toISOString().split('T')[0]);
     }
   };
@@ -141,7 +141,7 @@ export default function NewGroupPage() {
                 className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold focus:border-gold"
               />
               <p className="text-xs text-gray-500 mt-1">
-                When do you hope this group will multiply? (Typically 8 weeks from start)
+                When do you hope this group will multiply? (Typically 90 days from start)
               </p>
             </div>
 
@@ -152,7 +152,7 @@ export default function NewGroupPage() {
                 <li>1. Create your group</li>
                 <li>2. Add disciples to your group</li>
                 <li>3. Send them the Week 1 Life Assessment</li>
-                <li>4. Begin your 8-week DNA journey together</li>
+                <li>4. Begin your 90-day DNA journey together</li>
               </ul>
             </div>
 

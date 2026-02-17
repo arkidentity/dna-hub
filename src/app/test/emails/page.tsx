@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArrowLeft, Mail, ChevronDown, ChevronRight, Send, Users, Bell, Key, FileText, CheckCircle, Rocket, BookOpen, Compass, GraduationCap, UserPlus, Shield } from 'lucide-react';
 
@@ -129,7 +129,7 @@ const emailTemplates: EmailTemplate[] = [
         <div style="background: #1A2332; padding: 20px; border-radius: 8px; margin: 16px 0;">
           <h4 style="color: white; margin: 0 0 8px 0;">Book Your Discovery Call</h4>
           <p style="color: #E8E8E8; margin: 0 0 12px 0; font-size: 14px;">A 15-minute conversation to see if DNA is the right fit for your church.</p>
-          <p style="color: #D4A853; margin: 0 0 16px 0; font-size: 14px; font-weight: 500;">Book your Discovery Call now and receive the 8-Week Implementation Toolkit</p>
+          <p style="color: #D4A853; margin: 0 0 16px 0; font-size: 14px; font-weight: 500;">Book your Discovery Call now and receive the 90-Day Implementation Toolkit</p>
           <a href="{{discoveryCallUrl}}"
              style="background: #D4A853; color: white; padding: 12px 24px;
                     border-radius: 8px; text-decoration: none; font-weight: 500;
@@ -545,6 +545,22 @@ export default function TestEmailsPage() {
   const dnaEmails = emailTemplates.filter(e => e.recipient === 'dna');
   const displayEmails = activeTab === 'user' ? userEmails : activeTab === 'dna' ? dnaEmails : adminEmails;
 
+  // Auto-expand and scroll to email when arriving via anchor link from /test
+  useEffect(() => {
+    const hash = window.location.hash.replace('#', '');
+    if (!hash) return;
+    const template = emailTemplates.find(e => e.id === hash);
+    if (!template) return;
+    // Switch to the right tab
+    setActiveTab(template.recipient);
+    // Expand the email
+    setExpandedEmail(hash);
+    // Scroll after render
+    setTimeout(() => {
+      document.getElementById(hash)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }, 100);
+  }, []);
+
   const toggleEmail = (id: string) => {
     setExpandedEmail(expandedEmail === id ? null : id);
   };
@@ -644,7 +660,7 @@ export default function TestEmailsPage() {
             const isExpanded = expandedEmail === email.id;
 
             return (
-              <div key={email.id} className="card">
+              <div key={email.id} id={email.id} className="card scroll-mt-6">
                 <button
                   onClick={() => toggleEmail(email.id)}
                   className="w-full text-left"

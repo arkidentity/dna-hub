@@ -258,7 +258,7 @@ function DNALeaderDashboardContent() {
               </div>
               <h3 className="text-lg font-semibold text-navy mb-2">No groups yet</h3>
               <p className="text-gray-600 mb-6 max-w-sm mx-auto">
-                Create your first DNA group to start leading disciples through the 8-week journey.
+                Create your first DNA group to start leading disciples through the 90-day journey.
               </p>
               <Link
                 href="/groups/new"
