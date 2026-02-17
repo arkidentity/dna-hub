@@ -1,8 +1,8 @@
 'use client';
 
 import { useSearchParams } from 'next/navigation';
-import { CheckCircle, Download, BookOpen, Rocket, Compass } from 'lucide-react';
-import { Suspense } from 'react';
+import { CheckCircle, Download, BookOpen, Rocket, Compass, ExternalLink } from 'lucide-react';
+import { Suspense, useState, useCallback } from 'react';
 
 type ReadinessLevel = 'ready' | 'building' | 'exploring';
 
@@ -78,8 +78,34 @@ function ThankYouContent() {
   const searchParams = useSearchParams();
   const level = (searchParams.get('level') as ReadinessLevel) || 'building';
   const churchName = searchParams.get('church') || 'your church';
+  const email = searchParams.get('email') || '';
+  const firstName = searchParams.get('name') || '';
 
   const content = tieredContent[level] || tieredContent.building;
+
+  // Track whether the dashboard access email has been triggered
+  const [accessTriggered, setAccessTriggered] = useState(false);
+  const [accessLoading, setAccessLoading] = useState(false);
+
+  // Called when the calendar iframe is interacted with — we don't know exactly when
+  // they book, so we fire the API immediately when they click the booking header/CTA.
+  const handleBookCall = useCallback(async () => {
+    if (accessTriggered || !email) return;
+    setAccessLoading(true);
+
+    try {
+      await fetch('/api/assessment/book-call', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, firstName, churchName, readinessLevel: level }),
+      });
+      setAccessTriggered(true);
+    } catch (err) {
+      console.error('[BOOK-CALL] Failed to trigger access:', err);
+    } finally {
+      setAccessLoading(false);
+    }
+  }, [email, firstName, churchName, level, accessTriggered]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -167,12 +193,43 @@ function ThankYouContent() {
           )}
         </div>
 
-        {/* Embedded Google Calendar */}
+        {/* Book a Discovery Call — triggers silent dashboard access grant */}
         <div className="card">
           <h3 className="text-xl font-semibold text-navy mb-2 text-center">{content.calendarIncentive}</h3>
-          <p className="text-foreground-muted text-center mb-6">
+          <p className="text-foreground-muted text-center mb-4">
             Choose a time that works for you. This is a 15-minute conversation to see if DNA is right for {churchName}.
           </p>
+
+          {/* Access confirmation — shows after API fires */}
+          {accessTriggered && (
+            <div className="bg-success/10 border border-success/20 rounded-lg px-4 py-3 mb-4 text-center">
+              <p className="text-success text-sm font-medium">
+                ✓ Check your email — we&apos;ve sent your dashboard access link and the DNA Launch Guide.
+              </p>
+            </div>
+          )}
+
+          {/* CTA to trigger access + open calendar in new tab */}
+          {!accessTriggered && email && (
+            <div className="text-center mb-6">
+              <button
+                onClick={async () => {
+                  await handleBookCall();
+                  window.open(DISCOVERY_CALENDAR_EMBED, '_blank');
+                }}
+                disabled={accessLoading}
+                className="inline-flex items-center gap-2 bg-gold hover:bg-gold-dark disabled:opacity-60 text-white font-semibold px-8 py-4 rounded-lg transition-colors text-base"
+              >
+                {accessLoading ? 'Preparing your access...' : 'Book a Discovery Call'}
+                {!accessLoading && <ExternalLink className="w-4 h-4" />}
+              </button>
+              <p className="text-foreground-muted text-xs mt-2">
+                Opens Google Calendar — your dashboard access link will arrive by email.
+              </p>
+            </div>
+          )}
+
+          {/* Embedded calendar (shown always as fallback; primary is the button above) */}
           <div className="rounded-lg overflow-hidden border border-border">
             <iframe
               src={DISCOVERY_CALENDAR_EMBED}
@@ -181,6 +238,14 @@ function ThankYouContent() {
               height="600"
               frameBorder="0"
               title="Book Discovery Call"
+              onLoad={() => {
+                // Secondary trigger: if user interacts directly with the embedded calendar
+                // and hasn't already triggered, fire the API when the iframe first loads
+                // (best-effort — we can't detect when they actually book inside the iframe)
+                if (!accessTriggered && email) {
+                  handleBookCall();
+                }
+              }}
             />
           </div>
         </div>

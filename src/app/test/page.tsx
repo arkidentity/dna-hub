@@ -88,10 +88,11 @@ const funnels: FunnelSection[] = [
       {
         type: 'page',
         title: 'Assessment Confirmation — Ready',
-        description: 'Post-assessment page for churches ready to launch — shows launch guide + discovery call',
+        description: 'Post-assessment page for churches ready to launch — book a discovery call to receive dashboard access + Launch Guide',
         href: '/assessment/thank-you?level=ready&church=Test%20Church',
         icon: Rocket,
         color: 'bg-success/10 text-success',
+        emails: [{ label: 'Discovery Call — Dashboard Access', emailId: 'discovery-call-access' }],
       },
       {
         type: 'page',
@@ -100,6 +101,7 @@ const funnels: FunnelSection[] = [
         href: '/assessment/thank-you?level=building&church=Test%20Church',
         icon: BookOpen,
         color: 'bg-gold/10 text-gold',
+        emails: [{ label: 'Discovery Call — Dashboard Access', emailId: 'discovery-call-access' }],
       },
       {
         type: 'page',
@@ -108,6 +110,7 @@ const funnels: FunnelSection[] = [
         href: '/assessment/thank-you?level=exploring&church=Test%20Church',
         icon: Compass,
         color: 'bg-teal/10 text-teal',
+        emails: [{ label: 'Discovery Call — Dashboard Access', emailId: 'discovery-call-access' }],
       },
       {
         type: 'page',

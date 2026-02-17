@@ -204,8 +204,11 @@ export default function AssessmentPage() {
 
       if (!response.ok) throw new Error('Failed to submit');
 
-      // Redirect to thank-you with readiness level
-      router.push(`/assessment/thank-you?level=${readinessLevel}&church=${encodeURIComponent(formData.church_name)}`);
+      // Redirect to thank-you with readiness level, church name, email, and first name
+      const firstName = formData.your_name.split(' ')[0].trim();
+      router.push(
+        `/assessment/thank-you?level=${readinessLevel}&church=${encodeURIComponent(formData.church_name)}&email=${encodeURIComponent(formData.contact_email)}&name=${encodeURIComponent(firstName)}`
+      );
     } catch (error) {
       console.error('Submit error:', error);
       setErrors({ submit: 'Failed to submit assessment. Please try again.' });
