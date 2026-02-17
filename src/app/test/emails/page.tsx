@@ -238,18 +238,21 @@ const emailTemplates: EmailTemplate[] = [
     id: 'discovery-call-access',
     name: 'Discovery Call — Dashboard Access',
     subject: 'Your DNA Dashboard Access — {{churchName}}',
-    trigger: 'Church leader clicks "Book a Discovery Call" on assessment confirmation page (/assessment/thank-you)',
+    trigger: 'Church leader books a Discovery Call on /assessment/book-call — fires on page load',
     recipient: 'user',
-    variables: ['firstName', 'churchName', 'magicLink', 'launchGuideUrl'],
+    variables: ['firstName', 'churchName', 'magicLink'],
     html: `
       <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
         <h2 style="color: #1A2332;">Hey {{firstName}},</h2>
         <p>You just took a big step by booking a Discovery Call — I'm looking forward to connecting with you!</p>
-        <p>In the meantime, I've unlocked your DNA Church Dashboard. You can log in right now and start exploring:</p>
+        <p>In the meantime, I've unlocked your DNA Church Dashboard. Log in now and you'll find the DNA Launch Guide waiting for you inside.</p>
         <div style="background: #F4E7D7; padding: 24px; border-radius: 8px; margin: 24px 0; text-align: center;">
           <h3 style="color: #1A2332; margin: 0 0 8px 0;">Your Church Dashboard is Ready</h3>
+          <p style="color: #5A6577; margin: 0 0 4px 0; font-size: 14px;">
+            Inside you'll find the <strong>DNA Launch Guide</strong> and everything you need to prepare for our call.
+          </p>
           <p style="color: #5A6577; margin: 0 0 20px 0; font-size: 14px;">
-            Track {{churchName}}'s DNA implementation journey, access training resources, and manage your leadership team.
+            You can also track {{churchName}}'s implementation journey and manage your leadership team.
           </p>
           <a href="{{magicLink}}"
              style="background: #D4A853; color: white; padding: 14px 28px;
@@ -258,18 +261,8 @@ const emailTemplates: EmailTemplate[] = [
             Log In to Your Dashboard
           </a>
         </div>
-        <div style="background: #F8F9FA; padding: 20px; border-radius: 8px; margin: 24px 0; border-left: 4px solid #2D6A6A;">
-          <h4 style="color: #1A2332; margin: 0 0 8px 0;">DNA Launch Guide</h4>
-          <p style="color: #5A6577; margin: 0 0 12px 0; font-size: 14px;">
-            The step-by-step guide for launching DNA at {{churchName}}. We'll walk through this together on our call.
-          </p>
-          <a href="{{launchGuideUrl}}"
-             style="color: #2D6A6A; text-decoration: none; font-weight: 500; font-size: 14px;">
-            Download the DNA Launch Guide (PDF) →
-          </a>
-        </div>
         <p style="color: #5A6577; font-size: 14px;">
-          Your login link above is valid for 7 days. After that, visit <a href="https://dnadiscipleship.com/login" style="color: #2D6A6A;">dnadiscipleship.com/login</a> to request a new one.
+          Your login link is valid for 7 days. After that, visit <a href="https://dnadiscipleship.com/login" style="color: #2D6A6A;">dnadiscipleship.com/login</a> to request a new one.
         </p>
         <p style="margin-top: 32px;">Travis<br>
         <span style="color: #5A6577;">DNA Discipleship</span></p>

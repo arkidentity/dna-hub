@@ -76,9 +76,9 @@ export async function POST(request: NextRequest) {
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
     const magicLink = `${baseUrl}/api/auth/verify?token=${token}&destination=dashboard`;
-    const launchGuideUrl = process.env.NEXT_PUBLIC_LAUNCH_GUIDE_URL || '';
 
-    // Send the discovery call access email with magic link + launch guide
+    // Send the discovery call access email with magic link
+    // Launch Guide is inside the dashboard — no direct link in the email
     const displayName = firstName || user.name?.split(' ')[0] || 'Pastor';
     const displayChurchName = churchName || 'your church';
 
@@ -87,7 +87,6 @@ export async function POST(request: NextRequest) {
       displayName,
       displayChurchName,
       magicLink,
-      launchGuideUrl,
       churchId
     );
 
