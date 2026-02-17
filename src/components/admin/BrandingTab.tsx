@@ -19,11 +19,16 @@ interface Church {
   name: string;
 }
 
-export default function BrandingTab() {
+interface BrandingTabProps {
+  /** When provided, skips the church selector and loads branding for this specific church. */
+  churchId?: string;
+}
+
+export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProps = {}) {
   const [churches, setChurches] = useState<Church[]>([]);
-  const [selectedChurchId, setSelectedChurchId] = useState<string>('');
+  const [selectedChurchId, setSelectedChurchId] = useState<string>(fixedChurchId ?? '');
   const [branding, setBranding] = useState<ChurchBranding | null>(null);
-  const [loadingChurches, setLoadingChurches] = useState(true);
+  const [loadingChurches, setLoadingChurches] = useState(!fixedChurchId);
   const [loadingBranding, setLoadingBranding] = useState(false);
   const [saving, setSaving] = useState(false);
   const [uploadingLogo, setUploadingLogo] = useState(false);
@@ -49,14 +54,20 @@ export default function BrandingTab() {
   // ============================================
 
   useEffect(() => {
-    fetchChurches();
+    if (fixedChurchId) {
+      // Church is fixed — skip the selector, just load branding directly
+      fetchBranding(fixedChurchId);
+    } else {
+      fetchChurches();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
-    if (selectedChurchId) {
+    if (!fixedChurchId && selectedChurchId) {
       fetchBranding(selectedChurchId);
     }
-  }, [selectedChurchId]);
+  }, [fixedChurchId, selectedChurchId]);
 
   const fetchChurches = async () => {
     try {
@@ -179,7 +190,7 @@ export default function BrandingTab() {
   // RENDER
   // ============================================
 
-  if (loadingChurches) {
+  if (loadingChurches && !fixedChurchId) {
     return (
       <div className="flex items-center justify-center py-16">
         <Loader2 className="w-6 h-6 text-gold animate-spin" />
@@ -203,29 +214,32 @@ export default function BrandingTab() {
   return (
     <div className="space-y-6">
 
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-xl font-semibold text-navy">Church Branding</h2>
-          <p className="text-sm text-foreground-muted mt-1">
-            Configure subdomain, logo, and colors for each church&apos;s white-labeled Daily DNA app.
-          </p>
-        </div>
-      </div>
+      {/* Header + Church Selector — only shown in global admin view */}
+      {!fixedChurchId && (
+        <>
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-semibold text-navy">Church Branding</h2>
+              <p className="text-sm text-foreground-muted mt-1">
+                Configure subdomain, logo, and colors for each church&apos;s white-labeled Daily DNA app.
+              </p>
+            </div>
+          </div>
 
-      {/* Church Selector */}
-      <div className="bg-white rounded-xl border border-card-border p-4">
-        <label className="block text-sm font-medium text-navy mb-2">Select Church</label>
-        <select
-          value={selectedChurchId}
-          onChange={e => setSelectedChurchId(e.target.value)}
-          className="w-full max-w-sm border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold"
-        >
-          {churches.map(c => (
-            <option key={c.id} value={c.id}>{c.name}</option>
-          ))}
-        </select>
-      </div>
+          <div className="bg-white rounded-xl border border-card-border p-4">
+            <label className="block text-sm font-medium text-navy mb-2">Select Church</label>
+            <select
+              value={selectedChurchId}
+              onChange={e => setSelectedChurchId(e.target.value)}
+              className="w-full max-w-sm border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold"
+            >
+              {churches.map(c => (
+                <option key={c.id} value={c.id}>{c.name}</option>
+              ))}
+            </select>
+          </div>
+        </>
+      )}
 
       {loadingBranding ? (
         <div className="flex items-center justify-center py-12">

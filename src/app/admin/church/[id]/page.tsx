@@ -15,10 +15,11 @@ import {
   Tag,
   Check,
   X,
+  Palette,
+  UserCog,
 } from 'lucide-react';
 import { GroupsTab } from '@/components/dashboard';
-import { AdminChurchOverviewTab, AdminChurchJourneyTab, ChurchLeadersTab } from '@/components/admin';
-import { UserCog } from 'lucide-react';
+import { AdminChurchOverviewTab, AdminChurchJourneyTab, ChurchLeadersTab, BrandingTab } from '@/components/admin';
 
 interface ChurchDetail {
   church: {
@@ -121,7 +122,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
   const router = useRouter();
   const [data, setData] = useState<ChurchDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'leaders' | 'groups'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'leaders' | 'groups' | 'branding'>('overview');
 
   // Alias editing state
   const [editingAliases, setEditingAliases] = useState(false);
@@ -379,6 +380,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
               { id: 'journey', label: 'DNA Journey', icon: Map },
               { id: 'leaders', label: 'Leaders', icon: UserCog },
               { id: 'groups', label: 'DNA Groups', icon: Users },
+              { id: 'branding', label: 'Branding', icon: Palette },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -439,6 +441,11 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
             churchName={church.name}
             isAdmin={true}
           />
+        )}
+
+        {/* Branding Tab */}
+        {activeTab === 'branding' && (
+          <BrandingTab churchId={churchId} />
         )}
       </main>
     </div>
