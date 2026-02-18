@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
 
 // GET: Fetch calendar events
 // Supports ?group_id=X&start=ISO&end=ISO for group-scoped fetches (hub leader view)
@@ -123,16 +123,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
-    // Get leader ID
+    // Get leader ID — admins may not have a dna_leaders record; use null for created_by
     const { data: leader } = await supabase
       .from('dna_leaders')
       .select('id')
       .eq('email', session.email)
       .single();
 
-    if (!leader) {
+    if (!leader && !isAdmin(session)) {
       return NextResponse.json({ error: 'DNA leader not found' }, { status: 404 });
     }
+
+    const createdBy = leader?.id ?? null;
 
     // If recurring, create multiple instances
     if (is_recurring && recurrence_pattern) {
@@ -153,7 +155,7 @@ export async function POST(request: NextRequest) {
           church_id,
           is_recurring: true,
           recurrence_pattern,
-          created_by: leader.id,
+          created_by: createdBy,
         })
         .select()
         .single();
@@ -176,7 +178,7 @@ export async function POST(request: NextRequest) {
         church_id,
         is_recurring: false,
         parent_event_id: parentEvent.id,
-        created_by: leader.id,
+        created_by: createdBy,
       }));
 
       console.log(`[CALENDAR] Creating ${instanceRecords.length} instances. First: ${instanceRecords[0]?.start_time}, Parent ID: ${parentEvent.id}`);
@@ -208,7 +210,7 @@ export async function POST(request: NextRequest) {
         cohort_id,
         church_id,
         is_recurring: false,
-        created_by: leader.id,
+        created_by: createdBy,
       })
       .select()
       .single();

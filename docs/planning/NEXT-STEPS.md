@@ -155,15 +155,27 @@
 - ✅ Backfill: all existing dna_leaders enrolled; church_leaders auto-assigned as 'trainer'
 - ✅ Cohort events use existing `dna_calendar_events` table (`event_type = 'cohort_event'`) — appear in Daily DNA app calendar automatically via `get_my_calendar_events()` RPC
 
+**Database (Migration 062):**
+- ✅ All `church_leaders` (not just primary contact) promoted to trainer by email match
+- ✅ Trigger updated: new dna_leaders who are also church_leaders auto-enrolled as trainer
+
 **DNA Hub API:**
 - ✅ `GET /api/cohort` — auth for `dna_leader` + `church_leader` + admin; live data with mock fallback; `cohort_exempt` filter; events from `dna_calendar_events`
+- ✅ `GET /api/cohort?churchId=<uuid>` — admin-only bypass; fetches cohort directly by church (no membership required)
 - ✅ `POST /api/cohort/posts` — trainer-only; creates announcements/updates/resources with pin support
 - ✅ `POST /api/cohort/discussion` — any cohort member; creates top-level discussion posts
+- ✅ `PATCH /api/cohort/members/[id]` — trainer-only; promote/demote member between `trainer` and `leader` role
 
 **DNA Hub Pages:**
 - ✅ Feed page — "+ New Post" modal (trainer only, hidden in mock mode): post type, title, body, pin toggle
 - ✅ Calendar page — "+ Add Event" modal (trainer only, hidden in mock mode): title, date, time, duration, location, description
 - ✅ Discussion page — compose form wired to real API; disabled in mock mode
+- ✅ Members page — promote/demote toggle visible to trainers; optimistic UI update
+
+**Admin Church Detail (`/admin/church/[id]`):**
+- ✅ Cohort tab added — `AdminCohortTab` component with sub-tabs: Feed, Discussion, Members, Events
+- ✅ Read-only view of any church's cohort; no membership required for admin
+- ✅ Coach/admin workflow: Admin panel → click church → Cohort tab to observe live cohort activity
 
 ---
 

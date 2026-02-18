@@ -3,7 +3,8 @@ import { getSupabaseAdmin } from '@/lib/auth';
 import { getUnifiedSession, hasRole, isAdmin } from '@/lib/unified-auth';
 
 // POST /api/cohort/discussion
-// Any cohort member posts a new discussion thread (parent_id = null)
+// Any cohort member posts a new discussion thread (parent_id = null).
+// Admins can post by providing { cohort_id } in the body — no membership required.
 export async function POST(request: NextRequest) {
   try {
     const session = await getUnifiedSession();
@@ -16,8 +17,75 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = getSupabaseAdmin();
+    const body = await request.json();
+    const { post_body, cohort_id: adminCohortId } = body;
 
-    // Get the author's dna_leaders record
+    if (!post_body?.trim()) {
+      return NextResponse.json({ error: 'Post body is required' }, { status: 400 });
+    }
+
+    // ── Admin bypass ──────────────────────────────────────────────────
+    // Admin posts to a specific cohort by cohort_id, attributed to "DNA Coach".
+    // Uses the first trainer's leader_id to satisfy the FK on author_id.
+    if (isAdmin(session)) {
+      if (!adminCohortId) {
+        return NextResponse.json({ error: 'cohort_id required for admin posts' }, { status: 400 });
+      }
+
+      // Find any trainer to satisfy the FK on author_id
+      const { data: firstTrainer } = await supabase
+        .from('dna_cohort_members')
+        .select('leader_id')
+        .eq('cohort_id', adminCohortId)
+        .eq('role', 'trainer')
+        .limit(1)
+        .single();
+
+      let authorId: string | null = firstTrainer?.leader_id || null;
+
+      if (!authorId) {
+        const { data: anyMember } = await supabase
+          .from('dna_cohort_members')
+          .select('leader_id')
+          .eq('cohort_id', adminCohortId)
+          .limit(1)
+          .single();
+        authorId = anyMember?.leader_id || null;
+      }
+
+      if (!authorId) {
+        return NextResponse.json({ error: 'No cohort members found to attribute post' }, { status: 400 });
+      }
+
+      const { data: post, error } = await supabase
+        .from('dna_cohort_discussion')
+        .insert({
+          cohort_id: adminCohortId,
+          author_id: authorId,
+          body: post_body.trim(),
+          parent_id: null,
+        })
+        .select('id, body, created_at')
+        .single();
+
+      if (error) {
+        console.error('[COHORT DISCUSSION] Admin insert error:', error);
+        return NextResponse.json({ error: 'Failed to post' }, { status: 500 });
+      }
+
+      return NextResponse.json({
+        post: {
+          id: post.id,
+          body: post.body,
+          author_name: 'DNA Coach',
+          author_role: 'trainer',
+          reply_count: 0,
+          created_at: post.created_at,
+        },
+      });
+    }
+
+    // ── Regular member path ───────────────────────────────────────────
     const { data: leader } = await supabase
       .from('dna_leaders')
       .select('id, name')
@@ -28,7 +96,6 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Leader not found' }, { status: 404 });
     }
 
-    // Verify cohort membership
     const { data: membership } = await supabase
       .from('dna_cohort_members')
       .select('cohort_id, role')
@@ -38,13 +105,6 @@ export async function POST(request: NextRequest) {
 
     if (!membership) {
       return NextResponse.json({ error: 'Not a cohort member' }, { status: 403 });
-    }
-
-    const body = await request.json();
-    const { post_body } = body;
-
-    if (!post_body?.trim()) {
-      return NextResponse.json({ error: 'Post body is required' }, { status: 400 });
     }
 
     const { data: post, error } = await supabase
