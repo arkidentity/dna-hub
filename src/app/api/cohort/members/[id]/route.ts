@@ -8,9 +8,11 @@ import { getUnifiedSession, hasRole, isAdmin } from '@/lib/unified-auth';
 // [id] is the dna_cohort_members row id
 export async function PATCH(
   req: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id: memberId } = await params;
+
     const session = await getUnifiedSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
@@ -24,9 +26,8 @@ export async function PATCH(
     }
 
     const supabase = getSupabaseAdmin();
-    const memberId = params.id; // dna_cohort_members.id
 
-    // Fetch the target member row to get their cohort_id
+    // Fetch the target member row to get their cohort_id (memberId = dna_cohort_members.id)
     const { data: targetMember, error: fetchErr } = await supabase
       .from('dna_cohort_members')
       .select('id, cohort_id, role, leader_id')
