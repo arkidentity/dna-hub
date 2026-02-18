@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUnifiedSession, isTrainingParticipant, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession } from '@/lib/unified-auth';
 import { supabase } from '@/lib/supabase';
 
 // GET: Load completed assessment results
@@ -9,10 +9,6 @@ export async function GET() {
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!isTrainingParticipant(session) && !isAdmin(session)) {
-      return NextResponse.json({ error: 'Not a training participant' }, { status: 403 });
     }
 
     const userId = session.userId;

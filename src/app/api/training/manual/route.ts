@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUnifiedSession, isTrainingParticipant, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession } from '@/lib/unified-auth';
 import { supabase } from '@/lib/supabase';
 import { getSessionCount } from '@/lib/dna-manual-data';
 
@@ -13,27 +13,6 @@ export async function GET() {
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!isTrainingParticipant(session) && !isAdmin(session)) {
-      return NextResponse.json({ error: 'Not a training participant' }, { status: 403 });
-    }
-
-    // Check if flow assessment is complete (required to access manual)
-    const { data: flowAssessment } = await supabase
-      .from('user_flow_assessments')
-      .select('id, status')
-      .eq('user_id', session.userId)
-      .eq('status', 'completed')
-      .order('completed_at', { ascending: false })
-      .limit(1)
-      .single();
-
-    if (!flowAssessment) {
-      return NextResponse.json(
-        { error: 'Flow Assessment must be completed first' },
-        { status: 403 }
-      );
     }
 
     // Get user's training progress

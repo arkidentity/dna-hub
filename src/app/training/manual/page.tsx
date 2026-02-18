@@ -40,12 +40,6 @@ export default function DNAManualPage() {
           return;
         }
 
-        if (response.status === 403) {
-          // Not authorized - flow assessment not complete
-          router.push('/training');
-          return;
-        }
-
         if (!response.ok) {
           throw new Error('Failed to load manual');
         }

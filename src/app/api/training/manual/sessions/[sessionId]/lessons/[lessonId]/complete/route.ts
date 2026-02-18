@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUnifiedSession, isTrainingParticipant, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession } from '@/lib/unified-auth';
 import { supabase } from '@/lib/supabase';
 import { getSession, getLesson } from '@/lib/dna-manual-data';
 
@@ -21,10 +21,6 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!isTrainingParticipant(session) && !isAdmin(session)) {
-      return NextResponse.json({ error: 'Not a training participant' }, { status: 403 });
     }
 
     // Validate session and lesson exist

@@ -1,9 +1,5 @@
 import { NextResponse } from 'next/server';
-import {
-  getUnifiedSession,
-  isTrainingParticipant,
-  isAdmin,
-} from '@/lib/unified-auth';
+import { getUnifiedSession } from '@/lib/unified-auth';
 import { supabase } from '@/lib/supabase';
 import { getPhaseCount, launchGuideData } from '@/lib/launch-guide-data';
 
@@ -19,30 +15,11 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!isTrainingParticipant(session) && !isAdmin(session)) {
-      return NextResponse.json(
-        { error: 'Not a training participant' },
-        { status: 403 }
-      );
-    }
-
-    // Check if manual is complete (required to access launch guide) - OR admin override
+    // Get user's content unlocks
     const { data: contentUnlocks } = await supabase
       .from('user_content_unlocks')
       .select('*')
       .eq('user_id', session.userId);
-
-    const launchGuideUnlock = contentUnlocks?.find(
-      (u) => u.content_type === 'launch_guide'
-    );
-
-    // Admin can bypass the unlock check
-    if (!launchGuideUnlock && !isAdmin(session)) {
-      return NextResponse.json(
-        { error: 'DNA Manual must be completed first' },
-        { status: 403 }
-      );
-    }
 
     // Get user's training progress
     const { data: trainingProgress } = await supabase

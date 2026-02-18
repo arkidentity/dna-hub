@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { getUnifiedSession, isTrainingParticipant, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession } from '@/lib/unified-auth';
 import { supabase } from '@/lib/supabase';
 import { getSession } from '@/lib/dna-manual-data';
 
@@ -22,31 +22,10 @@ export async function GET(request: Request, { params }: RouteParams) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!isTrainingParticipant(session) && !isAdmin(session)) {
-      return NextResponse.json({ error: 'Not a training participant' }, { status: 403 });
-    }
-
     // Validate session exists
     const sessionData = getSession(sessionId);
     if (!sessionData) {
       return NextResponse.json({ error: 'Session not found' }, { status: 404 });
-    }
-
-    // Check if previous session is completed (if not session 1)
-    if (sessionId > 1) {
-      const { data: prevUnlock } = await supabase
-        .from('user_content_unlocks')
-        .select('*')
-        .eq('user_id', session.userId)
-        .eq('content_type', `manual_session_${sessionId - 1}`)
-        .single();
-
-      if (!prevUnlock?.metadata?.completed) {
-        return NextResponse.json(
-          { error: 'Previous session must be completed first' },
-          { status: 403 }
-        );
-      }
     }
 
     // Get or create session unlock record
@@ -121,10 +100,6 @@ export async function POST(request: Request, { params }: RouteParams) {
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!isTrainingParticipant(session) && !isAdmin(session)) {
-      return NextResponse.json({ error: 'Not a training participant' }, { status: 403 });
     }
 
     // Validate session exists
