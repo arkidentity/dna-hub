@@ -2,9 +2,10 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { Loader2 } from 'lucide-react';
 
 interface CohortMember {
-  id: string;
+  id: string; // dna_cohort_members.id — used for PATCH
   name: string;
   role: string;
   group_name?: string;
@@ -26,10 +27,81 @@ function avatarColor(name: string) {
   return avatarColors[hash % avatarColors.length];
 }
 
+// ============================================
+// MEMBER ROW
+// ============================================
+
+function MemberRow({
+  member,
+  canManage,
+  onRoleChange,
+}: {
+  member: CohortMember;
+  canManage: boolean;
+  onRoleChange: (memberId: string, newRole: 'trainer' | 'leader') => Promise<void>;
+}) {
+  const [loading, setLoading] = useState(false);
+
+  const handleToggle = async () => {
+    if (loading) return;
+    setLoading(true);
+    const newRole = member.role === 'trainer' ? 'leader' : 'trainer';
+    await onRoleChange(member.id, newRole);
+    setLoading(false);
+  };
+
+  return (
+    <div className="flex items-center gap-3 px-4 py-3">
+      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${avatarColor(member.name)}`}>
+        {initials(member.name)}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="font-medium text-navy text-sm">{member.name}</p>
+        {member.joined_at && (
+          <p className="text-xs text-gray-400">
+            Joined {new Date(member.joined_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+          </p>
+        )}
+      </div>
+
+      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+        member.role === 'trainer'
+          ? 'bg-gold/20 text-gold'
+          : 'bg-gray-100 text-gray-600'
+      }`}>
+        {member.role === 'trainer' ? 'Trainer' : 'Leader'}
+      </span>
+
+      {canManage && (
+        <button
+          onClick={handleToggle}
+          disabled={loading}
+          title={member.role === 'trainer' ? 'Remove trainer role' : 'Make trainer'}
+          className={`ml-1 text-xs px-2.5 py-1 rounded-lg border transition-colors disabled:opacity-50 ${
+            member.role === 'trainer'
+              ? 'border-gray-200 text-gray-500 hover:border-red-200 hover:text-red-600 hover:bg-red-50'
+              : 'border-gold/40 text-gold hover:bg-gold/10'
+          }`}
+        >
+          {loading
+            ? <Loader2 className="w-3 h-3 animate-spin inline" />
+            : member.role === 'trainer' ? 'Demote' : 'Make Trainer'
+          }
+        </button>
+      )}
+    </div>
+  );
+}
+
+// ============================================
+// MAIN PAGE
+// ============================================
+
 export default function CohortMembersPage() {
   const router = useRouter();
   const [members, setMembers] = useState<CohortMember[]>([]);
   const [cohortName, setCohortName] = useState('');
+  const [userRole, setUserRole] = useState('leader');
   const [loading, setLoading] = useState(true);
   const [isMock, setIsMock] = useState(false);
   const [search, setSearch] = useState('');
@@ -44,12 +116,32 @@ export default function CohortMembersPage() {
         if (d) {
           setMembers(d.members || []);
           setCohortName(d.cohort?.name || '');
+          setUserRole(d.currentUserRole || 'leader');
           setIsMock(d.mock || false);
         }
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, [router]);
+
+  const handleRoleChange = async (memberId: string, newRole: 'trainer' | 'leader') => {
+    const res = await fetch(`/api/cohort/members/${memberId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ role: newRole }),
+    });
+
+    if (!res.ok) {
+      const data = await res.json();
+      alert(data.error || 'Failed to update role');
+      return;
+    }
+
+    // Update local state optimistically
+    setMembers((prev) =>
+      prev.map((m) => m.id === memberId ? { ...m, role: newRole } : m)
+    );
+  };
 
   if (loading) {
     return (
@@ -59,8 +151,9 @@ export default function CohortMembersPage() {
     );
   }
 
+  const isTrainer = userRole === 'trainer';
   const trainers = members.filter((m) => m.role === 'trainer');
-  const leaders = members.filter((m) => m.role === 'leader');
+  const leaders = members.filter((m) => m.role !== 'trainer');
 
   const filtered = (list: CohortMember[]) =>
     search
@@ -70,7 +163,7 @@ export default function CohortMembersPage() {
   // Group leaders by training group
   const groups: Record<string, CohortMember[]> = {};
   for (const leader of leaders) {
-    const key = leader.group_name || 'Unassigned';
+    const key = leader.group_name || 'DNA Leaders';
     if (!groups[key]) groups[key] = [];
     groups[key].push(leader);
   }
@@ -80,6 +173,12 @@ export default function CohortMembersPage() {
       {isMock && (
         <div className="mb-6 bg-amber-50 border border-amber-200 rounded-lg px-4 py-3 text-sm text-amber-700">
           <strong>Demo mode</strong> — showing sample roster for {cohortName}.
+        </div>
+      )}
+
+      {isTrainer && !isMock && (
+        <div className="mb-6 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-sm text-blue-700">
+          As a trainer, you can promote DNA leaders to trainer status so they can post announcements and add events.
         </div>
       )}
 
@@ -100,10 +199,17 @@ export default function CohortMembersPage() {
       {/* Trainers */}
       {filtered(trainers).length > 0 && (
         <div className="mb-6">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Trainer{trainers.length > 1 ? 's' : ''}</p>
+          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">
+            Trainer{trainers.length !== 1 ? 's' : ''}
+          </p>
           <div className="bg-white rounded-lg shadow divide-y divide-gray-100">
             {filtered(trainers).map((m) => (
-              <MemberRow key={m.id} member={m} />
+              <MemberRow
+                key={m.id}
+                member={m}
+                canManage={isTrainer && !isMock}
+                onRoleChange={handleRoleChange}
+              />
             ))}
           </div>
         </div>
@@ -118,7 +224,12 @@ export default function CohortMembersPage() {
             <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">{groupName}</p>
             <div className="bg-white rounded-lg shadow divide-y divide-gray-100">
               {filteredGroup.map((m) => (
-                <MemberRow key={m.id} member={m} />
+                <MemberRow
+                  key={m.id}
+                  member={m}
+                  canManage={isTrainer && !isMock}
+                  onRoleChange={handleRoleChange}
+                />
               ))}
             </div>
           </div>
@@ -135,31 +246,6 @@ export default function CohortMembersPage() {
       <p className="text-center text-xs text-gray-400 mt-4">
         {members.length} total member{members.length !== 1 ? 's' : ''}
       </p>
-    </div>
-  );
-}
-
-function MemberRow({ member }: { member: CohortMember }) {
-  return (
-    <div className="flex items-center gap-3 px-4 py-3">
-      <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${avatarColor(member.name)}`}>
-        {initials(member.name)}
-      </div>
-      <div className="flex-1 min-w-0">
-        <p className="font-medium text-navy text-sm">{member.name}</p>
-        {member.joined_at && (
-          <p className="text-xs text-gray-400">
-            Joined {new Date(member.joined_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
-          </p>
-        )}
-      </div>
-      <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
-        member.role === 'trainer'
-          ? 'bg-gold/20 text-gold'
-          : 'bg-gray-100 text-gray-600'
-      }`}>
-        {member.role === 'trainer' ? 'Trainer' : 'Leader'}
-      </span>
     </div>
   );
 }

@@ -148,8 +148,9 @@ async function resolveLeader(email: string, supabase: ReturnType<typeof getSupab
 }
 
 // GET /api/cohort
-// Returns the current user's cohort data (or mock data for demo)
-export async function GET() {
+// Returns the current user's cohort data (or mock data for demo).
+// Admin/coach bypass: pass ?churchId=<uuid> to view any church's cohort directly.
+export async function GET(req: Request) {
   try {
     const session = await getUnifiedSession();
 
@@ -162,6 +163,161 @@ export async function GET() {
     }
 
     const supabase = getSupabaseAdmin();
+    const { searchParams } = new URL(req.url);
+    const adminChurchId = searchParams.get('churchId');
+
+    // ── Admin/Coach bypass ──────────────────────────────────────────
+    // If ?churchId= is provided, only admins may use it.
+    // Look up the cohort directly by church_id — no membership required.
+    if (adminChurchId) {
+      if (!isAdmin(session)) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+
+      // Find the active cohort for this church
+      const { data: cohortRow } = await supabase
+        .from('dna_cohorts')
+        .select('id, name, generation, status, started_at, church:churches(name)')
+        .eq('church_id', adminChurchId)
+        .eq('status', 'active')
+        .single();
+
+      if (!cohortRow) {
+        // No cohort yet for this church — return empty live state (not mock)
+        const { data: churchRow } = await supabase
+          .from('churches')
+          .select('name')
+          .eq('id', adminChurchId)
+          .single();
+        return NextResponse.json({
+          mock: false,
+          adminView: true,
+          cohort: null,
+          currentUserRole: 'admin',
+          stats: { total_members: 0, trainers: 0, upcoming_events: 0 },
+          feed: [],
+          discussion: [],
+          members: [],
+          events: [],
+          churchName: (churchRow as any)?.name || 'This Church',
+        });
+      }
+
+      const cohortId = cohortRow.id;
+      const churchName = (cohortRow.church as unknown as { name: string } | null)?.name || 'Church';
+
+      // Fetch all cohort data — same queries as member path below
+      const [membersRes, postsRes, discussionRes, eventsRes] = await Promise.all([
+        supabase
+          .from('dna_cohort_members')
+          .select('id, role, joined_at, leader:dna_leaders(id, name)')
+          .eq('cohort_id', cohortId)
+          .eq('cohort_exempt', false)
+          .order('joined_at', { ascending: true }),
+        supabase
+          .from('dna_cohort_posts')
+          .select('id, post_type, title, body, pinned, created_at, author_role, author:dna_leaders(id, name)')
+          .eq('cohort_id', cohortId)
+          .order('pinned', { ascending: false })
+          .order('created_at', { ascending: false })
+          .limit(20),
+        supabase
+          .from('dna_cohort_discussion')
+          .select('id, body, created_at, author:dna_leaders(id, name), parent_id')
+          .eq('cohort_id', cohortId)
+          .is('parent_id', null)
+          .order('created_at', { ascending: false })
+          .limit(20),
+        supabase
+          .from('dna_calendar_events')
+          .select('id, title, description, start_time, end_time, location')
+          .eq('cohort_id', cohortId)
+          .eq('event_type', 'cohort_event')
+          .eq('is_recurring', false)
+          .gte('start_time', new Date().toISOString())
+          .order('start_time', { ascending: true })
+          .limit(10),
+      ]);
+
+      const members = membersRes.data || [];
+      const posts = postsRes.data || [];
+      const discussion = discussionRes.data || [];
+      const events = eventsRes.data || [];
+
+      const trainerIds = new Set(
+        members
+          .filter((m) => m.role === 'trainer')
+          .map((m) => (m.leader as unknown as { id: string } | null)?.id)
+          .filter(Boolean)
+      );
+
+      const threadIds = discussion.map((d) => d.id);
+      const replyCounts: Record<string, number> = {};
+      if (threadIds.length > 0) {
+        const { data: replies } = await supabase
+          .from('dna_cohort_discussion')
+          .select('parent_id')
+          .in('parent_id', threadIds);
+        (replies || []).forEach((r) => {
+          replyCounts[r.parent_id] = (replyCounts[r.parent_id] || 0) + 1;
+        });
+      }
+
+      return NextResponse.json({
+        mock: false,
+        adminView: true,
+        cohort: {
+          id: cohortRow.id,
+          name: cohortRow.name,
+          generation: cohortRow.generation,
+          status: cohortRow.status,
+          started_at: cohortRow.started_at,
+          church_name: churchName,
+        },
+        currentUserRole: 'admin',
+        stats: {
+          total_members: members.length,
+          trainers: members.filter((m) => m.role === 'trainer').length,
+          upcoming_events: events.length,
+        },
+        feed: posts.map((p) => ({
+          id: p.id,
+          post_type: p.post_type,
+          title: p.title,
+          body: p.body,
+          pinned: p.pinned,
+          author_name: (p.author as unknown as { name: string } | null)?.name || 'Trainer',
+          author_role: (p as any).author_role || 'trainer',
+          created_at: p.created_at,
+        })),
+        discussion: discussion.map((d) => {
+          const authorId = (d.author as unknown as { id: string } | null)?.id;
+          return {
+            id: d.id,
+            body: d.body,
+            author_name: (d.author as unknown as { name: string } | null)?.name || 'Leader',
+            author_role: authorId && trainerIds.has(authorId) ? 'trainer' : 'leader',
+            reply_count: replyCounts[d.id] || 0,
+            created_at: d.created_at,
+          };
+        }),
+        members: members.map((m) => ({
+          id: m.id,
+          name: (m.leader as unknown as { id: string; name: string } | null)?.name || 'Leader',
+          role: m.role,
+          joined_at: m.joined_at,
+        })),
+        events: events.map((e) => ({
+          id: e.id,
+          title: e.title,
+          description: e.description,
+          start_time: e.start_time,
+          end_time: e.end_time,
+          location: e.location,
+        })),
+      });
+    }
+    // ── End Admin bypass ────────────────────────────────────────────
 
     const leader = await resolveLeader(session.email, supabase);
 
