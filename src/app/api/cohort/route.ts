@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, hasRole } from '@/lib/unified-auth';
+import { getUnifiedSession, hasRole, isAdmin } from '@/lib/unified-auth';
 
 // Mock data used when no real cohort exists (demo mode)
 function getMockCohortData(leaderName: string, churchName: string) {
@@ -44,7 +44,7 @@ function getMockCohortData(leaderName: string, churchName: string) {
         id: 'post-3',
         post_type: 'update',
         title: 'Reminder: Mid-Cohort Retreat — Feb 22',
-        body: 'Just a reminder that our mid-cohort retreat is coming up on Saturday, February 22nd at Camp Cho-Yeh. We\'ll leave at 8am from the church parking lot. Please confirm your RSVP if you haven\'t already.',
+        body: "Just a reminder that our mid-cohort retreat is coming up on Saturday, February 22nd at Camp Cho-Yeh. We'll leave at 8am from the church parking lot. Please confirm your RSVP if you haven't already.",
         pinned: false,
         author_name: leaderName,
         author_role: 'trainer',
@@ -62,7 +62,7 @@ function getMockCohortData(leaderName: string, churchName: string) {
       },
       {
         id: 'disc-2',
-        body: 'Question for the group — how are you all structuring your weekly check-ins with your disciples outside of the group time? Trying to figure out the right rhythm.',
+        body: "Question for the group — how are you all structuring your weekly check-ins with your disciples outside of the group time? Trying to figure out the right rhythm.",
         author_name: 'Sarah Chen',
         author_role: 'leader',
         reply_count: 5,
@@ -86,18 +86,18 @@ function getMockCohortData(leaderName: string, churchName: string) {
       },
     ],
     members: [
-      { id: 'm-1', name: leaderName, role: 'trainer', group_name: null, joined_at: '2026-01-06' },
-      { id: 'm-2', name: 'Marcus Rivera', role: 'leader', group_name: 'Group A', joined_at: '2026-01-06' },
-      { id: 'm-3', name: 'Sarah Chen', role: 'leader', group_name: 'Group A', joined_at: '2026-01-06' },
-      { id: 'm-4', name: 'David Kim', role: 'leader', group_name: 'Group A', joined_at: '2026-01-06' },
-      { id: 'm-5', name: 'Aisha Washington', role: 'leader', group_name: 'Group A', joined_at: '2026-01-06' },
-      { id: 'm-6', name: 'James Okafor', role: 'leader', group_name: 'Group B', joined_at: '2026-01-06' },
-      { id: 'm-7', name: 'Priya Nair', role: 'leader', group_name: 'Group B', joined_at: '2026-01-06' },
-      { id: 'm-8', name: 'Carlos Mendez', role: 'leader', group_name: 'Group B', joined_at: '2026-01-06' },
-      { id: 'm-9', name: 'Rachel Thompson', role: 'leader', group_name: 'Group B', joined_at: '2026-01-06' },
-      { id: 'm-10', name: 'Tyler Brooks', role: 'leader', group_name: 'Group C', joined_at: '2026-01-06' },
-      { id: 'm-11', name: 'Naomi Osei', role: 'leader', group_name: 'Group C', joined_at: '2026-01-06' },
-      { id: 'm-12', name: 'Ben Matthews', role: 'leader', group_name: 'Group C', joined_at: '2026-01-06' },
+      { id: 'm-1', name: leaderName, role: 'trainer', joined_at: '2026-01-06' },
+      { id: 'm-2', name: 'Marcus Rivera', role: 'leader', joined_at: '2026-01-06' },
+      { id: 'm-3', name: 'Sarah Chen', role: 'leader', joined_at: '2026-01-06' },
+      { id: 'm-4', name: 'David Kim', role: 'leader', joined_at: '2026-01-06' },
+      { id: 'm-5', name: 'Aisha Washington', role: 'leader', joined_at: '2026-01-06' },
+      { id: 'm-6', name: 'James Okafor', role: 'leader', joined_at: '2026-01-06' },
+      { id: 'm-7', name: 'Priya Nair', role: 'leader', joined_at: '2026-01-06' },
+      { id: 'm-8', name: 'Carlos Mendez', role: 'leader', joined_at: '2026-01-06' },
+      { id: 'm-9', name: 'Rachel Thompson', role: 'leader', joined_at: '2026-01-06' },
+      { id: 'm-10', name: 'Tyler Brooks', role: 'leader', joined_at: '2026-01-06' },
+      { id: 'm-11', name: 'Naomi Osei', role: 'leader', joined_at: '2026-01-06' },
+      { id: 'm-12', name: 'Ben Matthews', role: 'leader', joined_at: '2026-01-06' },
     ],
     events: [
       {
@@ -128,6 +128,25 @@ function getMockCohortData(leaderName: string, churchName: string) {
   };
 }
 
+// Resolve the dna_leaders record for the current session email.
+// church_leaders who are also dna_leaders will match. Pure church_leaders fall through.
+async function resolveLeader(email: string, supabase: ReturnType<typeof getSupabaseAdmin>) {
+  const { data } = await supabase
+    .from('dna_leaders')
+    .select('id, name, email, church:churches(id, name)')
+    .eq('email', email)
+    .single();
+
+  if (!data) return null;
+
+  return {
+    id: data.id as string,
+    name: data.name as string,
+    email: data.email as string,
+    church: data.church as unknown as { id: string; name: string } | null,
+  };
+}
+
 // GET /api/cohort
 // Returns the current user's cohort data (or mock data for demo)
 export async function GET() {
@@ -138,34 +157,33 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!hasRole(session, 'dna_leader')) {
+    if (!hasRole(session, 'dna_leader') && !hasRole(session, 'church_leader') && !isAdmin(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const supabase = getSupabaseAdmin();
 
-    // Get DNA leader record
-    const { data: dnaLeader } = await supabase
-      .from('dna_leaders')
-      .select('id, name, email, church:churches(id, name)')
-      .eq('email', session.email)
-      .single();
+    const leader = await resolveLeader(session.email, supabase);
 
-    if (!dnaLeader) {
-      return NextResponse.json({ error: 'Leader not found' }, { status: 404 });
+    if (!leader) {
+      // church_leader with no dna_leaders record — show mock
+      return NextResponse.json({
+        mock: true,
+        ...getMockCohortData(session.email, 'Your Church'),
+      });
     }
 
-    const leaderName = dnaLeader.name || session.email;
-    const churchName = (dnaLeader.church as unknown as { name: string } | null)?.name || 'Your Church';
+    const leaderName = leader.name || session.email;
+    const churchName = leader.church?.name || 'Your Church';
 
-    // Check if a real cohort exists for this leader
+    // Check cohort membership (only non-exempt members)
     const { data: membership } = await supabase
       .from('dna_cohort_members')
       .select('cohort_id, role')
-      .eq('leader_id', dnaLeader.id)
+      .eq('leader_id', leader.id)
+      .eq('cohort_exempt', false)
       .single();
 
-    // If no real cohort membership, return mock data for demo
     if (!membership) {
       return NextResponse.json({
         mock: true,
@@ -173,7 +191,6 @@ export async function GET() {
       });
     }
 
-    // Real data path — fetch live from Supabase
     const cohortId = membership.cohort_id;
 
     const [cohortRes, membersRes, postsRes, discussionRes, eventsRes] = await Promise.all([
@@ -186,25 +203,29 @@ export async function GET() {
         .from('dna_cohort_members')
         .select('id, role, joined_at, leader:dna_leaders(id, name)')
         .eq('cohort_id', cohortId)
+        .eq('cohort_exempt', false)
         .order('joined_at', { ascending: true }),
       supabase
         .from('dna_cohort_posts')
-        .select('id, post_type, title, body, pinned, created_at, author:dna_leaders(name)')
+        .select('id, post_type, title, body, pinned, created_at, author_role, author:dna_leaders(id, name)')
         .eq('cohort_id', cohortId)
         .order('pinned', { ascending: false })
         .order('created_at', { ascending: false })
         .limit(20),
       supabase
         .from('dna_cohort_discussion')
-        .select('id, body, created_at, author:dna_leaders(name), parent_id')
+        .select('id, body, created_at, author:dna_leaders(id, name), parent_id')
         .eq('cohort_id', cohortId)
         .is('parent_id', null)
         .order('created_at', { ascending: false })
         .limit(20),
+      // Cohort events live in dna_calendar_events (event_type = 'cohort_event')
       supabase
-        .from('dna_cohort_events')
+        .from('dna_calendar_events')
         .select('id, title, description, start_time, end_time, location')
         .eq('cohort_id', cohortId)
+        .eq('event_type', 'cohort_event')
+        .eq('is_recurring', false)
         .gte('start_time', new Date().toISOString())
         .order('start_time', { ascending: true })
         .limit(10),
@@ -216,7 +237,15 @@ export async function GET() {
     const discussion = discussionRes.data || [];
     const events = eventsRes.data || [];
 
-    // Get reply counts for discussion posts
+    // Build trainer id set for accurate author_role on discussion posts
+    const trainerIds = new Set(
+      members
+        .filter((m) => m.role === 'trainer')
+        .map((m) => (m.leader as unknown as { id: string } | null)?.id)
+        .filter(Boolean)
+    );
+
+    // Get reply counts for discussion threads
     const threadIds = discussion.map((d) => d.id);
     const replyCounts: Record<string, number> = {};
     if (threadIds.length > 0) {
@@ -252,17 +281,20 @@ export async function GET() {
         body: p.body,
         pinned: p.pinned,
         author_name: (p.author as unknown as { name: string } | null)?.name || 'Trainer',
-        author_role: 'trainer',
+        author_role: (p as any).author_role || 'trainer',
         created_at: p.created_at,
       })),
-      discussion: discussion.map((d) => ({
-        id: d.id,
-        body: d.body,
-        author_name: (d.author as unknown as { name: string } | null)?.name || 'Leader',
-        author_role: 'leader',
-        reply_count: replyCounts[d.id] || 0,
-        created_at: d.created_at,
-      })),
+      discussion: discussion.map((d) => {
+        const authorId = (d.author as unknown as { id: string } | null)?.id;
+        return {
+          id: d.id,
+          body: d.body,
+          author_name: (d.author as unknown as { name: string } | null)?.name || 'Leader',
+          author_role: authorId && trainerIds.has(authorId) ? 'trainer' : 'leader',
+          reply_count: replyCounts[d.id] || 0,
+          created_at: d.created_at,
+        };
+      }),
       members: members.map((m) => ({
         id: m.id,
         name: (m.leader as unknown as { id: string; name: string } | null)?.name || 'Leader',

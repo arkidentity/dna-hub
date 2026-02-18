@@ -262,14 +262,18 @@ npm run lint     # Run ESLint
 - Groups & Chat Phase 1 live (real-time group chat)
 - Account syncing to Hub working
 
-**Active Priorities (Feb 12, 2026):**
-- ~~Groups Calendar~~ ✅ COMPLETE — create/edit/delete (scoped), `GroupMeetings` component, Daily DNA calendar widget + full page
+**Active Priorities (Feb 18, 2026):**
+- ~~Groups Calendar~~ ✅ COMPLETE — create/edit/delete (scoped), `GroupMeetings`, Daily DNA calendar
 - ~~Co-leader invitations~~ ✅ COMPLETE — Migration 049
 - ~~Cohort in nav dropdown~~ ✅ COMPLETE — `UserMenu` shows Cohort for `dna_leader` + `church_leader`
 - ~~Global Resources Admin UI~~ ✅ COMPLETE — CRUD + file upload, `ResourcesTab` in `/admin`
-- Testimony Builder cloud sync
-- Pathway locking (locked unless in DNA group, unlock by phase/month)
+- ~~Testimony Builder cloud sync~~ ✅ COMPLETE — Migration 050, `testimonySync.ts`
+- ~~White-label branding Phase 1~~ ✅ COMPLETE — Migrations 051-060, subdomain middleware, dynamic themes
+- ~~RLS security hardening~~ ✅ COMPLETE — Migrations 057-060, all linter errors resolved
+- ~~White label Phase 2~~ ✅ COMPLETE — `BrandingTab` (church selector, logo upload, color pickers, live preview), branding API routes
+- Pathway locking — DEFERRED: Phase 2 & 3 content doesn't exist yet. Phase 1 Month 1 always available. Schema in place (Migrations 055+056) for when content is ready.
 - Calendar email reminders (Resend + .ics, 24hr before events)
+- Passage of the Day content expansion (100 → 365 passages)
 - See `/docs/planning/NEXT-STEPS.md` for full roadmap
 
 **Key Decisions (Feb 2026):**
@@ -280,6 +284,9 @@ npm run lint     # Run ESLint
 - Testimonies private unless shared in group chat
 - Training should bridge to Groups dashboard
 - Fireflies deprioritized
+- White-label: church branding stored in `church_branding` table, served via `get_church_branding_by_subdomain()` RPC
+- Leaders who also use Daily DNA have `role` column in `disciple_app_accounts` (auto-synced from `user_roles`)
+- DB gotcha: DROP + CREATE on RPC functions loses GRANT — always re-add `GRANT EXECUTE TO anon, authenticated`
 
 ### Church Implementation
 

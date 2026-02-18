@@ -1,7 +1,8 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import { X, Loader2 } from 'lucide-react';
 
 interface FeedPost {
   id: string;
@@ -30,12 +31,146 @@ const postTypeConfig: Record<string, { label: string; color: string; bg: string 
   resource: { label: 'Resource', color: 'text-green-700', bg: 'bg-green-50 border-green-200' },
 };
 
+// ============================================
+// NEW POST MODAL
+// ============================================
+
+function NewPostModal({ onClose, onSuccess }: {
+  onClose: () => void;
+  onSuccess: (post: FeedPost) => void;
+}) {
+  const [form, setForm] = useState({
+    post_type: 'announcement',
+    title: '',
+    post_body: '',
+    pinned: false,
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const submittingRef = useRef(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+    setSaving(true);
+    setError(null);
+
+    try {
+      const res = await fetch('/api/cohort/posts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(form),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to create post');
+      }
+
+      const data = await res.json();
+      onSuccess(data.post);
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to create post');
+    } finally {
+      setSaving(false);
+      submittingRef.current = false;
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-5 py-4 flex items-center justify-between">
+          <h3 className="font-semibold text-navy">New Post</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-navy">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">{error}</div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-navy mb-1">Post Type</label>
+            <select
+              value={form.post_type}
+              onChange={(e) => setForm(p => ({ ...p, post_type: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold/40"
+            >
+              <option value="announcement">Announcement</option>
+              <option value="update">Update</option>
+              <option value="resource">Resource</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-navy mb-1">Title <span className="text-red-500">*</span></label>
+            <input
+              type="text"
+              value={form.title}
+              onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold/40"
+              placeholder="Post title"
+              required
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-navy mb-1">Body <span className="text-red-500">*</span></label>
+            <textarea
+              value={form.post_body}
+              onChange={(e) => setForm(p => ({ ...p, post_body: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold/40 resize-none"
+              rows={5}
+              placeholder="Write your post..."
+              required
+            />
+          </div>
+
+          <label className="flex items-center gap-2 cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={form.pinned}
+              onChange={(e) => setForm(p => ({ ...p, pinned: e.target.checked }))}
+              className="w-4 h-4 rounded border-gray-300 text-gold focus:ring-gold/40"
+            />
+            <span className="text-sm text-navy">Pin this post</span>
+          </label>
+
+          <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-navy border border-gray-200 rounded-lg transition-colors">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex items-center gap-2 bg-gold hover:bg-gold/90 disabled:opacity-50 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
+            >
+              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+              {saving ? 'Posting...' : 'Post'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// MAIN PAGE
+// ============================================
+
 export default function CohortFeedPage() {
   const router = useRouter();
   const [posts, setPosts] = useState<FeedPost[]>([]);
   const [userRole, setUserRole] = useState('leader');
   const [loading, setLoading] = useState(true);
   const [isMock, setIsMock] = useState(false);
+  const [showNewPost, setShowNewPost] = useState(false);
 
   useEffect(() => {
     fetch('/api/cohort')
@@ -64,6 +199,7 @@ export default function CohortFeedPage() {
 
   const pinned = posts.filter((p) => p.pinned);
   const rest = posts.filter((p) => !p.pinned);
+  const isTrainer = userRole === 'trainer';
 
   return (
     <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -75,8 +211,11 @@ export default function CohortFeedPage() {
 
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold text-navy">Announcements & Updates</h2>
-        {userRole === 'trainer' && (
-          <button className="bg-gold hover:bg-gold/90 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors">
+        {isTrainer && !isMock && (
+          <button
+            onClick={() => setShowNewPost(true)}
+            className="bg-gold hover:bg-gold/90 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+          >
             + New Post
           </button>
         )}
@@ -110,8 +249,26 @@ export default function CohortFeedPage() {
             </svg>
           </div>
           <p className="text-navy font-semibold">No announcements yet</p>
-          <p className="text-gray-500 text-sm mt-1">Your trainer will post updates here.</p>
+          <p className="text-gray-500 text-sm mt-1">
+            {isTrainer ? 'Create the first post to get started.' : 'Your trainer will post updates here.'}
+          </p>
         </div>
+      )}
+
+      {showNewPost && (
+        <NewPostModal
+          onClose={() => setShowNewPost(false)}
+          onSuccess={(post) => {
+            setPosts((prev) => {
+              const updated = [post, ...prev];
+              // Pinned posts always float to top
+              return [
+                ...updated.filter(p => p.pinned),
+                ...updated.filter(p => !p.pinned),
+              ];
+            });
+          }}
+        />
       )}
     </div>
   );

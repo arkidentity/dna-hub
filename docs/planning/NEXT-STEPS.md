@@ -1,6 +1,6 @@
 # DNA Hub + Daily DNA — Next Steps
 
-**Last Updated:** February 12, 2026
+**Last Updated:** February 18, 2026
 
 ---
 
@@ -8,10 +8,11 @@
 
 | Priority | Key Items |
 |----------|-----------|
-| **Done this week** | Groups calendar (create, view, edit, delete w/ scope), Group page layout polish, Cohort in nav dropdown, Global Resources Admin UI (CRUD + file upload), Bug fixes |
-| **This Week** | Passage of the Day content, Testimony Builder cloud sync |
-| **Next Week** | Pathway locking, Email reminders for meetings (Resend + .ics), Training↔Groups bridge |
-| **Post-Launch** | DNA Cohort full build, Cloud sync (remaining tools), Multiplication tracking, Groups polish |
+| **Done (Feb 12)** | Groups calendar, Global Resources Admin UI, Cohort in nav, Testimony Builder cloud sync, Bug fixes |
+| **Done (Feb 18)** | White-label branding (Migrations 051-060), Pathway sync support (055), Leader role in Daily DNA (056), RLS security hardening (058-060), DNA Cohort module live (Migration 061) |
+| **This Week** | Passage of the Day content expansion, Calendar email reminders |
+| **Next Week** | Calendar email reminders (Resend + .ics), Training↔Groups bridge |
+| **Post-Launch** | Cloud sync (remaining tools), Multiplication tracking, Groups polish, White label Phase 3 |
 
 ---
 
@@ -104,7 +105,69 @@
 
 ---
 
-## 🔴 This Week (Week of Feb 12)
+## ✅ Completed (Feb 13–18, 2026)
+
+### White-Label Branding System — COMPLETE ✅
+
+**Database:**
+- ✅ Migration 051: `church_branding` table (logo, colors, custom domain, header_style)
+- ✅ Migration 052: `header_style` column added to branding
+- ✅ Migration 053: Spiritual gifts inquiry linked to church
+- ✅ Migration 054: `church_id` added to spiritual gifts data
+- ✅ Migration 059: `get_church_branding_by_subdomain()` RPC (fixed grants + all columns)
+- ✅ Migration 060: Branding RPC + RLS performance fixes
+
+**Phase 1 (Middleware + subdomain detection):** Complete
+- ✅ Next.js middleware for subdomain detection
+- ✅ Dynamic theme injection from Supabase branding data
+
+### Pathway Sync Support — COMPLETE ✅ (Migration 055)
+- ✅ `checkpoint_key` string field on `disciple_checkpoint_completions`
+- ✅ `week_number` field for leader visibility in disciple profile
+- ✅ Upsert-by-key pattern (no integer FK needed from Daily DNA app)
+
+### Leader Role in Daily DNA — COMPLETE ✅ (Migration 056)
+- ✅ `role` column on `disciple_app_accounts` (dna_leader / church_leader / admin)
+- ✅ Backfill + trigger to keep in sync with `user_roles`
+- ✅ Leaders get Pathway months 2 & 3 automatically unlocked in Daily DNA
+
+### RLS Security Hardening — COMPLETE ✅ (Migrations 057–060)
+- ✅ Migration 057: Fixed recurring event duplication (RLS + timezone bug)
+- ✅ Migration 058: Enabled RLS on tables missing policies
+- ✅ Migration 059/060: Fixed `search_path`, permissive policies, RLS performance
+- ✅ All Supabase linter ERROR-level findings resolved
+
+### White Label Phase 2 — Hub Branding Admin UI — COMPLETE ✅ (Feb 18, 2026)
+- ✅ `BrandingTab` component — church selector, logo upload, color pickers, live phone preview
+- ✅ `header_style` toggle (Text Title vs Church Logo)
+- ✅ `GET/POST /api/admin/branding` — fetch + save per church
+- ✅ `POST /api/admin/branding/upload-logo` — logo upload to Supabase Storage (`church-logos` bucket)
+
+---
+
+### DNA Cohort Module — LIVE ✅ (Feb 18, 2026)
+
+**Database (Migration 061):**
+- ✅ `cohort_exempt` flag on `dna_cohort_members` — church leader can exclude a leader
+- ✅ `get_or_create_church_cohort()` — finds or creates an active cohort per church
+- ✅ `add_leader_to_cohort()` — safe insert with conflict guard
+- ✅ `trg_auto_add_leader_to_cohort` trigger — auto-enrolls new dna_leaders on insert/update of `church_id`
+- ✅ Backfill: all existing dna_leaders enrolled; church_leaders auto-assigned as 'trainer'
+- ✅ Cohort events use existing `dna_calendar_events` table (`event_type = 'cohort_event'`) — appear in Daily DNA app calendar automatically via `get_my_calendar_events()` RPC
+
+**DNA Hub API:**
+- ✅ `GET /api/cohort` — auth for `dna_leader` + `church_leader` + admin; live data with mock fallback; `cohort_exempt` filter; events from `dna_calendar_events`
+- ✅ `POST /api/cohort/posts` — trainer-only; creates announcements/updates/resources with pin support
+- ✅ `POST /api/cohort/discussion` — any cohort member; creates top-level discussion posts
+
+**DNA Hub Pages:**
+- ✅ Feed page — "+ New Post" modal (trainer only, hidden in mock mode): post type, title, body, pin toggle
+- ✅ Calendar page — "+ Add Event" modal (trainer only, hidden in mock mode): title, date, time, duration, location, description
+- ✅ Discussion page — compose form wired to real API; disabled in mock mode
+
+---
+
+## 🔴 This Week (Week of Feb 18)
 
 ### 1. Passage of the Day — Content Expansion
 
@@ -114,7 +177,18 @@
 
 ---
 
-### 2. Testimony Builder Cloud Sync — ✅ COMPLETE (Feb 12, 2026)
+### 2. White Label Phase 2 — Hub Branding Admin UI — ✅ COMPLETE (Feb 18, 2026)
+
+**Status:** Complete
+**What was built:**
+- ✅ `BrandingTab` component in `/admin` dashboard (church selector, logo upload, color pickers, live phone preview)
+- ✅ `header_style` toggle (Text Title vs Church Logo) — shown only when a logo is uploaded
+- ✅ `GET/POST /api/admin/branding` — fetch + save branding per church
+- ✅ `POST /api/admin/branding/upload-logo` — logo upload to Supabase Storage (`church-logos` bucket)
+
+---
+
+### 3. Testimony Builder Cloud Sync — ✅ COMPLETE (Feb 12, 2026)
 
 **Status:** Complete
 **Priority:** High — highest-value tool after journal
@@ -136,7 +210,7 @@
 
 ---
 
-## 🟡 Next Week (Week of Feb 16)
+## 🟡 Next Week (Week of Feb 23)
 
 ### 4. Calendar Email Reminders
 
@@ -151,15 +225,16 @@
 
 ---
 
-### 5. Pathway Locking System
+### 5. Pathway Locking System — ⏸ DEFERRED (no Phase 2/3 content yet)
 
-**Status:** Not started — architecture decided
-**Priority:** High — controls disciple access to discipleship content
+**Status:** Deferred — Phase 2 and Phase 3 content does not exist yet, so there's nothing to lock/unlock
+**Decision:** Phase 1, Month 1 is always available to all users. Phases 2 & 3 remain permanently locked UI until content is created.
 
-**Decisions (Feb 8, 2026):**
-- Pathway (90-day toolkit phases 1-3) is LOCKED unless disciple is in a DNA group
+**When content is ready:**
 - Unlock by phase/month — leader activates phases, not individual tools
+- Leaders (`dna_leader`/`church_leader` role in `disciple_app_accounts`) get months 2 & 3 auto-unlocked (Migration 056 already in place)
 - Always available (no group required): Creed Cards, Spiritual Gifts Test, Testimony Builder
+- Group membership gate (lock entire Pathway unless in a DNA group) can be revisited then
 
 ---
 
@@ -175,7 +250,7 @@
 
 ---
 
-## 🟢 Week 3+ (Week of Feb 23)
+## 🟢 Week 3+ (Week of Mar 2)
 
 ### 7. Groups Testing & Design Polish
 
@@ -195,9 +270,10 @@
 
 | Item | Priority | Notes |
 |------|----------|-------|
-| **DNA Cohort** | **High** | Permanent leader peer community — see `DNA-COHORT-PLAN.md` |
+| **Pathway Phase 2 & 3 content + locking** | **High** | Deferred until content exists. Schema (Migrations 055/056) already in place. |
 | Calendar — "Add to Calendar" .ics button | Medium | Per-event download |
 | Cloud sync — Q&A, Listening Prayer, Pathway progress | Medium | Extend journal sync pattern |
+| White label Phase 3 — Church selector in Daily DNA | Medium | Profile settings page |
 | Groups Chat Phase 2 (images/GIFs) | Low | Can wait |
 | Context-aware training (smart content by week/stage) | Medium | Iterative enhancement |
 | DNA Groups Phases B-D (Journey View, Multiplication) | Medium | Some built, some pending |
@@ -249,10 +325,10 @@ DROP TABLE IF EXISTS milestones_deprecated CASCADE;
                               ▼
 ┌─────────────────────────────────────────────────────────────────┐
 │ ROADMAP 4: DNA Cohort                                           │
-│ Status: In nav dropdown ✅ | Full build: post-launch            │
+│ Status: LIVE ✅ (Migration 061 + all Hub pages + APIs)         │
 │ Purpose: Permanent leader peer community (church-scoped)        │
-│ Hub: Feed, Discussion, Members, Calendar (new nav section)      │
-│ App: Cohort card in Groups tab (window into Hub)                │
+│ Hub: Feed ✅, Discussion ✅, Members ✅, Calendar ✅           │
+│ Auto-enrollment trigger ✅ | Cohort events → App calendar ✅   │
 │ See: docs/planning/DNA-COHORT-PLAN.md                          │
 └─────────────────────────────────────────────────────────────────┘
                               │

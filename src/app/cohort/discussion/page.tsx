@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface DiscussionPost {
@@ -44,6 +44,8 @@ export default function CohortDiscussionPage() {
   const [isMock, setIsMock] = useState(false);
   const [newPost, setNewPost] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [postError, setPostError] = useState<string | null>(null);
+  const submittingRef = useRef(false);
 
   useEffect(() => {
     fetch('/api/cohort')
@@ -61,22 +63,34 @@ export default function CohortDiscussionPage() {
       .catch(() => setLoading(false));
   }, [router]);
 
-  function handleSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!newPost.trim()) return;
+    if (!newPost.trim() || submittingRef.current) return;
+    submittingRef.current = true;
     setSubmitting(true);
-    // In mock mode, just prepend locally
-    const mockEntry: DiscussionPost = {
-      id: `local-${Date.now()}`,
-      body: newPost.trim(),
-      author_name: 'You',
-      author_role: 'leader',
-      reply_count: 0,
-      created_at: new Date().toISOString(),
-    };
-    setPosts((prev) => [mockEntry, ...prev]);
-    setNewPost('');
-    setSubmitting(false);
+    setPostError(null);
+
+    try {
+      const res = await fetch('/api/cohort/discussion', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ post_body: newPost.trim() }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to post');
+      }
+
+      const data = await res.json();
+      setPosts((prev) => [data.post, ...prev]);
+      setNewPost('');
+    } catch (err) {
+      setPostError(err instanceof Error ? err.message : 'Failed to post');
+    } finally {
+      setSubmitting(false);
+      submittingRef.current = false;
+    }
   }
 
   if (loading) {
@@ -98,21 +112,25 @@ export default function CohortDiscussionPage() {
       {/* Compose */}
       <div className="bg-white rounded-lg shadow p-5 mb-6">
         <h3 className="font-semibold text-navy mb-3">Share with the cohort</h3>
+        {postError && (
+          <div className="mb-3 bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">{postError}</div>
+        )}
         <form onSubmit={handleSubmit}>
           <textarea
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
-            placeholder="Ask a question, share a win, or encourage someone..."
-            className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gold/40 resize-none"
+            placeholder={isMock ? 'Posting is disabled in demo mode.' : 'Ask a question, share a win, or encourage someone...'}
+            disabled={isMock}
+            className="w-full border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-700 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gold/40 resize-none disabled:opacity-50 disabled:bg-gray-50"
             rows={3}
           />
           <div className="flex justify-end mt-3">
             <button
               type="submit"
-              disabled={!newPost.trim() || submitting}
+              disabled={!newPost.trim() || submitting || isMock}
               className="bg-gold hover:bg-gold/90 disabled:opacity-50 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
             >
-              Post
+              {submitting ? 'Posting...' : 'Post'}
             </button>
           </div>
         </form>
