@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import {
   getUnifiedSession,
-  isTrainingParticipant,
-  isAdmin,
   updateTrainingMilestone,
   unlockContent
 } from '@/lib/unified-auth';
@@ -16,10 +14,6 @@ export async function POST(request: NextRequest) {
 
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    if (!isTrainingParticipant(session) && !isAdmin(session)) {
-      return NextResponse.json({ error: 'Not a training participant' }, { status: 403 });
     }
 
     const body = await request.json();
