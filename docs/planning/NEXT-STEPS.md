@@ -1,6 +1,6 @@
 # DNA Hub + Daily DNA — Next Steps
 
-**Last Updated:** February 18, 2026
+**Last Updated:** February 18, 2026 (evening)
 
 ---
 
@@ -177,6 +177,23 @@
 - ✅ Read-only view of any church's cohort; no membership required for admin
 - ✅ Coach/admin workflow: Admin panel → click church → Cohort tab to observe live cohort activity
 
+### Admin Cohort Write Access — COMPLETE ✅ (Feb 18, 2026)
+
+DNA coaches (admins) can now fully manage cohort content from the admin church view — no trainer membership required.
+
+**API changes:**
+- ✅ `POST /api/cohort/posts` — admin bypass path: accepts `cohort_id` in body, skips membership check, attributes post to "DNA Coach"; FK satisfied by borrowing first trainer's `leader_id`
+- ✅ `POST /api/cohort/discussion` — same admin bypass pattern; posts attributed to "DNA Coach"
+- ✅ `POST /api/calendar/events` — admins without a `dna_leaders` record now supported; `created_by` falls back to `null` (column already nullable via `ON DELETE SET NULL`)
+
+**`AdminCohortTab` write UI:**
+- ✅ Feed tab — `+ New Post` button opens modal: type selector (announcement/update/resource), title, body, pin toggle; optimistic state update
+- ✅ Discussion tab — inline compose box always visible; post immediately; optimistic prepend
+- ✅ Events tab — `+ Add Event` button opens modal: title, date/time, duration, location, description; events sorted by date after creation
+- ✅ Members tab — remains read-only (trainer roster is owned by trainers, not admin)
+- ✅ Removed "read-only" banner; replaced with `DNA Coach` role pill in cohort header
+- ✅ Stats counter for upcoming events increments on new event creation
+
 ---
 
 ## 🔴 This Week (Week of Feb 18)
@@ -341,6 +358,7 @@ DROP TABLE IF EXISTS milestones_deprecated CASCADE;
 │ Purpose: Permanent leader peer community (church-scoped)        │
 │ Hub: Feed ✅, Discussion ✅, Members ✅, Calendar ✅           │
 │ Auto-enrollment trigger ✅ | Cohort events → App calendar ✅   │
+│ Admin write access ✅ (post, discuss, schedule from admin view) │
 │ See: docs/planning/DNA-COHORT-PLAN.md                          │
 └─────────────────────────────────────────────────────────────────┘
                               │

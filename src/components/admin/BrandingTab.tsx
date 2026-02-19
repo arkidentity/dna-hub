@@ -11,6 +11,8 @@ import {
   ExternalLink,
   Image as ImageIcon,
   Globe,
+  Smartphone,
+  LayoutTemplate,
 } from 'lucide-react';
 import { ChurchBranding } from '@/lib/types';
 
@@ -24,6 +26,48 @@ interface BrandingTabProps {
   churchId?: string;
 }
 
+type LogoType = 'header' | 'icon' | 'splash';
+
+interface LogoSlot {
+  type: LogoType;
+  label: string;
+  hint: string;
+  dimensions: string;
+  aspect: string; // CSS aspect-ratio for preview box
+  icon: React.ReactNode;
+  field: 'logo_url' | 'icon_url' | 'splash_logo_url';
+}
+
+const LOGO_SLOTS: LogoSlot[] = [
+  {
+    type: 'header',
+    label: 'Header Logo',
+    hint: 'Shown in the top-left of the app header (Journal, Pathway pages)',
+    dimensions: 'Horizontal — recommended 400×120 px, transparent background',
+    aspect: '3/1',
+    icon: <LayoutTemplate className="w-4 h-4" />,
+    field: 'logo_url',
+  },
+  {
+    type: 'icon',
+    label: 'App Icon',
+    hint: 'Used as the PWA home screen icon when disciples save the app',
+    dimensions: 'Square — recommended 512×512 px, no padding, transparent or solid bg',
+    aspect: '1/1',
+    icon: <Smartphone className="w-4 h-4" />,
+    field: 'icon_url',
+  },
+  {
+    type: 'splash',
+    label: 'Splash / Loading Screen Logo',
+    hint: 'Shown on the full-screen loading splash when the app opens',
+    dimensions: 'Square or wide — recommended 400×400 px, transparent background',
+    aspect: '1/1',
+    icon: <ImageIcon className="w-4 h-4" />,
+    field: 'splash_logo_url',
+  },
+];
+
 export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProps = {}) {
   const [churches, setChurches] = useState<Church[]>([]);
   const [selectedChurchId, setSelectedChurchId] = useState<string>(fixedChurchId ?? '');
@@ -31,19 +75,25 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
   const [loadingChurches, setLoadingChurches] = useState(!fixedChurchId);
   const [loadingBranding, setLoadingBranding] = useState(false);
   const [saving, setSaving] = useState(false);
-  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [uploadingLogo, setUploadingLogo] = useState<LogoType | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
 
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileInputRefs = useRef<Record<LogoType, HTMLInputElement | null>>({
+    header: null,
+    icon: null,
+    splash: null,
+  });
 
   // Form state
   const [form, setForm] = useState({
     subdomain: '',
     primary_color: '#143348',
     accent_color: '#e8b562',
-    logo_url: '' as string | null,
+    logo_url: null as string | null,
+    icon_url: null as string | null,
+    splash_logo_url: null as string | null,
     app_title: 'DNA Daily',
     app_description: 'Daily discipleship tools',
     header_style: 'text' as 'text' | 'logo',
@@ -55,7 +105,6 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
 
   useEffect(() => {
     if (fixedChurchId) {
-      // Church is fixed — skip the selector, just load branding directly
       fetchBranding(fixedChurchId);
     } else {
       fetchChurches();
@@ -74,11 +123,10 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
       const res = await fetch('/api/admin/churches');
       if (!res.ok) throw new Error('Failed to fetch churches');
       const data = await res.json();
-      // churches endpoint returns array of church summaries
-      const list = (data.churches || []).map((c: any) => ({ id: c.id, name: c.name }));
+      const list = (data.churches || []).map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }));
       setChurches(list);
       if (list.length > 0) setSelectedChurchId(list[0].id);
-    } catch (err) {
+    } catch {
       setError('Failed to load churches');
     } finally {
       setLoadingChurches(false);
@@ -100,11 +148,13 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
         primary_color: b.primary_color ?? '#143348',
         accent_color: b.accent_color ?? '#e8b562',
         logo_url: b.logo_url ?? null,
+        icon_url: b.icon_url ?? null,
+        splash_logo_url: b.splash_logo_url ?? null,
         app_title: b.app_title ?? 'DNA Daily',
         app_description: b.app_description ?? 'Daily discipleship tools',
         header_style: (b.header_style ?? 'text') as 'text' | 'logo',
       });
-    } catch (err) {
+    } catch {
       setError('Failed to load branding settings');
     } finally {
       setLoadingBranding(false);
@@ -115,17 +165,18 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
   // LOGO UPLOAD
   // ============================================
 
-  const handleLogoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleLogoUpload = async (logoType: LogoType, e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !selectedChurchId) return;
 
-    setUploadingLogo(true);
+    setUploadingLogo(logoType);
     setSaveError(null);
 
     try {
       const fd = new FormData();
       fd.append('file', file);
       fd.append('church_id', selectedChurchId);
+      fd.append('logo_type', logoType);
 
       const res = await fetch('/api/admin/branding/upload-logo', {
         method: 'POST',
@@ -138,17 +189,19 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
       }
 
       const data = await res.json();
-      setForm(prev => ({ ...prev, logo_url: data.logo_url }));
+      const slot = LOGO_SLOTS.find(s => s.type === logoType)!;
+      setForm(prev => ({ ...prev, [slot.field]: data.logo_url }));
     } catch (err) {
       setSaveError(err instanceof Error ? err.message : 'Logo upload failed');
     } finally {
-      setUploadingLogo(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
+      setUploadingLogo(null);
+      const ref = fileInputRefs.current[logoType];
+      if (ref) ref.value = '';
     }
   };
 
-  const handleRemoveLogo = () => {
-    setForm(prev => ({ ...prev, logo_url: null }));
+  const handleRemoveLogo = (slot: LogoSlot) => {
+    setForm(prev => ({ ...prev, [slot.field]: null }));
   };
 
   // ============================================
@@ -187,6 +240,89 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
   };
 
   // ============================================
+  // RENDER HELPERS
+  // ============================================
+
+  const renderLogoSlot = (slot: LogoSlot) => {
+    const currentUrl = form[slot.field];
+    const isUploading = uploadingLogo === slot.type;
+
+    return (
+      <div key={slot.type} className="bg-white rounded-xl border border-card-border p-5">
+        <div className="flex items-center gap-2 mb-1">
+          <span className="text-gold">{slot.icon}</span>
+          <h4 className="font-medium text-navy text-sm">{slot.label}</h4>
+        </div>
+        <p className="text-xs text-foreground-muted mb-1">{slot.hint}</p>
+        <p className="text-xs text-gray-400 mb-4 italic">{slot.dimensions}</p>
+
+        {currentUrl ? (
+          <div className="flex items-start gap-4">
+            {/* Preview */}
+            <div
+              className="rounded-lg border border-card-border bg-gray-100 flex items-center justify-center overflow-hidden shrink-0"
+              style={{
+                aspectRatio: slot.aspect,
+                width: slot.aspect === '1/1' ? '80px' : '160px',
+                height: slot.aspect === '1/1' ? '80px' : '53px',
+              }}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={currentUrl}
+                alt={slot.label}
+                className="max-w-full max-h-full object-contain"
+              />
+            </div>
+            {/* Actions */}
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => fileInputRefs.current[slot.type]?.click()}
+                disabled={isUploading}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs border border-card-border rounded-lg text-navy hover:bg-gray-50 transition-colors"
+              >
+                {isUploading ? <Loader2 className="w-3 h-3 animate-spin" /> : <Upload className="w-3 h-3" />}
+                Replace
+              </button>
+              <button
+                onClick={() => handleRemoveLogo(slot)}
+                className="flex items-center gap-2 px-3 py-1.5 text-xs border border-red-200 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
+              >
+                <X className="w-3 h-3" />
+                Remove
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button
+            onClick={() => fileInputRefs.current[slot.type]?.click()}
+            disabled={isUploading}
+            className="flex flex-col items-center gap-2 w-full py-6 border-2 border-dashed border-card-border rounded-lg text-foreground-muted hover:border-gold hover:text-gold transition-colors"
+          >
+            {isUploading ? (
+              <Loader2 className="w-5 h-5 animate-spin" />
+            ) : (
+              <Upload className="w-5 h-5" />
+            )}
+            <span className="text-xs font-medium">
+              {isUploading ? 'Uploading...' : `Upload ${slot.label}`}
+            </span>
+            <span className="text-xs text-gray-400">PNG, JPG, SVG, WebP — max 5MB</span>
+          </button>
+        )}
+
+        <input
+          ref={el => { fileInputRefs.current[slot.type] = el; }}
+          type="file"
+          accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
+          onChange={e => handleLogoUpload(slot.type, e)}
+          className="hidden"
+        />
+      </div>
+    );
+  };
+
+  // ============================================
   // RENDER
   // ============================================
 
@@ -207,9 +343,7 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
     );
   }
 
-  const subdomainPreview = form.subdomain
-    ? `https://${form.subdomain}.dailydna.app`
-    : null;
+  const subdomainPreview = form.subdomain ? `https://${form.subdomain}.dailydna.app` : null;
 
   return (
     <div className="space-y-6">
@@ -221,7 +355,7 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
             <div>
               <h2 className="text-xl font-semibold text-navy">Church Branding</h2>
               <p className="text-sm text-foreground-muted mt-1">
-                Configure subdomain, logo, and colors for each church&apos;s white-labeled Daily DNA app.
+                Configure subdomain, logos, and colors for each church&apos;s white-labeled Daily DNA app.
               </p>
             </div>
           </div>
@@ -258,9 +392,7 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
                 <h3 className="font-medium text-navy">Subdomain</h3>
               </div>
 
-              <label className="block text-sm text-foreground-muted mb-1">
-                Church subdomain
-              </label>
+              <label className="block text-sm text-foreground-muted mb-1">Church subdomain</label>
               <div className="flex items-center gap-2">
                 <div className="flex items-center border border-card-border rounded-lg overflow-hidden focus-within:ring-2 focus-within:ring-gold">
                   <input
@@ -290,70 +422,22 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
                 </div>
               )}
               <p className="text-xs text-foreground-muted mt-2">
-                Lowercase letters, numbers, and hyphens only. Leave blank to use the root domain.
+                Lowercase letters, numbers, and hyphens only.
               </p>
             </div>
 
-            {/* Logo */}
+            {/* Logos — 3 slots */}
             <div className="bg-white rounded-xl border border-card-border p-5">
               <div className="flex items-center gap-2 mb-4">
                 <ImageIcon className="w-4 h-4 text-gold" />
-                <h3 className="font-medium text-navy">Church Logo</h3>
+                <h3 className="font-medium text-navy">Logos</h3>
               </div>
-
-              {form.logo_url ? (
-                <div className="flex items-start gap-4">
-                  <div className="w-24 h-24 rounded-lg border border-card-border bg-gray-50 flex items-center justify-center overflow-hidden shrink-0">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={form.logo_url}
-                      alt="Church logo"
-                      className="max-w-full max-h-full object-contain"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <button
-                      onClick={() => fileInputRef.current?.click()}
-                      disabled={uploadingLogo}
-                      className="flex items-center gap-2 px-3 py-2 text-sm border border-card-border rounded-lg text-navy hover:bg-gray-50 transition-colors"
-                    >
-                      {uploadingLogo ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4" />}
-                      Replace Logo
-                    </button>
-                    <button
-                      onClick={handleRemoveLogo}
-                      className="flex items-center gap-2 px-3 py-2 text-sm border border-red-200 rounded-lg text-red-600 hover:bg-red-50 transition-colors"
-                    >
-                      <X className="w-4 h-4" />
-                      Remove Logo
-                    </button>
-                  </div>
-                </div>
-              ) : (
-                <button
-                  onClick={() => fileInputRef.current?.click()}
-                  disabled={uploadingLogo}
-                  className="flex flex-col items-center gap-2 w-full py-8 border-2 border-dashed border-card-border rounded-lg text-foreground-muted hover:border-gold hover:text-gold transition-colors"
-                >
-                  {uploadingLogo ? (
-                    <Loader2 className="w-6 h-6 animate-spin" />
-                  ) : (
-                    <Upload className="w-6 h-6" />
-                  )}
-                  <span className="text-sm font-medium">
-                    {uploadingLogo ? 'Uploading...' : 'Upload Church Logo'}
-                  </span>
-                  <span className="text-xs">PNG, JPG, SVG, WebP — max 5MB</span>
-                </button>
-              )}
-
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/png,image/jpeg,image/jpg,image/svg+xml,image/webp"
-                onChange={handleLogoUpload}
-                className="hidden"
-              />
+              <p className="text-xs text-foreground-muted mb-4">
+                Upload separate logo versions for each context — they display at very different sizes and aspect ratios.
+              </p>
+              <div className="space-y-4">
+                {LOGO_SLOTS.map(renderLogoSlot)}
+              </div>
             </div>
 
             {/* Colors */}
@@ -368,17 +452,15 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
                 <div>
                   <label className="block text-sm text-foreground-muted mb-2">
                     Primary Color
-                    <span className="ml-1 text-xs text-gray-400">(nav, backgrounds)</span>
+                    <span className="ml-1 text-xs text-gray-400">(nav, backgrounds, cards)</span>
                   </label>
                   <div className="flex items-center gap-3">
-                    <div className="relative">
-                      <input
-                        type="color"
-                        value={form.primary_color}
-                        onChange={e => setForm(prev => ({ ...prev, primary_color: e.target.value }))}
-                        className="w-10 h-10 rounded-lg border border-card-border cursor-pointer p-0.5 bg-white"
-                      />
-                    </div>
+                    <input
+                      type="color"
+                      value={form.primary_color}
+                      onChange={e => setForm(prev => ({ ...prev, primary_color: e.target.value }))}
+                      className="w-10 h-10 rounded-lg border border-card-border cursor-pointer p-0.5 bg-white"
+                    />
                     <input
                       type="text"
                       value={form.primary_color}
@@ -439,10 +521,12 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
                     placeholder="DNA Daily"
                     className="w-full border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold"
                   />
-                  <p className="text-xs text-foreground-muted mt-1">Replaces "DAILY DNA" in the app header, browser tab, and PWA home screen</p>
+                  <p className="text-xs text-foreground-muted mt-1">
+                    Replaces &ldquo;DAILY DNA&rdquo; in the app header, browser tab, and PWA home screen name
+                  </p>
                 </div>
 
-                {/* Header style toggle — only shown when a logo has been uploaded */}
+                {/* Header style toggle — only shown when a header logo has been uploaded */}
                 {form.logo_url && (
                   <div>
                     <label className="block text-sm text-foreground-muted mb-2">App Header Style</label>
@@ -467,16 +551,17 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
                             : 'bg-white text-foreground-muted hover:bg-gray-50'
                         }`}
                       >
-                        Church Logo
+                        Header Logo
                       </button>
                     </div>
                     <p className="text-xs text-foreground-muted mt-1">
                       {form.header_style === 'logo'
-                        ? 'Your uploaded logo will appear in the Pathway and Journal headers'
+                        ? 'Your header logo will appear in the Pathway and Journal headers'
                         : 'App title text will appear in the Pathway and Journal headers'}
                     </p>
                   </div>
                 )}
+
                 <div>
                   <label className="block text-sm text-foreground-muted mb-1">App Description</label>
                   <input
@@ -530,14 +615,14 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
                 <div className="w-16 h-1.5 bg-white/30 rounded-full" />
               </div>
 
-              {/* App header */}
+              {/* App header — shows header logo or text */}
               <div
                 className="px-4 py-3 flex items-center gap-3"
                 style={{ backgroundColor: form.primary_color }}
               >
-                {form.logo_url ? (
+                {form.header_style === 'logo' && form.logo_url ? (
                   // eslint-disable-next-line @next/next/no-img-element
-                  <img src={form.logo_url} alt="Logo" className="h-7 w-auto object-contain" />
+                  <img src={form.logo_url} alt="Header logo" className="h-7 w-auto object-contain" />
                 ) : (
                   <div
                     className="h-7 px-2 rounded text-xs font-bold flex items-center"
@@ -550,16 +635,11 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
 
               {/* Content area */}
               <div className="bg-white p-3 space-y-2">
-                {/* Mock card 1 */}
                 <div className="rounded-lg p-2.5 text-xs" style={{ backgroundColor: `${form.primary_color}15` }}>
-                  <div
-                    className="w-12 h-1.5 rounded mb-1"
-                    style={{ backgroundColor: form.accent_color }}
-                  />
+                  <div className="w-12 h-1.5 rounded mb-1" style={{ backgroundColor: form.accent_color }} />
                   <div className="w-20 h-1 rounded bg-gray-200" />
                   <div className="w-16 h-1 rounded bg-gray-200 mt-1" />
                 </div>
-                {/* Mock card 2 */}
                 <div className="rounded-lg p-2.5 text-xs bg-gray-50">
                   <div className="w-16 h-1.5 rounded mb-1 bg-gray-300" />
                   <div className="w-24 h-1 rounded bg-gray-200" />
@@ -575,31 +655,44 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
                   <div
                     key={i}
                     className="w-5 h-5 rounded"
-                    style={{
-                      backgroundColor: i === 0 ? form.accent_color : `${form.accent_color}40`,
-                    }}
+                    style={{ backgroundColor: i === 0 ? form.accent_color : `${form.accent_color}40` }}
                   />
                 ))}
               </div>
             </div>
+
+            {/* App icon preview */}
+            {form.icon_url && (
+              <div className="bg-white rounded-xl border border-card-border p-4 w-56 mx-auto">
+                <p className="text-xs font-medium text-navy mb-2">App Icon Preview</p>
+                <div className="flex items-center gap-3">
+                  {/* iOS-style rounded square */}
+                  <div
+                    className="w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center shadow-md"
+                    style={{ backgroundColor: form.primary_color }}
+                  >
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img src={form.icon_url} alt="App icon" className="w-full h-full object-contain" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-medium text-navy">{form.app_title || 'DNA Daily'}</p>
+                    <p className="text-xs text-foreground-muted">Home screen</p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Color swatches */}
             <div className="bg-white rounded-xl border border-card-border p-4 w-56 mx-auto">
               <p className="text-xs font-medium text-navy mb-3">Color Swatches</p>
               <div className="flex gap-2">
                 <div className="flex-1">
-                  <div
-                    className="h-10 rounded-lg mb-1"
-                    style={{ backgroundColor: form.primary_color }}
-                  />
+                  <div className="h-10 rounded-lg mb-1" style={{ backgroundColor: form.primary_color }} />
                   <p className="text-xs text-center font-mono text-foreground-muted">{form.primary_color}</p>
                   <p className="text-xs text-center text-foreground-muted">Primary</p>
                 </div>
                 <div className="flex-1">
-                  <div
-                    className="h-10 rounded-lg mb-1"
-                    style={{ backgroundColor: form.accent_color }}
-                  />
+                  <div className="h-10 rounded-lg mb-1" style={{ backgroundColor: form.accent_color }} />
                   <p className="text-xs text-center font-mono text-foreground-muted">{form.accent_color}</p>
                   <p className="text-xs text-center text-foreground-muted">Accent</p>
                 </div>

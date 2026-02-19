@@ -224,7 +224,9 @@ export interface MilestoneResource {
 export interface ChurchBranding {
   id: string;
   name: string;
-  logo_url: string | null;
+  logo_url: string | null;        // Horizontal header logo
+  icon_url: string | null;        // Square PWA app icon (512×512 recommended)
+  splash_logo_url: string | null; // Splash/loading screen logo
   subdomain: string | null;
   primary_color: string;
   accent_color: string;

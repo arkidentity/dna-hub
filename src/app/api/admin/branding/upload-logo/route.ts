@@ -6,6 +6,15 @@ const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp'];
 const BUCKET = 'church-logos';
 
+// logo type → storage filename + DB column
+const LOGO_TYPE_MAP = {
+  header: { filename: 'logo',        column: 'logo_url' },
+  icon:   { filename: 'icon',        column: 'icon_url' },
+  splash: { filename: 'splash_logo', column: 'splash_logo_url' },
+} as const;
+
+type LogoType = keyof typeof LOGO_TYPE_MAP;
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getUnifiedSession();
@@ -17,9 +26,14 @@ export async function POST(request: NextRequest) {
 
     const file = formData.get('file') as File;
     const churchId = formData.get('church_id') as string;
+    const logoTypeRaw = (formData.get('logo_type') as string) || 'header';
 
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     if (!churchId) return NextResponse.json({ error: 'church_id is required' }, { status: 400 });
+
+    const logoType: LogoType = (logoTypeRaw in LOGO_TYPE_MAP)
+      ? (logoTypeRaw as LogoType)
+      : 'header';
 
     // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
@@ -40,15 +54,16 @@ export async function POST(request: NextRequest) {
       : file.type === 'image/png' ? 'png'
       : 'jpg';
 
-    // Store as {church_id}/logo.{ext} — overwrites previous logo for same church
-    const filePath = `${churchId}/logo.${ext}`;
+    const { filename, column } = LOGO_TYPE_MAP[logoType];
 
-    // Upload to Supabase Storage (church-logos bucket, public)
+    // Store as {church_id}/{filename}.{ext} — overwrites previous for same church + type
+    const filePath = `${churchId}/${filename}.${ext}`;
+
     const { data: uploadData, error: uploadError } = await supabase.storage
       .from(BUCKET)
       .upload(filePath, file, {
         contentType: file.type,
-        upsert: true, // Overwrite existing logo
+        upsert: true,
       });
 
     if (uploadError) {
@@ -56,18 +71,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to upload logo' }, { status: 500 });
     }
 
-    // Get public URL
     const { data: urlData } = supabase.storage
       .from(BUCKET)
       .getPublicUrl(uploadData.path);
 
-    // Add cache-busting timestamp so browsers pick up the new logo
+    // Add cache-busting timestamp so browsers pick up the new image
     const logoUrl = `${urlData.publicUrl}?t=${Date.now()}`;
 
-    // Immediately update churches.logo_url
+    // Update the appropriate column on churches
     const { error: updateError } = await supabase
       .from('churches')
-      .update({ logo_url: logoUrl, updated_at: new Date().toISOString() })
+      .update({ [column]: logoUrl, updated_at: new Date().toISOString() })
       .eq('id', churchId);
 
     if (updateError) {
@@ -75,7 +89,7 @@ export async function POST(request: NextRequest) {
       // Return the URL anyway so UI can still show preview
     }
 
-    return NextResponse.json({ logo_url: logoUrl });
+    return NextResponse.json({ logo_url: logoUrl, logo_type: logoType, column });
   } catch (error) {
     console.error('[ADMIN] Logo upload error:', error);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
