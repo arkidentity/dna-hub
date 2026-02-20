@@ -275,11 +275,16 @@ function DiscipleProfileContent() {
   ];
 
   // Format a raw answer value for display
+  // Note: jsonb values from Supabase may have numeric indices stored as numbers or strings
   const formatLAAnswer = (q: LAQuestion, val: unknown): string => {
     if (val === null || val === undefined || val === '') return '—';
     if (q.type === 'likert') return `${val}/5`;
-    if (q.type === 'mc' && q.choices && typeof val === 'number') return q.choices[val - 1] ?? String(val);
-    if (q.type === 'mc' && q.choices && typeof val === 'string') return val;
+    if (q.type === 'mc' && q.choices) {
+      // Scored mc: answer is a 1-based index (may come back as number or numeric string)
+      const numVal = typeof val === 'number' ? val : typeof val === 'string' && !isNaN(Number(val)) ? Number(val) : null;
+      if (numVal !== null) return q.choices[numVal - 1] ?? String(val);
+      return String(val);
+    }
     if (q.type === 'checkbox' && Array.isArray(val)) return val.join(', ') || '—';
     return String(val);
   };
@@ -824,8 +829,10 @@ function DiscipleProfileContent() {
                       {isExpanded && (
                         <div className="mt-1 mb-2 ml-5 space-y-3 border-l-2 border-gray-100 pl-3">
                           {cat.questions.map((q) => {
-                            const w1Raw = week1Assessment?.responses?.[q.id];
-                            const w12Raw = week12Assessment?.responses?.[q.id];
+                            // JSON object keys from Supabase jsonb are always strings — coerce id
+                            const qKey = String(q.id);
+                            const w1Raw = week1Assessment?.responses?.[qKey] ?? week1Assessment?.responses?.[q.id];
+                            const w12Raw = week12Assessment?.responses?.[qKey] ?? week12Assessment?.responses?.[q.id];
                             const w1Ans = w1Raw !== undefined && w1Raw !== null ? formatLAAnswer(q, w1Raw) : null;
                             const w12Ans = w12Raw !== undefined && w12Raw !== null ? formatLAAnswer(q, w12Raw) : null;
                             if (!w1Ans && !w12Ans) return null;
@@ -887,8 +894,10 @@ function DiscipleProfileContent() {
                 <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mt-4 mb-3">Reflection</h3>
                 <div className="space-y-4">
                   {([40, 41, 42] as const).map((qId) => {
-                    const w1Answer = week1Assessment?.responses?.[qId] as string | undefined;
-                    const w12Answer = week12Assessment?.responses?.[qId] as string | undefined;
+                    // jsonb keys from Supabase are strings — check both
+                    const qKey = String(qId);
+                    const w1Answer = (week1Assessment?.responses?.[qKey] ?? week1Assessment?.responses?.[qId]) as string | undefined;
+                    const w12Answer = (week12Assessment?.responses?.[qKey] ?? week12Assessment?.responses?.[qId]) as string | undefined;
                     if (!w1Answer && !w12Answer) return null;
 
                     return (
