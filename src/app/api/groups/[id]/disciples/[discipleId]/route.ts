@@ -26,16 +26,21 @@ export async function GET(
       ? new Date(Date.now() - filterDays * 24 * 60 * 60 * 1000).toISOString()
       : null;
 
-    // Get DNA leader record
+    // Get DNA leader record (optional — church_leaders and admins may not have one)
     const { data: dnaLeader } = await supabase
       .from('dna_leaders')
       .select('id')
       .eq('email', session.email)
       .single();
 
-    if (!dnaLeader) return NextResponse.json({ error: 'DNA leader not found' }, { status: 404 });
+    const isChurchLeaderOrAdmin = hasRole(session, 'church_leader') || hasRole(session, 'admin');
 
-    // Get group and verify ownership
+    // dna_leaders are required unless user is a church_leader or admin
+    if (!dnaLeader && !isChurchLeaderOrAdmin) {
+      return NextResponse.json({ error: 'DNA leader not found' }, { status: 404 });
+    }
+
+    // Get group
     const { data: group } = await supabase
       .from('dna_groups')
       .select('id, group_name, current_phase, leader_id, co_leader_id')
@@ -43,8 +48,12 @@ export async function GET(
       .single();
 
     if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
-    if (group.leader_id !== dnaLeader.id && group.co_leader_id !== dnaLeader.id) {
-      return NextResponse.json({ error: 'Not authorized to access this group' }, { status: 403 });
+
+    // Verify ownership — church_leaders and admins can access any group
+    if (!isChurchLeaderOrAdmin && dnaLeader) {
+      if (group.leader_id !== dnaLeader.id && group.co_leader_id !== dnaLeader.id) {
+        return NextResponse.json({ error: 'Not authorized to access this group' }, { status: 403 });
+      }
     }
 
     // Get disciple basic info (include app_account_id)
@@ -67,7 +76,30 @@ export async function GET(
     if (!membership) return NextResponse.json({ error: 'Disciple not in this group' }, { status: 404 });
 
     // Fetch assessments, log entries, checkpoints, and app activity in parallel
-    const appAccountId = disciple.app_account_id;
+    let appAccountId = disciple.app_account_id;
+
+    // Fallback: if app_account_id not set, look up by email and heal the link
+    if (!appAccountId && disciple.email) {
+      const { data: appAccount } = await supabase
+        .from('disciple_app_accounts')
+        .select('id')
+        .ilike('email', disciple.email)
+        .single();
+
+      if (appAccount?.id) {
+        appAccountId = appAccount.id;
+        // Heal the link so future loads don't need the fallback
+        await supabase
+          .from('disciples')
+          .update({ app_account_id: appAccount.id })
+          .eq('id', discipleId);
+        await supabase
+          .from('disciple_app_accounts')
+          .update({ disciple_id: discipleId })
+          .eq('id', appAccount.id)
+          .is('disciple_id', null);
+      }
+    }
 
     // Build time-filtered queries for app metrics
     const buildFilteredCountQuery = (table: string) => {
