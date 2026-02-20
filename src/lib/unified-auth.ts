@@ -8,14 +8,18 @@
  * - admin: Full system access
  *
  * Users can have multiple roles and access multiple dashboards with one login.
+ *
+ * Auth is powered by Supabase Auth (email/password + Google OAuth).
+ * The session lives in httpOnly cookies managed by @supabase/ssr middleware.
+ * After reading the Supabase Auth user, we look up their roles in the
+ * `users` + `user_roles` tables by email.
  */
 
-import { cookies } from 'next/headers'
 import { getSupabaseAdmin } from './auth'
+import { createServerSupabase } from './supabase'
 
-// Lazy accessor — avoids calling getSupabaseAdmin() at module load time,
-// which can throw if env vars aren't ready yet in Next.js edge/SSR contexts.
-const supabase = { from: (table: string) => getSupabaseAdmin().from(table) }
+// Lazy accessor for admin queries (bypasses RLS)
+const adminDb = { from: (table: string) => getSupabaseAdmin().from(table) }
 
 export interface UserRole {
   role: 'church_leader' | 'dna_leader' | 'training_participant' | 'admin'
@@ -29,49 +33,60 @@ export interface UserSession {
   roles: UserRole[]
 }
 
-// In-memory session cache to avoid 2 DB queries per request
+// In-memory session cache keyed by email to avoid DB role lookups per request
 const sessionCache = new Map<string, { session: UserSession; expiresAt: number }>()
 const SESSION_CACHE_TTL = 2 * 60 * 1000 // 2 minutes
 
 /**
- * Get the current user session from the unified session cookie.
+ * Get the current user session from Supabase Auth cookies.
+ * Falls back to legacy magic link cookie for existing sessions.
  * Uses an in-memory cache to avoid hitting the DB on every API call.
  * @returns UserSession or null if not authenticated
  */
 export async function getUnifiedSession(): Promise<UserSession | null> {
-  const cookieStore = await cookies()
-  const sessionToken = cookieStore.get('user_session')?.value
+  // --- Primary: Supabase Auth session ---
+  try {
+    const supabase = await createServerSupabase()
+    const { data: { user: authUser } } = await supabase.auth.getUser()
 
-  if (!sessionToken) {
-    return null
+    if (authUser?.email) {
+      return resolveSessionByEmail(authUser.email, authUser.user_metadata?.full_name || authUser.user_metadata?.name || null)
+    }
+  } catch {
+    // createServerSupabase can fail outside of request context — fall through
   }
 
-  // Check cache first
-  const cached = sessionCache.get(sessionToken)
+  // --- Fallback: legacy magic link cookie (for existing sessions) ---
+  try {
+    const { cookies } = await import('next/headers')
+    const cookieStore = await cookies()
+    const sessionToken = cookieStore.get('user_session')?.value
+    if (sessionToken) {
+      return resolveLegacySession(sessionToken)
+    }
+  } catch {
+    // cookies() can fail outside of request context
+  }
+
+  return null
+}
+
+/**
+ * Resolve a UserSession from an email address.
+ * Looks up the `users` + `user_roles` tables.
+ * Uses in-memory cache to avoid DB hits.
+ */
+async function resolveSessionByEmail(email: string, nameHint: string | null): Promise<UserSession | null> {
+  const normalizedEmail = email.toLowerCase()
+
+  // Check cache
+  const cached = sessionCache.get(normalizedEmail)
   if (cached && cached.expiresAt > Date.now()) {
     return cached.session
   }
 
-  // Cache miss — verify token against DB
-  const { data: tokenData, error: tokenError } = await supabase
-    .from('magic_link_tokens')
-    .select('email, expires_at, used')
-    .eq('token', sessionToken)
-    .single()
-
-  if (tokenError || !tokenData || !tokenData.used) {
-    sessionCache.delete(sessionToken)
-    return null
-  }
-
-  // Check if token is expired
-  if (new Date(tokenData.expires_at) < new Date()) {
-    sessionCache.delete(sessionToken)
-    return null
-  }
-
-  // Get user and roles
-  const { data: user, error: userError } = await supabase
+  // Look up user and roles
+  const { data: user, error: userError } = await adminDb
     .from('users')
     .select(`
       id,
@@ -82,31 +97,30 @@ export async function getUnifiedSession(): Promise<UserSession | null> {
         church_id
       )
     `)
-    .eq('email', tokenData.email)
+    .eq('email', normalizedEmail)
     .single()
 
   if (userError || !user) {
-    sessionCache.delete(sessionToken)
     return null
   }
 
   const session: UserSession = {
     userId: user.id,
     email: user.email,
-    name: user.name,
+    name: user.name || nameHint,
     roles: user.user_roles.map((r: any) => ({
       role: r.role,
-      churchId: r.church_id
-    }))
+      churchId: r.church_id,
+    })),
   }
 
   // Store in cache
-  sessionCache.set(sessionToken, {
+  sessionCache.set(normalizedEmail, {
     session,
     expiresAt: Date.now() + SESSION_CACHE_TTL,
   })
 
-  // Evict stale entries periodically (keep cache from growing unbounded)
+  // Evict stale entries
   if (sessionCache.size > 100) {
     const now = Date.now()
     for (const [key, val] of sessionCache) {
@@ -118,11 +132,50 @@ export async function getUnifiedSession(): Promise<UserSession | null> {
 }
 
 /**
- * Clear the session cache for a specific token (call on logout)
+ * Resolve a UserSession from a legacy magic link token.
+ * Kept for backward compatibility — existing logged-in users
+ * with a `user_session` cookie will still work.
+ */
+async function resolveLegacySession(token: string): Promise<UserSession | null> {
+  // Check cache
+  const cached = sessionCache.get(`legacy:${token}`)
+  if (cached && cached.expiresAt > Date.now()) {
+    return cached.session
+  }
+
+  const { data: tokenData, error: tokenError } = await adminDb
+    .from('magic_link_tokens')
+    .select('email, expires_at, used')
+    .eq('token', token)
+    .single()
+
+  if (tokenError || !tokenData || !tokenData.used) {
+    return null
+  }
+
+  if (new Date(tokenData.expires_at) < new Date()) {
+    return null
+  }
+
+  const session = await resolveSessionByEmail(tokenData.email, null)
+  if (session) {
+    // Also cache under the legacy token key
+    sessionCache.set(`legacy:${token}`, {
+      session,
+      expiresAt: Date.now() + SESSION_CACHE_TTL,
+    })
+  }
+
+  return session
+}
+
+/**
+ * Clear the session cache (call on logout)
  */
 export function clearSessionCache(token?: string) {
   if (token) {
     sessionCache.delete(token)
+    sessionCache.delete(`legacy:${token}`)
   } else {
     sessionCache.clear()
   }
@@ -268,7 +321,7 @@ export interface FlowAssessment {
  * @returns Training progress or null
  */
 export async function getTrainingProgress(userId: string): Promise<TrainingProgress | null> {
-  const { data, error } = await supabase
+  const { data, error } = await adminDb
     .from('user_training_progress')
     .select('current_stage, milestones')
     .eq('user_id', userId)
@@ -288,7 +341,7 @@ export async function getTrainingProgress(userId: string): Promise<TrainingProgr
  * @returns Object with content unlock status
  */
 export async function getContentUnlocks(userId: string): Promise<ContentUnlocks> {
-  const { data } = await supabase
+  const { data } = await adminDb
     .from('user_content_unlocks')
     .select('content_type, unlocked')
     .eq('user_id', userId)
@@ -305,7 +358,7 @@ export async function getContentUnlocks(userId: string): Promise<ContentUnlocks>
     toolkit_90day: false
   }
 
-  data?.forEach(item => {
+  data?.forEach((item: any) => {
     unlocks[item.content_type] = item.unlocked
   })
 
@@ -318,7 +371,7 @@ export async function getContentUnlocks(userId: string): Promise<ContentUnlocks>
  * @returns Flow assessment or null
  */
 export async function getFlowAssessment(userId: string): Promise<FlowAssessment | null> {
-  const { data, error } = await supabase
+  const { data, error } = await adminDb
     .from('user_flow_assessments')
     .select('*')
     .eq('user_id', userId)
@@ -366,7 +419,7 @@ export async function getFlowAssessment(userId: string): Promise<FlowAssessment 
  */
 export async function initializeTrainingUser(userId: string): Promise<void> {
   // Create training progress record
-  await supabase
+  await adminDb
     .from('user_training_progress')
     .upsert({
       user_id: userId,
@@ -375,7 +428,7 @@ export async function initializeTrainingUser(userId: string): Promise<void> {
     }, { onConflict: 'user_id' })
 
   // Unlock flow assessment (first step)
-  await supabase
+  await adminDb
     .from('user_content_unlocks')
     .upsert({
       user_id: userId,
@@ -398,7 +451,7 @@ export async function updateTrainingMilestone(
   completed: boolean
 ): Promise<void> {
   // Get current milestones
-  const { data: progress } = await supabase
+  const { data: progress } = await adminDb
     .from('user_training_progress')
     .select('milestones')
     .eq('user_id', userId)
@@ -414,7 +467,7 @@ export async function updateTrainingMilestone(
     }
   }
 
-  await supabase
+  await adminDb
     .from('user_training_progress')
     .update({
       milestones: updatedMilestones,
@@ -434,7 +487,7 @@ export async function unlockContent(
   contentType: string,
   trigger: string
 ): Promise<void> {
-  await supabase
+  await adminDb
     .from('user_content_unlocks')
     .upsert({
       user_id: userId,

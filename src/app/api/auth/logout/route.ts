@@ -1,17 +1,24 @@
 import { NextResponse, NextRequest } from 'next/server';
 import { cookies } from 'next/headers';
+import { createServerSupabase } from '@/lib/supabase';
 import { clearSessionCache } from '@/lib/unified-auth';
 
 export async function POST(request: NextRequest) {
   const cookieStore = await cookies();
 
-  // Clear session cache for this token before deleting the cookie
-  const sessionToken = cookieStore.get('user_session')?.value;
-  if (sessionToken) {
-    clearSessionCache(sessionToken);
+  // Clear in-memory role cache
+  const legacyToken = cookieStore.get('user_session')?.value;
+  clearSessionCache(legacyToken || undefined);
+
+  // Sign out of Supabase Auth (clears auth cookies)
+  try {
+    const supabase = await createServerSupabase();
+    await supabase.auth.signOut();
+  } catch {
+    // Ignore — we'll clear cookies manually below as fallback
   }
 
-  // Clear all session cookies (unified + legacy)
+  // Clear legacy session cookies
   cookieStore.delete('user_session');
   cookieStore.delete('church_leader_session');
   cookieStore.delete('dna_leader_session');
