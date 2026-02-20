@@ -617,7 +617,7 @@ I don't know if this is something you're interested in, but I wanted to ask: Wou
       tagline: 'Establishing Rhythms and Trust',
       duration: 'Months 1-3 (Weeks 1-12)',
       intro:
-        "The first 3 months are critical. You're laying foundation, building trust, and establishing patterns that will carry the group for the next 6-9 months. Use the 90-Day Toolkit for week-by-week guidance.",
+        "The first 3 months are critical. You're laying foundation, building trust, and establishing patterns that will carry the group for the next 6-9 months. Work through each month below — the 90-Day Toolkit in the app gives disciples their week-by-week content.",
       sections: [
         {
           id: 'agreement-shared',
@@ -638,83 +638,56 @@ This step ensures everyone comes to the first meeting with aligned expectations.
           },
         },
         {
-          id: 'week1',
-          title: 'Week 1: First Official Meeting',
-          intro: 'Meeting Structure (90 minutes):',
+          id: 'month1',
+          title: 'Month 1: Building Habits (Weeks 1-4)',
+          intro: 'Focus: Establish the foundation — trust, tools, and daily rhythms.',
           subsections: [
             {
-              title: 'Welcome & Vision Casting (15 mins)',
+              title: 'Week 1: First Official Meeting (90 mins)',
               items: [
-                'Share your heart for the group',
-                'Review DNA Group Agreement together',
-                'Answer any questions',
-                'Pray together',
+                'Welcome & Vision Casting (15 mins) — Share your heart, review DNA Group Agreement together, answer questions, pray',
+                'Life Assessment (45 mins) — Send disciples the link, give 25 min to complete, share 2-3 answers each, listen more than you talk',
+                'Set Group Rhythms (20 mins) — Confirm meeting time/location, set up group chat, schedule next 4 meetings',
+                'Closing Prayer (10 mins) — Pray over each person by name',
+              ],
+              note: 'After the meeting: Send a follow-up text thanking them for coming. Confirm next meeting time.',
+            },
+            {
+              title: 'Week 2: 3D Journal',
+              content: 'Goal: Teach disciples how to hear God through Scripture daily.',
+              items: [
+                'Introduce the HEAD · HEART · HANDS framework',
+                'Walk through a passage together using the 3D Journal',
+                'Assign them a Scripture to journal before next meeting',
+                'Share your own journal entry as a model',
               ],
             },
             {
-              title: 'Life Assessment Activity (45 mins)',
+              title: 'Week 3: 4D Prayer',
+              content: 'Goal: Build a sustainable daily prayer rhythm.',
               items: [
-                'Send Life Assessment links to your disciples (or PDF)',
-                'Give everyone 25 minutes to complete individually',
-                'Go around and share 2-3 answers each',
-                'Listen more than you talk—this is data collection',
+                'Introduce the REVERE · REFLECT · REQUEST · REST framework',
+                'Practice a 4D prayer session together (10-15 mins)',
+                'Help them create their first prayer card',
+                'Encourage daily use before next meeting',
               ],
             },
             {
-              title: 'Set Group Rhythms (20 mins)',
+              title: 'Week 4: Creed Cards',
+              content: 'Goal: Build theological foundation through key doctrines.',
               items: [
-                'Confirm meeting time/location',
-                'Set up group chat',
-                'Schedule next 4 meetings',
-                'Discuss communication expectations',
-              ],
-            },
-            {
-              title: 'Closing Prayer (10 mins)',
-              items: [
-                'Pray over each person by name',
-                'Ask God to guide the journey ahead',
+                'Pick 2-3 Creed Cards to work through together',
+                'Discuss: "What do you believe about this? What has shaped that belief?"',
+                'Address any doubts or questions that come up naturally',
+                'Encourage continued review between meetings',
               ],
             },
           ],
-          note: 'After the meeting: Send a follow-up text thanking them for coming. Share any resources mentioned. Confirm next meeting time.',
-        },
-        {
-          id: 'weeks2-12',
-          title: 'Weeks 2-12: Building Connection',
-          intro: 'Meeting Flow for Weeks 2-12:',
-          subsections: [
-            {
-              title: 'Check-In (15 mins)',
-              content: '"How was your week? Highs and lows?"',
-            },
-            {
-              title: 'Teaching/Tool (30 mins)',
-              content:
-                'Introduce one discipleship tool each week following the 90-Day Toolkit:',
-              items: [
-                'Week 2: 3D Journal (Assign Scripture for next week)',
-                'Week 3: 4D Prayer / In The Gap (Practice daily prayer rhythm)',
-                'Week 4: Foundation Doctrines (Pick 2-3 Creed Cards to discuss)',
-                'Weeks 5-8: Testimony, Q&A, Listening Prayer, Outreach',
-                'Weeks 9-12: Strongholds, Identity, Spiritual Gifts, Assessment Revisited',
-              ],
-            },
-            {
-              title: 'Application/Discussion (30 mins)',
-              content: 'Process what was taught. Ask questions like:',
-              items: [
-                '"What stood out to you?"',
-                '"How does this challenge you?"',
-                '"What\'s one thing you\'ll do this week because of this?"',
-              ],
-            },
-            {
-              title: 'Prayer (15 mins)',
-              content: "Pray for each other's specific needs",
-            },
-          ],
-          note: 'Between meetings: Text the group at least once during the week. Check in individually with your assigned disciple. Pray for them daily by name.',
+          note: 'Meeting flow every week: Check-In (15 min) → Teaching/Tool (30 min) → Application/Discussion (30 min) → Prayer (15 min). Between meetings: Text the group at least once. Pray for them daily by name.',
+          sectionCheck: {
+            id: 'p1_check_month1',
+            label: 'Month 1 complete — disciples practicing 3D Journal, 4D Prayer, and Creed Cards?',
+          },
         },
         {
           id: 'month2',
@@ -727,75 +700,95 @@ This step ensures everyone comes to the first meeting with aligned expectations.
               items: [
                 'Each person shares a testimony of God in their life (10 mins each)',
                 'Ask follow-up questions',
-                'Celebrate God\'s goodness together',
+                "Celebrate God's goodness together",
                 'Close in worship or thanksgiving prayer',
               ],
             },
             {
               title: 'Week 6: Q&A Deep Dive',
-              content:
-                'Goal: Address doubts, questions, and theological confusion.',
+              content: 'Goal: Address doubts, questions, and theological confusion.',
               items: [
                 '"What questions about God or the Bible have you been afraid to ask?"',
-                'Open floor—no question is off-limits',
-                'Don\'t rush to answer—sometimes ask, "What do you think?"',
-                'If you don\'t know the answer: "Great question. Let me research that and we\'ll talk next week."',
+                'Open floor — no question is off-limits',
+                'Don\'t rush to answer — sometimes ask, "What do you think?"',
+                'If you don\'t know: "Great question. Let me research that and we\'ll talk next week."',
               ],
             },
             {
-              title: 'Week 7-8: Addressing Strongholds',
-              content:
-                'Goal: Begin addressing patterns, lies, and strongholds.',
+              title: 'Week 7: Listening Prayer',
+              content: 'Goal: Help disciples hear God\'s voice for others, not just themselves.',
               items: [
-                "By now, you've observed patterns in their life (fear, insecurity, anger, etc.)",
-                'Gently name what you see: "I\'ve noticed that when [situation] happens, you [response]. Can we talk about that?"',
-                'Use Scripture to expose the lie and present truth',
-                'Pray for breakthrough',
+                'Teach the difference between our thoughts and God\'s voice',
+                'Practice: each person quietly listens for a word/image/impression for the person next to them',
+                'Share what you sensed — gently and without pressure',
+                'Debrief: "What was that experience like for you?"',
               ],
-              note: "This is where connection before correction matters. If you haven't built trust, they'll shut down. If you have, they'll receive it.",
+            },
+            {
+              title: 'Week 8: Outreach/Mission Activity',
+              content: 'Goal: Apply faith in a real-world, outward-focused context.',
+              items: [
+                'Street evangelism, serve at a shelter, prayer walk, or hospital visit',
+                'Debrief afterward: "What did you learn about God? About yourself?"',
+                'Celebrate what God did — look for stories to share',
+              ],
             },
           ],
+          sectionCheck: {
+            id: 'p1_check_month2',
+            label: 'Month 2 complete — disciples showing vulnerability, sharing testimonies, and engaging outreach?',
+          },
         },
         {
           id: 'month3',
           title: 'Month 3: Empowerment Begins (Weeks 9-12)',
-          intro:
-            'Focus: Start giving them opportunities to lead and practice.',
+          intro: 'Focus: Start giving disciples opportunities to lead and practice.',
           subsections: [
             {
-              title: 'Week 9: Let Them Lead Devotional',
-              content: 'Goal: Give them practice teaching and hearing from God.',
+              title: 'Week 9: Breaking Strongholds',
+              content: 'Goal: Address patterns, lies, and areas of spiritual bondage.',
               items: [
-                'Assign them a chapter of Scripture',
-                'They prepare and lead the 3D journal discussion',
-                'You and co-leader give feedback afterward',
+                "Name what you've observed: \"I've noticed that when [situation] happens, you [response]. Can we talk about that?\"",
+                'Use Scripture to expose the lie and present truth (Reveal · Renounce · Replace)',
+                'Pray for breakthrough together',
               ],
-              note: "What you're watching: Can they prepare? Do they show up ready? How do they handle leading?",
+              note: "Connection before correction — if trust has been built, they'll receive it. If not, they'll shut down.",
             },
             {
-              title: 'Week 10: Outreach/Mission Activity',
-              content: 'Goal: Apply faith in real-world context.',
+              title: 'Week 10: Identity Shift',
+              content: 'Goal: Root disciples in who God says they are.',
               items: [
-                'Street evangelism',
-                'Serve at homeless shelter',
-                'Prayer walk through neighborhood',
-                'Visit hospital or nursing home',
+                'Work through Identity in Christ statements together',
+                'Ask: "Which of these is hardest for you to believe about yourself? Why?"',
+                'Pray Scripture-based identity declarations over each person',
               ],
-              note: 'Debrief afterward: "What was that like for you?" "What did you learn about God? About yourself?" "What fears came up?"',
             },
             {
-              title: 'Week 11-12: Progress Check-In',
-              content: 'Goal: Measure growth and identify next steps.',
+              title: 'Week 11: Ministry Gifts',
+              content: 'Goal: Help disciples discover how God has wired them to serve.',
               items: [
-                'Retake Life Assessment from Week 1',
-                'Compare answers: "What\'s changed?"',
-                'Celebrate growth',
-                'Identify areas still needing work',
-                'Set goals for next 3 months',
+                'Complete the Ministry Gifts Test in the app',
+                'Discuss results: "Does this resonate with you? Where have you seen this in your life?"',
+                'Connect gifts to opportunities to serve in and outside the group',
               ],
-              note: 'Ask directly: "Do you feel like you\'re growing?" "What\'s been most challenging?" "What\'s been most helpful?" "Is there anything we should adjust?"',
+            },
+            {
+              title: 'Week 12: Life Assessment Revisited',
+              content: 'Goal: Measure growth and cast vision for what\'s next.',
+              items: [
+                'Retake the Life Assessment from Week 1',
+                'Compare answers: "What\'s changed? What has God done in you?"',
+                'Celebrate growth — make it a real moment',
+                'Ask: "Do you feel ready to help someone else grow like this?"',
+                'Set goals and expectations heading into Phase 2',
+              ],
+              note: 'Let them lead the devotional this week. Watch: Can they prepare? Do they show up ready? How do they handle leading?',
             },
           ],
+          sectionCheck: {
+            id: 'p1_check_month3',
+            label: 'Month 3 complete — disciples addressing strongholds, discovering gifts, and ready for Phase 2?',
+          },
         },
       ],
       checklist: [
