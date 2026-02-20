@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getUnifiedSession, isTrainingParticipant, isAdmin } from '@/lib/unified-auth';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/auth';
 import { getSessionCount } from '@/lib/dna-manual-data';
+
+const supabase = getSupabaseAdmin();
 
 /**
  * GET /api/training/certificate

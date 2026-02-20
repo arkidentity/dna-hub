@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getUnifiedSession } from '@/lib/unified-auth';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/auth';
 import { getPhaseCount, launchGuideData } from '@/lib/launch-guide-data';
+
+const supabase = getSupabaseAdmin();
 
 /**
  * GET /api/training/launch-guide

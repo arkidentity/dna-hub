@@ -46,8 +46,8 @@ export default function UserMenu({ session }: UserMenuProps) {
     })
   }
 
-  // Groups - for DNA leaders
-  if (session.roles.some(r => r.role === 'dna_leader')) {
+  // Groups - for DNA leaders and church leaders
+  if (session.roles.some(r => r.role === 'dna_leader' || r.role === 'church_leader')) {
     dashboards.push({
       name: 'Groups',
       href: '/groups',

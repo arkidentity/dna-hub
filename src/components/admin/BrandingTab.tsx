@@ -258,20 +258,26 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
 
         {currentUrl ? (
           <div className="flex items-start gap-4">
-            {/* Preview */}
+            {/* Preview — icon slot uses primary_color bg to match what the OS renders */}
             <div
-              className="rounded-lg border border-card-border bg-gray-100 flex items-center justify-center overflow-hidden shrink-0"
+              className="rounded-lg border border-card-border flex items-center justify-center overflow-hidden shrink-0"
               style={{
                 aspectRatio: slot.aspect,
                 width: slot.aspect === '1/1' ? '80px' : '160px',
                 height: slot.aspect === '1/1' ? '80px' : '53px',
+                backgroundColor: slot.type === 'icon' ? form.primary_color : '#f3f4f6',
               }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
                 src={currentUrl}
                 alt={slot.label}
-                className="max-w-full max-h-full object-contain"
+                className="object-contain"
+                style={{
+                  // Icon slot: 80% of box to match server-side compositing padding
+                  width: slot.type === 'icon' ? '80%' : '100%',
+                  height: slot.type === 'icon' ? '80%' : '100%',
+                }}
               />
             </div>
             {/* Actions */}
@@ -666,13 +672,13 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
               <div className="bg-white rounded-xl border border-card-border p-4 w-56 mx-auto">
                 <p className="text-xs font-medium text-navy mb-2">App Icon Preview</p>
                 <div className="flex items-center gap-3">
-                  {/* iOS-style rounded square */}
+                  {/* iOS-style rounded square — matches server compositing: 80% padding */}
                   <div
                     className="w-14 h-14 rounded-2xl overflow-hidden flex items-center justify-center shadow-md"
                     style={{ backgroundColor: form.primary_color }}
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={form.icon_url} alt="App icon" className="w-full h-full object-contain" />
+                    <img src={form.icon_url} alt="App icon" className="object-contain" style={{ width: '80%', height: '80%' }} />
                   </div>
                   <div>
                     <p className="text-xs font-medium text-navy">{form.app_title || 'DNA Daily'}</p>

@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getUnifiedSession } from '@/lib/unified-auth';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/auth';
 import { getSession } from '@/lib/dna-manual-data';
+
+const supabase = getSupabaseAdmin();
 
 interface RouteParams {
   params: Promise<{ sessionId: string }>;

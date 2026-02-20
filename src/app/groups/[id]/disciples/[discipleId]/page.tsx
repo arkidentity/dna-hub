@@ -51,6 +51,9 @@ function DiscipleProfileContent() {
   const [answeringEntry, setAnsweringEntry] = useState<DiscipleshipLogEntry | null>(null);
   const [answerNotes, setAnswerNotes] = useState('');
 
+  // Life Assessment expandable category state
+  const [expandedLACategory, setExpandedLACategory] = useState<string | null>(null);
+
   // Time filter for app activity metrics
   const [metricsDays, setMetricsDays] = useState<number | null>(null);
 
@@ -212,16 +215,74 @@ function DiscipleProfileContent() {
   const week12Assessment = lifeAssessments?.week12 ?? null;
   const hasLifeAssessment = !!(week1Assessment || week12Assessment);
 
-  // Category display config (matches assessmentData.ts order, excludes reflection)
-  const LIFE_ASSESSMENT_CATEGORIES = [
-    { id: 'relationship_with_god', label: 'Relationship with God' },
-    { id: 'spiritual_freedom', label: 'Spiritual Freedom' },
-    { id: 'identity_emotions', label: 'Identity & Emotions' },
-    { id: 'relationships', label: 'Relationships' },
-    { id: 'calling_purpose', label: 'Calling & Purpose' },
-    { id: 'lifestyle_stewardship', label: 'Lifestyle & Stewardship' },
-    { id: 'spiritual_fruit', label: 'Spiritual Fruit' },
+  // Category display config with questions (matches assessmentData.ts, excludes reflection)
+  type LAQuestion = { id: number; text: string; type: 'likert' | 'mc' | 'open' | 'checkbox'; choices?: string[] };
+  type LACategory = { id: string; label: string; questions: LAQuestion[] };
+  const LIFE_ASSESSMENT_CATEGORIES: LACategory[] = [
+    { id: 'relationship_with_god', label: 'Relationship with God', questions: [
+      { id: 1, text: 'How would you describe your current relationship with God?', type: 'mc', choices: ['Distant and struggling','Inconsistent—hot and cold','Growing but still immature','Steady and deepening','Intimate and thriving'] },
+      { id: 2, text: 'Rate your devotional consistency (prayer, Bible, journal)', type: 'likert' },
+      { id: 3, text: "When you pray, do you sense God's presence and hear His voice?", type: 'likert' },
+      { id: 4, text: 'Can you clearly articulate the gospel?', type: 'mc', choices: ['Yes','Somewhat','No'] },
+      { id: 5, text: 'Do you believe God likes you, or just loves you out of obligation?', type: 'mc', choices: ['Likes me','Just loves me','Not sure'] },
+      { id: 6, text: "Rate your confidence in God's goodness when life is hard", type: 'likert' },
+    ]},
+    { id: 'spiritual_freedom', label: 'Spiritual Freedom', questions: [
+      { id: 7, text: 'Are you currently walking in freedom from lifestyle sin?', type: 'mc', choices: ['Yes','Mostly','Struggling','No'] },
+      { id: 8, text: "Is there any area of ongoing sin you're aware of but haven't addressed?", type: 'mc', choices: ['Yes','No'] },
+      { id: 9, text: 'Do you struggle with any of the following?', type: 'checkbox', choices: ['Pornography or sexual sin','Substance abuse','Anger or rage','Fear or anxiety','Pride or control','Gossip or slander','Lying or deception','Bitterness or unforgiveness','Other'] },
+      { id: 10, text: 'Do you feel free in Christ, or trapped by guilt and shame?', type: 'mc', choices: ['Free','Mostly free','Trapped','Somewhere in between'] },
+      { id: 11, text: 'When you sin, how do you typically respond?', type: 'mc', choices: ['Hide and avoid dealing with it','Feel shame and beat myself up','Minimize it','Confess to God but not people','Confess quickly to God and trusted people'] },
+      { id: 12, text: 'Rate your ability to receive correction without becoming defensive', type: 'likert' },
+    ]},
+    { id: 'identity_emotions', label: 'Identity & Emotions', questions: [
+      { id: 13, text: "When you think about yourself, what's the first word that comes to mind?", type: 'open' },
+      { id: 14, text: 'Do you see yourself the way God sees you?', type: 'likert' },
+      { id: 15, text: "What's your biggest insecurity?", type: 'open' },
+      { id: 16, text: 'How do you respond to failure or mistakes?', type: 'mc', choices: ['Catastrophize','Get defensive or blame others','Feel bad but move on','Process with trusted people','Learn from it and grow'] },
+      { id: 17, text: 'Rate your ability to manage strong emotions (anger, fear, sadness)', type: 'likert' },
+    ]},
+    { id: 'relationships', label: 'Relationships', questions: [
+      { id: 18, text: 'Do you have 2-3 close, healthy, life-giving friendships?', type: 'mc', choices: ['Yes','1-2','No'] },
+      { id: 19, text: 'Are there any broken or unresolved relationships you need to address?', type: 'mc', choices: ['Yes','No'] },
+      { id: 20, text: 'How do you typically handle conflict?', type: 'mc', choices: ['Avoid it','Get defensive or aggressive','Shut down emotionally','Address it but struggle','Address it well with grace and truth'] },
+      { id: 21, text: 'Have you ever discipled someone or led someone to Christ?', type: 'mc', choices: ['Yes','No'] },
+      { id: 22, text: 'Who knows the real you—struggles and all?', type: 'open' },
+    ]},
+    { id: 'calling_purpose', label: 'Calling & Purpose', questions: [
+      { id: 23, text: 'Do you have a sense of what God has called you to?', type: 'mc', choices: ['Yes, clear','Somewhat','No idea'] },
+      { id: 24, text: 'What breaks your heart or makes you angry in the world?', type: 'open' },
+      { id: 25, text: "If you could do anything for God's Kingdom without limitation, what would it be?", type: 'open' },
+      { id: 26, text: 'Rate your current sense of purpose and direction in life', type: 'likert' },
+    ]},
+    { id: 'lifestyle_stewardship', label: 'Lifestyle & Stewardship', questions: [
+      { id: 27, text: 'Rate the stability of your financial situation', type: 'likert' },
+      { id: 28, text: 'Do you have healthy boundaries with your time and energy?', type: 'likert' },
+      { id: 29, text: 'Rate the health of your physical body (sleep, exercise, diet)', type: 'likert' },
+      { id: 30, text: 'Rate your work/life balance', type: 'likert' },
+    ]},
+    { id: 'spiritual_fruit', label: 'Spiritual Fruit', questions: [
+      { id: 31, text: 'LOVE — Sacrificial care for others', type: 'likert' },
+      { id: 32, text: 'JOY — Deep contentment regardless of circumstances', type: 'likert' },
+      { id: 33, text: 'PEACE — Inner rest and trust in God', type: 'likert' },
+      { id: 34, text: 'PATIENCE — Slow to anger, extending grace', type: 'likert' },
+      { id: 35, text: 'KINDNESS — Actively seeking others\' good', type: 'likert' },
+      { id: 36, text: 'GOODNESS — Moral integrity and generosity', type: 'likert' },
+      { id: 37, text: 'FAITHFULNESS — Reliable and consistent follow-through', type: 'likert' },
+      { id: 38, text: 'GENTLENESS — Strength under control', type: 'likert' },
+      { id: 39, text: 'SELF-CONTROL — Mastery over impulses and appetites', type: 'likert' },
+    ]},
   ];
+
+  // Format a raw answer value for display
+  const formatLAAnswer = (q: LAQuestion, val: unknown): string => {
+    if (val === null || val === undefined || val === '') return '—';
+    if (q.type === 'likert') return `${val}/5`;
+    if (q.type === 'mc' && q.choices && typeof val === 'number') return q.choices[val - 1] ?? String(val);
+    if (q.type === 'mc' && q.choices && typeof val === 'string') return val;
+    if (q.type === 'checkbox' && Array.isArray(val)) return val.join(', ') || '—';
+    return String(val);
+  };
 
   // Reflection question text (matches assessmentData.ts Q40-Q42)
   const REFLECTION_QUESTIONS: Record<number, string> = {
@@ -692,9 +753,8 @@ function DiscipleProfileContent() {
               </div>
             </div>
 
-            {/* Category Scores */}
+            {/* Score Summary — column headers */}
             <div className="px-6 py-4">
-              {/* Column headers */}
               <div className="grid grid-cols-[1fr_80px_80px_56px] gap-2 mb-2 text-xs font-semibold text-gray-400 uppercase tracking-wider">
                 <span>Category</span>
                 <span className="text-center">Week 1</span>
@@ -702,62 +762,96 @@ function DiscipleProfileContent() {
                 <span className="text-center">Change</span>
               </div>
 
-              <div className="space-y-3">
+              {/* Expandable category rows */}
+              <div className="space-y-1">
                 {LIFE_ASSESSMENT_CATEGORIES.map((cat) => {
                   const w1Score = week1Assessment?.category_scores?.[cat.id] ?? null;
                   const w12Score = week12Assessment?.category_scores?.[cat.id] ?? null;
                   const delta = w1Score !== null && w12Score !== null
                     ? Math.round((w12Score - w1Score) * 10) / 10
                     : null;
+                  const isExpanded = expandedLACategory === cat.id;
 
                   return (
-                    <div key={cat.id} className="grid grid-cols-[1fr_80px_80px_56px] gap-2 items-center">
-                      <span className="text-sm text-navy font-medium truncate">{cat.label}</span>
+                    <div key={cat.id} className="rounded-lg overflow-hidden border border-transparent hover:border-gray-100 transition-colors">
+                      {/* Row header — click to expand */}
+                      <button
+                        className="w-full grid grid-cols-[1fr_80px_80px_56px] gap-2 items-center py-2 px-2 -mx-2 rounded-lg hover:bg-gray-50 transition-colors text-left"
+                        onClick={() => setExpandedLACategory(isExpanded ? null : cat.id)}
+                      >
+                        <span className="flex items-center gap-1.5 text-sm text-navy font-medium">
+                          <svg className={`w-3 h-3 text-gray-400 flex-shrink-0 transition-transform ${isExpanded ? 'rotate-90' : ''}`} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+                            <path d="M9 18l6-6-6-6" />
+                          </svg>
+                          {cat.label}
+                        </span>
 
-                      {/* Week 1 score */}
-                      <div className="flex flex-col items-center gap-1">
-                        {w1Score !== null ? (
-                          <>
-                            <span className="text-xs font-semibold text-gray-700">{w1Score.toFixed(1)}<span className="text-gray-400 font-normal">/5</span></span>
-                            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                              <div className="h-full rounded-full bg-navy/40" style={{ width: `${(w1Score / 5) * 100}%` }} />
-                            </div>
-                          </>
-                        ) : (
-                          <span className="text-xs text-gray-300">—</span>
-                        )}
-                      </div>
+                        {/* Week 1 score */}
+                        <div className="flex flex-col items-center gap-1">
+                          {w1Score !== null ? (
+                            <>
+                              <span className="text-xs font-semibold text-gray-700">{w1Score.toFixed(1)}<span className="text-gray-400 font-normal">/5</span></span>
+                              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="h-full rounded-full bg-navy/40" style={{ width: `${(w1Score / 5) * 100}%` }} />
+                              </div>
+                            </>
+                          ) : <span className="text-xs text-gray-300">—</span>}
+                        </div>
 
-                      {/* Week 12 score */}
-                      <div className="flex flex-col items-center gap-1">
-                        {w12Score !== null ? (
-                          <>
-                            <span className="text-xs font-semibold text-gray-700">{w12Score.toFixed(1)}<span className="text-gray-400 font-normal">/5</span></span>
-                            <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                              <div className="h-full rounded-full" style={{ width: `${(w12Score / 5) * 100}%`, background: 'var(--gold)' }} />
-                            </div>
-                          </>
-                        ) : (
-                          <span className="text-xs text-gray-300">—</span>
-                        )}
-                      </div>
+                        {/* Week 12 score */}
+                        <div className="flex flex-col items-center gap-1">
+                          {w12Score !== null ? (
+                            <>
+                              <span className="text-xs font-semibold text-gray-700">{w12Score.toFixed(1)}<span className="text-gray-400 font-normal">/5</span></span>
+                              <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div className="h-full rounded-full" style={{ width: `${(w12Score / 5) * 100}%`, background: 'var(--gold)' }} />
+                              </div>
+                            </>
+                          ) : <span className="text-xs text-gray-300">—</span>}
+                        </div>
 
-                      {/* Delta */}
-                      <div className="flex justify-center">
-                        {delta !== null ? (
-                          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
-                            delta > 0
-                              ? 'bg-green-100 text-green-700'
-                              : delta < 0
-                              ? 'bg-red-100 text-red-600'
-                              : 'bg-gray-100 text-gray-500'
-                          }`}>
-                            {delta > 0 ? `+${delta}` : delta === 0 ? '—' : delta}
-                          </span>
-                        ) : (
-                          <span className="text-xs text-gray-300">—</span>
-                        )}
-                      </div>
+                        {/* Delta */}
+                        <div className="flex justify-center">
+                          {delta !== null ? (
+                            <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${delta > 0 ? 'bg-green-100 text-green-700' : delta < 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'}`}>
+                              {delta > 0 ? `+${delta}` : delta === 0 ? '—' : delta}
+                            </span>
+                          ) : <span className="text-xs text-gray-300">—</span>}
+                        </div>
+                      </button>
+
+                      {/* Expanded Q&A panel */}
+                      {isExpanded && (
+                        <div className="mt-1 mb-2 ml-5 space-y-3 border-l-2 border-gray-100 pl-3">
+                          {cat.questions.map((q) => {
+                            const w1Raw = week1Assessment?.responses?.[q.id];
+                            const w12Raw = week12Assessment?.responses?.[q.id];
+                            const w1Ans = w1Raw !== undefined && w1Raw !== null ? formatLAAnswer(q, w1Raw) : null;
+                            const w12Ans = w12Raw !== undefined && w12Raw !== null ? formatLAAnswer(q, w12Raw) : null;
+                            if (!w1Ans && !w12Ans) return null;
+
+                            return (
+                              <div key={q.id}>
+                                <p className="text-[11px] text-gray-500 mb-1 leading-snug">{q.text}</p>
+                                <div className="flex flex-wrap gap-x-4 gap-y-0.5">
+                                  {w1Ans && (
+                                    <span className="text-sm text-navy">
+                                      <span className="text-[10px] font-semibold text-navy/40 uppercase tracking-wider mr-1.5">W1</span>
+                                      {w1Ans}
+                                    </span>
+                                  )}
+                                  {w12Ans && (
+                                    <span className="text-sm text-navy">
+                                      <span className="text-[10px] font-semibold uppercase tracking-wider mr-1.5" style={{ color: 'var(--gold-dark)' }}>W12</span>
+                                      {w12Ans}
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
                   );
                 })}
@@ -766,7 +860,7 @@ function DiscipleProfileContent() {
               {/* Overall scores */}
               {(week1Assessment?.overall_score !== null || week12Assessment?.overall_score !== null) && (
                 <div className="mt-4 pt-3 border-t border-gray-100 grid grid-cols-[1fr_80px_80px_56px] gap-2 items-center">
-                  <span className="text-sm font-bold text-navy">Overall</span>
+                  <span className="text-sm font-bold text-navy pl-[18px]">Overall</span>
                   <span className="text-center text-sm font-bold text-navy">
                     {week1Assessment?.overall_score != null ? `${week1Assessment.overall_score.toFixed(1)}/5` : '—'}
                   </span>
@@ -777,9 +871,7 @@ function DiscipleProfileContent() {
                     {week1Assessment?.overall_score != null && week12Assessment?.overall_score != null ? (() => {
                       const d = Math.round((week12Assessment.overall_score - week1Assessment.overall_score) * 10) / 10;
                       return (
-                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${
-                          d > 0 ? 'bg-green-100 text-green-700' : d < 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'
-                        }`}>
+                        <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${d > 0 ? 'bg-green-100 text-green-700' : d < 0 ? 'bg-red-100 text-red-600' : 'bg-gray-100 text-gray-500'}`}>
                           {d > 0 ? `+${d}` : d === 0 ? '—' : d}
                         </span>
                       );

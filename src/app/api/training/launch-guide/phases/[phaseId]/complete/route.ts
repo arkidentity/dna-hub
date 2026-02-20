@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUnifiedSession } from '@/lib/unified-auth';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/auth';
 import { getPhase, launchGuideData } from '@/lib/launch-guide-data';
+
+const supabase = getSupabaseAdmin();
 
 /**
  * POST /api/training/launch-guide/phases/[phaseId]/complete

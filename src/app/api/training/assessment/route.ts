@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getUnifiedSession } from '@/lib/unified-auth';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/auth';
+
+const supabase = getSupabaseAdmin();
 
 // GET: Load existing draft or check for completed assessment
 export async function GET() {

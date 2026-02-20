@@ -17,7 +17,7 @@ export async function POST(
     }
 
     // Check if user is a DNA leader
-    if (!hasRole(session, 'dna_leader')) {
+    if (!(hasRole(session, 'dna_leader') || hasRole(session, 'church_leader'))) {
       return NextResponse.json(
         { error: 'Forbidden - DNA leader access required' },
         { status: 403 }
@@ -209,7 +209,7 @@ export async function GET(
     }
 
     // Check if user is a DNA leader
-    if (!hasRole(session, 'dna_leader')) {
+    if (!(hasRole(session, 'dna_leader') || hasRole(session, 'church_leader'))) {
       return NextResponse.json(
         { error: 'Forbidden - DNA leader access required' },
         { status: 403 }

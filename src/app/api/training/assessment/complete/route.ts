@@ -4,8 +4,10 @@ import {
   updateTrainingMilestone,
   unlockContent
 } from '@/lib/unified-auth';
-import { supabase } from '@/lib/supabase';
+import { getSupabaseAdmin } from '@/lib/auth';
 import { sendAssessmentCompleteEmail } from '@/lib/email';
+
+const supabase = getSupabaseAdmin();
 
 // POST: Complete the assessment
 export async function POST(request: NextRequest) {

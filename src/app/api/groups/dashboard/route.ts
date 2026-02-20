@@ -12,8 +12,8 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    // Check if user is a DNA leader
-    if (!hasRole(session, 'dna_leader')) {
+    // Check if user is a DNA leader or church leader
+    if (!(hasRole(session, 'dna_leader') || hasRole(session, 'church_leader'))) {
       return NextResponse.json(
         { error: 'Forbidden - DNA leader access required' },
         { status: 403 }
@@ -32,11 +32,13 @@ export async function GET() {
       .eq('email', session.email)
       .single();
 
-    if (leaderError || !dnaLeader) {
-      return NextResponse.json(
-        { error: 'DNA leader not found' },
-        { status: 404 }
-      );
+    // If no dna_leaders record (e.g. pure church_leader), return empty dashboard
+    if (!dnaLeader) {
+      return NextResponse.json({
+        leader: { id: null, name: session.name, email: session.email, church: null },
+        groups: [],
+        stats: { total_groups: 0, active_groups: 0, total_disciples: 0 },
+      });
     }
 
     const leaderId = dnaLeader.id;
