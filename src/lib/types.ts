@@ -776,6 +776,7 @@ export interface LifeAssessmentResult {
   category_scores: Record<string, number> | null;
   overall_score: number | null;
   responses: Record<string, unknown>;
+  follow_ups: Record<string, string> | null;
   submitted_at: string | null;
 }
 

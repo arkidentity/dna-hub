@@ -216,20 +216,20 @@ function DiscipleProfileContent() {
   const hasLifeAssessment = !!(week1Assessment || week12Assessment);
 
   // Category display config with questions (matches assessmentData.ts, excludes reflection)
-  type LAQuestion = { id: number; text: string; type: 'likert' | 'mc' | 'open' | 'checkbox'; choices?: string[] };
+  type LAQuestion = { id: number; text: string; type: 'likert' | 'mc' | 'open' | 'checkbox'; choices?: string[]; followUpPrompt?: string };
   type LACategory = { id: string; label: string; questions: LAQuestion[] };
   const LIFE_ASSESSMENT_CATEGORIES: LACategory[] = [
     { id: 'relationship_with_god', label: 'Relationship with God', questions: [
       { id: 1, text: 'How would you describe your current relationship with God?', type: 'mc', choices: ['Distant and struggling','Inconsistent—hot and cold','Growing but still immature','Steady and deepening','Intimate and thriving'] },
       { id: 2, text: 'Rate your devotional consistency (prayer, Bible, journal)', type: 'likert' },
-      { id: 3, text: "When you pray, do you sense God's presence and hear His voice?", type: 'likert' },
-      { id: 4, text: 'Can you clearly articulate the gospel?', type: 'mc', choices: ['Yes','Somewhat','No'] },
-      { id: 5, text: 'Do you believe God likes you, or just loves you out of obligation?', type: 'mc', choices: ['Likes me','Just loves me','Not sure'] },
+      { id: 3, text: "When you pray, do you sense God's presence and hear His voice?", type: 'likert', followUpPrompt: 'Explain:' },
+      { id: 4, text: 'Can you clearly articulate the gospel?', type: 'mc', choices: ['Yes','Somewhat','No'], followUpPrompt: 'If yes, write it in 2-3 sentences:' },
+      { id: 5, text: 'Do you believe God likes you, or just loves you out of obligation?', type: 'mc', choices: ['Likes me','Just loves me','Not sure'], followUpPrompt: 'Why?' },
       { id: 6, text: "Rate your confidence in God's goodness when life is hard", type: 'likert' },
     ]},
     { id: 'spiritual_freedom', label: 'Spiritual Freedom', questions: [
       { id: 7, text: 'Are you currently walking in freedom from lifestyle sin?', type: 'mc', choices: ['Yes','Mostly','Struggling','No'] },
-      { id: 8, text: "Is there any area of ongoing sin you're aware of but haven't addressed?", type: 'mc', choices: ['Yes','No'] },
+      { id: 8, text: "Is there any area of ongoing sin you're aware of but haven't addressed?", type: 'mc', choices: ['Yes','No'], followUpPrompt: 'If yes, what:' },
       { id: 9, text: 'Do you struggle with any of the following?', type: 'checkbox', choices: ['Pornography or sexual sin','Substance abuse','Anger or rage','Fear or anxiety','Pride or control','Gossip or slander','Lying or deception','Bitterness or unforgiveness','Other'] },
       { id: 10, text: 'Do you feel free in Christ, or trapped by guilt and shame?', type: 'mc', choices: ['Free','Mostly free','Trapped','Somewhere in between'] },
       { id: 11, text: 'When you sin, how do you typically respond?', type: 'mc', choices: ['Hide and avoid dealing with it','Feel shame and beat myself up','Minimize it','Confess to God but not people','Confess quickly to God and trusted people'] },
@@ -244,13 +244,13 @@ function DiscipleProfileContent() {
     ]},
     { id: 'relationships', label: 'Relationships', questions: [
       { id: 18, text: 'Do you have 2-3 close, healthy, life-giving friendships?', type: 'mc', choices: ['Yes','1-2','No'] },
-      { id: 19, text: 'Are there any broken or unresolved relationships you need to address?', type: 'mc', choices: ['Yes','No'] },
+      { id: 19, text: 'Are there any broken or unresolved relationships you need to address?', type: 'mc', choices: ['Yes','No'], followUpPrompt: 'If yes, with whom:' },
       { id: 20, text: 'How do you typically handle conflict?', type: 'mc', choices: ['Avoid it','Get defensive or aggressive','Shut down emotionally','Address it but struggle','Address it well with grace and truth'] },
       { id: 21, text: 'Have you ever discipled someone or led someone to Christ?', type: 'mc', choices: ['Yes','No'] },
       { id: 22, text: 'Who knows the real you—struggles and all?', type: 'open' },
     ]},
     { id: 'calling_purpose', label: 'Calling & Purpose', questions: [
-      { id: 23, text: 'Do you have a sense of what God has called you to?', type: 'mc', choices: ['Yes, clear','Somewhat','No idea'] },
+      { id: 23, text: 'Do you have a sense of what God has called you to?', type: 'mc', choices: ['Yes, clear','Somewhat','No idea'], followUpPrompt: 'If yes, what:' },
       { id: 24, text: 'What breaks your heart or makes you angry in the world?', type: 'open' },
       { id: 25, text: "If you could do anything for God's Kingdom without limitation, what would it be?", type: 'open' },
       { id: 26, text: 'Rate your current sense of purpose and direction in life', type: 'likert' },
@@ -835,7 +835,13 @@ function DiscipleProfileContent() {
                             const w12Raw = week12Assessment?.responses?.[qKey] ?? week12Assessment?.responses?.[q.id];
                             const w1Ans = w1Raw !== undefined && w1Raw !== null ? formatLAAnswer(q, w1Raw) : null;
                             const w12Ans = w12Raw !== undefined && w12Raw !== null ? formatLAAnswer(q, w12Raw) : null;
-                            if (!w1Ans && !w12Ans) return null;
+
+                            // Follow-up text answers (e.g. "Explain:", "Why?", "If yes, what:")
+                            const w1FollowUp = (week1Assessment?.follow_ups?.[qKey] ?? week1Assessment?.follow_ups?.[q.id]) as string | undefined;
+                            const w12FollowUp = (week12Assessment?.follow_ups?.[qKey] ?? week12Assessment?.follow_ups?.[q.id]) as string | undefined;
+                            const hasFollowUp = !!(w1FollowUp || w12FollowUp);
+
+                            if (!w1Ans && !w12Ans && !hasFollowUp) return null;
 
                             return (
                               <div key={q.id}>
@@ -854,6 +860,26 @@ function DiscipleProfileContent() {
                                     </span>
                                   )}
                                 </div>
+                                {/* Follow-up explanation text */}
+                                {hasFollowUp && (
+                                  <div className="mt-1.5 pl-1 border-l-2 border-gold/20 ml-0.5">
+                                    {q.followUpPrompt && (
+                                      <p className="text-[10px] text-gray-400 italic mb-0.5">{q.followUpPrompt}</p>
+                                    )}
+                                    {w1FollowUp && (
+                                      <div className="mb-1">
+                                        <span className="text-[10px] font-semibold text-navy/40 uppercase tracking-wider mr-1.5">W1</span>
+                                        <span className="text-sm text-navy/80 italic">{w1FollowUp}</span>
+                                      </div>
+                                    )}
+                                    {w12FollowUp && (
+                                      <div>
+                                        <span className="text-[10px] font-semibold uppercase tracking-wider mr-1.5" style={{ color: 'var(--gold-dark)' }}>W12</span>
+                                        <span className="text-sm text-navy/80 italic">{w12FollowUp}</span>
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
                               </div>
                             );
                           })}

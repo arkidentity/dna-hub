@@ -208,7 +208,7 @@ export async function GET(
       appAccountId
         ? supabase
             .from('life_assessment_responses')
-            .select('assessment_type, category_scores, overall_score, responses, submitted_at')
+            .select('assessment_type, category_scores, overall_score, responses, follow_ups, submitted_at')
             .eq('account_id', appAccountId)
             .eq('status', 'submitted')
             .order('submitted_at', { ascending: true })
@@ -276,8 +276,8 @@ export async function GET(
         } : null,
         // Life assessment results (synced from Daily DNA app)
         life_assessments: lifeAssessmentsResult.data ? {
-          week1: (lifeAssessmentsResult.data as Array<{ assessment_type: string; category_scores: Record<string, number> | null; overall_score: number | null; responses: Record<string, unknown>; submitted_at: string | null }>).find(r => r.assessment_type === 'week_1') || null,
-          week12: (lifeAssessmentsResult.data as Array<{ assessment_type: string; category_scores: Record<string, number> | null; overall_score: number | null; responses: Record<string, unknown>; submitted_at: string | null }>).find(r => r.assessment_type === 'week_12') || null,
+          week1: (lifeAssessmentsResult.data as Array<{ assessment_type: string; category_scores: Record<string, number> | null; overall_score: number | null; responses: Record<string, unknown>; follow_ups: Record<string, string> | null; submitted_at: string | null }>).find(r => r.assessment_type === 'week_1') || null,
+          week12: (lifeAssessmentsResult.data as Array<{ assessment_type: string; category_scores: Record<string, number> | null; overall_score: number | null; responses: Record<string, unknown>; follow_ups: Record<string, string> | null; submitted_at: string | null }>).find(r => r.assessment_type === 'week_12') || null,
         } : null,
       };
     }
