@@ -16,7 +16,7 @@
  */
 
 import { getSupabaseAdmin } from './auth'
-import { createServerSupabase } from './supabase'
+import { createServerSupabase } from './supabase-server'
 
 // Lazy accessor for admin queries (bypasses RLS)
 const adminDb = { from: (table: string) => getSupabaseAdmin().from(table) }
