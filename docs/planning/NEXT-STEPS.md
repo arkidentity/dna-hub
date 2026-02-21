@@ -1,6 +1,6 @@
 # DNA Hub + Daily DNA — Next Steps
 
-**Last Updated:** February 18, 2026 (evening)
+**Last Updated:** February 21, 2026
 
 ---
 
@@ -307,6 +307,32 @@ DNA coaches (admins) can now fully manage cohort content from the admin church v
 | Context-aware training (smart content by week/stage) | Medium | Iterative enhancement |
 | DNA Groups Phases B-D (Journey View, Multiplication) | Medium | Some built, some pending |
 | Engagement analytics | Low | Revisit at scale |
+| **Daily DNA — Shell caching optimization (scale)** | Low | See note below |
+
+### 📌 Future Performance: Daily DNA Shell Caching (Scale Optimization)
+
+**Context:** Added Feb 21, 2026 — relevant when user base grows significantly (5k+ users).
+
+**Current architecture:** The `no-store` `Cache-Control` header is set on all HTML routes in Daily DNA's `next.config.ts`. This is required so that Next.js middleware runs on every request to detect the church subdomain and inject the correct branding cookie. This means every page navigation makes a round-trip to the server for a fresh HTML shell.
+
+**Why it's fine now:** At current scale (100 users), this is negligible. The local-first architecture means zero DB reads on page load — the server just serves an HTML shell and the app hydrates from localStorage instantly.
+
+**When to revisit (5k+ users or if shell latency becomes noticeable):**
+
+Eliminate the `no-store` requirement by moving church branding detection fully to the client side:
+
+1. **Read the `church_config` cookie client-side** in `ThemeProvider` instead of passing `initialTheme` as a server prop from `layout.tsx`. The cookie is already set by middleware and readable in JavaScript.
+2. **Remove the `getChurchBranding()` server call** from `layout.tsx` — it currently adds a Supabase RPC round-trip on every server render.
+3. **Change `Cache-Control` from `no-store` to `s-maxage=60, stale-while-revalidate=300`** — lets Vercel's CDN cache the shell for 60 seconds, serve stale while revalidating. Navigation becomes near-instant since the shell is edge-cached.
+4. **Middleware still sets the cookie** — it just doesn't need to trigger a full re-render each time.
+
+**Trade-off:** Users switching churches/subdomains would see up to 60s of stale branding. Acceptable for the typical use case (one church per device). A `Vary: host` header can scope cache per subdomain.
+
+**Files to change:**
+- `daily-dna/next.config.ts` — update `Cache-Control` header
+- `daily-dna/app/layout.tsx` — remove `getChurchBranding()` server call, remove `initialTheme` prop
+- `daily-dna/components/ThemeProvider.tsx` — read `church_config` cookie client-side on mount
+- Keep middleware as-is (still sets the cookie on first visit)
 
 ---
 

@@ -4,7 +4,7 @@
 
 # **THE 90-DAY TOOLKIT**
 
-## **Month 2: Deepening (Weeks 5-8)**
+## **Month 2: Building (Weeks 5-8)**
 
 ## 
 
@@ -12,7 +12,7 @@
 
 ## 
 
-*A discipleship resource from ARK Identity*
+*A discipleship resource from DNA Discipleship*
 
 ***dnadiscipleship.com***
 
@@ -279,6 +279,8 @@ Disciples:
 
 ### 
 
+### 
+
 ### **Q\&A Coaching Tips**
 
 **How to Answer Well:**
@@ -329,8 +331,6 @@ Some questions don't have clean answers. "I don't fully understand why God allow
 
 **Address directly:** "Where did you hear that? Let's compare it to Scripture."
 
----
-
 ### **Leader Debrief (After the Meeting)**
 
 * What questions revealed deeper issues?  
@@ -342,8 +342,7 @@ Some questions don't have clean answers. "I don't fully understand why God allow
 
 * Research any unanswered questions and share findings in group chat  
 * Check in individually with anyone whose questions revealed spiritual crisis  
-* Recommend resources (books, sermons, articles) for deeper study  
-  ---
+* Recommend resources (books, sermons, articles) for deeper study
 
 
 # **Week 6:** 
@@ -549,9 +548,9 @@ Discipleship isn't just about knowledge—it's about obedience. Jesus didn't jus
 * Pray for courage and sensitivity to the Holy Spirit  
 * Bring whatever is needed for the activity
 
-### **Outreach Activity Options**
+### 
 
-**Choose one based on your group's context and comfort level:**
+### **Outreach Activity Options**
 
 **1\. Street Evangelism**
 
@@ -595,8 +594,9 @@ Discipleship isn't just about knowledge—it's about obedience. Jesus didn't jus
 
 * Host a BBQ in someone's neighborhood  
 * Invite neighbors  
-* Create an environment for organic gospel conversations  
-  ---
+* Create an environment for organic gospel conversations
+
+## 
 
 ## **Activity Structure (2-3 hours)**
 
@@ -720,8 +720,8 @@ Use your next DNA meeting to fully process the experience. Remind your disciples
 * Don't shame them  
 * Let them observe first  
 * Encourage: "You don't have to do it today. Just watch. Next time you'll be ready."  
-* Pray with them after to break off fear  
-  ---
+* Pray with them after to break off fear
+
 
 ### 
 
@@ -856,13 +856,11 @@ This debrief serves as a natural bridge into testimony building. Disciples are p
 
 "You all have stories like these. Tonight, we're going to help you BUILD powerful testimonies using the same framework we just modeled. Pull out your Testimony Development Worksheets—we're going to work through them together."
 
+### 
+
 ### **4\. Teaching: The STORY Framework (15 minutes)**
 
-**What is a testimony?**
-
-A testimony is your personal account of God's activity in your life. It's not just about salvation—it's about every moment God shows up, provides, heals, speaks, guides, or transforms.
-
-**Why testimonies matter:**
+**What is a testimony?** A testimony is your personal account of God's activity in your life. It's not just about salvation—it's about every moment God shows up, provides, heals, speaks, guides, or transforms.
 
 * **They build faith** (Romans 10:17 \- "Faith comes by hearing")  
 * **They overcome darkness** (Revelation 12:11 \- "We overcome by the blood of the Lamb and the word of our testimony")  
@@ -896,8 +894,7 @@ A testimony is your personal account of God's activity in your life. It's not ju
 * What hope can you offer them?  
 * How can they experience God's faithfulness too?
 
-
-  **Examples of testimony types:**
+**Examples of testimony types:**
 
 * **Salvation stories** \- How you came to faith in Jesus  
 * **Healing testimonies** \- Physical, emotional, or spiritual healing  
@@ -931,6 +928,8 @@ A testimony is your personal account of God's activity in your life. It's not ju
 
 ❌ Leaving out the struggle \- Only sharing the victory makes it unrelatable
 
+### 
+
 ### **5\. Testimony Workshop: Building Your Story (35 minutes)**
 
 **Instructions:** "Now it's your turn. You received the Testimony Development Worksheet last week. Let's refine your testimonies together using the STORY Framework."
@@ -960,8 +959,6 @@ A testimony is your personal account of God's activity in your life. It's not ju
 
 **Leaders circulate during this time:**
 
-* Listen to each pair
-
 * Ask clarifying questions
 
 * Help disciples identify what's working and what needs refinement
@@ -981,8 +978,6 @@ A testimony is your personal account of God's activity in your life. It's not ju
   * "How does this encourage your faith?"
 
 **Affirm every testimony:** "This is what we're learning to do—see God's activity in our lives and tell others about it. You're becoming witnesses."
-
-### 
 
 ### **6\. Challenge & Commission (10 minutes)**
 
@@ -1134,6 +1129,8 @@ Follow-Up:
 
 **This is exactly what Phase 1 is supposed to look like.**
 
+## 
+
 ## **Evaluation: Are They Ready for Month 3?**
 
 ### **Green Lights (Ready for Month 3):**
@@ -1176,6 +1173,8 @@ Follow-Up:
 * **Don't drag uncommitted disciples into Month 3\.** It's unfair to them and the group.
 
 **Better to reset now than to limp through the next 4 weeks.**
+
+### 
 
 ### **Prepare for Month 3: Breakthrough (Weeks 9-12)**
 

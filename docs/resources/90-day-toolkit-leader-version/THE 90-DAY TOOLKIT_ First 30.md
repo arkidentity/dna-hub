@@ -14,7 +14,7 @@
 
 ## 
 
-*A discipleship resource from ARK Identity*
+*A discipleship resource from DNA Discipleship*
 
 # ***dnadiscipleship.com***
 
@@ -93,17 +93,16 @@ Check in between meetings. Encourage daily habits. Celebrate small wins.
 
 ### **Before Week 1:**
 
-* \[ \] Confirm DNA Groups Dashboard access  
-* \[ \] Add all disciples to your dashboard  
-* \[ \] Send Week 1 Life Assessment links  
-* \[ \] Review this entire Month 1 guide  
+* \[ \] Create DNA Group and add disciples (they should get an email with the dna app info)  
+* \[ \] make sure disciples are logged in on the app (syncs their data to the dashboard)  
+* \[ \] Week 1 Life Assessment is in the pathway tab on the app  
+* \[ \] Review this entire Month 1 guide with your Co-Leader  
 * \[ \] Pray for each disciple by name daily
 
 ### **Each Week:**
 
 * \[ \] Read the upcoming week's lesson plan 2-3 days in advance  
 * \[ \] Complete the week's activity yourself first (model before teaching)  
-* \[ \] Gather materials (ARK app access, wifi, etc.)  
 * \[ \] Pray specifically for each disciple
 
 ### **Between Meetings:**
@@ -112,10 +111,6 @@ Check in between meetings. Encourage daily habits. Celebrate small wins.
 * \[ \] Post your own 3D Journal/4D Prayer in group chat (model it)  
 * \[ \] Address any red flags individually  
 * \[ \] Debrief with your co-leader after each meeting
-
-# 
-
-# 
 
 ## **Week 1:** 
 
@@ -133,12 +128,12 @@ You can't grow what you don't measure. Life Assessment helps disciples become se
 
 **Preparation (DNA Leader \- Before Week 1\)**
 
-**CRITICAL: You must have DNA Groups Dashboard access before Week 1**
+**CRITICAL: You must have DNA Group setup before Week 1**
 
 1. **Confirm Dashboard Access**  
    * Log in to the DNA Groups Dashboard  
    * Verify you can see your group and disciples  
-   * If you cannot log in, contact your church leader or ARK Identity immediately  
+   * If you cannot log in, contact your church leader or DNA admin immediately  
 2. **Send Assessment Links**  
    * From your dashboard, send the Week 1 Life Assessment link to each disciple  
    * You can send this 1-2 days before the meeting OR right as the meeting starts  
@@ -306,13 +301,13 @@ Most Christians struggle with Bible reading because they don't know how to move 
 
 Leaders:
 
-* Use Today’s Scripture in the ARK app or pick a passage that you want your disciples to use.  
-* Complete your own 3D beforehand so you can model it  
-* Use the ARK app or bring paper for disciples to use.
+* Use Today’s Scripture in the DNA app or pick a passage that you want your disciples to use.  
+* Complete your own 3D Journal beforehand so you can model it  
+* Use the DNA app or bring paper for disciples to use.
 
 Disciples:
 
-* Make sure you are logged in to the ARK app. [app.arkidentity.com](http://app.arkidentity.com) (this ensures your journal entries will be saved)
+* Make sure they are logged in to the DNA app using your church subdomain. For example yourchurch.dailydna.app (this ensures your journal entries will be saved)
 
 ## 
 
@@ -335,7 +330,7 @@ Disciples:
 
 ### **Example: (Using Hebrews 4:14-16)**
 
-**S:** “Therefore, since we have a great high priest who has ascended into heaven, Jesus the Son of God, let us hold firmly to the faith we profess. For we do not have a high priest who is unable to empathize with our weaknesses, but we have one who has been tempted in every way, just as we are—yet he did not sin. Let us then approach God’s throne of grace with confidence, so that we may receive mercy and find grace to help us in our time of need.” \- Hebrews 4:14-16
+“Therefore, since we have a great high priest who has ascended into heaven, Jesus the Son of God, let us hold firmly to the faith we profess. For we do not have a high priest who is unable to empathize with our weaknesses, but we have one who has been tempted in every way, just as we are—yet he did not sin. Let us then approach God’s throne of grace with confidence, so that we may receive mercy and find grace to help us in our time of need.” \- Hebrews 4:14-16
 
 **1D (HEAD):** How could we be ashamed to approach the Father after knowing we have Jesus as our representative. He has made a way for us to be reconciled back to the Father. This should cause us to run to God and ask for help at any moment whether good or bad.
 
@@ -418,7 +413,7 @@ Disciples:
 **Problem-Solve Together:**
 
 * **"I forget"** → Set a daily phone reminder  
-* **"I don't know what to read"** → Use "Today's Scripture" in the ARK app  
+* **"I don't know what to read"** → Use "Today's Scripture" in the DNA app  
 * **"I'm too busy"** → What can you cut? What's less important than hearing from God?  
 * **"I don't understand the Bible well enough"** → That's exactly WHY you journal—understanding grows with practice
 
@@ -470,13 +465,13 @@ Establish a daily prayer rhythm using the 4D framework (Revere, Reflect, Request
 
 ### **Why This Matters**
 
-Prayer isn't just asking God for things—it's partnering with Him in what He's already doing. Jesus stands in the gap for us; because we're in Him, we stand in the gap for others. The 4D Prayer Rhythm makes this a sustainable daily practice.
+Prayer isn't just asking God for things—it's partnering with Him in what He's already doing. Jesus stands in the gap for us; because we're in Him, we do the same for others. The 4D Prayer Rhythm makes this a sustainable daily practice.
 
 ## **Preparation (Before the Meeting)**
 
 **Leaders:**
 
-* Set up your own "In The Gap" prayer cards in the ARK app  
+* Set up your own prayer cards in the DNA app  
 * Test the prayer session flow so you can guide confidently  
 * Prepare to teach Ezekiel 22:30 and Hebrews 7:25  
 * Have your device ready to screen share (if using projector/TV)  
@@ -484,12 +479,12 @@ Prayer isn't just asking God for things—it's partnering with Him in what He's 
 
 **Disciples:**
 
-* Have ARK app open on phone or computer (app.arkidentity.com)  
+* Have DNA app open on phone or computer  
 * No other preparation needed
 
 ## **Meeting Structure (90 minutes)**
 
-### **1\. Opening: The Theology of "In The Gap" (20 minutes)**
+### **1\. Opening: The Theology of 4D Prayer (20 minutes)**
 
 *"I searched for a man among them who would build up the wall and stand in the gap before Me for the land, so that I would not destroy it; but I found no one."*  
  **— Ezekiel 22:30 NASB**
@@ -520,37 +515,38 @@ You are a priest. Intercession isn't optional—it's your identity.
 
 **The 4D Prayer Rhythm:**
 
-"Today we're introducing a tool that makes daily intercession simple, sustainable, and powerful. It's called the **4D Prayer Rhythm**, and it happens in a feature of the ARK app called **'In The Gap.'**
+Today we're introducing a tool that makes daily intercession simple, sustainable, and powerful.
 
-The rhythm has 4 movements:
+**The 4 dimensions of prayer**
 
 1. **REVERE** — Worship God for who He is  
 2. **REFLECT** — Thank God for what He's done  
 3. **REQUEST** — Intercede for others  
 4. **REST** — Listen to what God is saying
 
-This isn't just for beginners—it's a lifestyle. A rhythm of relationship. You'll do this daily, just like your 3D Journal."
+This isn't just for beginners—it's a lifestyle. A rhythm of relationship. 
+
+You'll do this daily, just like your 3D Journal."
 
 ---
 
 ### **2\. Create Prayer Cards Together (20 minutes)**
 
-In The Gap isn't just a prayer session—it's a prayer room. When you open the ARK app and go to the **Prayer** tab, you'll enter 'In The Gap.'
+In The Gap isn't just a prayer session—it's a prayer room. When you open the DNA app and go to the **Prayer** tab, you'll enter 'In The Gap.'
 
 The first thing you'll do is create **prayer cards**—these are the people and situations you're standing in the gap for. Creating these cards is a prayerful act. Don't rush it.
 
 **Live Demo (Leaders screen share or walk through together):**
 
-1. Open ARK app → Click **Prayer** tab  
-2. You'll see the entry to **"In The Gap"**  
-3. Click **Create Prayer Card**  
+1. Open DNA app → Click **Prayer** tab  
+2. Enter into the prayer lobby  
+3. Click **Add your first prayer card**  
 4. Fill in:  
    * Name of person/situation  
    * Specific request (be detailed—not "bless them" but "breakthrough in marriage")  
-   * Optional: Scripture to pray over them  
-   * Optional: Photo
+   * Optional: Scripture to pray over them
 
-**Categories to Create (5-10 cards total):**
+**Create (5-10 cards total)**
 
 * **DNA Group:** One card per person in your group  
 * **Family:** Parents, spouse, kids, siblings  
@@ -586,7 +582,7 @@ We're going to do this together for 20 minutes. I'll pray out loud to set the at
 
 **REVERE (Awe and honor for who God is)**
 
-* Screen shows prompts: "Who is God to you today?"  
+* The screen shows prompts: "Who is God to you today?"  
 * Music plays softly  
 * **Leaders pray out loud first:** "God, You are faithful. You are mighty. You are near."  
 * Disciples join in, praying out loud or silently
@@ -647,7 +643,7 @@ We're going to do this together for 20 minutes. I'll pray out loud to set the at
 Here's what we're asking: **Do both daily for the next 7 days.**
 
 **Morning:** 3D Journal (10 minutes)  
-**Anytime:** In The Gap prayer session (10 minutes)  
+**Anytime:** 4D prayer session (10 minutes)  
 **Total:** 20 minutes a day with God
 
 If you do these two things consistently, you WILL grow. It's not complicated—it's just consistent."
@@ -693,7 +689,7 @@ Leaders will post first every day to model. We're not trying to shame anyone—w
 ### **Common Struggles:**
 
 **"I don't have a smartphone."**  
- → "The app works on any computer at app.arkidentity.com. Or you can use a notepad—write out the 4 movements and your prayer list. The app just makes it easier."
+ → "The app works on any computer at dailydna.app  Or you can use a notepad—write out the 4 movements and your prayer list. The app just makes it easier."
 
 **"I forgot to pray some days."**  
  → "That's okay—just restart tomorrow. We're building a habit, not earning God's love."
@@ -741,7 +737,7 @@ You can't build a house without a foundation. Creed Cards give us bite-sized, bi
 
 **Leaders:**
 
-* Access Creed Cards in the ARK Identity app
+* Access Creed Cards in the DNA Identity app
 
 * Select 2-3 cards for tonight (see suggestions below)
 
@@ -797,7 +793,7 @@ You can't build a house without a foundation. Creed Cards give us bite-sized, bi
 
 ### 
 
-### **2\. How to Use Creed Cards (10 minutes)            ARK app: [app.arkidentity.com](http://app.arkidentity.com)**
+### **2\. How to Use Creed Cards (10 minutes)                                dailydna.app**
 
 ### **Step 1: DISCUSS (Before Flipping)**
 
@@ -1034,4 +1030,4 @@ Before moving to Month 2, evaluate each disciple:
 
 ### **Questions? Need Support?**
 
-Contact ARK Identity: [info@arkidentity.com](mailto:info@arkidentity.com)            Visit dnadiscipleship.com for tools and resources
+Contact  [info@dnadiscipleship.com](mailto:info@dnadiscipleship.com)                            Visit [dnadiscipleship.com](http://dnadiscipleship.com) for tools and resources

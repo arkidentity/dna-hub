@@ -14,9 +14,21 @@
 
 ## **A Practical Roadmap for DNA Leaders**
 
-*A discipleship resource from ARK Identity*
+*A discipleship resource from DNA Discipleship*
 
 ***dnadiscipleship.com***
+
+## 
+
+## 
+
+## 
+
+## 
+
+## 
+
+## 
 
 ## **What Is the 90-Day Toolkit?**
 
@@ -39,6 +51,8 @@
 * ## Complete all 12 weeks before moving to Phase 2
 
 ## ---
+
+## 
 
 ## **The 12-Week Structure**
 
@@ -71,9 +85,13 @@
 
 * ## Surface-level sharing (no vulnerability)
 
+### 
+
 ### **MONTH 2: DEEPENING (Weeks 5-8)**
 
-## **Focus:** Experiencing the tools in community. The emphasis is on vulnerability and ownership—disciples take more responsibility for their growth and begin to minister to one another.
+## **Focus:** 
+
+## Experiencing the tools in community. The emphasis is on vulnerability and ownership—disciples take more responsibility for their growth and begin to minister to one another.
 
 | Week | Tool | Purpose |
 | :---- | :---- | :---- |
@@ -104,7 +122,9 @@
 
 ### **MONTH 3: BREAKTHROUGH (Weeks 9-12)**
 
-## **Focus:** Disciples are ready to go deeper. The emphasis is on confidence and competence—addressing root issues, breaking strongholds, and preparing for Phase 2 (where they'll begin co-leading and facilitating).
+## **Focus:** 
+
+## Disciples are ready to go deeper. The emphasis is on confidence and competence—addressing root issues, breaking strongholds, and preparing for Phase 2 (where they'll begin co-leading and facilitating).
 
 | Week | Tool | Purpose |
 | :---- | :---- | :---- |
@@ -185,7 +205,9 @@
 
 ## 
 
-## **Key Principles**
+## 
+
+##  **Key Principles**
 
 ### **1\. Connection Before Correction**
 
@@ -197,7 +219,7 @@ Disciples won't be vulnerable if they don't feel safe. Create a culture of grace
 
 ### **3\. Relationship Before Revelation**
 
-God speaks most clearly in the context of relationship. Prioritize connection with Him and with each other.
+God speaks most clearly in the context of relationships. Prioritize connection with Him and with one another.
 
 ### **4\. Model First, Then Release**
 
@@ -206,6 +228,8 @@ Leaders demonstrate vulnerability, obedience, and faith before asking disciples 
 ### **5\. Daily Habits \= Transformation**
 
 The tools work when they're practiced daily. 3D Journal \+ 4D Prayer \= the foundation of a disciple's life.
+
+## 
 
 ## **What Happens After Week 12?**
 
@@ -262,8 +286,6 @@ After completing Week 12, assess whether your disciples are ready to move to Pha
 
 ## ---
 
-## 
-
 ## **The Big Picture: Phases 0-3**
 
 | Phase | Timeline | Focus | Leader Role |
@@ -273,11 +295,13 @@ After completing Week 12, assess whether your disciples are ready to move to Pha
 | **Phase 2: Growth & Empowerment** | Months 4-6 | Disciples co-facilitate, use Supplemental Lessons | Coaching |
 | **Phase 3: Multiplication Prep** | Months 7-12 | Disciples facilitate 75%+, prepare to launch own groups | Releasing  |
 
-## **Daily Habits: Utilizing the ARK app**
+## 
+
+## **Daily Habits: Utilizing the DNA app**
 
 ## The 90-Day Toolkit introduces two **non-negotiable daily habits** in Weeks 2-3: 
 
-## These tools can be accessed in the ARK app. [app.arkidentity.com](http://app.arkidentity.com)
+## These tools can be accessed in the DNA app.
 
 ### **3D Journal (Week 2\)**
 
@@ -285,7 +309,7 @@ After completing Week 12, assess whether your disciples are ready to move to Pha
 
 * ## Read Scripture → Process it through Head (understand), Heart (apply), Hands (obey)
 
-* ## Use the ARK app or paper journal
+* ## Use the DNA app or paper journal
 
 ### **4D Prayer (Week 3\)**
 
@@ -293,11 +317,13 @@ After completing Week 12, assess whether your disciples are ready to move to Pha
 
 * ## Revere (worship), Reflect (gratitude), Request (intercession), Rest (listen)
 
-* ## Use the "In The Gap" feature in the ARK app
+* ## Use the 4D Prayer feature in the DNA app
 
 ## **Total time commitment:** 20- 30 minutes per day
 
 ## **Why this matters:** Disciples who journal and pray daily for 90 days will be **unrecognizable** from who they were at the start. This is where transformation happens—not in weekly meetings, but in daily rhythms.
+
+## 
 
 ## **Leader Expectations**
 
@@ -339,6 +365,8 @@ After completing Week 12, assess whether your disciples are ready to move to Pha
 
 ## ---
 
+## 
+
 ## **Common Mistakes to Avoid**
 
 ### **1\. Skipping Weeks or Changing the Order**
@@ -359,17 +387,17 @@ If someone isn't engaging, address it privately. Don't wait until Week 12\.
 
 ### **5\. Making It About Information, Not Transformation**
 
-The goal isn't to complete lessons—it's to make disciples. Prioritize heart change over curriculum completion.
+The goal isn't to complete lessons—it's to make disciples. Prioritize heart change over curriculum.
 
 ## **Frequently Asked Questions**
 
 ### **What if someone misses a week?**
 
-Catch them up individually before the next meeting. Don't repeat a week for one person—it disrupts the flow for everyone else.
+Catch them up individually before the next meeting. Don't repeat a week for one person.
 
 ### **What if someone isn't doing the daily habits?**
 
-Address it privately. Ask why. Remove barriers. Create accountability. If they're still not willing, they may not be ready for DNA.
+Address it privately. Ask why. Remove barriers. Create accountability. They may not be ready for DNA.
 
 ### **What if we finish early or need more time in a session?**
 
@@ -382,10 +410,6 @@ Offer to connect them with a counselor or pastor. Don't try to be their therapis
 ### **Can I add my own content or lessons?**
 
 Not during the first 90 days. Follow the toolkit exactly. After Week 12, you have freedom to customize in Phase 2\.
-
-## ---
-
-## 
 
 ## **Final Thoughts**
 
@@ -417,9 +441,8 @@ Not during the first 90 days. Follow the toolkit exactly. After Week 12, you hav
 
 ## **Questions? Need support?**
 
-## Contact ARK Identity: info@arkidentity.com
+## Contact info@dnadiscipleship.com
 
 ## ---
 
 ## *Let's go build the Kingdom.*
-

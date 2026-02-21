@@ -10,7 +10,7 @@
 
 ## 
 
-*A discipleship resource from ARK Identity*
+*A discipleship resource from DNA Discipleship*
 
 ## ***dnadiscipleship.com***
 
@@ -372,8 +372,6 @@ You've broken strongholds in Week 9\. Now it's time to build up the truth. The e
 * Come ready to see yourself the way God sees you  
 * Bring your Bible and a pen  
 * Be prepared to hear truth that might challenge your self-perception
-
-## 
 
 ## **Meeting Structure (90 minutes)**
 
