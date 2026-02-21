@@ -676,14 +676,12 @@ function ToolCard({ tool }: { tool: Tool }) {
             {openIndex === i && (
               <div
                 style={{
-                  padding: '0 2.75rem 1.5rem',
+                  padding: '1.25rem 2.75rem 1.5rem',
                   fontSize: '0.875rem',
-                  color: 'var(--lp-mid)',
+                  color: item.label === 'What Changes' ? 'var(--lp-ink)' : 'var(--lp-mid)',
                   lineHeight: 1.75,
                   borderTop: '1px solid var(--lp-rule)',
-                  paddingTop: '1.25rem',
                   fontStyle: item.label === 'What Changes' ? 'italic' : 'normal',
-                  color: item.label === 'What Changes' ? 'var(--lp-ink)' : 'var(--lp-mid)',
                 } as React.CSSProperties}
               >
                 {item.content}
