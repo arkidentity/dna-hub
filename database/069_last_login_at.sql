@@ -3,4 +3,4 @@
 
 ALTER TABLE users ADD COLUMN IF NOT EXISTS last_login_at TIMESTAMPTZ;
 
-COMMENT ON COLUMN users.last_login_at IS 'Timestamp of the most recent successful magic-link login. NULL means never logged in after initial invite.';
+COMMENT ON COLUMN users.last_login_at IS 'Timestamp of the most recent successful login (password, Google OAuth, or magic link). NULL means the user has never logged in.';

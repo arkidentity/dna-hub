@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerClient } from '@supabase/ssr'
+import { getSupabaseAdmin } from '@/lib/auth'
 
 /**
  * OAuth callback handler.
@@ -31,9 +32,17 @@ export async function GET(request: NextRequest) {
       }
     )
 
-    const { error } = await supabase.auth.exchangeCodeForSession(code)
+    const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
+      // Stamp last_login_at for the authenticated user
+      const email = sessionData?.user?.email
+      if (email) {
+        await getSupabaseAdmin()
+          .from('users')
+          .update({ last_login_at: new Date().toISOString() })
+          .eq('email', email.toLowerCase())
+      }
       return response
     }
   }

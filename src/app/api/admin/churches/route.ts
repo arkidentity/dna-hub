@@ -159,6 +159,143 @@ export async function GET() {
   }
 }
 
+export async function POST(request: NextRequest) {
+  try {
+    const session = await getUnifiedSession();
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    if (!isAdmin(session)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const body = await request.json();
+    const {
+      churchName,
+      city,
+      state,
+      leaderName,
+      leaderEmail,
+      leaderPhone,
+      leaderRole,
+      initialStatus = 'active',
+    } = body;
+
+    if (!churchName?.trim()) {
+      return NextResponse.json({ error: 'Church name is required' }, { status: 400 });
+    }
+    if (!leaderName?.trim()) {
+      return NextResponse.json({ error: 'Leader name is required' }, { status: 400 });
+    }
+    if (!leaderEmail?.trim()) {
+      return NextResponse.json({ error: 'Leader email is required' }, { status: 400 });
+    }
+
+    const supabase = getSupabaseAdmin();
+    const normalizedEmail = leaderEmail.trim().toLowerCase();
+
+    // 1. Create the church record
+    const { data: church, error: churchError } = await supabase
+      .from('churches')
+      .insert({
+        name: churchName.trim(),
+        status: initialStatus,
+      })
+      .select()
+      .single();
+
+    if (churchError || !church) {
+      console.error('[ADD CHURCH] church insert error:', churchError);
+      return NextResponse.json({ error: 'Failed to create church' }, { status: 500 });
+    }
+
+    // 1b. Create a minimal assessment record to store city/state/contact info
+    await supabase.from('church_assessments').insert({
+      church_id: church.id,
+      church_name: churchName.trim(),
+      contact_name: leaderName.trim(),
+      contact_email: leaderEmail.trim().toLowerCase(),
+      contact_phone: leaderPhone?.trim() || null,
+      church_city: city?.trim() || null,
+      church_state: state?.trim() || null,
+    });
+
+    // 2. Create or find the user in unified auth
+    let userId: string;
+    const { data: existingUser } = await supabase
+      .from('users')
+      .select('id')
+      .eq('email', normalizedEmail)
+      .single();
+
+    if (existingUser) {
+      userId = existingUser.id;
+    } else {
+      const { data: newUser, error: userError } = await supabase
+        .from('users')
+        .insert({ email: normalizedEmail, name: leaderName.trim() })
+        .select('id')
+        .single();
+
+      if (userError || !newUser) {
+        console.error('[ADD CHURCH] user insert error:', userError);
+        await supabase.from('churches').delete().eq('id', church.id);
+        return NextResponse.json({ error: 'Failed to create user record' }, { status: 500 });
+      }
+      userId = newUser.id;
+    }
+
+    // 3. Assign roles
+    await supabase.from('user_roles').upsert(
+      { user_id: userId, role: 'church_leader', church_id: church.id },
+      { onConflict: 'user_id,role,church_id', ignoreDuplicates: true }
+    );
+    await supabase.from('user_roles').upsert(
+      { user_id: userId, role: 'dna_leader', church_id: church.id },
+      { onConflict: 'user_id,role,church_id', ignoreDuplicates: true }
+    );
+    await supabase.from('user_roles').upsert(
+      { user_id: userId, role: 'training_participant' },
+      { onConflict: 'user_id,role,church_id', ignoreDuplicates: true }
+    );
+
+    // 4. Create dna_leaders record (pre-activated)
+    await supabase.from('dna_leaders').upsert(
+      {
+        email: normalizedEmail,
+        name: leaderName.trim(),
+        phone: leaderPhone?.trim() || null,
+        church_id: church.id,
+        user_id: userId,
+        is_active: true,
+        activated_at: new Date().toISOString(),
+        invited_by_type: 'super_admin',
+      },
+      { onConflict: 'email' }
+    );
+
+    // 5. Create church_leaders record
+    const { error: clError } = await supabase.from('church_leaders').insert({
+      church_id: church.id,
+      email: normalizedEmail,
+      name: leaderName.trim(),
+      role: leaderRole?.trim() || null,
+      is_primary_contact: true,
+      user_id: userId,
+    });
+
+    if (clError) {
+      console.error('[ADD CHURCH] church_leaders insert error:', clError);
+      // Non-fatal — church and auth records are fine
+    }
+
+    return NextResponse.json({ church: { id: church.id, name: church.name } }, { status: 201 });
+  } catch (error) {
+    console.error('[ADD CHURCH] Unexpected error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
 export async function PATCH(request: NextRequest) {
   try {
     const session = await getUnifiedSession();

@@ -62,6 +62,9 @@ function LoginContent() {
         return;
       }
 
+      // Stamp last_login_at (fire and forget — don't block redirect)
+      fetch('/api/auth/session-start', { method: 'POST' }).catch(() => {});
+
       // Success — redirect based on roles
       router.replace('/dashboard');
     } catch (err) {
