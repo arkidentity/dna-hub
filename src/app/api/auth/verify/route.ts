@@ -39,6 +39,12 @@ export async function GET(request: NextRequest) {
     .update({ used: true })
     .eq('token', token);
 
+  // Stamp last_login_at on the user record
+  await supabase
+    .from('users')
+    .update({ last_login_at: new Date().toISOString() })
+    .eq('email', tokenData.email);
+
   // Set unified session cookie
   const cookieStore = await cookies();
 

@@ -9,11 +9,13 @@ import {
   CheckCircle,
   Clock,
   AlertTriangle,
-  ChevronRight,
   Mail,
   Heart,
   RefreshCw,
   X,
+  Pencil,
+  Search,
+  LogIn,
 } from 'lucide-react';
 import { DNALeader, DNAGroup, DNAGroupPhase } from '@/lib/types';
 
@@ -27,6 +29,10 @@ interface HealthSummary {
 
 interface GroupWithCount extends DNAGroup {
   disciple_count?: number;
+}
+
+interface DNALeaderWithLogin extends Omit<DNALeader, never> {
+  last_login_at?: string | null;
 }
 
 interface GroupsTabProps {
@@ -52,7 +58,7 @@ const HEALTH_STATUS: Record<string, { label: string; color: string; icon: typeof
 export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [leaders, setLeaders] = useState<DNALeader[]>([]);
+  const [leaders, setLeaders] = useState<DNALeaderWithLogin[]>([]);
   const [groups, setGroups] = useState<GroupWithCount[]>([]);
   const [healthSummaries, setHealthSummaries] = useState<HealthSummary[]>([]);
   const [stats, setStats] = useState({
@@ -76,6 +82,16 @@ export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabPr
   const [inviting, setInviting] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState(false);
+
+  // Edit modal state
+  const [editingLeader, setEditingLeader] = useState<DNALeaderWithLogin | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', email: '', phone: '' });
+  const [saving, setSaving] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  // Search / filter state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'pending'>('all');
 
   useEffect(() => {
     fetchData();
@@ -143,12 +159,81 @@ export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabPr
     }
   };
 
+  const openEditModal = (leader: DNALeaderWithLogin) => {
+    setEditingLeader(leader);
+    setEditForm({ name: leader.name, email: leader.email, phone: leader.phone || '' });
+    setEditError(null);
+  };
+
+  const handleEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingLeader) return;
+    setSaving(true);
+    setEditError(null);
+
+    try {
+      const response = await fetch(
+        `/api/churches/${churchId}/dna-leaders/${editingLeader.id}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: editForm.name,
+            email: editForm.email,
+            phone: editForm.phone || null,
+          }),
+        }
+      );
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update leader');
+      }
+
+      setEditingLeader(null);
+      fetchData();
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : 'Failed to update leader');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const filteredLeaders = leaders.filter(leader => {
+    const q = searchQuery.toLowerCase();
+    const matchesSearch =
+      !q ||
+      leader.name.toLowerCase().includes(q) ||
+      leader.email.toLowerCase().includes(q) ||
+      (leader.phone?.toLowerCase().includes(q) ?? false);
+
+    const matchesStatus =
+      filterStatus === 'all' ||
+      (filterStatus === 'active' && !!leader.activated_at) ||
+      (filterStatus === 'pending' && !leader.activated_at);
+
+    return matchesSearch && matchesStatus;
+  });
+
   const getHealthForLeader = (leaderId: string): HealthSummary | undefined => {
     return healthSummaries.find(h => h.leader_id === leaderId);
   };
 
   const getGroupsForLeader = (leaderId: string): GroupWithCount[] => {
     return groups.filter(g => g.leader_id === leaderId);
+  };
+
+  const formatLastLogin = (dateStr: string | null | undefined): string => {
+    if (!dateStr) return 'Never logged in';
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return 'Today';
+    if (diffDays === 1) return 'Yesterday';
+    if (diffDays < 7) return `${diffDays} days ago`;
+    if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) !== 1 ? 's' : ''} ago`;
+    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
   };
 
   if (loading) {
@@ -225,17 +310,42 @@ export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabPr
         </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex justify-between items-center">
-        <h2 className="text-lg font-semibold text-navy">DNA Leaders</h2>
+      {/* Search, Filter, and Actions */}
+      <div className="flex flex-col sm:flex-row gap-3 items-start sm:items-center">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-foreground-muted" />
+          <input
+            type="text"
+            placeholder="Search by name or email..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 w-full"
+          />
+        </div>
+        <select
+          value={filterStatus}
+          onChange={(e) => setFilterStatus(e.target.value as 'all' | 'active' | 'pending')}
+          className="sm:w-36"
+        >
+          <option value="all">All Status</option>
+          <option value="active">Active</option>
+          <option value="pending">Pending</option>
+        </select>
         <button
           onClick={() => setShowInviteModal(true)}
-          className="btn-primary inline-flex items-center gap-2"
+          className="btn-primary inline-flex items-center gap-2 whitespace-nowrap"
         >
           <UserPlus className="w-4 h-4" />
           Invite Leader
         </button>
       </div>
+
+      {/* Result count */}
+      {(searchQuery || filterStatus !== 'all') && (
+        <p className="text-sm text-foreground-muted">
+          {filteredLeaders.length} leader{filteredLeaders.length !== 1 ? 's' : ''} found
+        </p>
+      )}
 
       {/* Leaders List */}
       {leaders.length === 0 ? (
@@ -253,9 +363,15 @@ export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabPr
             Invite Your First Leader
           </button>
         </div>
+      ) : filteredLeaders.length === 0 ? (
+        <div className="card text-center py-12">
+          <Search className="w-12 h-12 text-foreground-muted mx-auto mb-4" />
+          <h3 className="font-medium text-navy mb-2">No Leaders Found</h3>
+          <p className="text-foreground-muted text-sm">Try adjusting your search or filter.</p>
+        </div>
       ) : (
         <div className="space-y-4">
-          {leaders.map((leader) => {
+          {filteredLeaders.map((leader) => {
             const health = getHealthForLeader(leader.id);
             const leaderGroups = getGroupsForLeader(leader.id);
             const healthStatus = health ? HEALTH_STATUS[health.status] : null;
@@ -284,7 +400,7 @@ export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabPr
                       )}
                     </div>
 
-                    <div className="flex items-center gap-4 text-sm text-foreground-muted mb-3">
+                    <div className="flex items-center gap-4 text-sm text-foreground-muted mb-2">
                       <a
                         href={`mailto:${leader.email}`}
                         className="flex items-center gap-1 text-teal hover:text-teal-light"
@@ -295,6 +411,13 @@ export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabPr
                       {leader.phone && (
                         <span>{leader.phone}</span>
                       )}
+                    </div>
+
+                    <div className="flex items-center gap-1 text-xs text-foreground-muted mb-3">
+                      <LogIn className="w-3 h-3" />
+                      <span className={!leader.last_login_at ? 'text-yellow-600' : ''}>
+                        {formatLastLogin(leader.last_login_at)}
+                      </span>
                     </div>
 
                     {/* Health flags */}
@@ -342,11 +465,112 @@ export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabPr
                     )}
                   </div>
 
-                  <ChevronRight className="w-5 h-5 text-foreground-muted flex-shrink-0" />
+                  <button
+                    onClick={() => openEditModal(leader)}
+                    className="p-1.5 text-foreground-muted hover:text-navy hover:bg-background-secondary rounded-lg transition-colors flex-shrink-0"
+                    title="Edit leader"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             );
           })}
+        </div>
+      )}
+
+      {/* Edit Leader Modal */}
+      {editingLeader && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-navy">Edit Leader</h3>
+              <button
+                onClick={() => setEditingLeader(null)}
+                className="p-1 text-foreground-muted hover:text-navy"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleEdit}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-navy mb-1">
+                    Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    required
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-navy mb-1">
+                    Email *
+                  </label>
+                  <input
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    required
+                    className="w-full"
+                  />
+                  {editingLeader.activated_at && (
+                    <p className="text-xs text-foreground-muted mt-1">
+                      Note: changing the email will update the leader&apos;s login address.
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-navy mb-1">
+                    Phone (optional)
+                  </label>
+                  <input
+                    type="tel"
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    placeholder="(555) 123-4567"
+                    className="w-full"
+                  />
+                </div>
+
+                {editError && (
+                  <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+                    {editError}
+                  </div>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingLeader(null)}
+                    className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-background-secondary transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex-1 btn-primary flex items-center justify-center gap-2"
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
+          </div>
         </div>
       )}
 

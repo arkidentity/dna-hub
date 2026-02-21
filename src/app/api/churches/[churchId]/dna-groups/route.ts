@@ -35,8 +35,25 @@ export async function GET(
 
     if (leadersError) throw leadersError;
 
+    // Join last_login_at from users table (keyed by email)
+    const leaderEmails = (leaders || []).map(l => l.email);
+    let lastLoginMap: Record<string, string | null> = {};
+    if (leaderEmails.length > 0) {
+      const { data: userRows } = await supabase
+        .from('users')
+        .select('email, last_login_at')
+        .in('email', leaderEmails);
+      (userRows || []).forEach(u => {
+        lastLoginMap[u.email] = u.last_login_at ?? null;
+      });
+    }
+    const leadersWithLogin = (leaders || []).map(l => ({
+      ...l,
+      last_login_at: lastLoginMap[l.email] ?? null,
+    }));
+
     // Get leader IDs to fetch their groups
-    const leaderIds = (leaders || []).map(l => l.id);
+    const leaderIds = leadersWithLogin.map(l => l.id);
 
     // Fetch groups and health check-ins in parallel (both depend on leaderIds)
     let groups: Array<{
@@ -108,9 +125,9 @@ export async function GET(
 
     // Calculate stats
     const stats = {
-      totalLeaders: leaders?.length || 0,
-      activeLeaders: leaders?.filter(l => l.is_active && l.activated_at).length || 0,
-      pendingInvites: leaders?.filter(l => !l.activated_at).length || 0,
+      totalLeaders: leadersWithLogin.length,
+      activeLeaders: leadersWithLogin.filter(l => l.is_active && l.activated_at).length,
+      pendingInvites: leadersWithLogin.filter(l => !l.activated_at).length,
       totalGroups: groups.length,
       totalDisciples: groups.reduce((sum, g) => sum + (g.disciple_count || 0), 0),
       healthyLeaders: healthSummaries.filter(h => h.status === 'healthy').length,
@@ -118,7 +135,7 @@ export async function GET(
     };
 
     return NextResponse.json({
-      leaders: leaders || [],
+      leaders: leadersWithLogin,
       groups,
       healthSummaries,
       stats,
