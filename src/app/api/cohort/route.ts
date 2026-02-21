@@ -133,7 +133,7 @@ function getMockCohortData(leaderName: string, churchName: string) {
 async function resolveLeader(email: string, supabase: ReturnType<typeof getSupabaseAdmin>) {
   const { data } = await supabase
     .from('dna_leaders')
-    .select('id, name, email, church:churches(id, name)')
+    .select('id, name, email, church:churches(id, name, subdomain)')
     .eq('email', email)
     .single();
 
@@ -177,7 +177,7 @@ export async function GET(req: Request) {
       // Find the active cohort for this church
       const { data: cohortRow } = await supabase
         .from('dna_cohorts')
-        .select('id, name, generation, status, started_at, church:churches(name)')
+        .select('id, name, generation, status, started_at, church:churches(name, subdomain)')
         .eq('church_id', adminChurchId)
         .eq('status', 'active')
         .single();
@@ -204,7 +204,9 @@ export async function GET(req: Request) {
       }
 
       const cohortId = cohortRow.id;
-      const churchName = (cohortRow.church as unknown as { name: string } | null)?.name || 'Church';
+      const churchData = cohortRow.church as unknown as { name: string; subdomain?: string | null } | null;
+      const churchName = churchData?.name || 'Church';
+      const churchSubdomain = churchData?.subdomain || null;
 
       // Fetch all cohort data — same queries as member path below
       const [membersRes, postsRes, discussionRes, eventsRes] = await Promise.all([
@@ -273,6 +275,7 @@ export async function GET(req: Request) {
           status: cohortRow.status,
           started_at: cohortRow.started_at,
           church_name: churchName,
+          church_subdomain: churchSubdomain,
         },
         currentUserRole: 'admin',
         stats: {
@@ -331,6 +334,7 @@ export async function GET(req: Request) {
 
     const leaderName = leader.name || session.email;
     const churchName = leader.church?.name || 'Your Church';
+    const churchSubdomain = (leader.church as unknown as { subdomain?: string | null } | null)?.subdomain || null;
 
     // Check cohort membership (only non-exempt members)
     const { data: membership } = await supabase
@@ -352,7 +356,7 @@ export async function GET(req: Request) {
     const [cohortRes, membersRes, postsRes, discussionRes, eventsRes] = await Promise.all([
       supabase
         .from('dna_cohorts')
-        .select('*, church:churches(name)')
+        .select('*, church:churches(name, subdomain)')
         .eq('id', cohortId)
         .single(),
       supabase
@@ -423,6 +427,7 @@ export async function GET(req: Request) {
         status: cohort?.status,
         started_at: cohort?.started_at,
         church_name: churchName,
+        church_subdomain: churchSubdomain,
       },
       currentUserRole: membership.role,
       stats: {

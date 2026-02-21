@@ -27,7 +27,7 @@ export async function GET() {
       .from('dna_leaders')
       .select(`
         *,
-        church:churches(id, name, logo_url)
+        church:churches(id, name, logo_url, subdomain)
       `)
       .eq('email', session.email)
       .single();

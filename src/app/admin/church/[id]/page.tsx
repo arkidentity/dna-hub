@@ -18,6 +18,8 @@ import {
   Palette,
   UserCog,
   GraduationCap,
+  Globe,
+  ExternalLink,
 } from 'lucide-react';
 import { GroupsTab } from '@/components/dashboard';
 import { AdminChurchOverviewTab, AdminChurchJourneyTab, ChurchLeadersTab, BrandingTab, AdminCohortTab } from '@/components/admin';
@@ -29,6 +31,7 @@ interface ChurchDetail {
     status: string;
     current_phase: number;
     created_at: string;
+    subdomain?: string | null;
     start_date?: string;
     phase_1_start?: string;
     phase_1_target?: string;
@@ -289,6 +292,22 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
                   {leader.email}
                 </a>
               </div>
+              {/* Subdomain link */}
+              {church.subdomain && (
+                <div className="flex items-center gap-2 mt-1.5">
+                  <Globe className="w-3 h-3 text-gray-400" />
+                  <a
+                    href={`https://${church.subdomain}.dailydna.app`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs text-gold hover:text-gold-light flex items-center gap-1"
+                  >
+                    {church.subdomain}.dailydna.app
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                </div>
+              )}
+
               {/* Calendar Aliases */}
               <div className="flex items-center gap-2 mt-2">
                 <Tag className="w-3 h-3 text-gray-400" />

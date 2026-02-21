@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Users, MessageSquare, Rss, Calendar, Loader2, Plus, X, Pin } from 'lucide-react';
+import { Users, MessageSquare, Rss, Calendar, Loader2, Plus, X, Pin, Globe, ExternalLink } from 'lucide-react';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -51,6 +51,7 @@ interface CohortData {
     status: string;
     started_at: string;
     church_name: string;
+    church_subdomain?: string | null;
   } | null;
   currentUserRole: string;
   stats: { total_members: number; trainers: number; upcoming_events: number };
@@ -788,6 +789,18 @@ export default function AdminCohortTab({ churchId }: { churchId: string }) {
               DNA Coach
             </span>
           </p>
+          {data.cohort.church_subdomain && (
+            <a
+              href={`https://${data.cohort.church_subdomain}.dailydna.app`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs text-gold hover:text-gold/80 mt-1"
+            >
+              <Globe className="w-3 h-3" />
+              {data.cohort.church_subdomain}.dailydna.app
+              <ExternalLink className="w-3 h-3" />
+            </a>
+          )}
         </div>
         {/* Stats */}
         <div className="flex items-center gap-6 text-center">
