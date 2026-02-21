@@ -10,7 +10,7 @@ const months = [
   },
   {
     tag: 'Month 02',
-    title: 'Deepening',
+    title: 'Building',
     weeks: 'Weeks 5–8',
     desc: 'Disciples move from learning the tools to experiencing them in community. They ask hard questions, hear God for each other in a Listening Prayer Circle, go on mission together, and build powerful testimonies from what God does.',
     color: 'var(--lp-green)',
@@ -85,7 +85,7 @@ export default function ToolkitIntro() {
               lineHeight: 1.7,
             }}
           >
-            Each week builds on the last. The order is not optional. By the time disciples reach Week 12 they have a foundation, a testimony, a freed identity, and an activated calling — built one week at a time.
+            Love without a plan leaves people stuck. The 90-Day Toolkit gives the plan shape — each week building on the last, in a sequence that cannot be skipped. By Week 12, disciples have a foundation, a testimony, a freed identity, and an activated calling.
           </p>
         </div>
 

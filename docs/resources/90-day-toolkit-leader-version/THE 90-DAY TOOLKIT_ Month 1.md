@@ -995,7 +995,7 @@ Before moving to Month 2, evaluate each disciple:
 
 **Don't move forward if disciples aren't engaged.** Better to extend Month 1 or reset expectations than to drag uncommitted disciples into Month 2\.
 
-## **Prepare for Month 2: Deepening (Weeks 5-8)**
+## **Prepare for Month 2: Building (Weeks 5-8)**
 
 **Month 2 Focus:** Vulnerability, Ownership, Ministry to One Another
 

@@ -54,12 +54,12 @@ export default function ToolkitHero() {
             color: '#fff',
             marginBottom: '1.75rem',
             fontWeight: 900,
-            maxWidth: '750px',
+            maxWidth: '820px',
           }}
         >
-          Twelve tools.<br />
-          <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>Ninety days.</em>{' '}
-          <em style={{ fontStyle: 'italic', color: 'var(--lp-green)' }}>A disciple who can multiply.</em>
+          Twelve tools.{' '}
+          <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>Ninety days.</em><br />
+          <em style={{ fontStyle: 'italic', color: 'var(--lp-green)', whiteSpace: 'nowrap' }}>A disciple who can multiply.</em>
         </h1>
 
         {/* Subheadline */}
@@ -68,11 +68,11 @@ export default function ToolkitHero() {
             fontSize: '1.1rem',
             lineHeight: 1.8,
             color: 'rgba(255,255,255,0.55)',
-            maxWidth: '600px',
+            maxWidth: '620px',
             marginBottom: '3rem',
           }}
         >
-          The 90-Day Toolkit is the structured heart of Phase 1 — a week-by-week sequence of tools that takes a brand-new disciple from self-assessment to spiritual freedom, daily habits, and readiness to lead others. This is what happens inside a DNA group for the first 12 weeks.
+          Discipleship is not accidental. It&rsquo;s loving people with a plan. The 90-Day Toolkit is that plan — a week-by-week sequence of tools that takes a brand-new disciple from self-assessment to spiritual freedom, daily habits, and an activated calling. This is what happens in the first 12 weeks of a DNA group.
         </p>
 
         {/* Stats row */}
