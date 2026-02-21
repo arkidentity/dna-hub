@@ -53,6 +53,24 @@ export async function POST(request: NextRequest) {
         authorId = anyMember?.leader_id || null;
       }
 
+      // Final fallback: find any dna_leader in the cohort's church
+      if (!authorId) {
+        const { data: cohortRow } = await supabase
+          .from('dna_cohorts')
+          .select('church_id')
+          .eq('id', adminCohortId)
+          .single();
+        if (cohortRow?.church_id) {
+          const { data: anyLeader } = await supabase
+            .from('dna_leaders')
+            .select('id')
+            .eq('church_id', cohortRow.church_id)
+            .limit(1)
+            .single();
+          authorId = anyLeader?.id || null;
+        }
+      }
+
       if (!authorId) {
         return NextResponse.json({ error: 'No cohort members found to attribute post' }, { status: 400 });
       }
