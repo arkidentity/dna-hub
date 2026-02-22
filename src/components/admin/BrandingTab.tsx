@@ -97,6 +97,7 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
     app_title: 'DNA Daily',
     app_description: 'Daily discipleship tools',
     header_style: 'text' as 'text' | 'logo',
+    reading_plan_id: null as string | null,
   });
 
   // ============================================
@@ -153,6 +154,7 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
         app_title: b.app_title ?? 'DNA Daily',
         app_description: b.app_description ?? 'Daily discipleship tools',
         header_style: (b.header_style ?? 'text') as 'text' | 'logo',
+        reading_plan_id: b.reading_plan_id ?? null,
       });
     } catch {
       setError('Failed to load branding settings');
@@ -577,6 +579,25 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
                     placeholder="Daily discipleship tools"
                     className="w-full border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold"
                   />
+                </div>
+
+                <div>
+                  <label className="block text-sm text-foreground-muted mb-1">Bible Reading Plan</label>
+                  <select
+                    value={form.reading_plan_id ?? ''}
+                    onChange={e => setForm(prev => ({ ...prev, reading_plan_id: e.target.value || null }))}
+                    className="w-full border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold bg-white"
+                  >
+                    <option value="">NT in 90 Days (default)</option>
+                    <option value="chronological">Bible in Chronological Order (365 days)</option>
+                    <option value="nt-90">New Testament in 90 Days</option>
+                    <option value="bible-in-one-year">Bible in One Year</option>
+                    <option value="identity-30">Identity in Christ — 30 Days</option>
+                    <option value="psalms-proverbs">Psalms &amp; Proverbs — 31 Days</option>
+                  </select>
+                  <p className="text-xs text-foreground-muted mt-1">
+                    The reading plan shown to your disciples in the DNA Daily app
+                  </p>
                 </div>
               </div>
             </div>

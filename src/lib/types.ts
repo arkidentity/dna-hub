@@ -234,6 +234,7 @@ export interface ChurchBranding {
   app_description: string;
   theme_color: string;
   header_style: 'text' | 'logo';
+  reading_plan_id: string | null;
 }
 
 // Global resource (general resources for all churches)
