@@ -308,3 +308,175 @@ export async function GET(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+// ============================================================
+// PATCH /api/groups/[id]/disciples/[discipleId]
+// Update disciple name/email/phone and/or membership status
+// Body: { name?, email?, phone?, current_status? }
+// ============================================================
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string; discipleId: string }> }
+) {
+  try {
+    const session = await getUnifiedSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!(hasRole(session, 'dna_leader') || hasRole(session, 'church_leader'))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { id: groupId, discipleId } = await params;
+    const supabase = getSupabaseAdmin();
+
+    // Verify leadership / access
+    const { data: dnaLeader } = await supabase
+      .from('dna_leaders')
+      .select('id')
+      .eq('email', session.email)
+      .single();
+
+    const isChurchLeaderOrAdmin = hasRole(session, 'church_leader') || hasRole(session, 'admin');
+
+    if (!dnaLeader && !isChurchLeaderOrAdmin) {
+      return NextResponse.json({ error: 'DNA leader not found' }, { status: 404 });
+    }
+
+    const { data: group } = await supabase
+      .from('dna_groups')
+      .select('leader_id, co_leader_id')
+      .eq('id', groupId)
+      .single();
+
+    if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
+
+    if (!isChurchLeaderOrAdmin && dnaLeader) {
+      if (group.leader_id !== dnaLeader.id && group.co_leader_id !== dnaLeader.id) {
+        return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+      }
+    }
+
+    const body = await request.json();
+    const { name, email, phone, current_status } = body;
+
+    // Update disciples table if any contact info changed
+    const discipleUpdates: Record<string, string> = {};
+    if (name !== undefined) {
+      if (!name.trim()) return NextResponse.json({ error: 'Name cannot be empty' }, { status: 400 });
+      discipleUpdates.name = name.trim();
+    }
+    if (email !== undefined) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email)) return NextResponse.json({ error: 'Invalid email format' }, { status: 400 });
+      discipleUpdates.email = email.toLowerCase().trim();
+    }
+    if (phone !== undefined) {
+      discipleUpdates.phone = phone?.trim() || null as unknown as string;
+    }
+
+    if (Object.keys(discipleUpdates).length > 0) {
+      const { error: discipleError } = await supabase
+        .from('disciples')
+        .update(discipleUpdates)
+        .eq('id', discipleId);
+
+      if (discipleError) {
+        if (discipleError.code === '23505') {
+          return NextResponse.json({ error: 'That email is already used by another disciple' }, { status: 400 });
+        }
+        console.error('[Disciples] PATCH update error:', discipleError);
+        return NextResponse.json({ error: 'Failed to update disciple' }, { status: 500 });
+      }
+    }
+
+    // Update group membership status if provided
+    if (current_status !== undefined) {
+      const validStatuses = ['active', 'completed', 'dropped'];
+      if (!validStatuses.includes(current_status)) {
+        return NextResponse.json({ error: 'Invalid status' }, { status: 400 });
+      }
+
+      const { error: membershipError } = await supabase
+        .from('group_disciples')
+        .update({ current_status })
+        .eq('group_id', groupId)
+        .eq('disciple_id', discipleId);
+
+      if (membershipError) {
+        console.error('[Disciples] PATCH membership error:', membershipError);
+        return NextResponse.json({ error: 'Failed to update membership status' }, { status: 500 });
+      }
+    }
+
+    return NextResponse.json({ success: true });
+
+  } catch (error) {
+    console.error('[Disciples] PATCH error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}
+
+// ============================================================
+// DELETE /api/groups/[id]/disciples/[discipleId]
+// Removes disciple from the group (sets current_status = 'dropped')
+// Does NOT delete the disciple record — they may be in other groups.
+// ============================================================
+export async function DELETE(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string; discipleId: string }> }
+) {
+  try {
+    const session = await getUnifiedSession();
+    if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    if (!(hasRole(session, 'dna_leader') || hasRole(session, 'church_leader'))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { id: groupId, discipleId } = await params;
+    const supabase = getSupabaseAdmin();
+
+    // Verify leadership / access
+    const { data: dnaLeader } = await supabase
+      .from('dna_leaders')
+      .select('id')
+      .eq('email', session.email)
+      .single();
+
+    const isChurchLeaderOrAdmin = hasRole(session, 'church_leader') || hasRole(session, 'admin');
+
+    if (!dnaLeader && !isChurchLeaderOrAdmin) {
+      return NextResponse.json({ error: 'DNA leader not found' }, { status: 404 });
+    }
+
+    const { data: group } = await supabase
+      .from('dna_groups')
+      .select('leader_id, co_leader_id')
+      .eq('id', groupId)
+      .single();
+
+    if (!group) return NextResponse.json({ error: 'Group not found' }, { status: 404 });
+
+    if (!isChurchLeaderOrAdmin && dnaLeader) {
+      if (group.leader_id !== dnaLeader.id && group.co_leader_id !== dnaLeader.id) {
+        return NextResponse.json({ error: 'Not authorized' }, { status: 403 });
+      }
+    }
+
+    // Soft-remove: mark membership as dropped
+    const { error: removeError } = await supabase
+      .from('group_disciples')
+      .update({ current_status: 'dropped' })
+      .eq('group_id', groupId)
+      .eq('disciple_id', discipleId);
+
+    if (removeError) {
+      console.error('[Disciples] DELETE error:', removeError);
+      return NextResponse.json({ error: 'Failed to remove disciple from group' }, { status: 500 });
+    }
+
+    return NextResponse.json({ success: true });
+
+  } catch (error) {
+    console.error('[Disciples] DELETE error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

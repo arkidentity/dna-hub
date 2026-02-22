@@ -57,6 +57,19 @@ function DiscipleProfileContent() {
   // Time filter for app activity metrics
   const [metricsDays, setMetricsDays] = useState<number | null>(null);
 
+  // Edit disciple modal
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editPhone, setEditPhone] = useState('');
+  const [editStatus, setEditStatus] = useState<string>('active');
+  const [editSubmitting, setEditSubmitting] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  // Remove disciple confirmation
+  const [showRemoveConfirm, setShowRemoveConfirm] = useState(false);
+  const [removing, setRemoving] = useState(false);
+
   // Phase display helpers
   const phaseLabels: Record<string, string> = {
     'pre-launch': 'Pre-Launch',
@@ -200,6 +213,83 @@ function DiscipleProfileContent() {
       }
     } catch (err) {
       console.error('Delete entry error:', err);
+    }
+  }
+
+  function openEditModal() {
+    if (!disciple) return;
+    setEditName(disciple.name);
+    setEditEmail(disciple.email);
+    setEditPhone(disciple.phone || '');
+    setEditStatus(disciple.current_status);
+    setEditError(null);
+    setShowEditModal(true);
+  }
+
+  async function handleEditSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (editSubmitting) return;
+    setEditSubmitting(true);
+    setEditError(null);
+
+    try {
+      const response = await fetch(`/api/groups/${groupId}/disciples/${discipleId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editName,
+          email: editEmail,
+          phone: editPhone || null,
+          current_status: editStatus,
+        }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || data.error) {
+        setEditError(data.error || 'Failed to update disciple');
+        setEditSubmitting(false);
+        return;
+      }
+
+      // Optimistically update local state
+      if (disciple) {
+        setDisciple({
+          ...disciple,
+          name: editName,
+          email: editEmail,
+          current_status: editStatus as 'active' | 'completed' | 'dropped',
+        });
+      }
+
+      setShowEditModal(false);
+      setEditSubmitting(false);
+    } catch {
+      setEditError('Failed to update. Please try again.');
+      setEditSubmitting(false);
+    }
+  }
+
+  async function handleRemoveDisciple() {
+    if (removing) return;
+    setRemoving(true);
+
+    try {
+      const response = await fetch(`/api/groups/${groupId}/disciples/${discipleId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.error || 'Failed to remove disciple');
+        setRemoving(false);
+        return;
+      }
+
+      // Navigate back to group page after removal
+      router.push(`/groups/${groupId}`);
+    } catch {
+      alert('Failed to remove disciple. Please try again.');
+      setRemoving(false);
     }
   }
 
@@ -423,6 +513,28 @@ function DiscipleProfileContent() {
                     W12 {disciple.week12_assessment_status === 'completed' ? '✓' : disciple.week12_assessment_status === 'sent' ? 'Sent' : '—'}
                   </span>
                 </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex items-center gap-2 mt-4">
+                <button
+                  onClick={openEditModal}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-sm font-medium rounded-lg transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487l1.687-1.688a1.875 1.875 0 112.652 2.652L10.582 16.07a4.5 4.5 0 01-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 011.13-1.897l8.932-8.931zm0 0L19.5 7.125" />
+                  </svg>
+                  Edit
+                </button>
+                <button
+                  onClick={() => setShowRemoveConfirm(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-500/20 hover:bg-red-500/30 text-red-300 text-sm font-medium rounded-lg transition-colors"
+                >
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M22 10.5h-6m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+                  </svg>
+                  Remove from Group
+                </button>
               </div>
             </div>
           </div>
@@ -1271,6 +1383,127 @@ function DiscipleProfileContent() {
                 className="bg-green-600 hover:bg-green-700 text-white font-medium py-2 px-6 rounded-lg transition-colors"
               >
                 Mark Answered
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* EDIT DISCIPLE MODAL                                           */}
+      {/* ============================================================ */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h3 className="text-lg font-bold text-navy">Edit Disciple</h3>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <form onSubmit={handleEditSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Name</label>
+                <input
+                  type="text"
+                  value={editName}
+                  onChange={e => setEditName(e.target.value)}
+                  required
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input
+                  type="email"
+                  value={editEmail}
+                  onChange={e => setEditEmail(e.target.value)}
+                  required
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone <span className="text-gray-400 font-normal">(optional)</span></label>
+                <input
+                  type="tel"
+                  value={editPhone}
+                  onChange={e => setEditPhone(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
+                  placeholder="(555) 000-0000"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Status</label>
+                <select
+                  value={editStatus}
+                  onChange={e => setEditStatus(e.target.value)}
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/50 focus:border-gold"
+                >
+                  <option value="active">Active</option>
+                  <option value="completed">Completed</option>
+                  <option value="dropped">Dropped</option>
+                </select>
+              </div>
+
+              {editError && (
+                <p className="text-red-600 text-sm">{editError}</p>
+              )}
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="px-4 py-2 text-gray-600 hover:text-gray-800 text-sm"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={editSubmitting}
+                  className="bg-gold hover:bg-gold-dark text-white font-semibold py-2 px-6 rounded-lg text-sm transition-colors disabled:opacity-60"
+                >
+                  {editSubmitting ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ============================================================ */}
+      {/* REMOVE DISCIPLE CONFIRMATION                                   */}
+      {/* ============================================================ */}
+      {showRemoveConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 text-center">
+            <div className="w-12 h-12 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+              <svg className="w-6 h-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={1.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M22 10.5h-6m-2.25-4.125a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zM4 19.235v-.11a6.375 6.375 0 0112.75 0v.109A12.318 12.318 0 0110.374 21c-2.331 0-4.512-.645-6.374-1.766z" />
+              </svg>
+            </div>
+            <h3 className="text-lg font-bold text-navy mb-2">Remove from Group?</h3>
+            <p className="text-gray-600 text-sm mb-6">
+              <strong>{disciple.name}</strong> will be removed from this group. Their discipleship log and progress data will be preserved.
+            </p>
+            <div className="flex justify-center gap-3">
+              <button
+                onClick={() => setShowRemoveConfirm(false)}
+                className="px-5 py-2 text-gray-600 hover:text-gray-800 text-sm font-medium"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleRemoveDisciple}
+                disabled={removing}
+                className="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-6 rounded-lg text-sm transition-colors disabled:opacity-60"
+              >
+                {removing ? 'Removing...' : 'Yes, Remove'}
               </button>
             </div>
           </div>
