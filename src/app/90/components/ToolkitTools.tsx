@@ -467,7 +467,7 @@ function ToolCard({ tool }: { tool: Tool }) {
   const isNavyMonth  = tool.weekNum >= 9 && tool.weekNum <= 12;
 
   const cardBg      = isNavyMonth  ? 'var(--lp-accent)'
-                    : isGreenMonth ? 'rgba(74,158,127,0.06)'
+                    : isGreenMonth ? '#f2f8f6'
                     : '#fff';
   const titleColor  = isNavyMonth  ? '#fff'                   : 'var(--lp-ink)';
   const subtitleColor = isNavyMonth ? 'rgba(255,255,255,0.5)' : 'var(--lp-mid)';
@@ -744,7 +744,7 @@ export default function ToolkitTools() {
               marginBottom: '1.25rem',
             }}
           >
-            The 12 Tools
+            The 90-Day Toolkit
           </div>
           <h2
             style={{
