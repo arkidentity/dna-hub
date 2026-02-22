@@ -235,6 +235,10 @@ export interface ChurchBranding {
   theme_color: string;
   header_style: 'text' | 'logo';
   reading_plan_id: string | null;
+  custom_link_1_title: string | null;
+  custom_link_1_url: string | null;
+  custom_link_2_title: string | null;
+  custom_link_2_url: string | null;
 }
 
 // Global resource (general resources for all churches)

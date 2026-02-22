@@ -98,6 +98,10 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
     app_description: 'Daily discipleship tools',
     header_style: 'text' as 'text' | 'logo',
     reading_plan_id: null as string | null,
+    custom_link_1_title: '',
+    custom_link_1_url: '',
+    custom_link_2_title: '',
+    custom_link_2_url: '',
   });
 
   // ============================================
@@ -155,6 +159,10 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
         app_description: b.app_description ?? 'Daily discipleship tools',
         header_style: (b.header_style ?? 'text') as 'text' | 'logo',
         reading_plan_id: b.reading_plan_id ?? null,
+        custom_link_1_title: b.custom_link_1_title ?? '',
+        custom_link_1_url: b.custom_link_1_url ?? '',
+        custom_link_2_title: b.custom_link_2_title ?? '',
+        custom_link_2_url: b.custom_link_2_url ?? '',
       });
     } catch {
       setError('Failed to load branding settings');
@@ -600,6 +608,59 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
                   </p>
                 </div>
               </div>
+            </div>
+
+            {/* Custom Menu Links */}
+            <div className="bg-card rounded-xl border border-card-border p-5 space-y-4">
+              <div>
+                <h3 className="font-medium text-navy">Custom Menu Links</h3>
+                <p className="text-xs text-foreground-muted mt-0.5">
+                  Add up to 2 links that appear in the app settings menu below the Profile button. Links open inside the app in a branded page.
+                </p>
+              </div>
+
+              {/* Link 1 */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-navy">Link 1</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={form.custom_link_1_title}
+                    onChange={e => setForm(prev => ({ ...prev, custom_link_1_title: e.target.value }))}
+                    placeholder="Title (e.g. Our Website)"
+                    className="w-1/3 border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold"
+                  />
+                  <input
+                    type="url"
+                    value={form.custom_link_1_url}
+                    onChange={e => setForm(prev => ({ ...prev, custom_link_1_url: e.target.value }))}
+                    placeholder="https://mychurch.com"
+                    className="flex-1 border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold"
+                  />
+                </div>
+              </div>
+
+              {/* Link 2 */}
+              <div className="space-y-2">
+                <label className="block text-sm font-medium text-navy">Link 2</label>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={form.custom_link_2_title}
+                    onChange={e => setForm(prev => ({ ...prev, custom_link_2_title: e.target.value }))}
+                    placeholder="Title (e.g. Give Online)"
+                    className="w-1/3 border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold"
+                  />
+                  <input
+                    type="url"
+                    value={form.custom_link_2_url}
+                    onChange={e => setForm(prev => ({ ...prev, custom_link_2_url: e.target.value }))}
+                    placeholder="https://mychurch.com/give"
+                    className="flex-1 border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold"
+                  />
+                </div>
+              </div>
+              <p className="text-xs text-foreground-muted">Leave both fields blank to hide a link. Both title and URL are required for a link to appear.</p>
             </div>
 
             {/* Error / Save */}
