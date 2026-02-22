@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
     // Fetch church branding fields + extended settings
     const { data: church, error: churchError } = await supabase
       .from('churches')
-      .select('id, name, logo_url, icon_url, splash_logo_url, subdomain, primary_color, accent_color')
+      .select('id, name, logo_url, icon_url, splash_logo_url, subdomain, primary_color, accent_color, contact_email')
       .eq('id', churchId)
       .single();
 
@@ -89,6 +89,7 @@ export async function POST(request: NextRequest) {
       custom_link_1_url,
       custom_link_2_title,
       custom_link_2_url,
+      contact_email,
     } = body;
 
     if (!church_id) {
@@ -139,6 +140,7 @@ export async function POST(request: NextRequest) {
         logo_url: logo_url ?? undefined,
         icon_url: icon_url ?? undefined,
         splash_logo_url: splash_logo_url ?? undefined,
+        contact_email: contact_email || null,
         updated_at: new Date().toISOString(),
       })
       .eq('id', church_id);
