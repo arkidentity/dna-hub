@@ -117,18 +117,43 @@ export async function POST(request: NextRequest) {
     // Add roles for the user (church_leader + dna_leader)
     if (userId) {
       // Add church_leader role (ignore if already exists)
-      await supabaseAdmin.from('user_roles').upsert({
-        user_id: userId,
-        role: 'church_leader',
-        church_id: church.id,
-      }, { onConflict: 'user_id,role,church_id', ignoreDuplicates: true });
+      // NOTE: user_roles has a partial unique index (WHERE church_id IS NOT NULL),
+      // so we check first and insert only if missing — upsert with onConflict
+      // won't match partial indexes reliably.
+      const { data: existingChurchLeaderRole } = await supabaseAdmin
+        .from('user_roles')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('role', 'church_leader')
+        .eq('church_id', church.id)
+        .maybeSingle();
+
+      if (!existingChurchLeaderRole) {
+        const { error: clRoleError } = await supabaseAdmin.from('user_roles').insert({
+          user_id: userId,
+          role: 'church_leader',
+          church_id: church.id,
+        });
+        if (clRoleError) console.error('[Assessment] Failed to insert church_leader role:', clRoleError);
+      }
 
       // Add dna_leader role (all church leaders are also DNA leaders)
-      await supabaseAdmin.from('user_roles').upsert({
-        user_id: userId,
-        role: 'dna_leader',
-        church_id: church.id,
-      }, { onConflict: 'user_id,role,church_id', ignoreDuplicates: true });
+      const { data: existingDnaLeaderRole } = await supabaseAdmin
+        .from('user_roles')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('role', 'dna_leader')
+        .eq('church_id', church.id)
+        .maybeSingle();
+
+      if (!existingDnaLeaderRole) {
+        const { error: dlRoleError } = await supabaseAdmin.from('user_roles').insert({
+          user_id: userId,
+          role: 'dna_leader',
+          church_id: church.id,
+        });
+        if (dlRoleError) console.error('[Assessment] Failed to insert dna_leader role:', dlRoleError);
+      }
 
       // Create dna_leaders record (ignore if already exists)
       await supabaseAdmin.from('dna_leaders').upsert({

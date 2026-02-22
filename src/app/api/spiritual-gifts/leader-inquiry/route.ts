@@ -95,15 +95,36 @@ export async function POST(request: NextRequest) {
 
     // =====================================================
     // 4. Assign roles
+    // NOTE: user_roles has a partial unique index (WHERE church_id IS NOT NULL),
+    // so upsert with onConflict won't match it reliably — check first, then insert.
     // =====================================================
-    await supabase.from('user_roles').upsert(
-      { user_id: userId, role: 'church_leader', church_id: church.id },
-      { onConflict: 'user_id,role,church_id', ignoreDuplicates: true }
-    );
-    await supabase.from('user_roles').upsert(
-      { user_id: userId, role: 'dna_leader', church_id: church.id },
-      { onConflict: 'user_id,role,church_id', ignoreDuplicates: true }
-    );
+    const { data: existingChurchLeaderRole } = await supabase
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('role', 'church_leader')
+      .eq('church_id', church.id)
+      .maybeSingle();
+    if (!existingChurchLeaderRole) {
+      const { error: clRoleError } = await supabase.from('user_roles').insert({
+        user_id: userId, role: 'church_leader', church_id: church.id,
+      });
+      if (clRoleError) console.error('[Leader Inquiry] Failed to insert church_leader role:', clRoleError);
+    }
+
+    const { data: existingDnaLeaderRole } = await supabase
+      .from('user_roles')
+      .select('id')
+      .eq('user_id', userId)
+      .eq('role', 'dna_leader')
+      .eq('church_id', church.id)
+      .maybeSingle();
+    if (!existingDnaLeaderRole) {
+      const { error: dlRoleError } = await supabase.from('user_roles').insert({
+        user_id: userId, role: 'dna_leader', church_id: church.id,
+      });
+      if (dlRoleError) console.error('[Leader Inquiry] Failed to insert dna_leader role:', dlRoleError);
+    }
     // Training participant (global, no church)
     const { data: existingTraining } = await supabase
       .from('user_roles')
