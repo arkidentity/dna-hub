@@ -57,9 +57,9 @@ export default function ToolkitHero() {
             maxWidth: '820px',
           }}
         >
-          Twelve tools.{' '}
+          Twelve tools.<br />
           <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>Ninety days.</em><br />
-          <em style={{ fontStyle: 'italic', color: 'var(--lp-green)', whiteSpace: 'nowrap' }}>A disciple who can multiply.</em>
+          <em style={{ fontStyle: 'italic', color: 'var(--lp-green)' }}>A disciple who<br />can multiply.</em>
         </h1>
 
         {/* Subheadline */}
