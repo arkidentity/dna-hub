@@ -358,7 +358,7 @@ const tools: Tool[] = [
     week: 'Week 12',
     weekNum: 12,
     month: 'Month 3 — Breakthrough',
-    monthColor: 'var(--lp-green)',
+    monthColor: 'var(--lp-gold)',
     title: 'Life Assessment Revisited',
     subtitle: 'Measuring Growth and Setting New Goals',
     imageSlot: 'app',
@@ -423,9 +423,12 @@ function ImagePlaceholder({ label, slot }: { label: string; slot: ImageSlot }) {
         justifyContent: 'center',
         padding: '2rem 1.5rem',
         gap: '0.75rem',
-        minHeight: '220px',
+        width: '240px',
+        height: '280px',
+        flexShrink: 0,
         border: '1.5px dashed rgba(212,168,83,0.3)',
         textAlign: 'center',
+        boxSizing: 'border-box',
       }}
     >
       <div style={{ fontSize: '2rem', opacity: 0.5 }}>{icon}</div>
@@ -459,6 +462,22 @@ function ToolCard({ tool }: { tool: Tool }) {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const hasImage = tool.imageSlot !== 'none';
 
+  // Month-based background and text theming
+  const isGreenMonth = tool.weekNum >= 5 && tool.weekNum <= 8;
+  const isNavyMonth  = tool.weekNum >= 9 && tool.weekNum <= 12;
+
+  const cardBg      = isNavyMonth  ? 'var(--lp-accent)'
+                    : isGreenMonth ? 'rgba(74,158,127,0.06)'
+                    : '#fff';
+  const titleColor  = isNavyMonth  ? '#fff'                   : 'var(--lp-ink)';
+  const subtitleColor = isNavyMonth ? 'rgba(255,255,255,0.5)' : 'var(--lp-mid)';
+  const bulletColor = isNavyMonth  ? 'rgba(255,255,255,0.75)' : 'var(--lp-ink)';
+  const ruleColor   = isNavyMonth  ? 'rgba(255,255,255,0.1)'  : 'var(--lp-rule)';
+  const accordionLabelColor = isNavyMonth ? 'rgba(255,255,255,0.45)' : 'var(--lp-mid)';
+  const accordionHoverBg    = isNavyMonth ? 'rgba(255,255,255,0.04)' : 'var(--lp-paper)';
+  const accordionBodyColor  = isNavyMonth ? 'rgba(255,255,255,0.6)'  : 'var(--lp-mid)';
+  const accordionChangesColor = isNavyMonth ? 'rgba(255,255,255,0.9)' : 'var(--lp-ink)';
+
   function toggle(i: number) {
     setOpenIndex(openIndex === i ? null : i);
   }
@@ -467,12 +486,13 @@ function ToolCard({ tool }: { tool: Tool }) {
     <div
       className="fade-in"
       style={{
-        background: '#fff',
-        borderBottom: '1px solid var(--lp-rule)',
+        background: cardBg,
+        borderBottom: `1px solid ${ruleColor}`,
       }}
     >
       {/* Card header */}
       <div
+        className="tk-card-header"
         style={{
           padding: '2.25rem 2.75rem 0',
           display: 'flex',
@@ -509,8 +529,8 @@ function ToolCard({ tool }: { tool: Tool }) {
                 fontWeight: 500,
                 letterSpacing: '0.08em',
                 textTransform: 'uppercase',
-                color: 'var(--lp-mid)',
-                opacity: 0.6,
+                color: accordionLabelColor,
+                opacity: 0.8,
               }}
             >
               {tool.month}
@@ -521,7 +541,7 @@ function ToolCard({ tool }: { tool: Tool }) {
               fontFamily: "'Playfair Display', serif",
               fontSize: 'clamp(1.35rem, 2.5vw, 1.75rem)',
               fontWeight: 900,
-              color: 'var(--lp-ink)',
+              color: titleColor,
               marginBottom: '0.2rem',
               lineHeight: 1.2,
             }}
@@ -531,7 +551,7 @@ function ToolCard({ tool }: { tool: Tool }) {
           <p
             style={{
               fontSize: '0.85rem',
-              color: 'var(--lp-mid)',
+              color: subtitleColor,
               fontStyle: 'italic',
               margin: 0,
             }}
@@ -542,6 +562,7 @@ function ToolCard({ tool }: { tool: Tool }) {
 
         {/* Faded week number */}
         <div
+          className="tk-week-badge"
           style={{
             fontFamily: "'Playfair Display', serif",
             fontSize: '4rem',
@@ -559,6 +580,7 @@ function ToolCard({ tool }: { tool: Tool }) {
 
       {/* Body: image + bullets */}
       <div
+        className="tk-card-body"
         style={{
           padding: '0 2.75rem',
           display: 'grid',
@@ -569,7 +591,9 @@ function ToolCard({ tool }: { tool: Tool }) {
         }}
       >
         {hasImage && (
-          <ImagePlaceholder label={tool.imageLabel} slot={tool.imageSlot} />
+          <div className="tk-card-image">
+            <ImagePlaceholder label={tool.imageLabel} slot={tool.imageSlot} />
+          </div>
         )}
 
         {/* Bullet points */}
@@ -591,7 +615,7 @@ function ToolCard({ tool }: { tool: Tool }) {
                 alignItems: 'flex-start',
                 gap: '0.75rem',
                 fontSize: '0.88rem',
-                color: 'var(--lp-ink)',
+                color: bulletColor,
                 lineHeight: 1.6,
               }}
             >
@@ -615,7 +639,7 @@ function ToolCard({ tool }: { tool: Tool }) {
       {/* Accordion rows */}
       <div
         style={{
-          borderTop: '1px solid var(--lp-rule)',
+          borderTop: `1px solid ${ruleColor}`,
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -624,12 +648,13 @@ function ToolCard({ tool }: { tool: Tool }) {
           <div
             key={item.label}
             style={{
-              borderBottom: i < tool.accordion.length - 1 ? '1px solid var(--lp-rule)' : 'none',
+              borderBottom: i < tool.accordion.length - 1 ? `1px solid ${ruleColor}` : 'none',
             }}
           >
             {/* Accordion trigger */}
             <button
               onClick={() => toggle(i)}
+              className="tk-accordion-btn"
               style={{
                 width: '100%',
                 display: 'flex',
@@ -644,7 +669,7 @@ function ToolCard({ tool }: { tool: Tool }) {
                 transition: 'background 0.15s',
               }}
               onMouseEnter={(e) =>
-                ((e.currentTarget as HTMLElement).style.background = 'var(--lp-paper)')
+                ((e.currentTarget as HTMLElement).style.background = accordionHoverBg)
               }
               onMouseLeave={(e) =>
                 ((e.currentTarget as HTMLElement).style.background = 'none')
@@ -656,7 +681,7 @@ function ToolCard({ tool }: { tool: Tool }) {
                   fontWeight: 700,
                   letterSpacing: '0.16em',
                   textTransform: 'uppercase',
-                  color: openIndex === i ? tool.monthColor : 'var(--lp-mid)',
+                  color: openIndex === i ? tool.monthColor : accordionLabelColor,
                   transition: 'color 0.2s',
                 }}
               >
@@ -664,8 +689,9 @@ function ToolCard({ tool }: { tool: Tool }) {
               </span>
               <span
                 style={{
-                  color: openIndex === i ? tool.monthColor : 'var(--lp-mid)',
+                  color: openIndex === i ? tool.monthColor : accordionLabelColor,
                   transition: 'color 0.2s',
+                  flexShrink: 0,
                 }}
               >
                 <ChevronIcon open={openIndex === i} />
@@ -675,12 +701,13 @@ function ToolCard({ tool }: { tool: Tool }) {
             {/* Accordion content */}
             {openIndex === i && (
               <div
+                className="tk-accordion-body"
                 style={{
                   padding: '1.25rem 2.75rem 1.5rem',
                   fontSize: '0.875rem',
-                  color: item.label === 'What Changes' ? 'var(--lp-ink)' : 'var(--lp-mid)',
+                  color: item.label === 'What Changes' ? accordionChangesColor : accordionBodyColor,
                   lineHeight: 1.75,
-                  borderTop: '1px solid var(--lp-rule)',
+                  borderTop: `1px solid ${ruleColor}`,
                   fontStyle: item.label === 'What Changes' ? 'italic' : 'normal',
                 } as React.CSSProperties}
               >
@@ -746,6 +773,7 @@ export default function ToolkitTools() {
 
         {/* Tool cards */}
         <div
+          className="tk-tools-list"
           style={{
             display: 'flex',
             flexDirection: 'column',

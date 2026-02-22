@@ -94,6 +94,7 @@ export default function ToolkitIntro() {
           {months.map((month, i) => (
             <div
               key={month.tag}
+              className="tk-timeline-row"
               style={{
                 display: 'grid',
                 gridTemplateColumns: '140px 1px 1fr',
@@ -102,6 +103,7 @@ export default function ToolkitIntro() {
             >
               {/* Time label */}
               <div
+                className="tk-timeline-time"
                 style={{
                   textAlign: 'right',
                   fontSize: '0.75rem',
@@ -118,6 +120,7 @@ export default function ToolkitIntro() {
 
               {/* Timeline line + dot */}
               <div
+                className="tk-timeline-line"
                 style={{
                   width: '1px',
                   background: i < months.length - 1 ? 'rgba(200,146,42,0.25)' : 'transparent',

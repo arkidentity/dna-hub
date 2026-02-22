@@ -133,7 +133,7 @@ export default function ToolkitResult() {
 
           {/* Pull quote */}
           <div
-            className="fade-in"
+            className="fade-in tk-pull-quote"
             style={{
               marginTop: '4rem',
               padding: '2.5rem 3rem',
@@ -171,6 +171,7 @@ export default function ToolkitResult() {
 
       {/* CTA section */}
       <section
+        className="tk-cta"
         style={{
           background: 'var(--lp-ink)',
           padding: '6rem 5rem',
@@ -213,7 +214,7 @@ export default function ToolkitResult() {
           >
             The 90-Day Toolkit is just Phase 1. DNA provides everything a church needs to run a full 12-month discipleship cycle — including the app, dashboard, and coaching your leaders need to make it reproducible.
           </p>
-          <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
+          <div className="tk-cta-buttons" style={{ display: 'flex', gap: '1rem', justifyContent: 'center', flexWrap: 'wrap' }}>
             <a
               href="/"
               style={{
