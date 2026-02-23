@@ -14,11 +14,13 @@ export interface AdminUser {
 }
 
 export type ChurchStatus =
-  | 'pending_assessment'    // Just submitted assessment
-  | 'awaiting_discovery'    // Assessment reviewed, waiting for discovery call
+  | 'prospect'              // Admin building demo, church doesn't know yet
+  | 'demo'                  // Demo built, outreach/meeting in progress
+  | 'pending_assessment'    // Church expressed interest — sent assessment form link
+  | 'awaiting_discovery'    // Assessment submitted, reviewing + booking discovery call
   | 'proposal_sent'         // Discovery done, proposal sent
-  | 'awaiting_agreement'    // Proposal reviewed, waiting for agreement call
-  | 'awaiting_strategy'     // Agreement done, waiting for strategy call
+  | 'awaiting_agreement'    // Proposal reviewed, waiting for agreement
+  | 'awaiting_strategy'     // Agreement signed, waiting for strategy call
   | 'active'                // Strategy done, full dashboard access
   | 'completed'             // Finished all phases
   | 'paused'                // On hold

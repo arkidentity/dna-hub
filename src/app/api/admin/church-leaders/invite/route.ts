@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseAdmin, generateToken } from '@/lib/auth';
+import { getSupabaseAdmin } from '@/lib/auth';
 import { getUnifiedSession, isAdmin as checkIsAdmin, hasRole, getPrimaryChurch } from '@/lib/unified-auth';
 import { sendChurchLeaderInviteEmail } from '@/lib/email';
 
@@ -248,37 +248,34 @@ export async function POST(request: NextRequest) {
           invited_by: inviterId,
           invited_by_type: isSuperAdmin ? 'super_admin' : 'church_admin',
           user_id: userId,
-          activated_at: new Date().toISOString(), // Pre-activate
+          activated_at: new Date().toISOString(),
         });
     }
 
-    // 7. Create magic link token for direct login
-    const magicToken = generateToken();
-    const tokenExpiresAt = new Date();
-    tokenExpiresAt.setDate(tokenExpiresAt.getDate() + 7); // 7-day expiry
-
-    const { error: tokenError } = await supabase
-      .from('magic_link_tokens')
-      .insert({
+    // 7. Create Supabase Auth account silently (no Supabase email, no rate limits).
+    //    email_confirm: true so they can log in immediately via password or Google OAuth.
+    {
+      const { error: authCreateError } = await supabase.auth.admin.createUser({
         email: normalizedEmail,
-        token: magicToken,
-        expires_at: tokenExpiresAt.toISOString(),
-        used: false,
+        email_confirm: true,
+        user_metadata: { name: name?.trim(), signup_source: 'church_leader_invite' },
       });
-
-    if (tokenError) {
-      console.error('[Church Leaders] Magic token error:', tokenError);
-      // Continue anyway - they can request a new magic link via login
+      if (authCreateError &&
+          !authCreateError.message?.includes('already been registered') &&
+          !authCreateError.message?.includes('already exists')) {
+        console.error('[Church Leaders] Auth account creation error:', authCreateError.message);
+      }
     }
 
-    // 8. Send invitation email with direct magic link
+    // 8. Send invitation email pointing to the login page.
+    //    Auth account is pre-confirmed — they set a password or sign in with Google.
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dnadiscipleship.com';
-    const magicLink = `${baseUrl}/api/auth/verify?token=${magicToken}&destination=dashboard`;
+    const loginUrl = `${baseUrl}/login`;
 
     const emailResult = await sendChurchLeaderInviteEmail(
       normalizedEmail,
       name?.trim() || 'Church Leader',
-      magicLink,
+      loginUrl,
       churchName,
       inviterName,
       message

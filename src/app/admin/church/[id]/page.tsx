@@ -376,7 +376,9 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
                 onChange={(e) => handleStatusChange(e.target.value)}
                 className="bg-navy border border-gray-600 text-white rounded-lg px-3 py-2 text-sm"
               >
-                <option value="pending_assessment">Pending Review</option>
+                <option value="prospect">Prospect</option>
+                <option value="demo">Demo</option>
+                <option value="pending_assessment">Pending Assessment</option>
                 <option value="awaiting_discovery">Awaiting Discovery</option>
                 <option value="proposal_sent">Proposal Sent</option>
                 <option value="awaiting_agreement">Awaiting Agreement</option>

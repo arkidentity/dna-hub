@@ -933,7 +933,7 @@ export async function sendDNALeaderInvitationEmail(
 export async function sendDNALeaderDirectInviteEmail(
   to: string,
   leaderName: string,
-  magicLink: string,
+  loginUrl: string,
   churchName: string | null,
   inviterName: string,
   personalMessage?: string
@@ -963,24 +963,24 @@ export async function sendDNALeaderDirectInviteEmail(
 
       <p>As a DNA leader, you'll guide small groups through a 90-day discipleship journey that transforms lives and multiplies disciples.</p>
 
-      <p><strong>Your account is ready!</strong> Click below to log in and get started:</p>
+      <p><strong>Your account is ready!</strong> Click below to set up your password and get started — or sign in with Google if you prefer.</p>
 
       <div style="text-align: center; margin: 32px 0;">
-        <a href="${magicLink}"
+        <a href="${loginUrl}"
            style="background: #D4A853; color: white; padding: 16px 32px;
                   border-radius: 8px; text-decoration: none; font-weight: 500;
                   display: inline-block;">
-          Log In to DNA Hub
+          Set Up My Account
         </a>
       </div>
 
       <p style="color: #5A6577; font-size: 14px;">
-        This link expires in 7 days. After that, you can always request a new login link from the login page.
+        On the login page, click <strong>"First time? Set up your password"</strong> to create a password,
+        or click <strong>"Continue with Google"</strong> — just make sure to use this same email address: <strong>${to}</strong>
       </p>
 
       <p style="color: #5A6577; font-size: 14px;">
-        Or copy this link: <br>
-        <a href="${magicLink}" style="color: #2D6A6A;">${magicLink}</a>
+        Login page: <a href="${loginUrl}" style="color: #2D6A6A;">${loginUrl}</a>
       </p>
 
       <hr style="border: none; border-top: 1px solid #E8DDD0; margin: 32px 0;" />
@@ -1009,18 +1009,26 @@ export async function sendDNALeaderDirectInviteEmail(
 export async function sendChurchLeaderInviteEmail(
   to: string,
   leaderName: string,
-  magicLink: string,
+  loginUrl: string,
   churchName: string,
   inviterName: string,
   personalMessage?: string
 ) {
-  const subject = `You've been invited to lead DNA implementation at ${churchName}`;
+  // Peer invite vs. admin-provisioned — different subject + opening line
+  const isAdminProvisioned = !personalMessage && inviterName === 'DNA Hub Admin';
+  const subject = isAdminProvisioned
+    ? `Welcome to DNA Hub — your church dashboard is ready`
+    : `You've been invited to lead DNA implementation at ${churchName}`;
+
+  const openingLine = isAdminProvisioned
+    ? `Welcome to DNA Hub — your church dashboard is ready to use. <strong>${churchName}</strong> is one step closer to becoming a disciple-making church.`
+    : `${inviterName} has invited you to join the DNA implementation team at ${churchName}!`;
 
   const html = `
     <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
       <h2 style="color: #1A2332;">Hi ${leaderName},</h2>
 
-      <p>${inviterName} has invited you to join the DNA implementation team at ${churchName}!</p>
+      <p>${openingLine}</p>
 
       ${personalMessage ? `
       <div style="background: #F8F9FA; padding: 16px; border-radius: 8px; margin: 20px 0; border-left: 4px solid #2D6A6A;">
@@ -1032,29 +1040,29 @@ export async function sendChurchLeaderInviteEmail(
       <p>As a church leader in DNA Hub, you'll have access to:</p>
 
       <ul style="color: #5A6577; line-height: 1.8;">
-        <li><strong>Implementation Dashboard</strong> - Track your church's DNA journey milestones</li>
-        <li><strong>DNA Training</strong> - Flow Assessment, DNA Manual, and Launch Guide</li>
-        <li><strong>DNA Groups</strong> - Manage and track discipleship groups</li>
+        <li><strong>Implementation Dashboard</strong> — Track your church's DNA journey milestones</li>
+        <li><strong>DNA Training</strong> — Flow Assessment, DNA Manual, and Launch Guide</li>
+        <li><strong>DNA Groups</strong> — Manage and track discipleship groups</li>
       </ul>
 
-      <p><strong>Your account is ready!</strong> Click below to log in and get started:</p>
+      <p><strong>Your account is ready!</strong> Click below to set up your password and get started — or sign in with Google if you prefer.</p>
 
       <div style="text-align: center; margin: 32px 0;">
-        <a href="${magicLink}"
+        <a href="${loginUrl}"
            style="background: #D4A853; color: white; padding: 16px 32px;
                   border-radius: 8px; text-decoration: none; font-weight: 500;
                   display: inline-block;">
-          Log In to DNA Hub
+          Set Up My Account
         </a>
       </div>
 
       <p style="color: #5A6577; font-size: 14px;">
-        This link expires in 7 days. After that, you can always request a new login link from the login page.
+        On the login page, click <strong>"First time? Set up your password"</strong> to create a password,
+        or click <strong>"Continue with Google"</strong> — just make sure to use this same email address: <strong>${to}</strong>
       </p>
 
       <p style="color: #5A6577; font-size: 14px;">
-        Or copy this link: <br>
-        <a href="${magicLink}" style="color: #2D6A6A;">${magicLink}</a>
+        Login page: <a href="${loginUrl}" style="color: #2D6A6A;">${loginUrl}</a>
       </p>
 
       <hr style="border: none; border-top: 1px solid #E8DDD0; margin: 32px 0;" />
@@ -1075,6 +1083,65 @@ export async function sendChurchLeaderInviteEmail(
     subject,
     html,
     notificationType: 'church_leader_invite'
+  });
+}
+
+// Assessment Invite Email
+// Sent when admin promotes a church from demo → pending_assessment.
+// Warm, personal — from the assigned DNA coach.
+export async function sendAssessmentInviteEmail(
+  to: string,
+  leaderName: string,
+  churchName: string,
+  assessmentUrl: string,
+  coachName: string
+) {
+  const firstName = leaderName.split(' ')[0];
+  const subject = `${firstName}, the next step for ${churchName}`;
+
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1A2332;">Hi ${firstName},</h2>
+
+      <p>It was great connecting with you about DNA Discipleship. I'm excited about what God could do through <strong>${churchName}</strong> — and I think you're closer to being ready than you might think.</p>
+
+      <p>The next step is a short church profile form. It helps me understand where your church is at so we can have a much more focused conversation. It takes about 5 minutes.</p>
+
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${assessmentUrl}"
+           style="background: #D4A853; color: white; padding: 16px 32px;
+                  border-radius: 8px; text-decoration: none; font-weight: 500;
+                  display: inline-block;">
+          Fill Out the Church Profile →
+        </a>
+      </div>
+
+      <p style="color: #5A6577; font-size: 14px;">
+        Or copy this link: <a href="${assessmentUrl}" style="color: #2D6A6A;">${assessmentUrl}</a>
+      </p>
+
+      <p>Once you submit it, I'll review it personally and reach out to schedule a discovery conversation. Looking forward to it.</p>
+
+      <hr style="border: none; border-top: 1px solid #E8DDD0; margin: 32px 0;" />
+
+      <p style="color: #5A6577; font-size: 14px;">
+        Making disciples who make disciples,<br>
+        <strong>${coachName}</strong><br>
+        DNA Coach
+      </p>
+
+      <p style="color: #5A6577; font-size: 14px;">
+        Questions? Just reply to this email.<br>
+        <a href="https://dnadiscipleship.com" style="color: #2D6A6A;">dnadiscipleship.com</a>
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    notificationType: 'assessment_invite'
   });
 }
 

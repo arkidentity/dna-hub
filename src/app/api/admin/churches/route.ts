@@ -5,6 +5,8 @@ import {
   sendProposalReadyEmail,
   sendAgreementConfirmedEmail,
   sendDashboardAccessEmail,
+  sendChurchLeaderInviteEmail,
+  sendAssessmentInviteEmail,
 } from '@/lib/email';
 import { logStatusChange } from '@/lib/audit';
 
@@ -178,7 +180,7 @@ export async function POST(request: NextRequest) {
       leaderEmail,
       leaderPhone,
       leaderRole,
-      initialStatus = 'active',
+      initialStatus = 'prospect',
     } = body;
 
     if (!churchName?.trim()) {
@@ -289,6 +291,10 @@ export async function POST(request: NextRequest) {
       // Non-fatal — church and auth records are fine
     }
 
+    // Auth account and welcome email are deferred — they fire when the status is
+    // promoted to 'active' via the PATCH handler. For prospect/demo/pending_assessment
+    // the church leader doesn't know about the system yet.
+
     return NextResponse.json({ church: { id: church.id, name: church.name } }, { status: 201 });
   } catch (error) {
     console.error('[ADD CHURCH] Unexpected error:', error);
@@ -381,15 +387,34 @@ export async function PATCH(request: NextRequest) {
     }
 
     // Send email notifications based on status change
-    if (sendEmail && status && leaderData && churchData) {
+    // prospect + demo: no email — admin is working behind the scenes
+    // pending_assessment: assessment invite (warm, from DNA coach)
+    // awaiting_discovery: no email — assessment form submission already handles this
+    // proposal_sent: proposal ready email
+    // awaiting_strategy: agreement confirmed email
+    // active: dashboard access email + create auth account if not already done
+    if (sendEmail && status && leaderData && churchData && status !== churchData.status) {
       const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dnadiscipleship.com';
       const portalUrl = `${baseUrl}/portal`;
       const dashboardUrl = `${baseUrl}/dashboard`;
+      const loginUrl = `${baseUrl}/login`;
       const firstName = leaderData.name.split(' ')[0];
+      const coachName = session.name || 'Travis';
 
       try {
-        if (status === 'proposal_sent' && churchData.status !== 'proposal_sent') {
-          // Send proposal ready email
+        if (status === 'pending_assessment') {
+          // Warm personal email from DNA coach with link to public assessment form
+          const assessmentUrl = `${baseUrl}/assessment`;
+          await sendAssessmentInviteEmail(
+            leaderData.email,
+            leaderData.name,
+            churchData.name,
+            assessmentUrl,
+            coachName
+          );
+          console.log('[ADMIN] Sent assessment invite email to', leaderData.email);
+
+        } else if (status === 'proposal_sent') {
           await sendProposalReadyEmail(
             leaderData.email,
             firstName,
@@ -398,8 +423,8 @@ export async function PATCH(request: NextRequest) {
             churchId
           );
           console.log('[ADMIN] Sent proposal ready email to', leaderData.email);
-        } else if (status === 'awaiting_strategy' && churchData.status !== 'awaiting_strategy') {
-          // Send agreement confirmed email
+
+        } else if (status === 'awaiting_strategy') {
           await sendAgreementConfirmedEmail(
             leaderData.email,
             firstName,
@@ -409,8 +434,23 @@ export async function PATCH(request: NextRequest) {
             churchId
           );
           console.log('[ADMIN] Sent agreement confirmed email to', leaderData.email);
-        } else if (status === 'active' && churchData.status !== 'active') {
-          // Send dashboard access email
+
+        } else if (status === 'active') {
+          // Create Supabase Auth account now if it doesn't exist yet.
+          // (Churches that came through the self-serve assessment already have one —
+          //  the createUser call is idempotent and silently ignores duplicates.)
+          const { error: authCreateError } = await supabase.auth.admin.createUser({
+            email: leaderData.email,
+            email_confirm: true,
+            user_metadata: { name: leaderData.name, signup_source: 'status_activated' },
+          });
+          if (authCreateError &&
+              !authCreateError.message?.includes('already been registered') &&
+              !authCreateError.message?.includes('already exists')) {
+            console.error('[ADMIN] Auth account creation error on activate:', authCreateError.message);
+          }
+
+          // Dashboard access email — includes login instructions
           await sendDashboardAccessEmail(
             leaderData.email,
             firstName,
@@ -418,7 +458,15 @@ export async function PATCH(request: NextRequest) {
             dashboardUrl,
             churchId
           );
-          console.log('[ADMIN] Sent dashboard access email to', leaderData.email);
+          // Also send the "Set Up My Account" email so they know how to log in
+          await sendChurchLeaderInviteEmail(
+            leaderData.email,
+            leaderData.name,
+            loginUrl,
+            churchData.name,
+            coachName
+          );
+          console.log('[ADMIN] Sent dashboard access + login setup emails to', leaderData.email);
         }
       } catch (emailError) {
         console.error('[ADMIN] Email send error:', emailError);

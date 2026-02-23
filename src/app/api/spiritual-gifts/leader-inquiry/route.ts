@@ -1,12 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import { generateToken } from '@/lib/auth';
+import { getSupabaseAdmin } from '@/lib/auth';
 import { sendEmail } from '@/lib/email';
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
-);
+// Use admin client so we can call supabase.auth.admin.createUser
+const supabase = getSupabaseAdmin();
 
 
 export async function POST(request: NextRequest) {
@@ -172,27 +169,30 @@ export async function POST(request: NextRequest) {
     }
 
     // =====================================================
-    // 7. Generate magic link (7-day expiry)
+    // 7. Create Supabase Auth account silently (no Supabase email, no rate limits).
+    //    email_confirm: true so they can log in immediately via password or Google OAuth.
     // =====================================================
-    const magicToken = generateToken();
-    const tokenExpiresAt = new Date();
-    tokenExpiresAt.setDate(tokenExpiresAt.getDate() + 7);
-
-    await supabase.from('magic_link_tokens').insert({
-      email: normalizedEmail,
-      token: magicToken,
-      expires_at: tokenExpiresAt.toISOString(),
-      used: false,
-    });
+    {
+      const { error: authCreateError } = await supabase.auth.admin.createUser({
+        email: normalizedEmail,
+        email_confirm: true,
+        user_metadata: { name, signup_source: 'ministry_gifts_inquiry' },
+      });
+      if (authCreateError &&
+          !authCreateError.message?.includes('already been registered') &&
+          !authCreateError.message?.includes('already exists')) {
+        console.error('[Leader Inquiry] Auth account creation error:', authCreateError.message);
+      }
+    }
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://hub.dnadiscipleship.com';
-    const magicLink = `${baseUrl}/api/auth/verify?token=${magicToken}&destination=dashboard`;
+    const loginUrl = `${baseUrl}/login`;
     const adminChurchUrl = `${baseUrl}/admin/church/${church.id}`;
 
     // =====================================================
     // 8. Send emails
     // =====================================================
-    // Welcome email to pastor with magic link
+    // Welcome email to pastor — directs them to set up password or use Google
     await sendEmail({
       to: normalizedEmail,
       subject: `${firstName}, your Ministry Gifts dashboard is ready`,
@@ -218,11 +218,13 @@ export async function POST(request: NextRequest) {
 
               <!-- CTA -->
               <div style="background: #1A2332; padding: 28px 32px; margin: 0 0 2rem 0; text-align: center;">
-                <p style="font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A853; margin: 0 0 0.75rem 0;">One-click login — no password needed</p>
-                <a href="${magicLink}" style="display: inline-block; background: #D4A853; color: #0f0e0c; padding: 14px 32px; text-decoration: none; font-weight: 700; font-size: 0.95rem; letter-spacing: 0.04em;">
+                <p style="font-size: 0.8rem; letter-spacing: 0.15em; text-transform: uppercase; color: #D4A853; margin: 0 0 0.75rem 0;">Set up your password or sign in with Google</p>
+                <a href="${loginUrl}" style="display: inline-block; background: #D4A853; color: #0f0e0c; padding: 14px 32px; text-decoration: none; font-weight: 700; font-size: 0.95rem; letter-spacing: 0.04em;">
                   Access My Dashboard →
                 </a>
-                <p style="font-size: 0.78rem; color: rgba(247,244,239,0.4); margin: 1rem 0 0 0;">This link expires in 7 days.</p>
+                <p style="font-size: 0.78rem; color: rgba(247,244,239,0.4); margin: 1rem 0 0 0;">
+                  Click "First time? Set up your password" or "Continue with Google" using <strong style="color: rgba(247,244,239,0.6);">${normalizedEmail}</strong>
+                </p>
               </div>
 
               <!-- Next steps -->
@@ -264,7 +266,7 @@ export async function POST(request: NextRequest) {
         `,
     }).catch((err) => console.error('Welcome email error:', err));
 
-    // Internal notification with direct admin link
+    // Internal notification to you with direct admin link
     await sendEmail({
       to: 'info@dnadiscipleship.com',
       subject: `New Ministry Gifts Sign-up: ${churchName}`,
@@ -285,7 +287,7 @@ export async function POST(request: NextRequest) {
             </p>
             <p style="color: #64748b; font-size: 13px;">
               Church ID: ${church.id}<br />
-              A magic link has been sent to the pastor. No manual action needed.
+              Account created — pastor directed to set up password or use Google OAuth.
             </p>
           </div>
         `,

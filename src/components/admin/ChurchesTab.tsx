@@ -88,7 +88,9 @@ interface ChurchesTabProps {
 }
 
 const STATUS_LABELS: Record<string, { label: string; color: string; icon: typeof Clock }> = {
-  pending_assessment: { label: 'Pending Review', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
+  prospect: { label: 'Prospect', color: 'bg-slate-100 text-slate-600', icon: Eye },
+  demo: { label: 'Demo', color: 'bg-violet-100 text-violet-700', icon: Play },
+  pending_assessment: { label: 'Pending Assessment', color: 'bg-yellow-100 text-yellow-800', icon: Clock },
   awaiting_discovery: { label: 'Awaiting Discovery', color: 'bg-blue-100 text-blue-800', icon: Phone },
   proposal_sent: { label: 'Proposal Sent', color: 'bg-purple-100 text-purple-800', icon: FileText },
   awaiting_agreement: { label: 'Awaiting Agreement', color: 'bg-indigo-100 text-indigo-800', icon: FileText },
@@ -140,7 +142,7 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
     leaderEmail: '',
     leaderPhone: '',
     leaderRole: '',
-    initialStatus: 'active',
+    initialStatus: 'prospect',
   });
   const [addChurchLoading, setAddChurchLoading] = useState(false);
   const [addChurchError, setAddChurchError] = useState<string | null>(null);
@@ -187,7 +189,7 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
       setShowAddChurch(false);
       setAddChurchForm({
         churchName: '', city: '', state: '', leaderName: '',
-        leaderEmail: '', leaderPhone: '', leaderRole: '', initialStatus: 'active',
+        leaderEmail: '', leaderPhone: '', leaderRole: '', initialStatus: 'prospect',
       });
       await onRefresh();
     } catch (err) {
@@ -641,7 +643,7 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
             </select>
           </div>
           <button
-            onClick={() => { setAddChurchForm({ churchName: '', city: '', state: '', leaderName: '', leaderEmail: '', leaderPhone: '', leaderRole: '', initialStatus: 'active' }); setAddChurchError(null); setShowAddChurch(true); }}
+            onClick={() => { setAddChurchForm({ churchName: '', city: '', state: '', leaderName: '', leaderEmail: '', leaderPhone: '', leaderRole: '', initialStatus: 'prospect' }); setAddChurchError(null); setShowAddChurch(true); }}
             className="btn-primary inline-flex items-center gap-2 whitespace-nowrap self-start"
           >
             <PlusCircle className="w-4 h-4" />
@@ -826,6 +828,24 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
 
                     {/* Status Actions */}
                     <div className="flex items-center gap-2">
+                      {church.status === 'prospect' && (
+                        <button
+                          onClick={() => handleStatusChange(church.id, 'demo')}
+                          className="text-xs px-3 py-1.5 bg-violet-600 text-white rounded hover:bg-violet-700 transition-colors"
+                        >
+                          Mark Demo Ready
+                        </button>
+                      )}
+
+                      {church.status === 'demo' && (
+                        <button
+                          onClick={() => handleStatusChange(church.id, 'pending_assessment')}
+                          className="text-xs px-3 py-1.5 bg-yellow-500 text-white rounded hover:bg-yellow-600 transition-colors"
+                        >
+                          Send Assessment
+                        </button>
+                      )}
+
                       {church.status === 'pending_assessment' && (
                         <button
                           onClick={() => handleStatusChange(church.id, 'awaiting_discovery')}
@@ -1093,9 +1113,10 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
                         onChange={(e) => setAddChurchForm({ ...addChurchForm, initialStatus: e.target.value })}
                         className="w-full"
                       >
+                        <option value="prospect">Prospect (default — no email sent)</option>
+                        <option value="demo">Demo Ready</option>
+                        <option value="pending_assessment">Pending Assessment</option>
                         <option value="active">Active (full dashboard access)</option>
-                        <option value="awaiting_discovery">Awaiting Discovery</option>
-                        <option value="awaiting_strategy">Awaiting Strategy</option>
                       </select>
                     </div>
                   </div>

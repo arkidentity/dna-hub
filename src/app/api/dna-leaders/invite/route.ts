@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getSupabaseAdmin, generateToken } from '@/lib/auth';
+import { getSupabaseAdmin } from '@/lib/auth';
 import { getUnifiedSession, isAdmin as checkIsAdmin, getPrimaryChurch } from '@/lib/unified-auth';
 import { sendDNALeaderDirectInviteEmail } from '@/lib/email';
 
@@ -140,20 +140,22 @@ export async function POST(request: NextRequest) {
       userId = newUser.id;
     }
 
-    // 1b. Create Supabase Auth account so the leader can log in with a password.
-    //     inviteUserByEmail creates the auth.users record + sends a "set your password"
-    //     email. If the account already exists we ignore the error and move on.
+    // 1b. Create Supabase Auth account silently (no Supabase email sent).
+    //     Using createUser instead of inviteUserByEmail avoids Supabase's
+    //     email rate limits — our branded Resend email is sent below instead.
+    //     email_confirm: true marks the email as pre-confirmed so they can
+    //     log in immediately via "Set up password" or Google OAuth.
     {
-      const { error: authInviteError } = await supabase.auth.admin.inviteUserByEmail(
-        normalizedEmail,
-        {
-          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://hub.dnadiscipleship.com'}/login`,
-          data: { name: name.trim(), signup_source: 'admin_invite' },
-        }
-      );
-      if (authInviteError && !authInviteError.message?.includes('already been registered') && !authInviteError.message?.includes('already exists')) {
+      const { error: authCreateError } = await supabase.auth.admin.createUser({
+        email: normalizedEmail,
+        email_confirm: true,
+        user_metadata: { name: name.trim(), signup_source: 'admin_invite' },
+      });
+      if (authCreateError &&
+          !authCreateError.message?.includes('already been registered') &&
+          !authCreateError.message?.includes('already exists')) {
         // Log but don't fail the invite — magic link still works as fallback
-        console.error('[DNA Leaders] Auth account creation error:', authInviteError.message);
+        console.error('[DNA Leaders] Auth account creation error:', authCreateError.message);
       }
     }
 
@@ -225,34 +227,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // 4. Create magic link token for direct login
-    const magicToken = generateToken();
-    const tokenExpiresAt = new Date();
-    tokenExpiresAt.setDate(tokenExpiresAt.getDate() + 7); // 7-day expiry
-
-    const { error: tokenError } = await supabase
-      .from('magic_link_tokens')
-      .insert({
-        email: normalizedEmail,
-        token: magicToken,
-        expires_at: tokenExpiresAt.toISOString(),
-        used: false,
-      });
-
-    if (tokenError) {
-      console.error('[DNA Leaders] Magic token error:', tokenError);
-      // Continue anyway - they can request a new magic link via login
-    }
-
-    // 5. Send invitation email with direct magic link
-    // DNA leaders start with training, then can access groups
+    // 4. Send invitation email pointing to the login page.
+    // The auth account already exists (email_confirm: true), so leaders just
+    // set up a password or sign in with Google — no magic link needed.
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dnadiscipleship.com';
-    const magicLink = `${baseUrl}/api/auth/verify?token=${magicToken}&destination=training`;
+    const loginUrl = `${baseUrl}/login`;
 
     const emailResult = await sendDNALeaderDirectInviteEmail(
       normalizedEmail,
       name.trim(),
-      magicLink,
+      loginUrl,
       churchName,
       inviterName,
       message
