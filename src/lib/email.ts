@@ -1568,3 +1568,63 @@ export async function sendCoLeaderInvitationEmail(
     notificationType: 'co_leader_invitation'
   });
 }
+
+// Co-Leader New User Invite Email
+// Sent when a DNA leader invites someone who doesn't yet have a leader account
+export async function sendCoLeaderNewUserInviteEmail(
+  to: string,
+  leaderName: string,
+  groupName: string,
+  inviterName: string,
+  signupUrl: string,
+  existingAccountUrl: string
+) {
+  const subject = `${inviterName} invited you to co-lead "${groupName}" on DNA Discipleship`;
+
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #1A2332; padding: 24px; border-radius: 12px 12px 0 0; text-align: center;">
+        <p style="color: #D4A853; font-weight: 600; letter-spacing: 2px; margin: 0; font-size: 14px;">DNA DISCIPLESHIP</p>
+      </div>
+      <div style="background: #242D3D; padding: 32px; border-radius: 0 0 12px 12px;">
+        <h1 style="color: #FFFFFF; font-size: 24px; margin: 0 0 16px 0;">You&apos;ve Been Invited!</h1>
+        <p style="color: #CBD5E0; font-size: 16px; line-height: 1.6;">
+          Hi ${leaderName},
+        </p>
+        <p style="color: #CBD5E0; font-size: 16px; line-height: 1.6;">
+          <strong style="color: #FFFFFF;">${inviterName}</strong> has invited you to co-lead the DNA group
+          <strong style="color: #D4A853;">${groupName}</strong>.
+        </p>
+        <p style="color: #A0AEC0; font-size: 14px; line-height: 1.6; margin-bottom: 32px;">
+          As co-leader, you&apos;ll have full access to manage the group alongside the primary leader — including
+          tracking disciples, managing phases, and scheduling events.
+        </p>
+        <p style="color: #A0AEC0; font-size: 14px; line-height: 1.6; margin-bottom: 32px;">
+          Click below to create your free leader account and accept the invitation.
+        </p>
+
+        <div style="text-align: center; margin-bottom: 24px;">
+          <a href="${signupUrl}"
+             style="display: inline-block; padding: 14px 32px; background: #D4A853; color: #1A2332; border-radius: 8px; font-weight: 600; font-size: 16px; text-decoration: none;">
+            Accept &amp; Create Account
+          </a>
+        </div>
+
+        <p style="color: #5A6577; font-size: 13px; text-align: center; margin-bottom: 8px;">
+          This invitation expires in 7 days. If you didn&apos;t expect this email, you can safely ignore it.
+        </p>
+        <p style="color: #5A6577; font-size: 13px; text-align: center;">
+          Already have a DNA leader account?
+          <a href="${existingAccountUrl}" style="color: #D4A853; text-decoration: none;">Sign in here</a>
+        </p>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    notificationType: 'co_leader_invitation'
+  });
+}

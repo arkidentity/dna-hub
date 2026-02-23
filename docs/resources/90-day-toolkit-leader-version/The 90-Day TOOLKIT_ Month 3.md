@@ -1346,9 +1346,13 @@ I'm going to give each of you a copy (or show you on the screen). Take a few min
 
 # 
 
-# **After the 12 Weeks: What's Next?**
+# **After the 12 Weeks**
 
-Congratulations\! You've completed the 90-Day Toolkit. But this isn't the end—it's just the beginning.
+# **What's Next?**
+
+Congratulations\! 
+
+You've completed the 90-Day Toolkit. But this isn't the end—it's just the beginning.
 
 ## **Customize Your Own Rhythm**
 
@@ -1357,6 +1361,8 @@ Now that you understand the tools, create your own rhythm:
 * Mix and match tools based on group needs  
 * Add new tools as you discover them  
 * Follow the Holy Spirit's leading
+
+# 
 
 # 
 

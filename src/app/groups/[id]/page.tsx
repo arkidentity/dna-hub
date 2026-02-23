@@ -62,6 +62,7 @@ function GroupDetailContent() {
 
   // Co-leader modal state
   const [showCoLeaderModal, setShowCoLeaderModal] = useState(false);
+  const [coLeaderTab, setCoLeaderTab] = useState<'find' | 'invite'>('find');
   const [availableLeaders, setAvailableLeaders] = useState<{ id: string; name: string; email: string }[]>([]);
   const [selectedLeaderId, setSelectedLeaderId] = useState('');
   const [loadingLeaders, setLoadingLeaders] = useState(false);
@@ -70,6 +71,9 @@ function GroupDetailContent() {
   const [removingCoLeader, setRemovingCoLeader] = useState(false);
   const [leaderEmailSearch, setLeaderEmailSearch] = useState('');
   const [searchingLeader, setSearchingLeader] = useState(false);
+  // Invite by email tab state
+  const [inviteName, setInviteName] = useState('');
+  const [inviteEmail, setInviteEmail] = useState('');
 
   // Add disciple modal state
   const [showAddModal, setShowAddModal] = useState(false);
@@ -200,6 +204,38 @@ function GroupDetailContent() {
     } catch (err) {
       console.error('Set co-leader error:', err);
       setCoLeaderError('Failed to set co-leader');
+    }
+    setSettingCoLeader(false);
+  };
+
+  const handleInviteByEmail = async () => {
+    if (!inviteName.trim() || !inviteEmail.trim()) return;
+    setSettingCoLeader(true);
+    setCoLeaderError(null);
+
+    try {
+      const response = await fetch(`/api/groups/${groupId}/co-leader`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: inviteName.trim(), email: inviteEmail.trim().toLowerCase() }),
+      });
+
+      const data = await response.json();
+      if (!response.ok || data.error) {
+        setCoLeaderError(data.error || 'Failed to send invitation');
+        setSettingCoLeader(false);
+        return;
+      }
+
+      if (group) {
+        setGroup({ ...group, pending_co_leader: data.pending_co_leader, co_leader_invited_at: new Date().toISOString() });
+      }
+      setShowCoLeaderModal(false);
+      setInviteName('');
+      setInviteEmail('');
+    } catch (err) {
+      console.error('Invite by email error:', err);
+      setCoLeaderError('Failed to send invitation');
     }
     setSettingCoLeader(false);
   };
@@ -657,15 +693,33 @@ function GroupDetailContent() {
       {showCoLeaderModal && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
           <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
-            <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center justify-between mb-4">
               <h2 className="text-xl font-bold text-navy">Invite Co-Leader</h2>
               <button
-                onClick={() => setShowCoLeaderModal(false)}
+                onClick={() => { setShowCoLeaderModal(false); setCoLeaderTab('find'); setInviteName(''); setInviteEmail(''); setCoLeaderError(null); }}
                 className="text-gray-400 hover:text-gray-600"
               >
                 <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
+              </button>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200 mb-5">
+              <button
+                type="button"
+                onClick={() => { setCoLeaderTab('find'); setCoLeaderError(null); }}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${coLeaderTab === 'find' ? 'border-gold text-gold' : 'border-transparent text-gray-500 hover:text-navy'}`}
+              >
+                Find Existing Leader
+              </button>
+              <button
+                type="button"
+                onClick={() => { setCoLeaderTab('invite'); setCoLeaderError(null); }}
+                className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${coLeaderTab === 'invite' ? 'border-gold text-gold' : 'border-transparent text-gray-500 hover:text-navy'}`}
+              >
+                Invite by Email
               </button>
             </div>
 
@@ -675,57 +729,126 @@ function GroupDetailContent() {
               </div>
             )}
 
-            {loadingLeaders ? (
-              <div className="text-center py-8">
-                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold mx-auto"></div>
-                <p className="text-sm text-gray-500 mt-2">Loading leaders...</p>
-              </div>
-            ) : (
-              <div>
-                <label className="block text-sm font-medium text-navy mb-2">
-                  Search by email
-                </label>
-                <input
-                  type="email"
-                  value={leaderEmailSearch}
-                  onChange={(e) => handleLeaderEmailSearch(e.target.value)}
-                  placeholder="Enter co-leader's email address"
-                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold focus:border-gold mb-3"
-                />
+            {/* Tab: Find existing leader */}
+            {coLeaderTab === 'find' && (
+              loadingLeaders ? (
+                <div className="text-center py-8">
+                  <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gold mx-auto"></div>
+                  <p className="text-sm text-gray-500 mt-2">Loading leaders...</p>
+                </div>
+              ) : (
+                <div>
+                  <label className="block text-sm font-medium text-navy mb-2">
+                    Search by email
+                  </label>
+                  <input
+                    type="email"
+                    value={leaderEmailSearch}
+                    onChange={(e) => handleLeaderEmailSearch(e.target.value)}
+                    placeholder="Enter co-leader's email address"
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold focus:border-gold mb-3"
+                  />
 
-                {searchingLeader ? (
-                  <p className="text-sm text-gray-400 py-2">Searching...</p>
-                ) : availableLeaders.length === 0 ? (
-                  <p className="text-sm text-gray-400 py-2">
-                    {leaderEmailSearch.trim() ? 'No active leader found with that email.' : 'No other leaders in your church yet.'}
-                  </p>
-                ) : (
-                  <div className="border border-gray-200 rounded-lg divide-y max-h-48 overflow-y-auto">
-                    {availableLeaders.map(leader => (
-                      <button
-                        key={leader.id}
-                        type="button"
-                        onClick={() => setSelectedLeaderId(leader.id === selectedLeaderId ? '' : leader.id)}
-                        className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${selectedLeaderId === leader.id ? 'bg-gold/10 border-l-2 border-gold' : ''}`}
-                      >
-                        <p className="font-medium text-navy text-sm">{leader.name}</p>
-                        <p className="text-xs text-gray-500">{leader.email}</p>
-                      </button>
-                    ))}
+                  {searchingLeader ? (
+                    <p className="text-sm text-gray-400 py-2">Searching...</p>
+                  ) : availableLeaders.length === 0 ? (
+                    <div>
+                      <p className="text-sm text-gray-400 py-2">
+                        {leaderEmailSearch.trim() ? 'No active leader found with that email.' : 'No other leaders in your church yet.'}
+                      </p>
+                      {leaderEmailSearch.trim() && (
+                        <p className="text-sm text-gray-500 mt-1">
+                          Not a leader yet?{' '}
+                          <button
+                            type="button"
+                            onClick={() => { setCoLeaderTab('invite'); setInviteEmail(leaderEmailSearch); setCoLeaderError(null); }}
+                            className="text-gold hover:underline font-medium"
+                          >
+                            Invite them by email
+                          </button>
+                        </p>
+                      )}
+                    </div>
+                  ) : (
+                    <div className="border border-gray-200 rounded-lg divide-y max-h-48 overflow-y-auto">
+                      {availableLeaders.map(leader => (
+                        <button
+                          key={leader.id}
+                          type="button"
+                          onClick={() => setSelectedLeaderId(leader.id === selectedLeaderId ? '' : leader.id)}
+                          className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors ${selectedLeaderId === leader.id ? 'bg-gold/10 border-l-2 border-gold' : ''}`}
+                        >
+                          <p className="font-medium text-navy text-sm">{leader.name}</p>
+                          <p className="text-xs text-gray-500">{leader.email}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  <div className="flex justify-end gap-3 mt-6">
+                    <button
+                      type="button"
+                      onClick={() => { setShowCoLeaderModal(false); setCoLeaderTab('find'); setInviteName(''); setInviteEmail(''); setCoLeaderError(null); }}
+                      className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={handleSetCoLeader}
+                      disabled={!selectedLeaderId || settingCoLeader}
+                      className="bg-gold hover:bg-gold/90 text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      {settingCoLeader ? 'Sending...' : 'Send Invitation'}
+                    </button>
                   </div>
-                )}
+                </div>
+              )
+            )}
+
+            {/* Tab: Invite by email (new user) */}
+            {coLeaderTab === 'invite' && (
+              <div>
+                <p className="text-sm text-gray-500 mb-4">
+                  Invite someone who isn&apos;t a DNA leader yet. They&apos;ll receive an email to create their account and will be automatically set as co-leader once they sign up.
+                </p>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-navy mb-1">
+                      Their Name <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="text"
+                      value={inviteName}
+                      onChange={(e) => setInviteName(e.target.value)}
+                      placeholder="John Smith"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold focus:border-gold"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-navy mb-1">
+                      Their Email <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      type="email"
+                      value={inviteEmail}
+                      onChange={(e) => setInviteEmail(e.target.value)}
+                      placeholder="john@example.com"
+                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold focus:border-gold"
+                    />
+                  </div>
+                </div>
 
                 <div className="flex justify-end gap-3 mt-6">
                   <button
                     type="button"
-                    onClick={() => setShowCoLeaderModal(false)}
+                    onClick={() => { setShowCoLeaderModal(false); setCoLeaderTab('find'); setInviteName(''); setInviteEmail(''); setCoLeaderError(null); }}
                     className="px-4 py-2 text-gray-600 hover:text-gray-800"
                   >
                     Cancel
                   </button>
                   <button
-                    onClick={handleSetCoLeader}
-                    disabled={!selectedLeaderId || settingCoLeader}
+                    onClick={handleInviteByEmail}
+                    disabled={!inviteName.trim() || !inviteEmail.trim() || settingCoLeader}
                     className="bg-gold hover:bg-gold/90 text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {settingCoLeader ? 'Sending...' : 'Send Invitation'}

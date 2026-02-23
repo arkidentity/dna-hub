@@ -4,7 +4,7 @@
 
 # **THE 90-DAY TOOLKIT**
 
-## **Month 2: Building (Weeks 5-8)**
+## **Month 2: Going Deeper (Weeks 5-8)**
 
 ## 
 
@@ -1173,8 +1173,6 @@ Follow-Up:
 * **Don't drag uncommitted disciples into Month 3\.** It's unfair to them and the group.
 
 **Better to reset now than to limp through the next 4 weeks.**
-
-### 
 
 ### **Prepare for Month 3: Breakthrough (Weeks 9-12)**
 

@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { randomBytes } from 'crypto';
 import { getSupabaseAdmin } from '@/lib/auth';
 import { getUnifiedSession, hasRole } from '@/lib/unified-auth';
-import { sendCoLeaderInvitationEmail } from '@/lib/email';
+import { sendCoLeaderInvitationEmail, sendCoLeaderNewUserInviteEmail } from '@/lib/email';
 
 // POST /api/groups/[id]/co-leader
 // Send an invitation to a potential co-leader (primary leader only)
@@ -47,10 +48,207 @@ export async function POST(
     }
 
     const body = await request.json();
-    const { leader_id } = body;
+    const { leader_id, name: inviteName, email: inviteEmail } = body;
 
+    // --- PATH A: invite by email (new or unactivated person) ---
+    if (!leader_id && inviteEmail) {
+      const emailLower = inviteEmail.trim().toLowerCase();
+      const nameTrimmed = (inviteName || '').trim();
+
+      if (!nameTrimmed) {
+        return NextResponse.json({ error: 'Name is required when inviting by email' }, { status: 400 });
+      }
+
+      if (emailLower === dnaLeader.email.toLowerCase()) {
+        return NextResponse.json({ error: 'Cannot invite yourself as co-leader' }, { status: 400 });
+      }
+
+      // Look up existing dna_leaders record
+      const { data: existingLeader } = await supabase
+        .from('dna_leaders')
+        .select('id, name, email, is_active, activated_at, signup_token')
+        .eq('email', emailLower)
+        .maybeSingle();
+
+      let invitedLeaderId: string;
+      let signupToken: string;
+
+      if (existingLeader && existingLeader.is_active && existingLeader.activated_at) {
+        // Case B: already an active leader — use existing flow
+        invitedLeaderId = existingLeader.id;
+        signupToken = ''; // not needed for existing leader path
+
+        // Cancel previous pending invitations
+        await supabase
+          .from('co_leader_invitations')
+          .update({ status: 'cancelled' })
+          .eq('group_id', groupId)
+          .eq('status', 'pending');
+
+        const { data: invitation, error: inviteError } = await supabase
+          .from('co_leader_invitations')
+          .insert({
+            group_id: groupId,
+            invited_leader_id: invitedLeaderId,
+            invited_by_leader_id: dnaLeader.id,
+          })
+          .select('id, token')
+          .single();
+
+        if (inviteError || !invitation) {
+          console.error('[Co-Leader] Invitation create error:', inviteError);
+          return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 });
+        }
+
+        await supabase
+          .from('dna_groups')
+          .update({ pending_co_leader_id: invitedLeaderId, co_leader_invited_at: new Date().toISOString() })
+          .eq('id', groupId);
+
+        const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://hub.dnadiscipleship.com';
+        const invitationUrl = `${baseUrl}/groups/invitations/${invitation.token}`;
+        await sendCoLeaderInvitationEmail(
+          emailLower,
+          existingLeader.name || emailLower,
+          group.group_name,
+          dnaLeader.name || dnaLeader.email,
+          invitationUrl,
+          invitationUrl
+        );
+
+        return NextResponse.json({
+          success: true,
+          message: `Invitation sent to ${existingLeader.name || emailLower}`,
+          pending_co_leader: { id: invitedLeaderId, name: existingLeader.name, email: emailLower },
+        });
+      }
+
+      // Case A/C: person doesn't exist yet, or exists but hasn't activated
+      const newSignupToken = randomBytes(32).toString('hex');
+      const signupExpires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
+
+      if (!existingLeader) {
+        // Create users record (idempotent on email)
+        const { data: existingUser } = await supabase
+          .from('users')
+          .select('id')
+          .eq('email', emailLower)
+          .maybeSingle();
+
+        let userId: string;
+        if (existingUser) {
+          userId = existingUser.id;
+        } else {
+          const { data: newUser, error: userError } = await supabase
+            .from('users')
+            .insert({ email: emailLower, name: nameTrimmed })
+            .select('id')
+            .single();
+          if (userError || !newUser) {
+            console.error('[Co-Leader] User create error:', userError);
+            return NextResponse.json({ error: 'Failed to create user record' }, { status: 500 });
+          }
+          userId = newUser.id;
+        }
+
+        // Assign dna_leader role (idempotent)
+        const { data: existingRole } = await supabase
+          .from('user_roles')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('role', 'dna_leader')
+          .maybeSingle();
+
+        if (!existingRole) {
+          await supabase.from('user_roles').insert({ user_id: userId, role: 'dna_leader' });
+          await supabase.from('user_roles').insert({ user_id: userId, role: 'training_participant' });
+        }
+
+        // Create dna_leaders record
+        const { data: newLeader, error: leaderError } = await supabase
+          .from('dna_leaders')
+          .insert({
+            email: emailLower,
+            name: nameTrimmed,
+            user_id: userId,
+            invited_by: dnaLeader.id,
+            invited_by_type: 'dna_leader',
+            invited_at: new Date().toISOString(),
+            signup_token: newSignupToken,
+            signup_token_expires_at: signupExpires,
+            is_active: true,
+          })
+          .select('id')
+          .single();
+
+        if (leaderError || !newLeader) {
+          console.error('[Co-Leader] Leader create error:', leaderError);
+          return NextResponse.json({ error: 'Failed to create leader record' }, { status: 500 });
+        }
+
+        invitedLeaderId = newLeader.id;
+        signupToken = newSignupToken;
+      } else {
+        // Case C: exists but not activated — refresh signup token
+        invitedLeaderId = existingLeader.id;
+        await supabase
+          .from('dna_leaders')
+          .update({ signup_token: newSignupToken, signup_token_expires_at: signupExpires, name: nameTrimmed })
+          .eq('id', invitedLeaderId);
+        signupToken = newSignupToken;
+      }
+
+      // Cancel previous pending invitations
+      await supabase
+        .from('co_leader_invitations')
+        .update({ status: 'cancelled' })
+        .eq('group_id', groupId)
+        .eq('status', 'pending');
+
+      // Create co-leader invitation
+      const { data: invitation, error: inviteError } = await supabase
+        .from('co_leader_invitations')
+        .insert({
+          group_id: groupId,
+          invited_leader_id: invitedLeaderId,
+          invited_by_leader_id: dnaLeader.id,
+        })
+        .select('id, token')
+        .single();
+
+      if (inviteError || !invitation) {
+        console.error('[Co-Leader] Invitation create error:', inviteError);
+        return NextResponse.json({ error: 'Failed to create invitation' }, { status: 500 });
+      }
+
+      await supabase
+        .from('dna_groups')
+        .update({ pending_co_leader_id: invitedLeaderId, co_leader_invited_at: new Date().toISOString() })
+        .eq('id', groupId);
+
+      const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://hub.dnadiscipleship.com';
+      const signupUrl = `${baseUrl}/groups/signup?token=${signupToken}&co_leader_token=${invitation.token}`;
+      const existingAccountUrl = `${baseUrl}/groups/invitations/${invitation.token}`;
+
+      await sendCoLeaderNewUserInviteEmail(
+        emailLower,
+        nameTrimmed,
+        group.group_name,
+        dnaLeader.name || dnaLeader.email,
+        signupUrl,
+        existingAccountUrl
+      );
+
+      return NextResponse.json({
+        success: true,
+        message: `Invitation sent to ${nameTrimmed} (${emailLower})`,
+        pending_co_leader: { id: invitedLeaderId, name: nameTrimmed, email: emailLower },
+      });
+    }
+
+    // --- PATH B: existing flow — invite by leader_id ---
     if (!leader_id) {
-      return NextResponse.json({ error: 'leader_id is required' }, { status: 400 });
+      return NextResponse.json({ error: 'leader_id or email is required' }, { status: 400 });
     }
 
     if (leader_id === dnaLeader.id) {
@@ -102,7 +300,7 @@ export async function POST(
       .eq('id', groupId);
 
     // Send invitation email
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dnadiscipleship.com';
+    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://hub.dnadiscipleship.com';
     const invitationUrl = `${baseUrl}/groups/invitations/${invitation.token}`;
     const acceptUrl = invitationUrl;
     const declineUrl = invitationUrl;

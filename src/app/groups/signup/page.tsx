@@ -17,6 +17,7 @@ function DNALeaderSignupContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const token = searchParams.get('token');
+  const coLeaderToken = searchParams.get('co_leader_token');
 
   const [loading, setLoading] = useState(true);
   const [submitting, setSubmitting] = useState(false);
@@ -85,8 +86,22 @@ function DNALeaderSignupContent() {
         return;
       }
 
+      // Auto-accept co-leader invitation if one was included in the signup link
+      if (coLeaderToken) {
+        try {
+          await fetch(`/api/groups/invitations/${coLeaderToken}`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ action: 'accept' }),
+          });
+        } catch (err) {
+          console.error('Co-leader auto-accept error:', err);
+          // Non-fatal — they're still a leader, they can accept manually
+        }
+      }
+
       // Redirect to DNA leader dashboard
-      router.push('/groups?welcome=true');
+      router.push(coLeaderToken ? '/groups?welcome=true&co_leader=true' : '/groups?welcome=true');
     } catch (err) {
       console.error('Activation error:', err);
       setError('Failed to complete signup. Please try again.');
@@ -146,12 +161,18 @@ function DNALeaderSignupContent() {
             <div className="bg-navy/5 rounded-lg p-4 mb-6 text-center">
               <p className="text-sm text-gray-600">You&apos;re joining as a DNA leader at</p>
               <p className="text-lg font-semibold text-navy">{invitation.church.name}</p>
+              {coLeaderToken && (
+                <p className="text-sm text-gold mt-1">You&apos;ll be set as co-leader of a group once you complete signup.</p>
+              )}
             </div>
           )}
 
           {!invitation?.church && (
             <div className="bg-teal/10 rounded-lg p-4 mb-6 text-center">
               <p className="text-sm text-teal">You&apos;re joining as an independent DNA leader</p>
+              {coLeaderToken && (
+                <p className="text-sm text-gold mt-1">You&apos;ll be set as co-leader of a group once you complete signup.</p>
+              )}
             </div>
           )}
 

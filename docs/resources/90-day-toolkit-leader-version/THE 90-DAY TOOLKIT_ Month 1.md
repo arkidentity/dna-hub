@@ -6,7 +6,7 @@
 
 # **THE 90-DAY TOOLKIT**
 
-## **Month 1: Foundation (Weeks 1-4)**
+## **Month 1: Building Habits (Weeks 1-4)**
 
 ## 
 
@@ -20,7 +20,7 @@
 
 ## **First 30 Days\!**
 
-**The Foundation: Daily PB\&J (Prayer, Bible and Journal)**
+**Keep it simple: Daily PB\&J (Prayer, Bible and Journal)**
 
 Everything in the 90-Day Toolkit builds on one simple daily rhythm: Over the first few weeks 
 
@@ -719,7 +719,7 @@ Leaders will post first every day to model. We're not trying to shame anyone—w
 
 ### **Week 4:** 
 
-# **Foundation Doctrines**
+# **Foundational Doctrines**
 
 ## **(Creed Cards)**
 
@@ -995,7 +995,7 @@ Before moving to Month 2, evaluate each disciple:
 
 **Don't move forward if disciples aren't engaged.** Better to extend Month 1 or reset expectations than to drag uncommitted disciples into Month 2\.
 
-## **Prepare for Month 2: Building (Weeks 5-8)**
+## **Prepare for Month 2: Going Deeper (Weeks 5-8)**
 
 **Month 2 Focus:** Vulnerability, Ownership, Ministry to One Another
 

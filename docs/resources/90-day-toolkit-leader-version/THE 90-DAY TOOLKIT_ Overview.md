@@ -58,7 +58,7 @@
 
 ## **The toolkit is broken into 3 months, each with a distinct focus:**
 
-### **MONTH 1: FOUNDATION (Weeks 1-4)**
+### **MONTH 1: Building Habits (Weeks 1-4)**
 
 ## **Focus:** Learning the core DNA tools and begin practicing them. The emphasis is on connection and trust—creating a safe environment where vulnerability can flourish.
 
@@ -87,7 +87,7 @@
 
 ### 
 
-### **MONTH 2: DEEPENING (Weeks 5-8)**
+### **MONTH 2: GOING DEEPER (Weeks 5-8)**
 
 ## **Focus:** 
 
@@ -165,9 +165,9 @@
 
 ## Each month has its own detailed guide with full lesson plans:
 
-* ## **Month 1: Foundation** (Weeks 1-4)
+* ## **Month 1: Building Habits** (Weeks 1-4)
 
-* ## **Month 2: Deepening** (Weeks 5-8)
+* ## **Month 2: Going Deeper** (Weeks 5-8)
 
 * ## **Month 3: Breakthrough** (Weeks 9-12)
 
@@ -227,7 +227,9 @@ Leaders demonstrate vulnerability, obedience, and faith before asking disciples 
 
 ### **5\. Daily Habits \= Transformation**
 
-The tools work when they're practiced daily. 3D Journal \+ 4D Prayer \= the foundation of a disciple's life.
+The tools work when they're practiced daily. 
+
+3D Journal \+ 4D Prayer \= the foundation of a disciple's life.
 
 ## 
 
