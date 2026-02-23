@@ -140,6 +140,23 @@ export async function POST(request: NextRequest) {
       userId = newUser.id;
     }
 
+    // 1b. Create Supabase Auth account so the leader can log in with a password.
+    //     inviteUserByEmail creates the auth.users record + sends a "set your password"
+    //     email. If the account already exists we ignore the error and move on.
+    {
+      const { error: authInviteError } = await supabase.auth.admin.inviteUserByEmail(
+        normalizedEmail,
+        {
+          redirectTo: `${process.env.NEXT_PUBLIC_APP_URL || 'https://hub.dnadiscipleship.com'}/login`,
+          data: { name: name.trim(), signup_source: 'admin_invite' },
+        }
+      );
+      if (authInviteError && !authInviteError.message?.includes('already been registered') && !authInviteError.message?.includes('already exists')) {
+        // Log but don't fail the invite — magic link still works as fallback
+        console.error('[DNA Leaders] Auth account creation error:', authInviteError.message);
+      }
+    }
+
     // 2. Add dna_leader role (if not already present)
     const { data: existingRole } = await supabase
       .from('user_roles')
