@@ -713,7 +713,7 @@ export default function DNALeadersTab() {
                       onChange={(e) => setInviteForm({ ...inviteForm, churchId: e.target.value })}
                       className="w-full"
                     >
-                      <option value="">Independent (No Church)</option>
+                      <option value="">DNA Discipleship (default)</option>
                       {churches.map((church) => (
                         <option key={church.id} value={church.id}>
                           {church.name}
@@ -721,8 +721,7 @@ export default function DNALeadersTab() {
                       ))}
                     </select>
                     <p className="text-xs text-foreground-muted mt-1">
-                      Leave as &quot;Independent&quot; for leaders not affiliated with a specific
-                      church
+                      Leaders without a specific church are assigned to DNA Discipleship.
                     </p>
                   </div>
 
@@ -846,7 +845,7 @@ export default function DNALeadersTab() {
                     onChange={(e) => setEditForm({ ...editForm, church_id: e.target.value })}
                     className="w-full"
                   >
-                    <option value="">Independent (No Church)</option>
+                    <option value="">DNA Discipleship (default)</option>
                     {churches.map((church) => (
                       <option key={church.id} value={church.id}>
                         {church.name}
