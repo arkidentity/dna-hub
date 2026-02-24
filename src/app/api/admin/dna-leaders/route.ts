@@ -33,46 +33,58 @@ export async function GET(request: NextRequest) {
 
     if (leadersError) throw leadersError;
 
-    // Get group counts for each leader
+    // Get group counts and roles for each leader (parallel)
     const leaderIds = (leaders || []).map(l => l.id);
+    const userIds = (leaders || []).filter(l => l.user_id).map(l => l.user_id as string);
     let groupCounts: Record<string, number> = {};
     let discipleCounts: Record<string, number> = {};
 
-    if (leaderIds.length > 0) {
-      // Get groups per leader
-      const { data: groups, error: groupsError } = await supabase
-        .from('dna_groups')
-        .select('id, leader_id')
-        .in('leader_id', leaderIds);
+    // Fetch groups and user roles in parallel
+    const [groupsResult, rolesResult] = await Promise.all([
+      leaderIds.length > 0
+        ? supabase.from('dna_groups').select('id, leader_id').in('leader_id', leaderIds)
+        : Promise.resolve({ data: [] as { id: string; leader_id: string }[], error: null }),
+      userIds.length > 0
+        ? supabase
+            .from('user_roles')
+            .select('user_id, role, church_id')
+            .in('user_id', userIds)
+        : Promise.resolve({
+            data: [] as { user_id: string; role: string; church_id: string | null }[],
+            error: null,
+          }),
+    ]);
 
-      if (!groupsError && groups) {
-        groups.forEach(g => {
-          groupCounts[g.leader_id] = (groupCounts[g.leader_id] || 0) + 1;
-        });
+    const { data: groups, error: groupsError } = groupsResult;
+    const { data: userRoles } = rolesResult;
 
-        // Get disciple counts per group
-        const groupIds = groups.map(g => g.id);
-        if (groupIds.length > 0) {
-          const { data: disciples, error: disciplesError } = await supabase
-            .from('group_disciples')
-            .select('group_id')
-            .in('group_id', groupIds)
-            .eq('is_active', true);
+    if (!groupsError && groups) {
+      groups.forEach(g => {
+        groupCounts[g.leader_id] = (groupCounts[g.leader_id] || 0) + 1;
+      });
 
-          if (!disciplesError && disciples) {
-            // Map group_id back to leader_id for disciple counts
-            const groupToLeader: Record<string, string> = {};
-            groups.forEach(g => {
-              groupToLeader[g.id] = g.leader_id;
-            });
+      // Get disciple counts per group
+      const groupIds = groups.map(g => g.id);
+      if (groupIds.length > 0) {
+        const { data: disciples, error: disciplesError } = await supabase
+          .from('group_disciples')
+          .select('group_id')
+          .in('group_id', groupIds)
+          .eq('is_active', true);
 
-            disciples.forEach(d => {
-              const leaderId = groupToLeader[d.group_id];
-              if (leaderId) {
-                discipleCounts[leaderId] = (discipleCounts[leaderId] || 0) + 1;
-              }
-            });
-          }
+        if (!disciplesError && disciples) {
+          // Map group_id back to leader_id for disciple counts
+          const groupToLeader: Record<string, string> = {};
+          groups.forEach(g => {
+            groupToLeader[g.id] = g.leader_id;
+          });
+
+          disciples.forEach(d => {
+            const leaderId = groupToLeader[d.group_id];
+            if (leaderId) {
+              discipleCounts[leaderId] = (discipleCounts[leaderId] || 0) + 1;
+            }
+          });
         }
       }
     }
@@ -83,6 +95,7 @@ export async function GET(request: NextRequest) {
       church_name: leader.churches?.name || null,
       group_count: groupCounts[leader.id] || 0,
       disciple_count: discipleCounts[leader.id] || 0,
+      roles: (userRoles || []).filter(r => r.user_id === leader.user_id),
     }));
 
     // Calculate stats

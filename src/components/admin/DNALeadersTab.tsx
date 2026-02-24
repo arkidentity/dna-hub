@@ -19,11 +19,51 @@ import {
 } from 'lucide-react';
 import { DNALeader } from '@/lib/types';
 
+interface UserRole {
+  user_id: string;
+  role: string;
+  church_id: string | null;
+}
+
 interface LeaderWithStats extends DNALeader {
+  user_id?: string | null;
   church_name?: string;
   group_count: number;
   disciple_count: number;
+  roles?: UserRole[];
 }
+
+const ROLE_CHIPS: {
+  role: string;
+  label: string;
+  activeClass: string;
+  scoped: boolean;
+}[] = [
+  {
+    role: 'church_leader',
+    label: 'Church Leader',
+    activeClass: 'bg-blue-100 text-blue-700 border-blue-300',
+    scoped: true,
+  },
+  {
+    role: 'dna_leader',
+    label: 'DNA Leader',
+    activeClass: 'bg-teal/10 text-teal border-teal/30',
+    scoped: true,
+  },
+  {
+    role: 'training_participant',
+    label: 'Training',
+    activeClass: 'bg-purple-100 text-purple-700 border-purple-300',
+    scoped: false,
+  },
+  {
+    role: 'admin',
+    label: 'Admin',
+    activeClass: 'bg-red-100 text-red-700 border-red-300',
+    scoped: false,
+  },
+];
 
 interface DNALeadersStats {
   total: number;
@@ -63,6 +103,9 @@ export default function DNALeadersTab() {
   const [inviting, setInviting] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState(false);
+
+  // Role toggle state — key is `${leaderId}-${role}`
+  const [togglingRole, setTogglingRole] = useState<string | null>(null);
 
   // Edit modal state
   const [editingLeader, setEditingLeader] = useState<LeaderWithStats | null>(null);
@@ -126,6 +169,64 @@ export default function DNALeadersTab() {
       church_id: leader.church_id || '',
     });
     setSaveError(null);
+  };
+
+  const handleToggleRole = async (
+    leader: LeaderWithStats,
+    role: string,
+    isScoped: boolean,
+    currentlyActive: boolean
+  ) => {
+    if (!leader.user_id) return;
+    const church_id = isScoped ? (leader.church_id || null) : null;
+    if (isScoped && !church_id) return; // scoped role requires a church
+
+    const key = `${leader.id}-${role}`;
+    setTogglingRole(key);
+
+    try {
+      const res = await fetch(`/api/admin/users/${leader.user_id}/roles`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          role,
+          action: currentlyActive ? 'remove' : 'add',
+          church_id,
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to toggle role');
+      }
+
+      // Optimistic local update — no refetch needed
+      setLeaders((prev) =>
+        prev.map((l) => {
+          if (l.id !== leader.id) return l;
+          if (currentlyActive) {
+            return {
+              ...l,
+              roles: (l.roles || []).filter(
+                (r) => !(r.role === role && r.church_id === church_id)
+              ),
+            };
+          } else {
+            return {
+              ...l,
+              roles: [
+                ...(l.roles || []),
+                { user_id: l.user_id!, role, church_id: church_id ?? null },
+              ],
+            };
+          }
+        })
+      );
+    } catch (err) {
+      console.error('Toggle role error:', err);
+    } finally {
+      setTogglingRole(null);
+    }
   };
 
   const handleInvite = async (e: React.FormEvent) => {
@@ -456,6 +557,53 @@ export default function DNALeadersTab() {
                       <span>Invited {formatDate(leader.invited_at || leader.created_at)}</span>
                       {leader.activated_at && (
                         <span>Activated {formatDate(leader.activated_at)}</span>
+                      )}
+                    </div>
+
+                    {/* Role chips — click to toggle */}
+                    <div className="flex items-center gap-1.5 mt-2 flex-wrap">
+                      <span className="text-xs text-foreground-muted">Roles:</span>
+                      {ROLE_CHIPS.map(({ role, label, activeClass, scoped }) => {
+                        const church_id = scoped ? (leader.church_id || null) : null;
+                        const isActive = (leader.roles || []).some(
+                          (r) => r.role === role && r.church_id === church_id
+                        );
+                        const isLoading = togglingRole === `${leader.id}-${role}`;
+                        const isDisabled = !leader.user_id || (scoped && !leader.church_id);
+
+                        return (
+                          <button
+                            key={role}
+                            onClick={() =>
+                              !isDisabled && handleToggleRole(leader, role, scoped, isActive)
+                            }
+                            disabled={isLoading || isDisabled}
+                            title={
+                              isDisabled && scoped
+                                ? 'Requires church affiliation'
+                                : isActive
+                                ? `Remove ${label} role`
+                                : `Add ${label} role`
+                            }
+                            className={`
+                              text-xs px-2 py-0.5 rounded-full border transition-all select-none
+                              ${isActive
+                                ? activeClass
+                                : 'bg-gray-50 text-gray-400 border-gray-200'}
+                              ${isDisabled
+                                ? 'opacity-40 cursor-not-allowed'
+                                : 'cursor-pointer hover:opacity-80'}
+                              ${isLoading ? 'opacity-50' : ''}
+                            `}
+                          >
+                            {isLoading ? '···' : label}
+                          </button>
+                        );
+                      })}
+                      {!leader.user_id && (
+                        <span className="text-xs text-amber-500 italic">
+                          No user record — roles unavailable
+                        </span>
                       )}
                     </div>
                   </div>

@@ -436,9 +436,8 @@ export async function PATCH(request: NextRequest) {
           console.log('[ADMIN] Sent agreement confirmed email to', leaderData.email);
 
         } else if (status === 'active') {
-          // Create Supabase Auth account now if it doesn't exist yet.
-          // (Churches that came through the self-serve assessment already have one —
-          //  the createUser call is idempotent and silently ignores duplicates.)
+          // 1. Create Supabase Auth account (idempotent — ignores duplicates).
+          // Churches that came through the self-serve assessment already have one.
           const { error: authCreateError } = await supabase.auth.admin.createUser({
             email: leaderData.email,
             email_confirm: true,
@@ -450,6 +449,70 @@ export async function PATCH(request: NextRequest) {
             console.error('[ADMIN] Auth account creation error on activate:', authCreateError.message);
           }
 
+          // 2. Ensure users record exists (may have come through assessment path with no POST).
+          const normalizedLeaderEmail = leaderData.email.toLowerCase();
+          let activatedUserId: string | null = null;
+          const { data: existingActivatedUser } = await supabase
+            .from('users')
+            .select('id')
+            .eq('email', normalizedLeaderEmail)
+            .single();
+
+          if (existingActivatedUser) {
+            activatedUserId = existingActivatedUser.id;
+          } else {
+            const { data: newActivatedUser } = await supabase
+              .from('users')
+              .insert({ email: normalizedLeaderEmail, name: leaderData.name })
+              .select('id')
+              .single();
+            if (newActivatedUser) activatedUserId = newActivatedUser.id;
+          }
+
+          // 3. Assign roles idempotently so users from the assessment path get access.
+          if (activatedUserId) {
+            await supabase.from('user_roles').upsert(
+              { user_id: activatedUserId, role: 'church_leader', church_id: churchId },
+              { onConflict: 'user_id,role,church_id', ignoreDuplicates: true }
+            );
+            await supabase.from('user_roles').upsert(
+              { user_id: activatedUserId, role: 'dna_leader', church_id: churchId },
+              { onConflict: 'user_id,role,church_id', ignoreDuplicates: true }
+            );
+            await supabase.from('user_roles').upsert(
+              { user_id: activatedUserId, role: 'training_participant' },
+              { onConflict: 'user_id,role,church_id', ignoreDuplicates: true }
+            );
+            // Also ensure dna_leaders record exists
+            await supabase.from('dna_leaders').upsert(
+              {
+                email: normalizedLeaderEmail,
+                name: leaderData.name,
+                church_id: churchId,
+                user_id: activatedUserId,
+                is_active: true,
+                activated_at: new Date().toISOString(),
+                invited_by_type: 'super_admin',
+              },
+              { onConflict: 'email' }
+            );
+          }
+
+          // 4. Generate a recovery link for first-time password setup (not a hardcoded /login URL).
+          let setupUrl = loginUrl; // safe fallback
+          try {
+            const { data: linkData } = await supabase.auth.admin.generateLink({
+              type: 'recovery',
+              email: normalizedLeaderEmail,
+              options: { redirectTo: `${baseUrl}/auth/reset-password` },
+            });
+            if (linkData?.properties?.action_link) {
+              setupUrl = linkData.properties.action_link;
+            }
+          } catch {
+            console.error('[ADMIN] Failed to generate recovery link for activation, using fallback');
+          }
+
           // Dashboard access email — includes login instructions
           await sendDashboardAccessEmail(
             leaderData.email,
@@ -458,11 +521,11 @@ export async function PATCH(request: NextRequest) {
             dashboardUrl,
             churchId
           );
-          // Also send the "Set Up My Account" email so they know how to log in
+          // "Set Up My Account" email with a direct recovery link
           await sendChurchLeaderInviteEmail(
             leaderData.email,
             leaderData.name,
-            loginUrl,
+            setupUrl,
             churchData.name,
             coachName
           );
