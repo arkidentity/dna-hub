@@ -921,6 +921,23 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
                           Decline
                         </button>
                       )}
+
+                      {/* Override dropdown — move to any status freely */}
+                      <select
+                        value=""
+                        onChange={(e) => {
+                          if (e.target.value) handleStatusChange(church.id, e.target.value);
+                        }}
+                        className="text-xs py-1.5 pl-2 pr-6 border border-border rounded text-foreground-muted bg-white hover:border-foreground-muted transition-colors cursor-pointer"
+                        title="Move to any status"
+                      >
+                        <option value="" disabled>Move to…</option>
+                        {Object.entries(STATUS_LABELS)
+                          .filter(([key]) => key !== church.status)
+                          .map(([key, { label }]) => (
+                            <option key={key} value={key}>{label}</option>
+                          ))}
+                      </select>
                     </div>
                   </div>
                 </div>
