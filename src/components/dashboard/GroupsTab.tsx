@@ -16,6 +16,7 @@ import {
   Pencil,
   Search,
   LogIn,
+  Bell,
 } from 'lucide-react';
 import { DNALeader, DNAGroup, DNAGroupPhase } from '@/lib/types';
 
@@ -33,7 +34,18 @@ interface GroupWithCount extends DNAGroup {
 
 interface DNALeaderWithLogin extends Omit<DNALeader, never> {
   last_login_at?: string | null;
+  flow_assessment_complete?: boolean;
+  manual_complete?: boolean;
+  training_stage?: string | null;
 }
+
+const TRAINING_STAGE_LABELS: Record<string, { label: string; color: string }> = {
+  onboarding:   { label: 'Phase 0 — Onboarding',    color: 'bg-gray-100 text-gray-600' },
+  training:     { label: 'Phase 1 — Training',       color: 'bg-blue-100 text-blue-700' },
+  launching:    { label: 'Phase 2 — Launch Guide',   color: 'bg-purple-100 text-purple-700' },
+  growing:      { label: 'Phase 3 — Leading Group',  color: 'bg-teal/15 text-teal' },
+  multiplying:  { label: 'Phase 4 — Multiplying',    color: 'bg-gold/20 text-gold-dark' },
+};
 
 interface GroupsTabProps {
   churchId: string;
@@ -88,6 +100,10 @@ export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabPr
   const [editForm, setEditForm] = useState({ name: '', email: '', phone: '' });
   const [saving, setSaving] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+
+  // Reminder state
+  const [sendingReminder, setSendingReminder] = useState<string | null>(null);
+  const [reminderStatus, setReminderStatus] = useState<{ id: string; ok: boolean } | null>(null);
 
   // Search / filter state
   const [searchQuery, setSearchQuery] = useState('');
@@ -196,6 +212,23 @@ export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabPr
       setEditError(err instanceof Error ? err.message : 'Failed to update leader');
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSendReminder = async (leader: DNALeaderWithLogin) => {
+    setSendingReminder(leader.id);
+    setReminderStatus(null);
+    try {
+      const res = await fetch(
+        `/api/churches/${churchId}/dna-leaders/${leader.id}/remind`,
+        { method: 'POST' }
+      );
+      setReminderStatus({ id: leader.id, ok: res.ok });
+    } catch {
+      setReminderStatus({ id: leader.id, ok: false });
+    } finally {
+      setSendingReminder(null);
+      setTimeout(() => setReminderStatus(null), 3000);
     }
   };
 
@@ -420,6 +453,23 @@ export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabPr
                       </span>
                     </div>
 
+                    {/* Training progress indicators */}
+                    <div className="flex flex-wrap items-center gap-3 mb-3">
+                      <span className={`flex items-center gap-1.5 text-xs font-medium ${leader.flow_assessment_complete ? 'text-green-600' : 'text-foreground-muted'}`}>
+                        <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${leader.flow_assessment_complete ? 'bg-green-500' : 'bg-gray-300'}`} />
+                        Flow Assessment
+                      </span>
+                      <span className={`flex items-center gap-1.5 text-xs font-medium ${leader.manual_complete ? 'text-green-600' : 'text-foreground-muted'}`}>
+                        <span className={`w-2.5 h-2.5 rounded-full flex-shrink-0 ${leader.manual_complete ? 'bg-green-500' : 'bg-gray-300'}`} />
+                        DNA Manual
+                      </span>
+                      {leader.training_stage && TRAINING_STAGE_LABELS[leader.training_stage] && (
+                        <span className={`text-xs px-2 py-0.5 rounded-full ${TRAINING_STAGE_LABELS[leader.training_stage].color}`}>
+                          {TRAINING_STAGE_LABELS[leader.training_stage].label}
+                        </span>
+                      )}
+                    </div>
+
                     {/* Health flags */}
                     {health && health.flag_areas && health.flag_areas.length > 0 && (
                       <div className="flex flex-wrap gap-2 mb-3">
@@ -465,13 +515,31 @@ export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabPr
                     )}
                   </div>
 
-                  <button
-                    onClick={() => openEditModal(leader)}
-                    className="p-1.5 text-foreground-muted hover:text-navy hover:bg-background-secondary rounded-lg transition-colors flex-shrink-0"
-                    title="Edit leader"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
+                  <div className="flex items-center gap-1 flex-shrink-0">
+                    {reminderStatus?.id === leader.id && (
+                      <span className={`text-xs px-2 py-1 rounded-full ${reminderStatus.ok ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
+                        {reminderStatus.ok ? 'Sent!' : 'Failed'}
+                      </span>
+                    )}
+                    <button
+                      onClick={() => handleSendReminder(leader)}
+                      disabled={sendingReminder === leader.id}
+                      className="p-1.5 text-foreground-muted hover:text-teal hover:bg-background-secondary rounded-lg transition-colors"
+                      title={leader.activated_at ? 'Send login reminder' : 'Resend setup email'}
+                    >
+                      {sendingReminder === leader.id
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <Bell className="w-4 h-4" />
+                      }
+                    </button>
+                    <button
+                      onClick={() => openEditModal(leader)}
+                      className="p-1.5 text-foreground-muted hover:text-navy hover:bg-background-secondary rounded-lg transition-colors"
+                      title="Edit leader"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );

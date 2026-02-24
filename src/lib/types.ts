@@ -92,6 +92,7 @@ export interface Church {
   id: string;
   name: string;
   logo_url?: string;
+  splash_logo_url?: string | null;
   subdomain?: string | null;
   status: ChurchStatus;
   selected_tier?: string;  // The tier/package selected when signing agreement

@@ -1509,6 +1509,85 @@ export async function send3StepsEmail(
   });
 }
 
+// DNA Leader Reminder Email
+// Sent by a church leader to nudge their DNA leaders to log in / complete training
+export async function sendDNALeaderReminderEmail(
+  to: string,
+  leaderName: string,
+  fromName: string,
+  churchName: string,
+  loginUrl: string,
+  type: 'setup' | 'login'
+) {
+  const firstName = leaderName.split(' ')[0];
+
+  const subject = type === 'setup'
+    ? `${fromName} is inviting you to get started on DNA`
+    : `${fromName} wants you to continue your DNA training`;
+
+  const headline = type === 'setup'
+    ? 'Your account is ready — let\'s get started!'
+    : 'Keep the momentum going!';
+
+  const bodyText = type === 'setup'
+    ? `${fromName} from ${churchName} sent you a quick reminder that your DNA leader account is set up and ready to go. Your next step is to log in and complete your <strong>Flow Assessment</strong> — it only takes about 30 minutes and it's the foundation for everything else.`
+    : `${fromName} from ${churchName} wants to check in on your DNA training journey. Log back in to continue where you left off — whether that's your <strong>Flow Assessment</strong>, the <strong>DNA Manual</strong>, or your <strong>Launch Guide</strong>.`;
+
+  const ctaText = type === 'setup' ? 'Set Up My Account' : 'Continue Training';
+
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <div style="background: #1A2332; padding: 24px 32px; text-align: center;">
+        <p style="color: #D4A853; font-weight: 600; letter-spacing: 2px; margin: 0; font-size: 13px;">DNA DISCIPLESHIP</p>
+      </div>
+
+      <div style="background: #FFFBF5; padding: 40px 32px;">
+        <h2 style="color: #1A2332; margin: 0 0 8px 0; font-size: 22px;">${headline}</h2>
+        <p style="color: #5A6577; font-size: 14px; margin: 0 0 24px 0;">Hey ${firstName},</p>
+
+        <p style="color: #3D4A5C; font-size: 15px; line-height: 1.7; margin: 0 0 28px 0;">
+          ${bodyText}
+        </p>
+
+        <div style="background: #F4E7D7; padding: 20px 24px; border-radius: 8px; margin: 0 0 28px 0;">
+          <p style="color: #1A2332; font-size: 13px; font-weight: 600; letter-spacing: 0.05em; text-transform: uppercase; margin: 0 0 6px 0;">Your training path</p>
+          <div style="display: flex; flex-direction: column; gap: 6px;">
+            <p style="color: #5A6577; font-size: 14px; margin: 0;">1. Flow Assessment <span style="color: #A0AEC0; font-size: 12px;">(30–45 min)</span></p>
+            <p style="color: #5A6577; font-size: 14px; margin: 0;">2. DNA Manual <span style="color: #A0AEC0; font-size: 12px;">(6 sessions)</span></p>
+            <p style="color: #5A6577; font-size: 14px; margin: 0;">3. Launch Guide <span style="color: #A0AEC0; font-size: 12px;">(5 phases)</span></p>
+          </div>
+        </div>
+
+        <div style="text-align: center; margin: 0 0 32px 0;">
+          <a href="${loginUrl}"
+             style="background: #D4A853; color: #1A2332; padding: 15px 32px;
+                    border-radius: 8px; text-decoration: none; font-weight: 600;
+                    display: inline-block; font-size: 15px;">
+            ${ctaText}
+          </a>
+        </div>
+
+        <p style="color: #5A6577; font-size: 13px; line-height: 1.6; margin: 0;">
+          Questions? Reach out to ${fromName} or reply to this email.
+        </p>
+      </div>
+
+      <div style="background: #2a2825; padding: 16px 32px; text-align: center;">
+        <p style="font-family: system-ui, sans-serif; font-size: 11px; color: rgba(247,244,239,0.35); margin: 0;">
+          DNA Discipleship · dnadiscipleship.com
+        </p>
+      </div>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    notificationType: 'dna_leader_reminder',
+  });
+}
+
 // =====================================================
 // DAILY DNA APP EMAILS
 // =====================================================

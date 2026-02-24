@@ -1,6 +1,7 @@
 'use client';
 
-import { List, LayoutList, Calendar, CheckCircle, Clock, Video } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { List, LayoutList, Calendar, CheckCircle, Clock, Video, Phone } from 'lucide-react';
 import { PhaseWithMilestones, MilestoneWithProgress, Church, ScheduledCall } from '@/lib/types';
 import PhaseCard from './PhaseCard';
 import { formatCallDate } from './utils';
@@ -124,10 +125,32 @@ export default function JourneyTab({
   onCancelEditChurchNotes,
   onEditChurchNotesChange,
 }: JourneyTabProps) {
-  // Get the strategy call for display
-  const strategyCall = calls.find(c => c.call_type === 'strategy');
-  const discoveryCall = calls.find(c => c.call_type === 'discovery');
-  const proposalCall = calls.find(c => c.call_type === 'proposal');
+  // Scroll to first incomplete milestone in current phase (once on load)
+  const hasScrolledRef = useRef(false);
+  useEffect(() => {
+    if (hasScrolledRef.current) return;
+    const currentPhase = phases.find(
+      p => p.phase_number === church.current_phase ||
+        (church.current_phase === 0 && p.phase_number === 1)
+    );
+    if (!currentPhase || !expandedPhases.has(currentPhase.id)) return;
+    const firstIncomplete = currentPhase.milestones.find(m => !m.progress?.completed);
+    if (!firstIncomplete) return;
+    hasScrolledRef.current = true;
+    setTimeout(() => {
+      document.getElementById(`milestone-${firstIncomplete.id}`)?.scrollIntoView({
+        behavior: 'smooth',
+        block: 'center',
+      });
+    }, 200);
+  }, [expandedPhases, phases, church.current_phase]);
+
+  // Only show scheduled calls that haven't been completed yet
+  const activeDiscovery = calls.find(c => c.call_type === 'discovery' && !c.completed);
+  const activeProposal  = calls.find(c => c.call_type === 'proposal'  && !c.completed);
+  const activeStrategy  = calls.find(c => c.call_type === 'strategy'  && !c.completed);
+  const hasActiveCalls  = !!(activeDiscovery || activeProposal || activeStrategy);
+
   const totalMilestones = phases.filter(p => p.phase_number > 0).reduce((sum, p) => sum + p.totalCount, 0);
   const completedMilestones = phases.filter(p => p.phase_number > 0).reduce((sum, p) => sum + p.completedCount, 0);
   const overallProgress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
@@ -185,21 +208,39 @@ export default function JourneyTab({
       </div>
 
       {/* Scheduled Calls Section */}
-      {calls.length > 0 && (
+      {hasActiveCalls ? (
         <div className="card">
           <h3 className="font-semibold text-navy mb-4 flex items-center gap-2">
             <Calendar className="w-5 h-5 text-teal" />
             Your Scheduled Calls
           </h3>
-          <div className="grid sm:grid-cols-3 gap-3">
-            {/* Discovery Call */}
-            <CallCard call={discoveryCall} label="Discovery Call" />
-
-            {/* Proposal Call */}
-            <CallCard call={proposalCall} label="Proposal Call" />
-
-            {/* Strategy Call */}
-            <CallCard call={strategyCall} label="Strategy Call" />
+          <div className={`grid gap-3 ${[activeDiscovery, activeProposal, activeStrategy].filter(Boolean).length === 1 ? 'sm:grid-cols-1 max-w-sm' : [activeDiscovery, activeProposal, activeStrategy].filter(Boolean).length === 2 ? 'sm:grid-cols-2' : 'sm:grid-cols-3'}`}>
+            {activeDiscovery && <CallCard call={activeDiscovery} label="Discovery Call" />}
+            {activeProposal  && <CallCard call={activeProposal}  label="Proposal Call"  />}
+            {activeStrategy  && <CallCard call={activeStrategy}  label="Strategy Call"  />}
+          </div>
+        </div>
+      ) : (
+        <div className="card">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="font-semibold text-navy flex items-center gap-2">
+                <Calendar className="w-5 h-5 text-teal" />
+                Ready for a check-in?
+              </h3>
+              <p className="text-sm text-foreground-muted mt-1">
+                No upcoming calls scheduled. Book time with your DNA coach.
+              </p>
+            </div>
+            <a
+              href="https://calendar.google.com/calendar/appointments/schedules/AcZssZ06-H6-Lu-ReUlLa7bTB0qgXj9c1DxocZWH7WxTLw__s9chlLMDflEtH_my63oqNrQAaV7oahqR?gv=true"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-shrink-0 inline-flex items-center gap-2 px-4 py-2 bg-gold text-white rounded-lg hover:bg-gold/90 transition-colors text-sm font-medium"
+            >
+              <Phone className="w-4 h-4" />
+              Book a Call
+            </a>
           </div>
         </div>
       )}

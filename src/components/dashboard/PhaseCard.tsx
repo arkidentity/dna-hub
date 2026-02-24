@@ -188,6 +188,7 @@ export default function PhaseCard({
       {isExpanded && (
         <div className="mt-6 pl-9 space-y-3">
           {phase.milestones.map(milestone => (
+            <div key={milestone.id} id={`milestone-${milestone.id}`}>
             <MilestoneItem
               key={milestone.id}
               milestone={milestone}
@@ -219,6 +220,7 @@ export default function PhaseCard({
               onCancelEditChurchNotes={onCancelEditChurchNotes}
               onEditChurchNotesChange={onEditChurchNotesChange}
             />
+            </div>
           ))}
         </div>
       )}

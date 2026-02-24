@@ -103,10 +103,10 @@ export default function DashboardPage() {
 
       setData(dashboardData);
 
-      // Auto-expand current and onboarding phases
+      // Auto-expand only the current in-progress phase; completed phases stay closed
       const toExpand = new Set<string>();
       dashboardData.phases.forEach((phase: PhaseWithMilestones) => {
-        if (phase.status === 'current' || phase.phase_number === 0) {
+        if (phase.status === 'current') {
           toExpand.add(phase.id);
         }
       });
@@ -420,21 +420,19 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Page Title with Church Info */}
-      <div className="bg-navy text-white py-4 px-6">
+      <div className="bg-navy text-white py-3 px-6">
         <div className="max-w-5xl mx-auto flex items-center gap-4">
-          {church.logo_url && (
+          {(church.splash_logo_url || church.logo_url) ? (
             <Image
-              src={church.logo_url}
+              src={church.splash_logo_url || church.logo_url!}
               alt={church.name}
-              width={40}
-              height={40}
-              className="rounded-full"
+              width={180}
+              height={56}
+              className="object-contain max-h-14"
             />
+          ) : (
+            <p className="font-semibold text-lg">{church.name}</p>
           )}
-          <div>
-            <p className="text-gold font-medium text-sm tracking-wide">DNA ROADMAP</p>
-            <p className="font-semibold">{church.name}</p>
-          </div>
         </div>
       </div>
 

@@ -70,6 +70,7 @@ export async function GET() {
       documentsResult,
       callsResult,
       globalResourcesResult,
+      brandingResult,
     ] = await Promise.all([
       supabase
         .from('phases')
@@ -118,6 +119,11 @@ export async function GET() {
         .select('*')
         .eq('is_active', true)
         .order('display_order', { ascending: true }),
+      supabase
+        .from('church_branding_settings')
+        .select('splash_logo_url')
+        .eq('church_id', church.id)
+        .maybeSingle(),
     ]);
 
     const { data: phases, error: phasesError } = phasesResult;
@@ -128,6 +134,7 @@ export async function GET() {
     const { data: documents } = documentsResult;
     const { data: calls } = callsResult;
     const { data: globalResources } = globalResourcesResult;
+    const { data: branding } = brandingResult;
 
     if (phasesError) {
       console.error('Phases fetch error:', phasesError);
@@ -211,7 +218,7 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      church,
+      church: { ...church, splash_logo_url: branding?.splash_logo_url ?? null },
       leader,
       phases: phasesWithMilestones,
       documents: documents || [],

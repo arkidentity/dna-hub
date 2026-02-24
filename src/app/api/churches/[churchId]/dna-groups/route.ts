@@ -35,22 +35,58 @@ export async function GET(
 
     if (leadersError) throw leadersError;
 
-    // Join last_login_at from users table (keyed by email)
+    // Join last_login_at and user_id from users table (keyed by email)
     const leaderEmails = (leaders || []).map(l => l.email);
     let lastLoginMap: Record<string, string | null> = {};
+    let userIdMap: Record<string, string> = {};
     if (leaderEmails.length > 0) {
       const { data: userRows } = await supabase
         .from('users')
-        .select('email, last_login_at')
+        .select('id, email, last_login_at')
         .in('email', leaderEmails);
       (userRows || []).forEach(u => {
         lastLoginMap[u.email] = u.last_login_at ?? null;
+        if (u.id) userIdMap[u.email] = u.id;
       });
     }
-    const leadersWithLogin = (leaders || []).map(l => ({
-      ...l,
-      last_login_at: lastLoginMap[l.email] ?? null,
-    }));
+
+    // Fetch training progress for each leader (flow assessment + manual + stage)
+    const userIds = Object.values(userIdMap);
+    const flowAssessmentSet = new Set<string>();
+    const manualCompleteSet = new Set<string>();
+    const trainingStageMap: Record<string, string> = {};
+
+    if (userIds.length > 0) {
+      const [flowResult, trainingResult] = await Promise.all([
+        supabase
+          .from('user_flow_assessments')
+          .select('user_id, status')
+          .in('user_id', userIds)
+          .eq('status', 'completed'),
+        supabase
+          .from('user_training_progress')
+          .select('user_id, current_stage, milestones')
+          .in('user_id', userIds),
+      ]);
+
+      (flowResult.data || []).forEach(r => flowAssessmentSet.add(r.user_id));
+      (trainingResult.data || []).forEach(r => {
+        if (r.current_stage) trainingStageMap[r.user_id] = r.current_stage;
+        const milestones = r.milestones as Record<string, { completed?: boolean }> | null;
+        if (milestones?.manual_complete?.completed) manualCompleteSet.add(r.user_id);
+      });
+    }
+
+    const leadersWithLogin = (leaders || []).map(l => {
+      const uid = userIdMap[l.email];
+      return {
+        ...l,
+        last_login_at: lastLoginMap[l.email] ?? null,
+        flow_assessment_complete: uid ? flowAssessmentSet.has(uid) : false,
+        manual_complete: uid ? manualCompleteSet.has(uid) : false,
+        training_stage: uid ? (trainingStageMap[uid] ?? null) : null,
+      };
+    });
 
     // Get leader IDs to fetch their groups
     const leaderIds = leadersWithLogin.map(l => l.id);

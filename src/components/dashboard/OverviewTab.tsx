@@ -35,6 +35,7 @@ export default function OverviewTab({
         church={church}
         title="Implementation Progress"
         showPerPhase={true}
+        compact={true}
       />
 
       {/* Two Column Layout */}
