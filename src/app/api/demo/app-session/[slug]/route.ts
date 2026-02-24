@@ -1,20 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
+import { createClient } from '@supabase/supabase-js';
 
 /**
  * GET /api/demo/app-session/[slug]
  * Public endpoint (no auth required).
  *
  * Returns short-lived Supabase access + refresh tokens for the demo disciple
- * account, so the DemoPageClient can inject them into the Daily DNA iframe URL
- * as hash params — giving prospects a signed-in experience without a login screen.
+ * account so DemoPageClient can pass them to the Daily DNA iframe via
+ * /demo-entry?at=...&rt=... — giving prospects a signed-in experience
+ * without a login screen.
  *
  * Flow:
  *   1. Verify church + demo_enabled
- *   2. Fetch demo_user_id from church_demo_settings
- *   3. Generate a magic link token via supabase.auth.admin.generateLink
- *   4. Exchange the hashed_token for session tokens via /auth/v1/verify
- *   5. Return { access_token, refresh_token, expires_in }
+ *   2. Confirm demo_user_id is set (i.e. seed has been run)
+ *   3. Sign in as the demo account using signInWithPassword (anon client)
+ *   4. Return { access_token, refresh_token, expires_in }
+ *
+ * Why signInWithPassword instead of magic link token exchange:
+ *   The previous generateLink → hashed_token → /auth/v1/verify chain
+ *   silently fails when the redirect_to URL isn't in Supabase's allowlist.
+ *   signInWithPassword has no URL dependency and works reliably every time.
  *
  * Returns { demo_auth: false } if the church hasn't been seeded yet.
  */
@@ -57,26 +63,7 @@ export async function GET(
       return NextResponse.json({ demo_auth: false });
     }
 
-    const demoEmail = `demo-${slug}@dna.demo`;
-
-    // ── 3. Generate magic link token ───────────────────────────────────────
-    const appUrl = `https://${slug}.dailydna.app`;
-    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
-      email: demoEmail,
-      options: {
-        redirectTo: appUrl,
-      },
-    });
-
-    if (linkError || !linkData?.properties?.hashed_token) {
-      console.error('[DEMO] generateLink error:', linkError);
-      return NextResponse.json({ demo_auth: false });
-    }
-
-    const hashedToken = linkData.properties.hashed_token;
-
-    // ── 4. Exchange hashed_token for session tokens ────────────────────────
+    // ── 3. Sign in as the demo account ─────────────────────────────────────
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -85,42 +72,27 @@ export async function GET(
       return NextResponse.json({ demo_auth: false });
     }
 
-    const verifyRes = await fetch(`${supabaseUrl}/auth/v1/verify`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        apikey: supabaseAnonKey,
-      },
-      body: JSON.stringify({
-        token: hashedToken,
-        type: 'magiclink',
-        redirect_to: appUrl,
-      }),
+    const demoEmail = `demo-${slug}@dna.demo`;
+    const demoPassword = `dna-demo-${slug}-session`;
+
+    // Use anon client — signInWithPassword is a user-facing operation
+    const anonClient = createClient(supabaseUrl, supabaseAnonKey);
+    const { data: sessionData, error: signInError } = await anonClient.auth.signInWithPassword({
+      email: demoEmail,
+      password: demoPassword,
     });
 
-    if (!verifyRes.ok) {
-      const verifyText = await verifyRes.text();
-      console.error('[DEMO] /auth/v1/verify error:', verifyRes.status, verifyText);
+    if (signInError || !sessionData?.session) {
+      console.error('[DEMO] signInWithPassword error:', signInError?.message ?? 'no session returned');
       return NextResponse.json({ demo_auth: false });
     }
 
-    const verifyData = await verifyRes.json();
-
-    const accessToken = verifyData.access_token as string | undefined;
-    const refreshToken = verifyData.refresh_token as string | undefined;
-    const expiresIn = (verifyData.expires_in as number | undefined) ?? 3600;
-
-    if (!accessToken || !refreshToken) {
-      console.error('[DEMO] /auth/v1/verify response missing tokens:', Object.keys(verifyData));
-      return NextResponse.json({ demo_auth: false });
-    }
-
-    // ── 5. Return tokens ───────────────────────────────────────────────────
+    // ── 4. Return tokens ───────────────────────────────────────────────────
     return NextResponse.json({
       demo_auth: true,
-      access_token: accessToken,
-      refresh_token: refreshToken,
-      expires_in: expiresIn,
+      access_token: sessionData.session.access_token,
+      refresh_token: sessionData.session.refresh_token,
+      expires_in: sessionData.session.expires_in,
     });
   } catch (error) {
     console.error('[DEMO] app-session GET error:', error);

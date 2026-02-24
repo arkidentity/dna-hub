@@ -43,6 +43,8 @@ export async function POST(
 
     const subdomain = church.subdomain as string;
     const demoEmail = `demo-${subdomain}@dna.demo`;
+    // Deterministic password — used by app-session to sign in without magic links
+    const demoPassword = `dna-demo-${subdomain}-session`;
 
     // ── 2. Get or create the demo Auth user ────────────────────────────────
     // Check if we already have a stored demo_user_id
@@ -55,9 +57,11 @@ export async function POST(
     let authUserId: string | null = existingSettings?.demo_user_id ?? null;
 
     if (!authUserId) {
-      // Try to create a new auth user
+      // Try to create a new auth user with a known password so app-session
+      // can sign in via signInWithPassword (no magic link URL allowlist needed)
       const { data: authData, error: authError } = await supabase.auth.admin.createUser({
         email: demoEmail,
+        password: demoPassword,
         email_confirm: true,
         user_metadata: {
           is_demo: true,
@@ -92,6 +96,10 @@ export async function POST(
     if (!authUserId) {
       return NextResponse.json({ error: 'Could not obtain demo auth user ID' }, { status: 500 });
     }
+
+    // Always ensure the demo password is set — covers re-seeds and users
+    // created before this password field was added
+    await supabase.auth.admin.updateUserById(authUserId, { password: demoPassword });
 
     // ── 3. Upsert disciples record ─────────────────────────────────────────
     const { data: disciple, error: discipleError } = await supabase
