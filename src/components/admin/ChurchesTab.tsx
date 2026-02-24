@@ -208,13 +208,14 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
       });
 
       if (!response.ok) {
-        throw new Error('Failed to update status');
+        const data = await response.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to update status');
       }
 
       await onRefresh();
     } catch (error) {
       console.error('Status update error:', error);
-      alert('Failed to update church status');
+      alert(`Failed to update church status: ${error instanceof Error ? error.message : 'Unknown error'}`);
     }
   };
 

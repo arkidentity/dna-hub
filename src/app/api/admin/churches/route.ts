@@ -372,7 +372,11 @@ export async function PATCH(request: NextRequest) {
 
     if (updateError) {
       console.error('[ADMIN] Update error:', updateError);
-      return NextResponse.json({ error: 'Failed to update church' }, { status: 500 });
+      // Surface constraint violations (e.g. invalid status value) to the client
+      const msg = updateError.message?.includes('churches_status_check')
+        ? `Status "${status}" is not allowed by the database constraint`
+        : updateError.message || 'Failed to update church';
+      return NextResponse.json({ error: msg }, { status: 500 });
     }
 
     // Log the status change to audit trail
