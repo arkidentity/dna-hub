@@ -256,7 +256,7 @@ export default function DemoPageClient({
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
           {!logoError ? (
             <Image
-              src="/dna-logo.svg"
+              src="/dna-logo-black.png"
               alt="DNA"
               width={28}
               height={28}
