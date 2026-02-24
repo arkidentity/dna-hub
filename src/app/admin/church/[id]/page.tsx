@@ -22,7 +22,7 @@ import {
   ExternalLink,
 } from 'lucide-react';
 import { GroupsTab } from '@/components/dashboard';
-import { AdminChurchOverviewTab, AdminChurchJourneyTab, ChurchLeadersTab, BrandingTab, AdminCohortTab } from '@/components/admin';
+import { AdminChurchOverviewTab, AdminChurchJourneyTab, ChurchLeadersTab, BrandingTab, AdminCohortTab, DemoTab } from '@/components/admin';
 
 interface ChurchDetail {
   church: {
@@ -126,7 +126,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
   const router = useRouter();
   const [data, setData] = useState<ChurchDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'leaders' | 'groups' | 'branding' | 'cohort'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'leaders' | 'groups' | 'branding' | 'cohort' | 'demo'>('overview');
 
   // Alias editing state
   const [editingAliases, setEditingAliases] = useState(false);
@@ -404,6 +404,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
               { id: 'groups', label: 'DNA Groups', icon: Users },
               { id: 'cohort', label: 'Cohort', icon: GraduationCap },
               { id: 'branding', label: 'Branding', icon: Palette },
+              { id: 'demo', label: 'Demo', icon: ExternalLink },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -474,6 +475,15 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
         {/* Branding Tab */}
         {activeTab === 'branding' && (
           <BrandingTab churchId={churchId} />
+        )}
+
+        {/* Demo Tab */}
+        {activeTab === 'demo' && (
+          <DemoTab
+            churchId={churchId}
+            churchName={church.name}
+            subdomain={church.subdomain}
+          />
         )}
       </main>
     </div>

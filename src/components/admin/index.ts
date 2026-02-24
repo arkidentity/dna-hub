@@ -6,3 +6,4 @@ export { default as ChurchLeadersTab } from './ChurchLeadersTab';
 export { default as ResourcesTab } from './ResourcesTab';
 export { default as BrandingTab } from './BrandingTab';
 export { default as AdminCohortTab } from './AdminCohortTab';
+export { default as DemoTab } from './DemoTab';
