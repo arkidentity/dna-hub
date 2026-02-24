@@ -306,22 +306,6 @@ export default function DemoPageClient({
           <p style={{ fontSize: '1.05rem', color: '#666', margin: 0, lineHeight: 1.5 }}>
             {subline}
           </p>
-
-          {/* Primary CTA */}
-          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.625rem', marginTop: '0.25rem' }}>
-            <Link href={bookCallUrl} className="dp-btn-primary" style={{ background: primary }}>
-              {cta.ctaText}
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-
-            {/* Secondary text link */}
-            <Link
-              href={assessmentUrl}
-              style={{ fontSize: '0.875rem', color: '#888', textDecoration: 'none', borderBottom: '1px solid #ddd', paddingBottom: '1px' }}
-            >
-              Or take the 5-min church assessment →
-            </Link>
-          </div>
         </div>
       </section>
 
@@ -364,6 +348,20 @@ export default function DemoPageClient({
             <p style={{ fontSize: '0.825rem', color: '#999', margin: 0, textAlign: 'center' }}>
               {coachName} · Founder, DNA Discipleship
             </p>
+
+            {/* CTAs */}
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.625rem', marginTop: '0.5rem' }}>
+              <Link href={bookCallUrl} className="dp-btn-primary" style={{ background: primary }}>
+                {cta.ctaText}
+                <ArrowRight className="w-4 h-4" />
+              </Link>
+              <Link
+                href={assessmentUrl}
+                style={{ fontSize: '0.875rem', color: '#888', textDecoration: 'none', borderBottom: '1px solid #ddd', paddingBottom: '1px' }}
+              >
+                Or take the 5-min church assessment →
+              </Link>
+            </div>
           </div>
         </section>
       )}
