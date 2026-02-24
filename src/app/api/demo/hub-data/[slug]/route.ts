@@ -44,7 +44,7 @@ export async function GET(
     // Fetch seeded calendar events for this church
     const now = new Date().toISOString();
     const { data: events } = await supabase
-      .from('calendar_events')
+      .from('dna_calendar_events')
       .select('id, title, description, location, start_time, end_time, event_type')
       .eq('church_id', church.id)
       .gte('start_time', now)

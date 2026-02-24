@@ -33,7 +33,7 @@ export async function POST(
 
     // Delete any prior seeded events (identified by title prefix)
     await supabase
-      .from('calendar_events')
+      .from('dna_calendar_events')
       .delete()
       .eq('church_id', churchId)
       .ilike('title', '[DEMO]%');
@@ -84,7 +84,7 @@ export async function POST(
     ];
 
     const { error: insertError } = await supabase
-      .from('calendar_events')
+      .from('dna_calendar_events')
       .insert(eventsToInsert);
 
     if (insertError) {
