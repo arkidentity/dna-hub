@@ -38,12 +38,7 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'team' | 'groups' | 'gifts'>('overview');
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
-  const [compactView, setCompactView] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return localStorage.getItem('dashboard_compact_view') === 'true';
-    }
-    return false;
-  });
+  const [compactPhases, setCompactPhases] = useState<Set<string>>(new Set());
   const [updatingMilestone, setUpdatingMilestone] = useState<string | null>(null);
 
   // Admin editing state
@@ -69,11 +64,6 @@ export default function DashboardPage() {
     fetch(`/api/churches/${churchId}/dna-groups`).catch(() => {});
     fetch(`/api/admin/church-leaders/invite?church_id=${churchId}`).catch(() => {});
   }, [data?.church?.id]);
-
-  // Persist compact view preference
-  useEffect(() => {
-    localStorage.setItem('dashboard_compact_view', String(compactView));
-  }, [compactView]);
 
   const fetchDashboard = async () => {
     try {
@@ -116,6 +106,18 @@ export default function DashboardPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const togglePhaseCompact = (phaseId: string) => {
+    setCompactPhases(prev => {
+      const next = new Set(prev);
+      if (next.has(phaseId)) {
+        next.delete(phaseId);
+      } else {
+        next.add(phaseId);
+      }
+      return next;
+    });
   };
 
   const togglePhase = (phaseId: string) => {
@@ -482,7 +484,7 @@ export default function DashboardPage() {
             church={church}
             calls={calls}
             isAdmin={isAdmin}
-            compactView={compactView}
+            compactPhases={compactPhases}
             expandedPhases={expandedPhases}
             updatingMilestone={updatingMilestone}
             editingDateId={editingDateId}
@@ -492,7 +494,7 @@ export default function DashboardPage() {
             uploadingMilestone={uploadingMilestone}
             editingChurchNotesId={editingChurchNotesId}
             editChurchNotesValue={editChurchNotesValue}
-            onToggleCompactView={() => setCompactView(!compactView)}
+            onTogglePhaseCompact={togglePhaseCompact}
             onTogglePhase={togglePhase}
             onToggleMilestone={toggleMilestone}
             onStartEditingDate={startEditingDate}

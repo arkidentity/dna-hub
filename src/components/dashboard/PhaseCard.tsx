@@ -6,6 +6,8 @@ import {
   Lock,
   Clock,
   Download,
+  List,
+  LayoutList,
 } from 'lucide-react';
 import { PhaseWithMilestones, MilestoneWithProgress, Church, ScheduledCall } from '@/lib/types';
 import { getPhaseDate } from './utils';
@@ -17,7 +19,7 @@ interface PhaseCardProps {
   calls: ScheduledCall[];
   isExpanded: boolean;
   isAdmin: boolean;
-  compactView: boolean;
+  isCompact: boolean;
   updatingMilestone: string | null;
   editingDateId: string | null;
   editingNotesId: string | null;
@@ -27,6 +29,7 @@ interface PhaseCardProps {
   editingChurchNotesId: string | null;
   editChurchNotesValue: string;
   onTogglePhase: (phaseId: string) => void;
+  onToggleCompact: () => void;
   onToggleMilestone: (milestone: MilestoneWithProgress, phaseStatus: string) => void;
   onStartEditingDate: (milestoneId: string, currentDate?: string) => void;
   onStartEditingNotes: (milestoneId: string, currentNotes?: string) => void;
@@ -78,7 +81,7 @@ export default function PhaseCard({
   calls,
   isExpanded,
   isAdmin,
-  compactView,
+  isCompact,
   updatingMilestone,
   editingDateId,
   editingNotesId,
@@ -88,6 +91,7 @@ export default function PhaseCard({
   editingChurchNotesId,
   editChurchNotesValue,
   onTogglePhase,
+  onToggleCompact,
   onToggleMilestone,
   onStartEditingDate,
   onStartEditingNotes,
@@ -105,7 +109,6 @@ export default function PhaseCard({
   onCancelEditChurchNotes,
   onEditChurchNotesChange,
 }: PhaseCardProps) {
-  const isAccessible = phase.status === 'current' || phase.status === 'completed';
   const isUpcoming = phase.status === 'upcoming';
   const isLocked = phase.status === 'locked';
   const phaseDate = getPhaseDate(phase, church);
@@ -164,18 +167,40 @@ export default function PhaseCard({
             <p className="text-xs text-foreground-muted">completed</p>
           </div>
         </button>
-        {/* Calendar Export Button */}
-        {isExpanded && !isLocked && phase.milestones.some(m => m.progress?.target_date) && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onExportCalendar(phase.phase_number);
-            }}
-            className="ml-4 p-2 text-teal hover:text-teal-light hover:bg-teal/10 rounded-lg transition-colors"
-            title="Export to Calendar"
-          >
-            <Download className="w-5 h-5" />
-          </button>
+
+        {/* Phase Action Buttons (visible when expanded) */}
+        {isExpanded && !isLocked && (
+          <div className="flex items-center gap-1 ml-4">
+            {/* Compact / Expanded View Toggle */}
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleCompact();
+              }}
+              className={`p-2 rounded-lg transition-colors ${
+                isCompact
+                  ? 'bg-gold/10 text-gold'
+                  : 'text-foreground-muted hover:bg-background-secondary'
+              }`}
+              title={isCompact ? 'Expanded view' : 'Compact view'}
+            >
+              {isCompact ? <LayoutList className="w-5 h-5" /> : <List className="w-5 h-5" />}
+            </button>
+
+            {/* Calendar Export Button */}
+            {phase.milestones.some(m => m.progress?.target_date) && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onExportCalendar(phase.phase_number);
+                }}
+                className="p-2 text-teal hover:text-teal-light hover:bg-teal/10 rounded-lg transition-colors"
+                title="Export to Calendar"
+              >
+                <Download className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         )}
       </div>
 
@@ -195,7 +220,7 @@ export default function PhaseCard({
               scheduledCall={getMatchingCall(milestone.title, calls)}
               phaseStatus={phase.status}
               isAdmin={isAdmin}
-              compactView={compactView}
+              compactView={isCompact}
               updatingMilestone={updatingMilestone}
               editingDateId={editingDateId}
               editingNotesId={editingNotesId}
