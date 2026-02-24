@@ -54,7 +54,7 @@ const TEMP_COPY = {
   cold: {
     eyebrow: 'DNA Discipleship',
     headline: 'See how DNA Discipleship works for churches like yours',
-    subheadline: 'A proven 90-day framework that\'s multiplied disciples in hundreds of churches. Built around your people, your context, your culture.',
+    subheadline: "A proven 90-day framework that's multiplied disciples in hundreds of churches. Built around your people, your context, your culture.",
     ctaText: 'Schedule a Free Overview Call',
     ctaSubtext: 'No commitment required — 30 minutes',
     videoLabel: 'A message from your DNA coach',
@@ -62,24 +62,24 @@ const TEMP_COPY = {
     appSectionSub: 'DNA Daily is a guided discipleship tool — prayer, Scripture, a daily pathway, and group connection in one place.',
   },
   warm: {
-    eyebrow: 'Built for ' + '{{church_name}}',
+    eyebrow: 'Your Personalized Demo',
     headline: 'We put this together specifically for {{church_name}}',
-    subheadline: 'Here\'s what DNA discipleship would look like — your branding, your people, your church. Tap through the app below to explore your experience.',
+    subheadline: "Here's what DNA discipleship would look like — your branding, your people, your church. Tap through the app below to explore your experience.",
     ctaText: 'Book a Discovery Call',
-    ctaSubtext: 'Let\'s see if this is the right fit',
+    ctaSubtext: "Let's see if this is the right fit",
     videoLabel: 'A personal message for {{church_name}}',
-    appSectionHeadline: '{{church_name}}\'s app, ready to explore',
-    appSectionSub: 'Your church\'s branded DNA Daily app — exactly what your disciples would see on Day 1.',
+    appSectionHeadline: "{{church_name}}'s app, ready to explore",
+    appSectionSub: "Your church's branded DNA Daily app — exactly what your disciples would see on Day 1.",
   },
   hot: {
     eyebrow: '{{church_name}} is ready',
     headline: '{{church_name}} is ready for this',
-    subheadline: 'Your app is branded and live. Your disciples\' first experience starts here. Let\'s book a strategy call and set a launch date.',
+    subheadline: "Your app is branded and live. Your disciples' first experience starts here. Let's book a strategy call and set a launch date.",
     ctaText: 'Book Your Strategy Call',
     ctaSubtext: 'Your launch window is open',
     videoLabel: 'From your DNA coach',
     appSectionHeadline: 'Your app is live. Meet it.',
-    appSectionSub: 'This is exactly what your disciples will see when they tap the link in their invitation. It\'s already yours.',
+    appSectionSub: "This is exactly what your disciples will see when they tap the link in their invitation. It's already yours.",
   },
 };
 
@@ -134,31 +134,31 @@ const FAQ_ITEMS = [
   },
   {
     q: 'Does this replace our existing discipleship curriculum?',
-    a: 'DNA Discipleship is a complete framework — not a plugin. It replaces ad-hoc approaches with a proven, reproducible system. That said, it\'s flexible enough to incorporate your church\'s theological distinctives.',
+    a: "DNA Discipleship is a complete framework — not a plugin. It replaces ad-hoc approaches with a proven, reproducible system. That said, it's flexible enough to incorporate your church's theological distinctives.",
   },
   {
-    q: 'What if our members aren\'t tech-savvy?',
-    a: 'The Daily DNA app is intentionally simple — one button, three sections. We\'ve seen it adopted by 70-year-olds and teenagers alike. Leaders are trained to walk their group through the first session together.',
+    q: "What if our members aren't tech-savvy?",
+    a: "The Daily DNA app is intentionally simple — one button, three sections. We've seen it adopted by 70-year-olds and teenagers alike. Leaders are trained to walk their group through the first session together.",
   },
   {
     q: 'How is this different from a Bible app or devotional app?',
     a: 'DNA is a relational discipleship system, not a content platform. The app is built around accountability, group rhythm, and real multiplication — not individual consumption.',
   },
   {
-    q: 'What\'s the time commitment for group leaders?',
+    q: "What's the time commitment for group leaders?",
     a: 'Most leaders invest 60–90 minutes per week with their group, plus a few minutes daily in the app alongside their disciples. The system is designed to be sustainable, not overwhelming.',
   },
   {
     q: 'What support does our church get after launch?',
-    a: 'You\'re assigned a DNA coach who supports your launch, your first group cycle, and your multiplication. Ongoing training, a cohort of other church leaders, and a resource library are all included.',
+    a: "You're assigned a DNA coach who supports your launch, your first group cycle, and your multiplication. Ongoing training, a cohort of other church leaders, and a resource library are all included.",
   },
   {
     q: 'Is there a long-term contract?',
-    a: 'No lock-in. We believe in earning your partnership every cycle. Most churches stay because the results speak — but you\'re never trapped.',
+    a: "No lock-in. We believe in earning your partnership every cycle. Most churches stay because the results speak — but you're never trapped.",
   },
   {
-    q: 'Can we customize the app for our church\'s branding?',
-    a: 'Yes — completely. Your church name, logo, colors, and even custom links are applied to the app. Your disciples see your church identity, not a generic product.',
+    q: "Can we customize the app for our church's branding?",
+    a: "Yes — completely. Your church name, logo, colors, and even custom links are applied to the app. Your disciples see your church identity, not a generic product.",
   },
 ];
 
@@ -168,7 +168,7 @@ export default function DemoPageClient({
   church,
   demo,
   temp,
-  appUrl,
+  appUrl: _appUrl,
   hubDemoUrl,
   bookCallUrl,
   assessmentUrl,
@@ -180,7 +180,7 @@ export default function DemoPageClient({
 
   const [showStickyCta, setShowStickyCta] = useState(false);
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
-  const [showMoreInfo, setShowMoreInfo] = useState(false);
+  const [iframeSrc, setIframeSrc] = useState('');
   const heroRef = useRef<HTMLDivElement>(null);
 
   // Show sticky CTA after hero scrolls out of view
@@ -197,16 +197,41 @@ export default function DemoPageClient({
   useEffect(() => {
     const els = document.querySelectorAll<HTMLElement>('.demo-fade');
     const obs = new IntersectionObserver(
-      (entries) => entries.forEach(e => { if (e.isIntersecting) (e.target as HTMLElement).style.opacity = '1'; }),
+      (entries) =>
+        entries.forEach((e) => {
+          if (e.isIntersecting) (e.target as HTMLElement).style.opacity = '1';
+        }),
       { threshold: 0.12 }
     );
-    els.forEach(el => {
+    els.forEach((el) => {
       el.style.opacity = '0';
       el.style.transition = 'opacity 0.7s ease, transform 0.7s ease';
       obs.observe(el);
     });
     return () => obs.disconnect();
   }, []);
+
+  // Fetch demo session tokens for auto-login iframe
+  useEffect(() => {
+    async function fetchSession() {
+      try {
+        const res = await fetch(`/api/demo/app-session/${church.subdomain}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.access_token) {
+            setIframeSrc(
+              `https://${church.subdomain}.dailydna.app/#access_token=${data.access_token}&refresh_token=${data.refresh_token}&type=recovery`
+            );
+            return;
+          }
+        }
+      } catch {
+        // fallthrough to plain URL
+      }
+      setIframeSrc(`https://${church.subdomain}.dailydna.app`);
+    }
+    fetchSession();
+  }, [church.subdomain]);
 
   const headline = interpolate(copy.headline, church.name);
   const subheadline = interpolate(copy.subheadline, church.name);
@@ -220,7 +245,7 @@ export default function DemoPageClient({
       className="demo-page"
       style={{ fontFamily: "'DM Sans', sans-serif", background: '#faf8f4', color: '#0f0e0c', overflowX: 'hidden' }}
     >
-      {/* ── Google Fonts ─────────────────────────────────────────── */}
+      {/* ── Google Fonts + Styles ─────────────────────────────────── */}
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&display=swap');
 
@@ -237,27 +262,49 @@ export default function DemoPageClient({
         }
         .demo-sticky-bar.visible { transform: translateY(0); }
 
-        /* Phone mockup */
-        .demo-phone-outer {
-          position: relative; width: 280px; flex-shrink: 0;
-          background: #1a1a1a; border-radius: 38px;
-          padding: 14px 14px 18px;
-          box-shadow: 0 40px 80px rgba(0,0,0,0.4), 0 0 0 1px rgba(255,255,255,0.08) inset;
+        /* Two-column hero */
+        .demo-hero-cols {
+          display: flex;
+          gap: 3rem;
+          align-items: flex-start;
+          max-width: 1100px;
+          margin: 0 auto;
         }
-        .demo-phone-inner {
-          width: 100%; border-radius: 26px; overflow: hidden;
-          background: #fff; position: relative;
-          height: 560px; /* ~252 / 9 * 20 ratio */
+        .demo-hero-text { flex: 0 0 55%; min-width: 0; }
+        .demo-hero-video { flex: 0 0 40%; min-width: 0; display: flex; flex-direction: column; align-items: center; gap: 0.875rem; }
+
+        /* App iframe — natural proportions, no phone frame */
+        .demo-app-iframe-wrap {
+          width: 100%;
+          max-width: 390px;
+          aspect-ratio: 9 / 16;
+          border-radius: 24px;
+          overflow: hidden;
+          box-shadow: 0 32px 72px rgba(0,0,0,0.5);
+          background: #fff;
+          flex-shrink: 0;
+          position: relative;
         }
-        .demo-phone-inner iframe {
-          width: 390px; height: 844px; border: none;
-          transform: scale(0.6409); transform-origin: top left;
-          pointer-events: auto;
+        .demo-app-iframe-wrap iframe {
+          width: 100%;
+          height: 100%;
+          border: none;
+          display: block;
         }
-        /* Notch pill */
-        .demo-phone-notch {
-          position: absolute; top: 6px; left: 50%; transform: translateX(-50%);
-          width: 80px; height: 8px; background: #1a1a1a; border-radius: 4px; z-index: 10;
+        .demo-app-loading {
+          position: absolute; inset: 0;
+          display: flex; flex-direction: column; align-items: center; justify-content: center;
+          gap: 0.875rem; background: #111827;
+        }
+        @keyframes demo-spin {
+          to { transform: rotate(360deg); }
+        }
+        .demo-spinner {
+          width: 28px; height: 28px;
+          border: 3px solid rgba(255,255,255,0.15);
+          border-top-color: ${primary};
+          border-radius: 50%;
+          animation: demo-spin 0.75s linear infinite;
         }
 
         /* FAQ */
@@ -278,18 +325,17 @@ export default function DemoPageClient({
 
         /* Responsive */
         @media (max-width: 900px) {
+          .demo-hero-cols { flex-direction: column; gap: 2.5rem; }
+          .demo-hero-text { flex: 1 1 auto; }
+          .demo-hero-video { flex: 1 1 auto; width: 100%; max-width: 300px; margin: 0 auto; }
           .demo-app-section-inner { flex-direction: column !important; align-items: center !important; }
           .demo-features-col { max-width: 100% !important; }
           .demo-sticky-bar { padding: 0.6rem 1rem; }
           .demo-sticky-church { display: none !important; }
-          .demo-phone-outer { width: 220px; }
-          .demo-phone-inner { height: 438px; }
-          .demo-phone-inner iframe { transform: scale(0.5026); }
         }
         @media (max-width: 600px) {
-          .demo-hero-inner { padding: 6rem 1.25rem 3rem !important; }
+          .demo-hero-inner { padding: 5rem 1.25rem 3rem !important; }
           .demo-section { padding: 3.5rem 1.25rem !important; }
-          .demo-video-wrapper { max-width: 100% !important; }
         }
       `}</style>
 
@@ -325,136 +371,119 @@ export default function DemoPageClient({
         borderBottom: '1px solid rgba(0,0,0,0.06)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          {/* DNA logo */}
           <Image src="/dna-logo.svg" alt="DNA" width={32} height={32} style={{ opacity: 0.9 }} onError={() => {}} />
           <span style={{ fontWeight: 600, fontSize: '0.9rem', color: '#555' }}>DNA Discipleship</span>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          {/* Church logo if available */}
           {church.logo_url && (
             <img src={church.logo_url} alt={church.name} style={{ height: '28px', objectFit: 'contain', opacity: 0.9 }} />
           )}
         </div>
       </nav>
 
-      {/* ── HERO ─────────────────────────────────────────────────── */}
+      {/* ── HERO (two-column on desktop) ──────────────────────────── */}
       <section
         ref={heroRef}
-        className="demo-hero-inner demo-section"
-        style={{
-          padding: '9rem 2.5rem 5rem',
-          maxWidth: '1100px',
-          margin: '0 auto',
-        }}
+        className="demo-hero-inner"
+        style={{ padding: '6rem 2.5rem 4rem', background: '#faf8f4' }}
       >
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1.5rem', maxWidth: '640px' }}>
-          {/* Eyebrow */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: accent, fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
-            <span style={{ display: 'block', width: '2rem', height: '1px', background: accent }} />
-            {eyebrow}
+        <div className="demo-hero-cols">
+
+          {/* Left: text content */}
+          <div className="demo-hero-text" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+            {/* Eyebrow */}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: accent, fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
+              <span style={{ display: 'block', width: '2rem', height: '1px', background: accent }} />
+              {eyebrow}
+            </div>
+
+            {/* Headline */}
+            <h1 style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: 'clamp(2.25rem, 4.5vw, 3.5rem)',
+              lineHeight: 1.08,
+              fontWeight: 700,
+              color: '#0f0e0c',
+              margin: 0,
+            }}>
+              {headline}
+            </h1>
+
+            {/* Subheadline */}
+            <p style={{ fontSize: '1.1rem', lineHeight: 1.65, color: '#555', margin: 0 }}>
+              {subheadline}
+            </p>
+
+            {/* Single scroll-anchor CTA */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginTop: '0.25rem' }}>
+              <a
+                href="#app-preview"
+                onClick={(e) => {
+                  e.preventDefault();
+                  document.getElementById('app-preview')?.scrollIntoView({ behavior: 'smooth' });
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  background: accent,
+                  color: '#fff',
+                  padding: '0.85rem 1.75rem',
+                  borderRadius: '8px',
+                  textDecoration: 'none',
+                  fontWeight: 600,
+                  fontSize: '0.975rem',
+                  alignSelf: 'flex-start',
+                  cursor: 'pointer',
+                }}
+              >
+                View Your App
+                <ArrowRight className="w-4 h-4" />
+              </a>
+              <p style={{ fontSize: '0.82rem', color: '#888', margin: 0 }}>
+                Your branded app is live below
+              </p>
+            </div>
           </div>
 
-          {/* Headline */}
-          <h1 style={{
-            fontFamily: "'Playfair Display', serif",
-            fontSize: 'clamp(2.25rem, 4.5vw, 3.75rem)',
-            lineHeight: 1.08,
-            fontWeight: 700,
-            color: '#0f0e0c',
-            margin: 0,
-          }}>
-            {headline}
-          </h1>
+          {/* Right: vertical coach video */}
+          {videoId && (
+            <div className="demo-hero-video">
+              {/* Video label */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', color: accent, fontSize: '0.7rem', fontWeight: 600, letterSpacing: '0.16em', textTransform: 'uppercase', alignSelf: 'flex-start' }}>
+                <span style={{ display: 'block', width: '1.5rem', height: '1px', background: accent }} />
+                {videoLabel}
+              </div>
+              {/* 9:16 video */}
+              <div
+                style={{
+                  width: '100%',
+                  aspectRatio: '9 / 16',
+                  borderRadius: '20px',
+                  overflow: 'hidden',
+                  boxShadow: '0 24px 56px rgba(0,0,0,0.2)',
+                  background: '#000',
+                }}
+              >
+                <iframe
+                  src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1`}
+                  title="Coach video"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  style={{ width: '100%', height: '100%', border: 'none' }}
+                />
+              </div>
+            </div>
+          )}
 
-          {/* Subheadline */}
-          <p style={{ fontSize: '1.1rem', lineHeight: 1.65, color: '#555', margin: 0 }}>
-            {subheadline}
-          </p>
-
-          {/* CTA Buttons */}
-          <div style={{ display: 'flex', gap: '0.875rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
-            <Link
-              href={bookCallUrl}
-              style={{
-                background: primary,
-                color: '#fff',
-                padding: '0.8rem 1.75rem',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                fontWeight: 600,
-                fontSize: '0.975rem',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-              }}
-            >
-              {copy.ctaText}
-              <ArrowRight className="w-4 h-4" />
-            </Link>
-            <Link
-              href={assessmentUrl}
-              style={{
-                background: 'transparent',
-                color: '#555',
-                padding: '0.8rem 1.5rem',
-                borderRadius: '8px',
-                textDecoration: 'none',
-                fontWeight: 500,
-                fontSize: '0.95rem',
-                border: '1px solid #ddd',
-              }}
-            >
-              Take the Assessment
-            </Link>
-          </div>
-
-          <p style={{ fontSize: '0.82rem', color: '#888', margin: 0 }}>{copy.ctaSubtext}</p>
         </div>
       </section>
 
-      {/* ── COACH VIDEO ──────────────────────────────────────────── */}
-      {videoId && (
-        <section
-          className="demo-section demo-fade"
-          style={{
-            background: primary,
-            padding: '5rem 2.5rem',
-          }}
-        >
-          <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1.5rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', color: accent, fontSize: '0.75rem', fontWeight: 600, letterSpacing: '0.18em', textTransform: 'uppercase' }}>
-              <span style={{ display: 'block', width: '2rem', height: '1px', background: accent }} />
-              {videoLabel}
-            </div>
-            {/* Vertical video wrapper */}
-            <div
-              className="demo-video-wrapper"
-              style={{
-                maxWidth: '340px',
-                width: '100%',
-                aspectRatio: '9 / 16',
-                borderRadius: '20px',
-                overflow: 'hidden',
-                boxShadow: '0 24px 60px rgba(0,0,0,0.4)',
-                background: '#000',
-              }}
-            >
-              <iframe
-                src={`https://www.youtube.com/embed/${videoId}?rel=0&modestbranding=1&playsinline=1`}
-                title="Coach video"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                style={{ width: '100%', height: '100%', border: 'none' }}
-              />
-            </div>
-          </div>
-        </section>
-      )}
-
       {/* ── APP PREVIEW ──────────────────────────────────────────── */}
       <section
-        className="demo-section demo-fade"
-        style={{ background: '#fff', padding: '6rem 2.5rem' }}
+        id="app-preview"
+        className="demo-fade"
+        style={{ background: '#0d1520', padding: '6rem 2.5rem' }}
       >
         <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
           {/* Section header */}
@@ -464,30 +493,38 @@ export default function DemoPageClient({
               Live App Preview
               <span style={{ display: 'block', width: '2rem', height: '1px', background: accent }} />
             </div>
-            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', fontWeight: 700, color: '#0f0e0c', margin: '0 0 1rem', lineHeight: 1.15 }}>
+            <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 'clamp(1.75rem, 3.5vw, 2.75rem)', fontWeight: 700, color: '#fff', margin: '0 0 1rem', lineHeight: 1.15 }}>
               {appSectionHeadline}
             </h2>
-            <p style={{ color: '#666', fontSize: '1.05rem', maxWidth: '560px', margin: '0 auto', lineHeight: 1.65 }}>
+            <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1.05rem', maxWidth: '560px', margin: '0 auto', lineHeight: 1.65 }}>
               {appSectionSub}
             </p>
           </div>
 
-          {/* Phone + Features */}
+          {/* App iframe + Feature callouts */}
           <div className="demo-app-section-inner" style={{ display: 'flex', alignItems: 'flex-start', gap: '4rem', justifyContent: 'center' }}>
-            {/* Phone mockup */}
+
+            {/* Natural proportions iframe — no phone frame */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '1rem' }}>
-              <div className="demo-phone-outer">
-                <div className="demo-phone-notch" />
-                <div className="demo-phone-inner">
+              <div className="demo-app-iframe-wrap">
+                {!iframeSrc && (
+                  <div className="demo-app-loading">
+                    <div className="demo-spinner" />
+                    <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.875rem', margin: 0, fontWeight: 500 }}>
+                      Loading your app…
+                    </p>
+                  </div>
+                )}
+                {iframeSrc && (
                   <iframe
-                    src={`https://${church.subdomain}.dailydna.app`}
+                    src={iframeSrc}
                     title={`${church.name} DNA Daily App`}
                     sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                     loading="lazy"
                   />
-                </div>
+                )}
               </div>
-              <p style={{ fontSize: '0.8rem', color: '#999', textAlign: 'center' }}>
+              <p style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.35)', textAlign: 'center' }}>
                 Live preview · {church.app_title}
               </p>
             </div>
@@ -503,23 +540,22 @@ export default function DemoPageClient({
                     gap: '1rem',
                     padding: '1.25rem',
                     borderRadius: '12px',
-                    border: '1px solid #eee',
-                    background: '#faf8f4',
-                    transition: 'box-shadow 0.2s',
+                    border: '1px solid rgba(255,255,255,0.08)',
+                    background: 'rgba(255,255,255,0.04)',
                   }}
                 >
                   <div style={{
                     width: '44px', height: '44px', borderRadius: '10px', flexShrink: 0,
-                    background: primary + '18', color: primary,
+                    background: accent + '22', color: accent,
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                   }}>
                     {f.icon}
                   </div>
                   <div>
-                    <div style={{ fontWeight: 600, color: '#0f0e0c', marginBottom: '0.25rem', fontSize: '0.975rem' }}>
+                    <div style={{ fontWeight: 600, color: '#fff', marginBottom: '0.25rem', fontSize: '0.975rem' }}>
                       {f.title}
                     </div>
-                    <div style={{ color: '#666', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                    <div style={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.9rem', lineHeight: 1.6 }}>
                       {f.desc}
                     </div>
                   </div>
@@ -532,11 +568,12 @@ export default function DemoPageClient({
 
       {/* ── LEADER DASHBOARD TEASER ──────────────────────────────── */}
       <section
-        className="demo-section demo-fade"
+        className="demo-fade"
         style={{
-          background: '#0d1520',
+          background: '#0a0f18',
           padding: '6rem 2.5rem',
           color: '#fff',
+          borderTop: '1px solid rgba(255,255,255,0.06)',
         }}
       >
         <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center', gap: '2.5rem' }}>
@@ -550,15 +587,14 @@ export default function DemoPageClient({
             Behind every app is a powerful leader dashboard
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '1.05rem', maxWidth: '540px', lineHeight: 1.65, margin: 0 }}>
-            Pastors and group leaders get a full visibility into how their disciples are growing — without being intrusive.
+            Pastors and group leaders get full visibility into how their disciples are growing — without being intrusive.
           </p>
 
-          {/* 3 benefit bullets */}
           <div style={{ display: 'flex', gap: '2rem', flexWrap: 'wrap', justifyContent: 'center' }}>
             {[
               { icon: <Users className="w-5 h-5" />, title: 'Group & Disciple Management', desc: 'See every group, every disciple, their journey progress, and engagement at a glance.' },
               { icon: <TrendingUp className="w-5 h-5" />, title: 'Discipleship Insights', desc: 'Pathway progress, prayer activity, journal consistency — without requiring a report.' },
-              { icon: <LayoutDashboard className="w-5 h-5" />, title: 'Full Church Dashboard', desc: 'One place for your church\'s discipleship calendar, cohort, and leadership pipeline.' },
+              { icon: <LayoutDashboard className="w-5 h-5" />, title: 'Full Church Dashboard', desc: "One place for your church's discipleship calendar, cohort, and leadership pipeline." },
             ].map((b, i) => (
               <div key={i} style={{ maxWidth: '260px', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', textAlign: 'center' }}>
                 <div style={{ width: '48px', height: '48px', borderRadius: '12px', background: accent + '22', color: accent, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -594,88 +630,75 @@ export default function DemoPageClient({
         </div>
       </section>
 
-      {/* ── MORE INFORMATION (Progressive Disclosure) ────────────── */}
+      {/* ── HAVE QUESTIONS? ──────────────────────────────────────── */}
       <section
-        className="demo-section"
-        style={{ background: '#faf8f4', padding: '5rem 2.5rem' }}
+        className="demo-fade"
+        style={{ background: '#faf8f4', padding: '5.5rem 2.5rem' }}
       >
         <div style={{ maxWidth: '760px', margin: '0 auto' }}>
-          {/* Expand trigger */}
-          <div style={{ textAlign: 'center', marginBottom: '2.5rem' }}>
-            <button
-              onClick={() => setShowMoreInfo(v => !v)}
-              style={{
-                background: 'none',
-                border: 'none',
-                cursor: 'pointer',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.5rem',
-                color: '#555',
-                fontSize: '0.95rem',
-                fontWeight: 500,
-                fontFamily: 'inherit',
-                padding: '0.5rem 1rem',
-                borderRadius: '6px',
-                transition: 'color 0.15s',
-              }}
-            >
-              {showMoreInfo ? 'Hide' : 'Learn More'} — Common Questions
-              <ChevronDown
-                className="w-4 h-4"
-                style={{ transform: showMoreInfo ? 'rotate(180deg)' : 'none', transition: 'transform 0.25s' }}
-              />
-            </button>
+          {/* Section heading — always visible */}
+          <div style={{ marginBottom: '2.5rem' }}>
+            <h2 style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: 'clamp(2rem, 4vw, 2.75rem)',
+              fontWeight: 700,
+              color: '#0f0e0c',
+              margin: '0 0 0.75rem',
+              lineHeight: 1.1,
+            }}>
+              Have Questions?
+            </h2>
+            <p style={{ color: '#666', fontSize: '1.05rem', margin: 0, lineHeight: 1.6 }}>
+              {"We've answered the most common ones below."}
+            </p>
           </div>
 
-          {/* FAQ Accordion */}
-          {showMoreInfo && (
-            <div style={{ borderTop: '1px solid #e8e4dc' }}>
-              {FAQ_ITEMS.map((item, i) => (
-                <div key={i} className="demo-faq-item">
-                  <button
-                    className="demo-faq-q"
-                    onClick={() => setFaqOpen(faqOpen === i ? null : i)}
-                    aria-expanded={faqOpen === i}
-                  >
-                    <span>{item.q}</span>
-                    <ChevronDown
-                      className="w-4 h-4"
-                      style={{ flexShrink: 0, transform: faqOpen === i ? 'rotate(180deg)' : 'none', transition: 'transform 0.25s', color: accent }}
-                    />
-                  </button>
-                  <div
-                    className="demo-faq-a"
-                    style={{ maxHeight: faqOpen === i ? '400px' : '0', overflow: 'hidden', transition: 'max-height 0.3s ease' }}
-                  >
-                    {item.a}
-                  </div>
-                </div>
-              ))}
-
-              {/* Secondary CTA inside FAQ section */}
-              <div style={{ marginTop: '2.5rem', padding: '2rem', background: '#fff', borderRadius: '12px', border: '1px solid #eee', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
-                <p style={{ fontWeight: 600, color: '#0f0e0c', margin: 0, fontSize: '1.05rem' }}>
-                  Still have questions? Our assessment will help us answer them for you.
-                </p>
-                <Link
-                  href={assessmentUrl}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                    padding: '0.7rem 1.5rem', borderRadius: '8px',
-                    border: `2px solid ${primary}`, color: primary,
-                    fontWeight: 600, fontSize: '0.95rem', textDecoration: 'none',
-                  }}
+          {/* FAQ Accordion — always visible */}
+          <div style={{ borderTop: '1px solid #e8e4dc' }}>
+            {FAQ_ITEMS.map((item, i) => (
+              <div key={i} className="demo-faq-item">
+                <button
+                  className="demo-faq-q"
+                  onClick={() => setFaqOpen(faqOpen === i ? null : i)}
+                  aria-expanded={faqOpen === i}
                 >
-                  <Check className="w-4 h-4" />
-                  Take the Church Assessment
-                </Link>
-                <p style={{ fontSize: '0.82rem', color: '#888', margin: 0 }}>
-                  5 minutes · Helps us understand your context before any call
-                </p>
+                  <span>{item.q}</span>
+                  <ChevronDown
+                    className="w-4 h-4"
+                    style={{ flexShrink: 0, transform: faqOpen === i ? 'rotate(180deg)' : 'none', transition: 'transform 0.25s', color: accent }}
+                  />
+                </button>
+                <div
+                  className="demo-faq-a"
+                  style={{ maxHeight: faqOpen === i ? '400px' : '0', overflow: 'hidden', transition: 'max-height 0.3s ease' }}
+                >
+                  {item.a}
+                </div>
               </div>
+            ))}
+
+            {/* Assessment CTA inside FAQ section */}
+            <div style={{ marginTop: '2.5rem', padding: '2rem', background: '#fff', borderRadius: '12px', border: '1px solid #eee', textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
+              <p style={{ fontWeight: 600, color: '#0f0e0c', margin: 0, fontSize: '1.05rem' }}>
+                Still have questions? Our assessment will help us answer them for you.
+              </p>
+              <Link
+                href={assessmentUrl}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                  padding: '0.7rem 1.5rem', borderRadius: '8px',
+                  border: `2px solid ${primary}`, color: primary,
+                  fontWeight: 600, fontSize: '0.95rem', textDecoration: 'none',
+                }}
+              >
+                <Check className="w-4 h-4" />
+                Take the Church Assessment
+              </Link>
+              <p style={{ fontSize: '0.82rem', color: '#888', margin: 0 }}>
+                5 minutes · Helps us understand your context before any call
+              </p>
             </div>
-          )}
+          </div>
         </div>
       </section>
 
