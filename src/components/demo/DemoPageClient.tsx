@@ -145,8 +145,11 @@ export default function DemoPageClient({
         if (res.ok) {
           const data = await res.json();
           if (data.access_token) {
+            // Point to /demo-entry which calls setSession() explicitly before
+            // navigating to /journal. Using query params (not hash) because
+            // the root page.tsx does a server-side redirect that strips hashes.
             setIframeSrc(
-              `https://${church.subdomain}.dailydna.app/#access_token=${data.access_token}&refresh_token=${data.refresh_token}&type=recovery`
+              `https://${church.subdomain}.dailydna.app/demo-entry?at=${data.access_token}&rt=${data.refresh_token}`
             );
             return;
           }
