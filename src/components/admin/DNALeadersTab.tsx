@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Users,
   UserPlus,
@@ -15,6 +15,7 @@ import {
   Search,
   Filter,
   Heart,
+  Pencil,
 } from 'lucide-react';
 import { DNALeader } from '@/lib/types';
 
@@ -47,6 +48,7 @@ export default function DNALeadersTab() {
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<'all' | 'independent' | 'church'>('all');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'pending'>('all');
+  const [filterChurch, setFilterChurch] = useState<string>('all');
 
   // Invite modal state
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -55,12 +57,23 @@ export default function DNALeadersTab() {
     name: '',
     email: '',
     phone: '',
-    churchId: '', // Empty = independent
+    churchId: '',
     message: '',
   });
   const [inviting, setInviting] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState(false);
+
+  // Edit modal state
+  const [editingLeader, setEditingLeader] = useState<LeaderWithStats | null>(null);
+  const [editForm, setEditForm] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    church_id: '',
+  });
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchData();
@@ -72,10 +85,7 @@ export default function DNALeadersTab() {
 
     try {
       const response = await fetch('/api/admin/dna-leaders');
-      if (!response.ok) {
-        throw new Error('Failed to fetch DNA leaders');
-      }
-
+      if (!response.ok) throw new Error('Failed to fetch DNA leaders');
       const data = await response.json();
       setLeaders(data.leaders || []);
       setStats(data.stats);
@@ -92,10 +102,9 @@ export default function DNALeadersTab() {
       const response = await fetch('/api/admin/churches');
       if (response.ok) {
         const data = await response.json();
-        setChurches(data.churches.map((c: { id: string; name: string }) => ({
-          id: c.id,
-          name: c.name,
-        })));
+        setChurches(
+          data.churches.map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }))
+        );
       }
     } catch (err) {
       console.error('Error fetching churches:', err);
@@ -105,6 +114,18 @@ export default function DNALeadersTab() {
   const handleOpenInviteModal = () => {
     fetchChurches();
     setShowInviteModal(true);
+  };
+
+  const handleOpenEditModal = (leader: LeaderWithStats) => {
+    if (churches.length === 0) fetchChurches();
+    setEditingLeader(leader);
+    setEditForm({
+      name: leader.name,
+      email: leader.email,
+      phone: leader.phone || '',
+      church_id: leader.church_id || '',
+    });
+    setSaveError(null);
   };
 
   const handleInvite = async (e: React.FormEvent) => {
@@ -120,7 +141,7 @@ export default function DNALeadersTab() {
           name: inviteForm.name,
           email: inviteForm.email,
           phone: inviteForm.phone || undefined,
-          churchId: inviteForm.churchId || undefined, // undefined = independent
+          churchId: inviteForm.churchId || undefined,
           personalMessage: inviteForm.message || undefined,
         }),
       });
@@ -133,7 +154,6 @@ export default function DNALeadersTab() {
       setInviteSuccess(true);
       setInviteForm({ name: '', email: '', phone: '', churchId: '', message: '' });
 
-      // Refresh data after a short delay
       setTimeout(() => {
         fetchData();
         setShowInviteModal(false);
@@ -146,7 +166,50 @@ export default function DNALeadersTab() {
     }
   };
 
-  const filteredLeaders = leaders.filter(leader => {
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingLeader) return;
+    setSaving(true);
+    setSaveError(null);
+
+    try {
+      const response = await fetch(`/api/admin/dna-leaders/${editingLeader.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editForm.name,
+          email: editForm.email,
+          phone: editForm.phone,
+          church_id: editForm.church_id,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update leader');
+      }
+
+      setEditingLeader(null);
+      fetchData();
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save changes');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  // Derive unique churches from the loaded leaders list for the filter
+  const churchFilterOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    leaders.forEach((l) => {
+      if (l.church_id && l.church_name) seen.set(l.church_id, l.church_name);
+    });
+    return Array.from(seen.entries())
+      .map(([id, name]) => ({ id, name }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [leaders]);
+
+  const filteredLeaders = leaders.filter((leader) => {
     const matchesSearch =
       leader.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       leader.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -162,7 +225,12 @@ export default function DNALeadersTab() {
       (filterStatus === 'active' && leader.activated_at) ||
       (filterStatus === 'pending' && !leader.activated_at);
 
-    return matchesSearch && matchesType && matchesStatus;
+    const matchesChurch =
+      filterChurch === 'all' ||
+      (filterChurch === 'independent' && !leader.church_id) ||
+      leader.church_id === filterChurch;
+
+    return matchesSearch && matchesType && matchesStatus && matchesChurch;
   });
 
   const formatDate = (dateStr: string) => {
@@ -186,10 +254,7 @@ export default function DNALeadersTab() {
       <div className="text-center py-12">
         <AlertCircle className="w-12 h-12 text-error mx-auto mb-4" />
         <p className="text-foreground-muted mb-4">{error}</p>
-        <button
-          onClick={fetchData}
-          className="btn-primary inline-flex items-center gap-2"
-        >
+        <button onClick={fetchData} className="btn-primary inline-flex items-center gap-2">
           <RefreshCw className="w-4 h-4" />
           Try Again
         </button>
@@ -251,8 +316,8 @@ export default function DNALeadersTab() {
 
       {/* Filters and Actions */}
       <div className="card">
-        <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
-          <div className="flex flex-1 gap-4 items-center">
+        <div className="flex flex-col gap-4">
+          <div className="flex flex-col md:flex-row gap-4 items-start md:items-center justify-between">
             <div className="relative flex-1 max-w-md">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 w-4 h-4 text-foreground-muted" />
               <input
@@ -263,35 +328,50 @@ export default function DNALeadersTab() {
                 className="pl-10 w-full"
               />
             </div>
-            <div className="flex items-center gap-2">
-              <Filter className="w-4 h-4 text-foreground-muted" />
-              <select
-                value={filterType}
-                onChange={(e) => setFilterType(e.target.value as 'all' | 'independent' | 'church')}
-                className="min-w-[140px]"
-              >
-                <option value="all">All Types</option>
-                <option value="independent">Independent</option>
-                <option value="church">Church-Affiliated</option>
-              </select>
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as 'all' | 'active' | 'pending')}
-                className="min-w-[120px]"
-              >
-                <option value="all">All Status</option>
-                <option value="active">Active</option>
-                <option value="pending">Pending</option>
-              </select>
-            </div>
+            <button
+              onClick={handleOpenInviteModal}
+              className="btn-primary inline-flex items-center gap-2 shrink-0"
+            >
+              <UserPlus className="w-4 h-4" />
+              Invite Leader
+            </button>
           </div>
-          <button
-            onClick={handleOpenInviteModal}
-            className="btn-primary inline-flex items-center gap-2"
-          >
-            <UserPlus className="w-4 h-4" />
-            Invite Leader
-          </button>
+          <div className="flex flex-wrap items-center gap-2">
+            <Filter className="w-4 h-4 text-foreground-muted shrink-0" />
+            <select
+              value={filterType}
+              onChange={(e) => setFilterType(e.target.value as 'all' | 'independent' | 'church')}
+              className="min-w-[140px]"
+            >
+              <option value="all">All Types</option>
+              <option value="independent">Independent</option>
+              <option value="church">Church-Affiliated</option>
+            </select>
+            <select
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value as 'all' | 'active' | 'pending')}
+              className="min-w-[120px]"
+            >
+              <option value="all">All Status</option>
+              <option value="active">Active</option>
+              <option value="pending">Pending</option>
+            </select>
+            {churchFilterOptions.length > 0 && (
+              <select
+                value={filterChurch}
+                onChange={(e) => setFilterChurch(e.target.value)}
+                className="min-w-[160px]"
+              >
+                <option value="all">All Churches</option>
+                <option value="independent">Independent</option>
+                {churchFilterOptions.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
         </div>
       </div>
 
@@ -308,11 +388,11 @@ export default function DNALeadersTab() {
             <Users className="w-12 h-12 text-foreground-muted mx-auto mb-4" />
             <h3 className="font-medium text-navy mb-2">No DNA Leaders Found</h3>
             <p className="text-foreground-muted text-sm mb-4">
-              {searchQuery || filterType !== 'all' || filterStatus !== 'all'
+              {searchQuery || filterType !== 'all' || filterStatus !== 'all' || filterChurch !== 'all'
                 ? 'Try adjusting your filters'
                 : 'Invite your first DNA leader to get started'}
             </p>
-            {!searchQuery && filterType === 'all' && filterStatus === 'all' && (
+            {!searchQuery && filterType === 'all' && filterStatus === 'all' && filterChurch === 'all' && (
               <button
                 onClick={handleOpenInviteModal}
                 className="btn-primary inline-flex items-center gap-2"
@@ -373,16 +453,20 @@ export default function DNALeadersTab() {
                         <Heart className="w-4 h-4" />
                         {leader.disciple_count} disciple{leader.disciple_count !== 1 ? 's' : ''}
                       </span>
-                      <span>
-                        Invited {formatDate(leader.invited_at || leader.created_at)}
-                      </span>
+                      <span>Invited {formatDate(leader.invited_at || leader.created_at)}</span>
                       {leader.activated_at && (
-                        <span>
-                          Activated {formatDate(leader.activated_at)}
-                        </span>
+                        <span>Activated {formatDate(leader.activated_at)}</span>
                       )}
                     </div>
                   </div>
+
+                  <button
+                    onClick={() => handleOpenEditModal(leader)}
+                    className="ml-4 p-2 text-foreground-muted hover:text-navy hover:bg-background-secondary rounded-lg transition-colors"
+                    title="Edit leader"
+                  >
+                    <Pencil className="w-4 h-4" />
+                  </button>
                 </div>
               </div>
             );
@@ -420,9 +504,7 @@ export default function DNALeadersTab() {
               <form onSubmit={handleInvite}>
                 <div className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-navy mb-1">
-                      Name *
-                    </label>
+                    <label className="block text-sm font-medium text-navy mb-1">Name *</label>
                     <input
                       type="text"
                       value={inviteForm.name}
@@ -434,9 +516,7 @@ export default function DNALeadersTab() {
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-navy mb-1">
-                      Email *
-                    </label>
+                    <label className="block text-sm font-medium text-navy mb-1">Email *</label>
                     <input
                       type="email"
                       value={inviteForm.email}
@@ -477,7 +557,8 @@ export default function DNALeadersTab() {
                       ))}
                     </select>
                     <p className="text-xs text-foreground-muted mt-1">
-                      Leave as &quot;Independent&quot; for leaders not affiliated with a specific church
+                      Leave as &quot;Independent&quot; for leaders not affiliated with a specific
+                      church
                     </p>
                   </div>
 
@@ -532,6 +613,113 @@ export default function DNALeadersTab() {
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingLeader && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold text-navy">Edit Leader</h3>
+              <button
+                onClick={() => setEditingLeader(null)}
+                className="p-1 text-foreground-muted hover:text-navy"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit}>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-navy mb-1">Name *</label>
+                  <input
+                    type="text"
+                    value={editForm.name}
+                    onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                    required
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-navy mb-1">Email *</label>
+                  <input
+                    type="email"
+                    value={editForm.email}
+                    onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                    required
+                    className="w-full"
+                  />
+                  {editForm.email !== editingLeader.email && (
+                    <p className="text-xs text-amber-600 mt-1">
+                      Changing email will update their login credentials.
+                    </p>
+                  )}
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-navy mb-1">
+                    Phone (optional)
+                  </label>
+                  <input
+                    type="tel"
+                    value={editForm.phone}
+                    onChange={(e) => setEditForm({ ...editForm, phone: e.target.value })}
+                    placeholder="(555) 123-4567"
+                    className="w-full"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-navy mb-1">
+                    Church Affiliation
+                  </label>
+                  <select
+                    value={editForm.church_id}
+                    onChange={(e) => setEditForm({ ...editForm, church_id: e.target.value })}
+                    className="w-full"
+                  >
+                    <option value="">Independent (No Church)</option>
+                    {churches.map((church) => (
+                      <option key={church.id} value={church.id}>
+                        {church.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                {saveError && (
+                  <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">{saveError}</div>
+                )}
+
+                <div className="flex gap-3 pt-2">
+                  <button
+                    type="button"
+                    onClick={() => setEditingLeader(null)}
+                    className="flex-1 px-4 py-2 border border-border rounded-lg hover:bg-background-secondary transition-colors"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={saving}
+                    className="flex-1 btn-primary flex items-center justify-center gap-2"
+                  >
+                    {saving ? (
+                      <>
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                        Saving...
+                      </>
+                    ) : (
+                      'Save Changes'
+                    )}
+                  </button>
+                </div>
+              </div>
+            </form>
           </div>
         </div>
       )}

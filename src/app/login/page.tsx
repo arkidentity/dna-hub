@@ -81,25 +81,21 @@ function LoginContent() {
     setMessage('');
 
     try {
-      // Sign up creates a Supabase Auth account.
-      // If the email already exists in auth.users, Supabase returns an
-      // "already registered" error. That's fine — they should use sign in.
-      const { error } = await supabase.auth.signUp({
-        email: email.toLowerCase().trim(),
-        password,
-      });
+      // All leader accounts are pre-created by admins (email_confirm: true).
+      // Do NOT call signUp() — it triggers a Supabase confirmation email loop
+      // for already-existing accounts. Use resetPasswordForEmail() instead:
+      // it sends a "set your password" link to /auth/reset-password, no confirmation needed.
+      const { error } = await supabase.auth.resetPasswordForEmail(
+        email.toLowerCase().trim(),
+        { redirectTo: `${window.location.origin}/auth/reset-password` }
+      );
 
       if (error) {
-        if (error.message.includes('already registered') || error.message.includes('already been registered')) {
-          setError('This email already has a password. Try signing in instead.');
-          setMode('signin');
-        } else {
-          setError(error.message);
-        }
+        setError(error.message);
         return;
       }
 
-      setMessage('Check your email to confirm your account, then come back and sign in.');
+      setMessage("We've sent you a password setup link. Check your email and click the link to create your password.");
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -173,7 +169,7 @@ function LoginContent() {
           </h1>
           <p className="text-foreground-muted">
             {mode === 'signin' && 'Sign in with your email and password, or use Google.'}
-            {mode === 'setup' && 'First time? Create a password for your leader account.'}
+            {mode === 'setup' && "Enter your email and we'll send you a link to create your password."}
             {mode === 'reset' && 'Enter your email to receive a password reset link.'}
           </p>
         </div>
@@ -236,7 +232,7 @@ function LoginContent() {
             />
           </div>
 
-          {mode !== 'reset' && (
+          {mode === 'signin' && (
             <div className="mb-6">
               <label htmlFor="password" className="block text-navy font-medium mb-2 text-sm">
                 Password
@@ -265,7 +261,7 @@ function LoginContent() {
               </>
             ) : (
               mode === 'signin' ? 'Sign In' :
-              mode === 'setup' ? 'Create Password' :
+              mode === 'setup' ? 'Send Setup Link' :
               'Send Reset Link'
             )}
           </button>

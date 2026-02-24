@@ -234,22 +234,22 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
     setTierModalChurch(null);
   };
 
-  const sendMagicLink = async (email: string, name: string) => {
+  const sendLoginLink = async (email: string, name: string) => {
     try {
-      const response = await fetch('/api/auth/magic-link', {
+      const response = await fetch('/api/admin/send-login-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, name }),
       });
 
       if (response.ok) {
-        alert(`Magic link sent to ${name} (${email})`);
+        alert(`Login link sent to ${name} (${email})`);
       } else {
-        throw new Error('Failed to send magic link');
+        throw new Error('Failed to send login link');
       }
     } catch (error) {
-      console.error('Magic link error:', error);
-      alert('Failed to send magic link');
+      console.error('Login link error:', error);
+      alert('Failed to send login link');
     }
   };
 
@@ -325,10 +325,10 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
 
     for (const church of selectedChurches) {
       try {
-        const response = await fetch('/api/auth/magic-link', {
+        const response = await fetch('/api/admin/send-login-link', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ email: church.leader_email }),
+          body: JSON.stringify({ email: church.leader_email, name: church.leader_name }),
         });
 
         if (response.ok) {
@@ -817,7 +817,7 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
                         View
                       </Link>
                       <button
-                        onClick={() => sendMagicLink(church.leader_email, church.leader_name)}
+                        onClick={() => sendLoginLink(church.leader_email, church.leader_name)}
                         className="flex items-center gap-2 px-3 py-2 border border-teal text-teal rounded-lg hover:bg-teal/10 transition-colors text-sm"
                         title="Send login link to leader"
                       >

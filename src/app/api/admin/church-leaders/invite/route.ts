@@ -267,15 +267,31 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // 8. Send invitation email pointing to the login page.
-    //    Auth account is pre-confirmed — they set a password or sign in with Google.
+    // 8. Generate a direct "set your password" recovery link so the invite email
+    //    sends them straight to /auth/reset-password — no /login confusion.
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dnadiscipleship.com';
-    const loginUrl = `${baseUrl}/login`;
+    const fallbackLoginUrl = `${baseUrl}/login`;
+
+    let setupUrl = fallbackLoginUrl;
+    try {
+      const { data: linkData } = await supabase.auth.admin.generateLink({
+        type: 'recovery',
+        email: normalizedEmail,
+        options: {
+          redirectTo: `${baseUrl}/auth/reset-password`,
+        },
+      });
+      if (linkData?.properties?.action_link) {
+        setupUrl = linkData.properties.action_link;
+      }
+    } catch (linkErr) {
+      console.warn('[Church Leaders] Could not generate recovery link, falling back to login URL:', linkErr);
+    }
 
     const emailResult = await sendChurchLeaderInviteEmail(
       normalizedEmail,
       name?.trim() || 'Church Leader',
-      loginUrl,
+      setupUrl,
       churchName,
       inviterName,
       message

@@ -110,22 +110,22 @@ export default function TeamTab({ churchId, churchName }: TeamTabProps) {
     }
   };
 
-  const handleSendMagicLink = async (email: string) => {
+  const handleSendLoginLink = async (email: string, name?: string) => {
     setSendingLink(email);
     try {
-      const response = await fetch('/api/auth/magic-link', {
+      const response = await fetch('/api/admin/send-login-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, name }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send magic link');
+        throw new Error('Failed to send login link');
       }
 
       alert(`Login link sent to ${email}`);
     } catch (error) {
-      console.error('Magic link error:', error);
+      console.error('Login link error:', error);
       alert('Failed to send login link');
     } finally {
       setSendingLink(null);
@@ -224,7 +224,7 @@ export default function TeamTab({ churchId, churchName }: TeamTabProps) {
                     Added {formatDate(leader.created_at)}
                   </span>
                   <button
-                    onClick={() => handleSendMagicLink(leader.email)}
+                    onClick={() => handleSendLoginLink(leader.email, leader.name || undefined)}
                     disabled={sendingLink === leader.email}
                     className="flex items-center gap-1 px-2 py-1 text-xs text-teal hover:bg-teal/10 rounded transition-colors"
                     title="Send login link"

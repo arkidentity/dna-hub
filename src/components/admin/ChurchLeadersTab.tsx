@@ -11,6 +11,7 @@ import {
   Mail,
   CheckCircle,
   Send,
+  Pencil,
 } from 'lucide-react';
 
 interface ChurchLeader {
@@ -34,17 +35,19 @@ export default function ChurchLeadersTab({ churchId, churchName }: ChurchLeaders
 
   // Invite modal state
   const [showInviteModal, setShowInviteModal] = useState(false);
-  const [inviteForm, setInviteForm] = useState({
-    name: '',
-    email: '',
-    message: '',
-  });
+  const [inviteForm, setInviteForm] = useState({ name: '', email: '', message: '' });
   const [inviting, setInviting] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState(false);
 
   // Resend magic link state
   const [sendingLink, setSendingLink] = useState<string | null>(null);
+
+  // Edit modal state
+  const [editingLeader, setEditingLeader] = useState<ChurchLeader | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', email: '' });
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     fetchLeaders();
@@ -56,10 +59,7 @@ export default function ChurchLeadersTab({ churchId, churchName }: ChurchLeaders
 
     try {
       const response = await fetch(`/api/admin/church-leaders/invite?church_id=${churchId}`);
-      if (!response.ok) {
-        throw new Error('Failed to fetch church leaders');
-      }
-
+      if (!response.ok) throw new Error('Failed to fetch church leaders');
       const data = await response.json();
       setLeaders(data.leaders || []);
     } catch (err) {
@@ -95,7 +95,6 @@ export default function ChurchLeadersTab({ churchId, churchName }: ChurchLeaders
       setInviteSuccess(true);
       setInviteForm({ name: '', email: '', message: '' });
 
-      // Refresh data after a short delay
       setTimeout(() => {
         fetchLeaders();
         setShowInviteModal(false);
@@ -108,25 +107,58 @@ export default function ChurchLeadersTab({ churchId, churchName }: ChurchLeaders
     }
   };
 
-  const handleSendMagicLink = async (email: string) => {
-    setSendingLink(email);
+  const handleSendLoginLink = async (leader: ChurchLeader) => {
+    setSendingLink(leader.email);
     try {
-      const response = await fetch('/api/auth/magic-link', {
+      const response = await fetch('/api/admin/send-login-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email: leader.email, name: leader.name || undefined }),
       });
 
-      if (!response.ok) {
-        throw new Error('Failed to send magic link');
-      }
-
-      alert(`Login link sent to ${email}`);
+      if (!response.ok) throw new Error('Failed to send login link');
+      alert(`Login link sent to ${leader.email}`);
     } catch (error) {
-      console.error('Magic link error:', error);
+      console.error('Login link error:', error);
       alert('Failed to send login link');
     } finally {
       setSendingLink(null);
+    }
+  };
+
+  const handleOpenEdit = (leader: ChurchLeader) => {
+    setEditingLeader(leader);
+    setEditForm({ name: leader.name || '', email: leader.email });
+    setSaveError(null);
+  };
+
+  const handleSaveEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingLeader) return;
+    setSaving(true);
+    setSaveError(null);
+
+    try {
+      const response = await fetch(`/api/admin/church-leaders/${editingLeader.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editForm.name,
+          email: editForm.email,
+        }),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to update leader');
+      }
+
+      setEditingLeader(null);
+      fetchLeaders();
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Failed to save changes');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -151,10 +183,7 @@ export default function ChurchLeadersTab({ churchId, churchName }: ChurchLeaders
       <div className="text-center py-12">
         <AlertCircle className="w-12 h-12 text-error mx-auto mb-4" />
         <p className="text-foreground-muted mb-4">{error}</p>
-        <button
-          onClick={fetchLeaders}
-          className="btn-primary inline-flex items-center gap-2"
-        >
+        <button onClick={fetchLeaders} className="btn-primary inline-flex items-center gap-2">
           <RefreshCw className="w-4 h-4" />
           Try Again
         </button>
@@ -197,10 +226,7 @@ export default function ChurchLeadersTab({ churchId, churchName }: ChurchLeaders
         ) : (
           <div className="divide-y divide-card-border">
             {leaders.map((leader) => (
-              <div
-                key={leader.id}
-                className="py-4 flex items-center justify-between"
-              >
+              <div key={leader.id} className="py-4 flex items-center justify-between">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 bg-gold/10 rounded-full flex items-center justify-center">
                     <span className="text-gold font-medium">
@@ -208,21 +234,19 @@ export default function ChurchLeadersTab({ churchId, churchName }: ChurchLeaders
                     </span>
                   </div>
                   <div>
-                    <p className="font-medium text-navy">
-                      {leader.name || 'Name not provided'}
-                    </p>
+                    <p className="font-medium text-navy">{leader.name || 'Name not provided'}</p>
                     <p className="text-sm text-foreground-muted flex items-center gap-1">
                       <Mail className="w-3 h-3" />
                       {leader.email}
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <span className="text-xs text-foreground-muted">
                     Added {formatDate(leader.created_at)}
                   </span>
                   <button
-                    onClick={() => handleSendMagicLink(leader.email)}
+                    onClick={() => handleSendLoginLink(leader)}
                     disabled={sendingLink === leader.email}
                     className="flex items-center gap-1 px-2 py-1 text-xs text-teal hover:bg-teal/10 rounded transition-colors"
                     title="Send login link"
@@ -233,6 +257,13 @@ export default function ChurchLeadersTab({ churchId, churchName }: ChurchLeaders
                       <Send className="w-3 h-3" />
                     )}
                     Send Link
+                  </button>
+                  <button
+                    onClick={() => handleOpenEdit(leader)}
+                    className="p-1.5 text-foreground-muted hover:text-navy hover:bg-background-secondary rounded transition-colors"
+                    title="Edit leader"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
                   </button>
                 </div>
               </div>
@@ -245,9 +276,9 @@ export default function ChurchLeadersTab({ churchId, churchName }: ChurchLeaders
       <div className="card bg-blue-50 border-blue-200">
         <h4 className="font-medium text-navy mb-2">About Church Leaders</h4>
         <p className="text-sm text-foreground-muted">
-          Church leaders have full access to track DNA implementation, manage DNA groups,
-          and complete DNA training. They can also invite additional church leaders and DNA
-          group leaders.
+          Church leaders have full access to track DNA implementation, manage DNA groups, and
+          complete DNA training. They can also invite additional church leaders and DNA group
+          leaders.
         </p>
       </div>
 
@@ -275,7 +306,7 @@ export default function ChurchLeadersTab({ churchId, churchName }: ChurchLeaders
                 <CheckCircle className="w-12 h-12 text-success mx-auto mb-3" />
                 <h4 className="font-semibold text-navy mb-2">Invitation Sent!</h4>
                 <p className="text-foreground-muted">
-                  They'll receive an email with a link to log in.
+                  They&apos;ll receive an email with a link to log in.
                 </p>
               </div>
             ) : (
@@ -358,6 +389,84 @@ export default function ChurchLeadersTab({ churchId, churchName }: ChurchLeaders
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {editingLeader && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-card-border">
+              <h3 className="font-semibold text-navy">Edit Church Leader</h3>
+              <button
+                onClick={() => setEditingLeader(null)}
+                className="p-1 text-foreground-muted hover:text-navy rounded"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEdit} className="p-4 space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-navy mb-1">Name</label>
+                <input
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  className="w-full px-3 py-2 border border-input-border rounded-lg focus:ring-2 focus:ring-gold/50 focus:border-gold"
+                  placeholder="Pastor John"
+                />
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-navy mb-1">
+                  Email Address *
+                </label>
+                <input
+                  type="email"
+                  value={editForm.email}
+                  onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
+                  className="w-full px-3 py-2 border border-input-border rounded-lg focus:ring-2 focus:ring-gold/50 focus:border-gold"
+                  required
+                />
+                {editForm.email !== editingLeader.email && (
+                  <p className="text-xs text-amber-600 mt-1">
+                    Changing email will update their login credentials.
+                  </p>
+                )}
+              </div>
+
+              {saveError && (
+                <div className="p-3 bg-red-50 border border-red-200 rounded-lg">
+                  <p className="text-sm text-red-600">{saveError}</p>
+                </div>
+              )}
+
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setEditingLeader(null)}
+                  className="flex-1 px-4 py-2 border border-card-border text-foreground-muted rounded-lg hover:bg-background-secondary transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving || !editForm.email}
+                  className="flex-1 btn-primary flex items-center justify-center gap-2"
+                >
+                  {saving ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Saving...
+                    </>
+                  ) : (
+                    'Save Changes'
+                  )}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

@@ -202,24 +202,24 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
     }
   };
 
-  const handleSendMagicLink = async () => {
+  const handleSendLoginLink = async () => {
     if (!data?.leader.email) return;
 
     try {
-      const response = await fetch('/api/auth/magic-link', {
+      const response = await fetch('/api/admin/send-login-link', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: data.leader.email }),
+        body: JSON.stringify({ email: data.leader.email, name: data.leader.name }),
       });
 
       if (!response.ok) {
-        throw new Error('Failed to send magic link');
+        throw new Error('Failed to send login link');
       }
 
-      alert(`Magic link sent to ${data.leader.email}`);
+      alert(`Login link sent to ${data.leader.email}`);
     } catch (error) {
-      console.error('Magic link error:', error);
-      alert('Failed to send magic link');
+      console.error('Login link error:', error);
+      alert('Failed to send login link');
     }
   };
 
@@ -364,7 +364,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
             </div>
             <div className="flex items-center gap-3">
               <button
-                onClick={handleSendMagicLink}
+                onClick={handleSendLoginLink}
                 className="flex items-center gap-1.5 px-2 py-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors text-xs"
                 title="Send login link to church leader"
               >

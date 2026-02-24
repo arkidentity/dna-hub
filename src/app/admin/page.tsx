@@ -15,6 +15,7 @@ import {
   Palette,
 } from 'lucide-react';
 import { DNALeadersTab, ChurchesTab, ResourcesTab, BrandingTab } from '@/components/admin';
+import AuthAuditPanel from '@/components/admin/AuthAuditPanel';
 
 interface ChurchSummary {
   id: string;
@@ -131,6 +132,7 @@ export default function AdminPage() {
             <p className="font-semibold">Church Management</p>
           </div>
           <div className="flex items-center gap-4">
+            <AuthAuditPanel />
             <Link
               href="/admin/settings"
               className="p-2 text-gray-300 hover:text-white transition-colors"
