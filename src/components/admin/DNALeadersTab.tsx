@@ -49,7 +49,7 @@ const ROLE_CHIPS: {
     role: 'dna_leader',
     label: 'DNA Leader',
     activeClass: 'bg-teal/10 text-teal border-teal/30',
-    scoped: true,
+    scoped: false, // works for both church-affiliated AND independent leaders
   },
   {
     role: 'training_participant',
@@ -174,12 +174,10 @@ export default function DNALeadersTab() {
   const handleToggleRole = async (
     leader: LeaderWithStats,
     role: string,
-    isScoped: boolean,
+    church_id: string | null, // explicit — computed per-chip in render
     currentlyActive: boolean
   ) => {
     if (!leader.user_id) return;
-    const church_id = isScoped ? (leader.church_id || null) : null;
-    if (isScoped && !church_id) return; // scoped role requires a church
 
     const key = `${leader.id}-${role}`;
     setTogglingRole(key);
@@ -564,23 +562,41 @@ export default function DNALeadersTab() {
                     <div className="flex items-center gap-1.5 mt-2 flex-wrap">
                       <span className="text-xs text-foreground-muted">Roles:</span>
                       {ROLE_CHIPS.map(({ role, label, activeClass, scoped }) => {
-                        const church_id = scoped ? (leader.church_id || null) : null;
-                        const isActive = (leader.roles || []).some(
-                          (r) => r.role === role && r.church_id === church_id
-                        );
+                        // church_leader requires a church; dna_leader uses leader's church if
+                        // available but also works for independent leaders (church_id = null).
+                        const chipChurchId: string | null = scoped
+                          ? (leader.church_id || null)
+                          : role === 'dna_leader'
+                          ? (leader.church_id || null)
+                          : null;
+
+                        // isActive: for dna_leader match ANY dna_leader role so church-
+                        // affiliated leaders (church_id = 'X') show correctly too.
+                        const isActive =
+                          role === 'dna_leader'
+                            ? (leader.roles || []).some((r) => r.role === 'dna_leader')
+                            : (leader.roles || []).some(
+                                (r) => r.role === role && r.church_id === chipChurchId
+                              );
+
                         const isLoading = togglingRole === `${leader.id}-${role}`;
-                        const isDisabled = !leader.user_id || (scoped && !leader.church_id);
+                        // Only church_leader is blocked for independent leaders
+                        const isDisabled =
+                          !leader.user_id || (role === 'church_leader' && !leader.church_id);
 
                         return (
                           <button
                             key={role}
                             onClick={() =>
-                              !isDisabled && handleToggleRole(leader, role, scoped, isActive)
+                              !isDisabled &&
+                              handleToggleRole(leader, role, chipChurchId, isActive)
                             }
                             disabled={isLoading || isDisabled}
                             title={
-                              isDisabled && scoped
+                              isDisabled && role === 'church_leader'
                                 ? 'Requires church affiliation'
+                                : !leader.user_id
+                                ? 'No user record — run Auth Audit to fix'
                                 : isActive
                                 ? `Remove ${label} role`
                                 : `Add ${label} role`
@@ -602,7 +618,7 @@ export default function DNALeadersTab() {
                       })}
                       {!leader.user_id && (
                         <span className="text-xs text-amber-500 italic">
-                          No user record — roles unavailable
+                          No user record — use Auth Audit to fix
                         </span>
                       )}
                     </div>

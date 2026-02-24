@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
 import { getUnifiedSession, isAdmin as checkIsAdmin, getPrimaryChurch } from '@/lib/unified-auth';
 import { sendDNALeaderDirectInviteEmail } from '@/lib/email';
+import { getDnaHqChurchId } from '@/lib/dna-hq';
 
 // POST /api/dna-leaders/invite
 // Invite a new DNA leader (church admin or super admin only)
@@ -66,9 +67,8 @@ export async function POST(request: NextRequest) {
     const inviterId = session.userId;
 
     if (isSuperAdmin) {
-      // Super admin can invite to any church or as independent
       if (church_id && church_id !== 'independent') {
-        // Verify church exists
+        // Verify the specified church exists
         const { data: church, error: churchError } = await supabase
           .from('churches')
           .select('id, name')
@@ -76,15 +76,25 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (churchError || !church) {
-          return NextResponse.json(
-            { error: 'Church not found' },
-            { status: 400 }
-          );
+          return NextResponse.json({ error: 'Church not found' }, { status: 400 });
         }
         finalChurchId = church.id;
         churchName = church.name;
+      } else {
+        // No church specified — default to DNA HQ so the leader gets cohort + group access.
+        // "Independent" leaders no longer exist; everyone belongs to a church.
+        const hqId = await getDnaHqChurchId();
+        if (hqId) {
+          finalChurchId = hqId;
+          const { data: hqChurch } = await supabase
+            .from('churches')
+            .select('name')
+            .eq('id', hqId)
+            .single();
+          churchName = hqChurch?.name || 'DNA Discipleship';
+        }
+        // If DNA HQ church isn't found (misconfigured), finalChurchId stays null as fallback
       }
-      // If church_id is 'independent' or not provided, finalChurchId stays null
     } else {
       // Church admin can only invite to their own church
       const sessionChurchId = getPrimaryChurch(session);

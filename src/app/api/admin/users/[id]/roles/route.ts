@@ -1,12 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
 import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
+import { getDnaHqChurchId } from '@/lib/dna-hq';
 
 const VALID_ROLES = ['church_leader', 'dna_leader', 'training_participant', 'admin'] as const;
 type ValidRole = (typeof VALID_ROLES)[number];
 
-// Roles that are scoped to a church_id
-const CHURCH_SCOPED_ROLES: ValidRole[] = ['church_leader', 'dna_leader'];
+// Roles that REQUIRE a church_id — dna_leader is intentionally excluded because
+// independent DNA leaders (no church affiliation) also hold this role with church_id = null.
+const CHURCH_REQUIRED_ROLES: ValidRole[] = ['church_leader'];
 
 // PATCH /api/admin/users/[id]/roles
 // Toggle a role on or off for a user.
@@ -38,8 +40,8 @@ export async function PATCH(
       );
     }
 
-    // Church-scoped roles require a church_id
-    if (CHURCH_SCOPED_ROLES.includes(role as ValidRole) && !church_id) {
+    // Only church_leader strictly requires a church_id
+    if (CHURCH_REQUIRED_ROLES.includes(role as ValidRole) && !church_id) {
       return NextResponse.json(
         { error: `Role "${role}" requires a church_id` },
         { status: 400 }
@@ -58,9 +60,16 @@ export async function PATCH(
     if (!user) return NextResponse.json({ error: 'User not found' }, { status: 404 });
 
     if (action === 'add') {
+      // For dna_leader with no church_id, default to the DNA HQ church so the
+      // leader gets cohort and group access under the DNA Discipleship umbrella.
+      let effectiveChurchId = church_id || null;
+      if (role === 'dna_leader' && !effectiveChurchId) {
+        effectiveChurchId = await getDnaHqChurchId();
+      }
+
       // Upsert — ignoreDuplicates means this is safe to call repeatedly
       const { error } = await supabase.from('user_roles').upsert(
-        { user_id: userId, role, church_id: church_id || null },
+        { user_id: userId, role, church_id: effectiveChurchId },
         { onConflict: 'user_id,role,church_id', ignoreDuplicates: true }
       );
       if (error) {
@@ -69,12 +78,13 @@ export async function PATCH(
       }
 
       // When adding dna_leader, also ensure a dna_leaders record exists
-      if (role === 'dna_leader' && church_id) {
+      // and update it to reflect the resolved church (DNA HQ for independents).
+      if (role === 'dna_leader') {
         await supabase.from('dna_leaders').upsert(
           {
             email: user.email,
             name: user.name,
-            church_id,
+            church_id: effectiveChurchId,
             user_id: userId,
             is_active: true,
             activated_at: new Date().toISOString(),
