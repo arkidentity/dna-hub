@@ -136,6 +136,7 @@ export async function POST(
           email_verified: true,
           is_active: true,
           auth_provider: 'email',
+          role: 'dna_leader', // unlocks all pathway months + bypasses group gate
         },
         { onConflict: 'id' }
       );
