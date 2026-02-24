@@ -122,6 +122,7 @@ export default function DemoPageClient({
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
   const [stickyHidden, setStickyHidden] = useState(false);
   const [iframeSrc, setIframeSrc] = useState('');
+  const [logoError, setLogoError] = useState(false);
   const finalCtaRef = useRef<HTMLDivElement>(null);
 
   // Hide sticky mobile bar when final CTA section is in view
@@ -253,8 +254,26 @@ export default function DemoPageClient({
         borderBottom: '1px solid rgba(0,0,0,0.07)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-          <Image src="/dna-logo.svg" alt="DNA" width={28} height={28} style={{ opacity: 0.85 }} onError={() => {}} />
-          <span style={{ fontWeight: 600, fontSize: '0.875rem', color: '#555' }}>DNA Discipleship</span>
+          {!logoError ? (
+            <Image
+              src="/dna-logo.svg"
+              alt="DNA"
+              width={28}
+              height={28}
+              style={{ opacity: 0.85 }}
+              onError={() => setLogoError(true)}
+            />
+          ) : (
+            <span style={{
+              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+              width: '28px', height: '28px', borderRadius: '6px',
+              background: primary, color: '#fff',
+              fontSize: '0.65rem', fontWeight: 800, letterSpacing: '0.02em',
+            }}>
+              DNA
+            </span>
+          )}
+          <span style={{ fontWeight: 600, fontSize: '0.875rem', color: '#555' }}>Discipleship</span>
         </div>
         {church.logo_url && (
           <img src={church.logo_url} alt={church.name} style={{ height: '26px', objectFit: 'contain', opacity: 0.9 }} />
@@ -313,6 +332,8 @@ export default function DemoPageClient({
             {/* 9:16 video */}
             <div style={{
               width: '100%',
+              maxWidth: '336px',
+              margin: '0 auto',
               aspectRatio: '9 / 16',
               borderRadius: '16px',
               overflow: 'hidden',
@@ -374,7 +395,7 @@ export default function DemoPageClient({
           {/* iframe — natural 9:16, no phone chrome */}
           <div style={{
             width: '100%',
-            maxWidth: '390px',
+            maxWidth: '430px',
             aspectRatio: '9 / 16',
             borderRadius: '24px',
             overflow: 'hidden',
