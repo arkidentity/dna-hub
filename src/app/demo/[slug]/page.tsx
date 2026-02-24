@@ -22,6 +22,7 @@ interface DemoChurchData {
     video_url: string | null;
     default_temp: 'cold' | 'warm' | 'hot';
     demo_seeded_at: string | null;
+    coach_name: string;
   };
 }
 
@@ -63,7 +64,6 @@ export default async function DemoPage({ params, searchParams }: DemoPageProps) 
     ? (tempParam as Temp)
     : data.demo.default_temp ?? 'warm';
 
-  const appUrl = `https://${slug}.dailydna.app`;
   const hubDemoUrl = `/demo-hub/${slug}`;
   const bookCallUrl = '/assessment/book-call';
   const assessmentUrl = '/assessment';
@@ -73,10 +73,10 @@ export default async function DemoPage({ params, searchParams }: DemoPageProps) 
       church={data.church}
       demo={data.demo}
       temp={temp}
-      appUrl={appUrl}
       hubDemoUrl={hubDemoUrl}
       bookCallUrl={bookCallUrl}
       assessmentUrl={assessmentUrl}
+      coachName={data.demo.coach_name ?? 'Travis'}
     />
   );
 }

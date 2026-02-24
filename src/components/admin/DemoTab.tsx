@@ -14,6 +14,7 @@ import {
   Thermometer,
   Eye,
   EyeOff,
+  User,
 } from 'lucide-react';
 
 interface DemoTabProps {
@@ -27,6 +28,7 @@ interface DemoSettings {
   demo_enabled: boolean;
   default_temp: 'cold' | 'warm' | 'hot';
   demo_seeded_at: string | null;
+  coach_name: string;
 }
 
 const TEMPS = [
@@ -70,6 +72,7 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
     demo_enabled: false,
     default_temp: 'warm',
     demo_seeded_at: null,
+    coach_name: 'Travis',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -99,6 +102,7 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
           demo_enabled: data.settings.demo_enabled ?? false,
           default_temp: data.settings.default_temp ?? 'warm',
           demo_seeded_at: data.settings.demo_seeded_at ?? null,
+          coach_name: data.settings.coach_name ?? 'Travis',
         });
       }
     } catch (err) {
@@ -122,6 +126,7 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
           video_url: settings.video_url?.trim() || null,
           demo_enabled: settings.demo_enabled,
           default_temp: settings.default_temp,
+          coach_name: settings.coach_name?.trim() || 'Travis',
         }),
       });
 
@@ -287,6 +292,34 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
             Could not parse a YouTube video ID from this URL
           </div>
         )}
+      </div>
+
+      {/* Coach Name */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <label style={{ fontWeight: 600, color: '#1a2332', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <User className="w-4 h-4" />
+          Your Name
+        </label>
+        <p style={{ color: '#666', fontSize: '0.85rem', margin: 0 }}>
+          Appears as the caption below your video — e.g. &ldquo;Travis · Founder, DNA Discipleship&rdquo;
+        </p>
+        <input
+          type="text"
+          value={settings.coach_name}
+          onChange={e => setSettings(prev => ({ ...prev, coach_name: e.target.value }))}
+          placeholder="Travis"
+          style={{
+            padding: '0.625rem 0.75rem',
+            border: '1px solid #e0e0e0',
+            borderRadius: '6px',
+            fontSize: '0.9rem',
+            outline: 'none',
+            fontFamily: 'inherit',
+            width: '100%',
+            maxWidth: '280px',
+            boxSizing: 'border-box',
+          }}
+        />
       </div>
 
       {/* Default Temperature */}

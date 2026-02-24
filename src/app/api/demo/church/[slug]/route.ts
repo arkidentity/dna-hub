@@ -34,7 +34,7 @@ export async function GET(
     // Fetch demo settings — only return if enabled
     const { data: demo } = await supabase
       .from('church_demo_settings')
-      .select('video_url, demo_enabled, default_temp, demo_seeded_at')
+      .select('video_url, demo_enabled, default_temp, demo_seeded_at, coach_name')
       .eq('church_id', church.id)
       .single();
 
@@ -65,6 +65,7 @@ export async function GET(
         video_url: demo.video_url ?? null,
         default_temp: demo.default_temp ?? 'warm',
         demo_seeded_at: demo.demo_seeded_at ?? null,
+        coach_name: (demo.coach_name as string | null) ?? 'Travis',
       },
     });
   } catch (error) {
