@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { ChevronDown, ArrowRight } from 'lucide-react';
+import { ChevronDown, ArrowRight, Lock, Compass, Users, TrendingUp } from 'lucide-react';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -79,24 +79,28 @@ function isDirectVideoUrl(url: string): boolean {
   );
 }
 
+// ─── Gold ─────────────────────────────────────────────────────────────────────
+
+const GATE_GOLD = '#C4922A';
+
 // ─── FAQ Items ────────────────────────────────────────────────────────────────
 
 const FAQ_ITEMS = [
   {
-    q: 'How long does it take to set up for our church?',
-    a: 'Most churches are fully configured within a week of their strategy call. Branding, subdomain, and leader onboarding all happen before launch. Your first group can be discipling within 7–10 days.',
+    q: 'Is the app really free?',
+    a: "Yes. The white-labeled app — with your church name, logo, and branding — is completely free. Your disciples get access to the 3D Journal and 4D Prayer at no cost. The full DNA experience, including the 90-Day Pathway, DNA Groups, and the Leader Dashboard, unlocks through a coaching partnership. We'll talk through what that looks like on a discovery call.",
   },
   {
-    q: 'How is this different from a Bible app or devotional app?',
-    a: 'DNA is a relational discipleship system, not a content platform. The app is built around accountability, group rhythm, and real multiplication — not individual consumption. It tracks relationships, not just reading plans.',
+    q: 'How is this different from a Bible app or devotional?',
+    a: "DNA isn't a content platform. It's a relational discipleship system built around accountability, group rhythm, and multiplication. The app supports the relationship — it doesn't replace it.",
   },
   {
-    q: 'Is there a long-term contract?',
-    a: "No lock-in. We believe in earning your partnership every cycle. Most churches stay because the results speak — but you're never trapped.",
+    q: 'What does a coaching partnership actually involve?',
+    a: "You get a dedicated DNA coach, leader training, group infrastructure, and hands-on support through your first multiplication cycle. The discovery call is where we figure out what the right fit looks like for your church specifically.",
   },
   {
-    q: "Can we customize the app for our church's branding?",
-    a: "Yes — completely. Your church name, logo, colors, and custom links are all applied to the app. Your disciples see your church identity from Day 1.",
+    q: 'How long does it take to get started?',
+    a: 'Most churches are fully configured within a week of their strategy call. Your first group can be discipling within 7–10 days of launch.',
   },
 ];
 
@@ -123,7 +127,9 @@ export default function DemoPageClient({
   const [stickyHidden, setStickyHidden] = useState(false);
   const [iframeSrc, setIframeSrc] = useState('');
   const [logoError, setLogoError] = useState(false);
+  const [gateOpen, setGateOpen] = useState(false);
   const finalCtaRef = useRef<HTMLDivElement>(null);
+  const gateContentRef = useRef<HTMLDivElement>(null);
 
   // Hide sticky mobile bar when final CTA section is in view
   useEffect(() => {
@@ -179,9 +185,9 @@ export default function DemoPageClient({
         /* Sticky bottom CTA — mobile only */
         .dp-sticky-bottom {
           position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
-          padding: 0.875rem 1.25rem;
-          background: ${primary};
-          box-shadow: 0 -2px 16px rgba(0,0,0,0.15);
+          padding: 0.625rem 1.25rem 1rem;
+          background: #1A2332;
+          box-shadow: 0 -2px 16px rgba(0,0,0,0.25);
           transform: translateY(0); transition: transform 0.3s ease;
         }
         .dp-sticky-bottom.hidden { transform: translateY(110%); }
@@ -370,31 +376,36 @@ export default function DemoPageClient({
         </section>
       )}
 
-      {/* ── 4. LIVE APP PREVIEW ──────────────────────────────────── */}
+      {/* ── 4. FREE APP PREVIEW ──────────────────────────────────── */}
       <section
         id="app-preview"
         className="dp-section"
         style={{ background: '#f7f7f5', textAlign: 'center' }}
       >
         <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
-          {/* Label + headline */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', alignItems: 'center' }}>
-            <span style={{ fontSize: '1.0rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: accent }}>
-              Your Branded App
-            </span>
-            <h2 style={{
-              fontFamily: "'Playfair Display', serif",
-              fontSize: 'clamp(1.5rem, 5vw, 2.25rem)',
-              fontWeight: 700,
-              color: '#0f0e0c',
-              margin: 0,
-              lineHeight: 1.15,
-            }}>
-              Ready to explore.
-            </h2>
-          </div>
+          {/* Section label */}
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: accent }}>
+            Your Free App
+          </span>
 
-          {/* iframe — natural 9:16, no phone chrome */}
+          {/* Headline */}
+          <h2 style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 'clamp(1.5rem, 5vw, 2.25rem)',
+            fontWeight: 700,
+            color: '#0f0e0c',
+            margin: 0,
+            lineHeight: 1.15,
+          }}>
+            {church.name}&rsquo;s app — branded and ready.
+          </h2>
+
+          {/* Subline */}
+          <p style={{ fontSize: '1rem', color: '#666', margin: 0, lineHeight: 1.65, maxWidth: '400px' }}>
+            The 3D Journal and 4D Prayer are yours free. No cost. No commitment. Just your church&rsquo;s name on a tool that builds real disciples.
+          </p>
+
+          {/* iframe — locked view */}
           <div style={{
             width: '100%',
             maxWidth: '430px',
@@ -425,76 +436,258 @@ export default function DemoPageClient({
                 style={{ width: '100%', height: '100%', border: 'none' }}
               />
             )}
+            {/* Locked overlay — covers bottom nav tab area */}
+            {iframeSrc && (
+              <div style={{
+                position: 'absolute', bottom: 0, left: 0, right: 0,
+                height: '11%',
+                background: 'rgba(8,8,8,0.82)',
+                backdropFilter: 'blur(8px)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                gap: '0.5rem',
+                zIndex: 2,
+              }}>
+                <Lock size={13} style={{ color: GATE_GOLD, flexShrink: 0 }} />
+                <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.7rem', fontWeight: 600 }}>
+                  Groups · Pathway · Dashboard — unlock below
+                </span>
+              </div>
+            )}
           </div>
 
-          {/* Tagline */}
-          <p style={{ fontSize: '1.05rem', color: '#888', margin: 0, lineHeight: 1.5 }}>
-            This is exactly what your disciples would see on Day 1.
+          {/* Label below */}
+          <p style={{ fontSize: '1rem', color: '#888', margin: 0, lineHeight: 1.5 }}>
+            Tap around. This is exactly what your disciples would see on Day 1.
           </p>
         </div>
       </section>
 
-      {/* ── 5. PROOF POINTS ──────────────────────────────────────── */}
-      <section className="dp-section" style={{ background: '#fff', paddingTop: '2.5rem', paddingBottom: '2.5rem' }}>
-        <div className="dp-proof-row">
-          {[
-            { emoji: '📱', label: 'Branded for your church' },
-            { emoji: '👥', label: 'Built for groups' },
-            { emoji: '📈', label: 'Leader dashboard included' },
-          ].map((p, i) => (
-            <div key={i} className="dp-proof-item">
-              <span style={{ fontSize: '1.75rem', lineHeight: 1 }}>{p.emoji}</span>
-              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#333', textAlign: 'center', lineHeight: 1.3 }}>
-                {p.label}
-              </span>
-            </div>
-          ))}
+      {/* ── 5. FREE TIER CTA ─────────────────────────────────────── */}
+      <section className="dp-section" style={{ background: '#fff', textAlign: 'center' }}>
+        <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'center' }}>
+          <p style={{ fontSize: '1.05rem', color: '#555', margin: 0, lineHeight: 1.7 }}>
+            The app is our gift to the body of Christ. Start using it today — no strings attached.
+          </p>
+          <Link href={bookCallUrl} className="dp-btn-primary" style={{ background: primary }}>
+            Book a Discovery Call
+            <ArrowRight className="w-4 h-4" />
+          </Link>
+          <Link
+            href={assessmentUrl}
+            style={{ fontSize: '0.875rem', color: '#888', textDecoration: 'none', borderBottom: '1px solid #ddd', paddingBottom: '1px' }}
+          >
+            Take the 5-min assessment first →
+          </Link>
         </div>
       </section>
 
-      {/* ── 6. LEADER DASHBOARD CTA (conditional) ────────────────── */}
-      {hubDemoUrl && (
-        <section className="dp-section" style={{ background: '#f7f7f5', paddingTop: '2.5rem', paddingBottom: '2.5rem' }}>
-          <div style={{
-            maxWidth: '480px', margin: '0 auto',
-            background: '#fff', border: '1px solid #e5e5e5', borderRadius: '16px',
-            padding: '2rem 1.75rem',
-            display: 'flex', flexDirection: 'column', gap: '1.75rem', alignItems: 'flex-start',
+      {/* ── 6. THE GATE ──────────────────────────────────────────── */}
+      <section style={{ background: '#1A2332', textAlign: 'center', padding: '3.5rem 1.25rem' }}>
+        <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}>
+            There&rsquo;s More
+          </span>
+          <h2 style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 'clamp(1.625rem, 5vw, 2.375rem)',
+            fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.15,
           }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              <h3 style={{
+            What happens when DNA is fully unlocked?
+          </h2>
+          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '1rem', margin: 0, lineHeight: 1.7 }}>
+            Groups. Multiplication. A dashboard that shows you exactly where every disciple is in their journey. This is what coaching partners experience.
+          </p>
+          <button
+            onClick={() => {
+              const next = !gateOpen;
+              setGateOpen(next);
+              if (next) {
+                setTimeout(() => gateContentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
+              }
+            }}
+            style={{
+              width: '100%', maxWidth: '360px',
+              padding: '1rem 1.5rem',
+              background: GATE_GOLD,
+              color: '#fff',
+              border: 'none', borderRadius: '8px',
+              fontFamily: 'inherit', fontSize: '1rem', fontWeight: 700,
+              cursor: 'pointer',
+              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
+              transition: 'opacity 0.15s',
+            }}
+          >
+            {gateOpen ? 'Close ↑' : 'See the Full DNA Experience →'}
+          </button>
+        </div>
+      </section>
+
+      {/* ── 7. FULL EXPERIENCE (hidden until gate opens) ─────────── */}
+      {gateOpen && (
+        <div ref={gateContentRef}>
+          {/* 7A — Full App Demo */}
+          <section className="dp-section" style={{ background: '#f7f7f5', textAlign: 'center' }}>
+            <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: accent }}>
+                Full DNA Experience
+              </span>
+              <h2 style={{
                 fontFamily: "'Playfair Display', serif",
-                fontSize: '1.25rem', fontWeight: 700, color: '#0f0e0c', margin: 0, lineHeight: 1.2,
+                fontSize: 'clamp(1.5rem, 5vw, 2.25rem)',
+                fontWeight: 700, color: '#0f0e0c', margin: 0, lineHeight: 1.15,
               }}>
-                {"There's a dashboard behind every app."}
-              </h3>
-              <p style={{ color: '#666', fontSize: '0.95rem', margin: 0, lineHeight: 1.65 }}>
-                Pastors get full visibility into how their disciples are growing.
+                The complete system — unlocked.
+              </h2>
+              <p style={{ fontSize: '1rem', color: '#666', margin: 0, lineHeight: 1.65, maxWidth: '400px' }}>
+                This is what your disciples experience when your church partners with DNA. The full 90-Day Pathway, group connection, prayer tracking, and everything in between.
+              </p>
+
+              {/* iframe — fully unlocked */}
+              <div style={{
+                width: '100%',
+                maxWidth: '430px',
+                aspectRatio: '9 / 16',
+                borderRadius: '24px',
+                overflow: 'hidden',
+                boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
+                background: '#fff',
+                position: 'relative',
+              }}>
+                {!iframeSrc && (
+                  <div style={{
+                    position: 'absolute', inset: 0,
+                    display: 'flex', flexDirection: 'column',
+                    alignItems: 'center', justifyContent: 'center',
+                    gap: '0.875rem', background: '#f0f0f0',
+                  }}>
+                    <div className="dp-spinner" style={{ borderTopColor: primary }} />
+                    <p style={{ color: '#888', fontSize: '0.875rem', margin: 0 }}>Loading your app…</p>
+                  </div>
+                )}
+                {iframeSrc && (
+                  <iframe
+                    src={iframeSrc}
+                    title={`${church.name} DNA Daily App — Full Experience`}
+                    sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                    loading="lazy"
+                    style={{ width: '100%', height: '100%', border: 'none' }}
+                  />
+                )}
+              </div>
+
+              <p style={{ fontSize: '0.85rem', color: '#aaa', margin: 0 }}>
+                Live preview · {church.name} Discipleship
               </p>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
-              <Link
-                href={hubDemoUrl}
-                style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                  padding: '0.8rem 1.375rem', borderRadius: '8px',
-                  background: primary, color: '#fff',
-                  fontWeight: 600, fontSize: '0.95rem', textDecoration: 'none',
-                  alignSelf: 'flex-start',
-                }}
-              >
-                Explore the Leader Dashboard
-                <ArrowRight className="w-4 h-4" />
-              </Link>
-              <span style={{ fontSize: '0.8rem', color: '#aaa' }}>No login required</span>
+          </section>
+
+          {/* 7B — Leader Dashboard */}
+          <section className="dp-section" style={{ background: '#fff' }}>
+            <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.75rem', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                <h2 style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: 'clamp(1.375rem, 4vw, 1.875rem)',
+                  fontWeight: 700, color: '#0f0e0c', margin: 0, lineHeight: 1.2,
+                }}>
+                  Behind every disciple is a leader who knows where they are.
+                </h2>
+                <p style={{ color: '#666', fontSize: '0.975rem', margin: 0, lineHeight: 1.7 }}>
+                  The DNA dashboard gives you full visibility into every group, every disciple, and every stage of the journey — without being intrusive. This is where multiplication becomes measurable.
+                </p>
+              </div>
+              {hubDemoUrl && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <Link
+                    href={hubDemoUrl}
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
+                      padding: '0.875rem 1.5rem', borderRadius: '8px',
+                      border: `1.5px solid ${primary}`, color: primary,
+                      fontFamily: 'inherit', fontWeight: 600, fontSize: '0.95rem', textDecoration: 'none',
+                    }}
+                  >
+                    Explore the Leader Dashboard
+                    <ArrowRight className="w-4 h-4" />
+                  </Link>
+                  <span style={{ fontSize: '0.8rem', color: '#aaa' }}>No login required · Full preview available</span>
+                </div>
+              )}
             </div>
-          </div>
-        </section>
+          </section>
+
+          {/* 7C — Coaching Partnership */}
+          <section className="dp-section" style={{ background: '#f7f7f5' }}>
+            <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: accent }}>
+                  Partnership
+                </span>
+                <h2 style={{
+                  fontFamily: "'Playfair Display', serif",
+                  fontSize: 'clamp(1.375rem, 4vw, 1.875rem)',
+                  fontWeight: 700, color: '#0f0e0c', margin: 0, lineHeight: 1.2,
+                }}>
+                  Discipleship isn&rsquo;t accidental. Neither is our coaching.
+                </h2>
+                <p style={{ color: '#666', fontSize: '0.975rem', margin: 0, lineHeight: 1.7 }}>
+                  When your church partners with DNA, you don&rsquo;t get a software subscription. You get a coach. Someone who walks with you through your first group, your first multiplication cycle, and beyond. We don&rsquo;t just hand you a system — we build it with you.
+                </p>
+              </div>
+
+              {/* Proof points */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.375rem', width: '100%' }}>
+                {([
+                  { Icon: Compass, label: 'A dedicated DNA coach', body: 'From launch through your first multiplication cycle.' },
+                  { Icon: Users,   label: 'Group infrastructure',  body: 'Tools, training, and a dashboard built for real groups.' },
+                  { Icon: TrendingUp, label: 'Measurable multiplication', body: 'Track disciples, leaders, and generations — not just attendance.' },
+                ] as const).map(({ Icon, label, body }) => (
+                  <div key={label} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                    <div style={{
+                      flexShrink: 0,
+                      width: '40px', height: '40px',
+                      borderRadius: '10px',
+                      background: `${primary}18`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Icon size={20} style={{ color: primary }} />
+                    </div>
+                    <div>
+                      <p style={{ fontWeight: 600, color: '#0f0e0c', margin: '0 0 0.25rem', fontSize: '0.975rem' }}>{label}</p>
+                      <p style={{ color: '#777', margin: 0, fontSize: '0.9rem', lineHeight: 1.6 }}>{body}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* CTAs */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'flex-start' }}>
+                <Link href={bookCallUrl} className="dp-btn-primary" style={{ background: primary }}>
+                  Book a Discovery Call
+                  <ArrowRight className="w-4 h-4" />
+                </Link>
+                <Link
+                  href={assessmentUrl}
+                  style={{ fontSize: '0.875rem', color: '#888', textDecoration: 'none', borderBottom: '1px solid #ddd', paddingBottom: '1px' }}
+                >
+                  Take the 5-min assessment first →
+                </Link>
+              </div>
+            </div>
+          </section>
+        </div>
       )}
 
-      {/* ── 7. FAQ ───────────────────────────────────────────────── */}
+      {/* ── 8. FAQ ───────────────────────────────────────────────── */}
       <section className="dp-section" style={{ background: '#fff' }}>
         <div style={{ maxWidth: '580px', margin: '0 auto' }}>
+          <h2 style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 'clamp(1.5rem, 4vw, 2rem)',
+            fontWeight: 700, color: '#0f0e0c', margin: '0 0 2rem', lineHeight: 1.2,
+          }}>
+            Common questions.
+          </h2>
           <div style={{ borderTop: '1px solid #ebebeb' }}>
             {FAQ_ITEMS.map((item, i) => (
               <div key={i} className="dp-faq-item">
@@ -521,22 +714,18 @@ export default function DemoPageClient({
             ))}
           </div>
 
-          {/* Assessment text link below FAQ */}
           <div style={{ marginTop: '1.75rem', textAlign: 'center' }}>
-            <p style={{ color: '#888', fontSize: '0.9rem', margin: '0 0 0.375rem' }}>
-              Still have questions? The assessment helps us answer them.
-            </p>
             <Link
               href={assessmentUrl}
               style={{ fontSize: '0.9rem', color: primary, fontWeight: 600, textDecoration: 'none', borderBottom: `1px solid ${primary}` }}
             >
-              Take the 5-minute assessment →
+              Still have questions? The 5-min assessment helps us answer them before the call. →
             </Link>
           </div>
         </div>
       </section>
 
-      {/* ── 8. FINAL CTA ─────────────────────────────────────────── */}
+      {/* ── 9. FINAL CTA ─────────────────────────────────────────── */}
       <div ref={finalCtaRef}>
         <section
           className="dp-section"
@@ -551,50 +740,50 @@ export default function DemoPageClient({
               Ready to talk?
             </h2>
             <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '1.05rem', margin: 0, lineHeight: 1.55 }}>
-              30 minutes. No pressure. Just clarity.
+              30 minutes. No pressure. Just a real conversation about what multiplication could look like at {church.name}.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', alignItems: 'center' }}>
-              <Link href={bookCallUrl} className="dp-btn-primary" style={{ background: accent, justifyContent: 'center', width: '100%', maxWidth: '320px' }}>
-                {cta.ctaText}
+              <Link href={bookCallUrl} className="dp-btn-primary" style={{ background: GATE_GOLD, justifyContent: 'center', width: '100%', maxWidth: '320px' }}>
+                Book a Discovery Call
                 <ArrowRight className="w-4 h-4" />
               </Link>
               <Link href={assessmentUrl} className="dp-btn-outline" style={{ justifyContent: 'center', width: '100%', maxWidth: '320px' }}>
                 Take the Assessment First
               </Link>
             </div>
-            <p style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.8rem', margin: 0 }}>
-              {cta.ctaSubtext}
-            </p>
           </div>
         </section>
       </div>
 
-      {/* ── 9. FOOTER ────────────────────────────────────────────── */}
+      {/* ── 10. FOOTER ───────────────────────────────────────────── */}
       <footer style={{
         background: '#0a0a0a',
         padding: '1.5rem 1.25rem',
         display: 'flex',
-        justifyContent: 'space-between',
+        flexDirection: 'column',
         alignItems: 'center',
-        flexWrap: 'wrap',
         gap: '0.25rem',
+        textAlign: 'center',
       }}>
         <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.78rem' }}>
-          © {new Date().getFullYear()} DNA Discipleship
+          DNA Discipleship is a free resource for the body of Christ.
         </span>
-        <span style={{ color: 'rgba(255,255,255,0.35)', fontSize: '0.78rem' }}>
-          Personalized demo for {church.name}
+        <span style={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.78rem' }}>
+          © {new Date().getFullYear()} DNA Discipleship · Personalized demo for {church.name}
         </span>
       </footer>
 
       {/* ── STICKY MOBILE CTA BAR ────────────────────────────────── */}
       <div className={`dp-sticky-bottom${stickyHidden ? ' hidden' : ''}`}>
+        <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.75rem', margin: '0 0 0.5rem', textAlign: 'center', fontWeight: 500 }}>
+          Free to start. No commitment.
+        </p>
         <Link
           href={bookCallUrl}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
             width: '100%', padding: '0.875rem',
-            background: accent, color: '#fff',
+            background: GATE_GOLD, color: '#fff',
             borderRadius: '8px', fontWeight: 700, fontSize: '1rem',
             textDecoration: 'none',
           }}
