@@ -99,10 +99,18 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
     header_style: 'text' as 'text' | 'logo',
     reading_plan_id: null as string | null,
     contact_email: '',
+    custom_tab_label: '',
+    custom_tab_url: '',
     custom_link_1_title: '',
     custom_link_1_url: '',
     custom_link_2_title: '',
     custom_link_2_url: '',
+    custom_link_3_title: '',
+    custom_link_3_url: '',
+    custom_link_4_title: '',
+    custom_link_4_url: '',
+    custom_link_5_title: '',
+    custom_link_5_url: '',
   });
 
   // ============================================
@@ -161,10 +169,18 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
         header_style: (b.header_style ?? 'text') as 'text' | 'logo',
         reading_plan_id: b.reading_plan_id ?? null,
         contact_email: (b as any).contact_email ?? '',
+        custom_tab_label: b.custom_tab_label ?? '',
+        custom_tab_url: b.custom_tab_url ?? '',
         custom_link_1_title: b.custom_link_1_title ?? '',
         custom_link_1_url: b.custom_link_1_url ?? '',
         custom_link_2_title: b.custom_link_2_title ?? '',
         custom_link_2_url: b.custom_link_2_url ?? '',
+        custom_link_3_title: b.custom_link_3_title ?? '',
+        custom_link_3_url: b.custom_link_3_url ?? '',
+        custom_link_4_title: b.custom_link_4_title ?? '',
+        custom_link_4_url: b.custom_link_4_url ?? '',
+        custom_link_5_title: b.custom_link_5_title ?? '',
+        custom_link_5_url: b.custom_link_5_url ?? '',
       });
     } catch {
       setError('Failed to load branding settings');
@@ -214,6 +230,36 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
 
   const handleRemoveLogo = (slot: LogoSlot) => {
     setForm(prev => ({ ...prev, [slot.field]: null }));
+  };
+
+  // ============================================
+  // DRAWER LINK REORDERING
+  // ============================================
+
+  const moveDrawerLink = (index: number, direction: 'up' | 'down') => {
+    const links = [
+      { title: form.custom_link_1_title, url: form.custom_link_1_url },
+      { title: form.custom_link_2_title, url: form.custom_link_2_url },
+      { title: form.custom_link_3_title, url: form.custom_link_3_url },
+      { title: form.custom_link_4_title, url: form.custom_link_4_url },
+      { title: form.custom_link_5_title, url: form.custom_link_5_url },
+    ];
+    const swapIndex = direction === 'up' ? index - 1 : index + 1;
+    if (swapIndex < 0 || swapIndex > 4) return;
+    [links[index], links[swapIndex]] = [links[swapIndex], links[index]];
+    setForm(prev => ({
+      ...prev,
+      custom_link_1_title: links[0].title,
+      custom_link_1_url: links[0].url,
+      custom_link_2_title: links[1].title,
+      custom_link_2_url: links[1].url,
+      custom_link_3_title: links[2].title,
+      custom_link_3_url: links[2].url,
+      custom_link_4_title: links[3].title,
+      custom_link_4_url: links[3].url,
+      custom_link_5_title: links[4].title,
+      custom_link_5_url: links[4].url,
+    }));
   };
 
   // ============================================
@@ -629,52 +675,100 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
               />
             </div>
 
-            {/* Custom Menu Links */}
+            {/* Custom Tab (5th nav tab) */}
             <div className="bg-card rounded-xl border border-card-border p-5 space-y-4">
               <div>
-                <h3 className="font-medium text-navy">Custom Menu Links</h3>
+                <h3 className="font-medium text-navy">Custom Tab</h3>
                 <p className="text-xs text-foreground-muted mt-0.5">
-                  Add up to 2 links that appear in the app settings menu below the Profile button. Links open inside the app in a branded page.
+                  Configures the 5th tab in the bottom navigation bar. Opens a full-screen in-app page at the URL you provide.
+                  Leave blank to show the default ARK Courses tab.
                 </p>
               </div>
-
-              {/* Link 1 */}
               <div className="space-y-2">
-                <label className="block text-sm font-medium text-navy">Link 1</label>
                 <input
                   type="text"
-                  value={form.custom_link_1_title}
-                  onChange={e => setForm(prev => ({ ...prev, custom_link_1_title: e.target.value }))}
-                  placeholder="Title (e.g. Our Website)"
+                  value={form.custom_tab_label}
+                  onChange={e => setForm(prev => ({ ...prev, custom_tab_label: e.target.value }))}
+                  placeholder="Tab label (e.g. Give, Events, Media)"
                   className="w-full border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold"
                 />
                 <input
                   type="url"
-                  value={form.custom_link_1_url}
-                  onChange={e => setForm(prev => ({ ...prev, custom_link_1_url: e.target.value }))}
-                  placeholder="https://mychurch.com"
-                  className="w-full border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold"
-                />
-              </div>
-
-              {/* Link 2 */}
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-navy">Link 2</label>
-                <input
-                  type="text"
-                  value={form.custom_link_2_title}
-                  onChange={e => setForm(prev => ({ ...prev, custom_link_2_title: e.target.value }))}
-                  placeholder="Title (e.g. Give Online)"
-                  className="w-full border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold"
-                />
-                <input
-                  type="url"
-                  value={form.custom_link_2_url}
-                  onChange={e => setForm(prev => ({ ...prev, custom_link_2_url: e.target.value }))}
+                  value={form.custom_tab_url}
+                  onChange={e => setForm(prev => ({ ...prev, custom_tab_url: e.target.value }))}
                   placeholder="https://mychurch.com/give"
                   className="w-full border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold"
                 />
               </div>
+              <p className="text-xs text-foreground-muted">Both label and URL are required. Leave blank to show the default ARK Courses tab.</p>
+            </div>
+
+            {/* More Drawer Links */}
+            <div className="bg-card rounded-xl border border-card-border p-5 space-y-4">
+              <div>
+                <h3 className="font-medium text-navy">More Drawer Links</h3>
+                <p className="text-xs text-foreground-muted mt-0.5">
+                  Up to 5 links shown in the More menu (≡) below the Profile button. Links open inside the app in a branded page.
+                  Use the arrows to reorder.
+                </p>
+              </div>
+
+              {[
+                { titleKey: 'custom_link_1_title' as const, urlKey: 'custom_link_1_url' as const, num: 1 },
+                { titleKey: 'custom_link_2_title' as const, urlKey: 'custom_link_2_url' as const, num: 2 },
+                { titleKey: 'custom_link_3_title' as const, urlKey: 'custom_link_3_url' as const, num: 3 },
+                { titleKey: 'custom_link_4_title' as const, urlKey: 'custom_link_4_url' as const, num: 4 },
+                { titleKey: 'custom_link_5_title' as const, urlKey: 'custom_link_5_url' as const, num: 5 },
+              ].map(({ titleKey, urlKey, num }, index) => (
+                <div key={num} className="flex gap-2 items-start">
+                  {/* Reorder buttons */}
+                  <div className="flex flex-col gap-1 pt-1 shrink-0">
+                    <button
+                      type="button"
+                      onClick={() => moveDrawerLink(index, 'up')}
+                      disabled={index === 0}
+                      className="p-1 rounded border border-card-border text-foreground-muted hover:text-navy hover:border-navy disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+                      title="Move up"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+                        <path d="M18 15l-6-6-6 6" />
+                      </svg>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveDrawerLink(index, 'down')}
+                      disabled={index === 4}
+                      className="p-1 rounded border border-card-border text-foreground-muted hover:text-navy hover:border-navy disabled:opacity-25 disabled:cursor-not-allowed transition-colors"
+                      title="Move down"
+                    >
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3">
+                        <path d="M6 9l6 6 6-6" />
+                      </svg>
+                    </button>
+                  </div>
+
+                  {/* Number badge + inputs */}
+                  <div className="flex-1 space-y-1.5">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="w-5 h-5 rounded-full bg-navy/10 text-navy text-xs font-medium flex items-center justify-center shrink-0">{num}</span>
+                    </div>
+                    <input
+                      type="text"
+                      value={form[titleKey]}
+                      onChange={e => setForm(prev => ({ ...prev, [titleKey]: e.target.value }))}
+                      placeholder="Title (e.g. Give Online)"
+                      className="w-full border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold"
+                    />
+                    <input
+                      type="url"
+                      value={form[urlKey]}
+                      onChange={e => setForm(prev => ({ ...prev, [urlKey]: e.target.value }))}
+                      placeholder="https://mychurch.com/give"
+                      className="w-full border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold"
+                    />
+                  </div>
+                </div>
+              ))}
               <p className="text-xs text-foreground-muted">Leave both fields blank to hide a link. Both title and URL are required for a link to appear.</p>
             </div>
 
@@ -749,15 +843,15 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
                 </div>
               </div>
 
-              {/* Bottom nav */}
+              {/* Bottom nav — 5 tabs */}
               <div
                 className="flex justify-around py-2 px-1"
                 style={{ backgroundColor: form.primary_color }}
               >
-                {[...Array(4)].map((_, i) => (
+                {[...Array(5)].map((_, i) => (
                   <div
                     key={i}
-                    className="w-5 h-5 rounded"
+                    className="w-4 h-4 rounded"
                     style={{ backgroundColor: i === 0 ? form.accent_color : `${form.accent_color}40` }}
                   />
                 ))}

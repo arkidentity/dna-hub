@@ -238,10 +238,18 @@ export interface ChurchBranding {
   theme_color: string;
   header_style: 'text' | 'logo';
   reading_plan_id: string | null;
-  custom_link_1_title: string | null;
+  custom_tab_label: string | null;    // 5th nav tab label
+  custom_tab_url: string | null;      // 5th nav tab URL
+  custom_link_1_title: string | null; // More drawer link 1
   custom_link_1_url: string | null;
-  custom_link_2_title: string | null;
+  custom_link_2_title: string | null; // More drawer link 2
   custom_link_2_url: string | null;
+  custom_link_3_title: string | null; // More drawer link 3
+  custom_link_3_url: string | null;
+  custom_link_4_title: string | null; // More drawer link 4
+  custom_link_4_url: string | null;
+  custom_link_5_title: string | null; // More drawer link 5
+  custom_link_5_url: string | null;
 }
 
 // Global resource (general resources for all churches)

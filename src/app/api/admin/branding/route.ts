@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     const { data: settings } = await supabase
       .from('church_branding_settings')
-      .select('app_title, app_description, theme_color, header_style, reading_plan_id, custom_link_1_title, custom_link_1_url, custom_link_2_title, custom_link_2_url')
+      .select('app_title, app_description, theme_color, header_style, reading_plan_id, custom_tab_label, custom_tab_url, custom_link_1_title, custom_link_1_url, custom_link_2_title, custom_link_2_url, custom_link_3_title, custom_link_3_url, custom_link_4_title, custom_link_4_url, custom_link_5_title, custom_link_5_url')
       .eq('church_id', churchId)
       .single();
 
@@ -47,10 +47,18 @@ export async function GET(request: NextRequest) {
         theme_color: settings?.theme_color ?? church.primary_color ?? '#143348',
         header_style: settings?.header_style ?? 'text',
         reading_plan_id: settings?.reading_plan_id ?? null,
+        custom_tab_label: settings?.custom_tab_label ?? null,
+        custom_tab_url: settings?.custom_tab_url ?? null,
         custom_link_1_title: settings?.custom_link_1_title ?? null,
         custom_link_1_url: settings?.custom_link_1_url ?? null,
         custom_link_2_title: settings?.custom_link_2_title ?? null,
         custom_link_2_url: settings?.custom_link_2_url ?? null,
+        custom_link_3_title: settings?.custom_link_3_title ?? null,
+        custom_link_3_url: settings?.custom_link_3_url ?? null,
+        custom_link_4_title: settings?.custom_link_4_title ?? null,
+        custom_link_4_url: settings?.custom_link_4_url ?? null,
+        custom_link_5_title: settings?.custom_link_5_title ?? null,
+        custom_link_5_url: settings?.custom_link_5_url ?? null,
       },
     });
   } catch (error) {
@@ -85,10 +93,18 @@ export async function POST(request: NextRequest) {
       theme_color,
       header_style,
       reading_plan_id,
+      custom_tab_label,
+      custom_tab_url,
       custom_link_1_title,
       custom_link_1_url,
       custom_link_2_title,
       custom_link_2_url,
+      custom_link_3_title,
+      custom_link_3_url,
+      custom_link_4_title,
+      custom_link_4_url,
+      custom_link_5_title,
+      custom_link_5_url,
       contact_email,
     } = body;
 
@@ -162,10 +178,18 @@ export async function POST(request: NextRequest) {
             theme_color: theme_color || primary_color || '#143348',
             header_style: header_style || 'text',
             reading_plan_id: reading_plan_id || null,
+            custom_tab_label: custom_tab_label || null,
+            custom_tab_url: custom_tab_url || null,
             custom_link_1_title: custom_link_1_title || null,
             custom_link_1_url: custom_link_1_url || null,
             custom_link_2_title: custom_link_2_title || null,
             custom_link_2_url: custom_link_2_url || null,
+            custom_link_3_title: custom_link_3_title || null,
+            custom_link_3_url: custom_link_3_url || null,
+            custom_link_4_title: custom_link_4_title || null,
+            custom_link_4_url: custom_link_4_url || null,
+            custom_link_5_title: custom_link_5_title || null,
+            custom_link_5_url: custom_link_5_url || null,
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'church_id' }
