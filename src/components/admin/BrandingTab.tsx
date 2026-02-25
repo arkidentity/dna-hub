@@ -101,16 +101,22 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
     contact_email: '',
     custom_tab_label: '',
     custom_tab_url: '',
+    custom_tab_mode: 'browser' as 'iframe' | 'browser',
     custom_link_1_title: '',
     custom_link_1_url: '',
+    custom_link_1_mode: 'browser' as 'iframe' | 'browser',
     custom_link_2_title: '',
     custom_link_2_url: '',
+    custom_link_2_mode: 'browser' as 'iframe' | 'browser',
     custom_link_3_title: '',
     custom_link_3_url: '',
+    custom_link_3_mode: 'browser' as 'iframe' | 'browser',
     custom_link_4_title: '',
     custom_link_4_url: '',
+    custom_link_4_mode: 'browser' as 'iframe' | 'browser',
     custom_link_5_title: '',
     custom_link_5_url: '',
+    custom_link_5_mode: 'browser' as 'iframe' | 'browser',
   });
 
   // ============================================
@@ -171,16 +177,22 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
         contact_email: (b as any).contact_email ?? '',
         custom_tab_label: b.custom_tab_label ?? '',
         custom_tab_url: b.custom_tab_url ?? '',
+        custom_tab_mode: (b.custom_tab_mode ?? 'browser') as 'iframe' | 'browser',
         custom_link_1_title: b.custom_link_1_title ?? '',
         custom_link_1_url: b.custom_link_1_url ?? '',
+        custom_link_1_mode: (b.custom_link_1_mode ?? 'browser') as 'iframe' | 'browser',
         custom_link_2_title: b.custom_link_2_title ?? '',
         custom_link_2_url: b.custom_link_2_url ?? '',
+        custom_link_2_mode: (b.custom_link_2_mode ?? 'browser') as 'iframe' | 'browser',
         custom_link_3_title: b.custom_link_3_title ?? '',
         custom_link_3_url: b.custom_link_3_url ?? '',
+        custom_link_3_mode: (b.custom_link_3_mode ?? 'browser') as 'iframe' | 'browser',
         custom_link_4_title: b.custom_link_4_title ?? '',
         custom_link_4_url: b.custom_link_4_url ?? '',
+        custom_link_4_mode: (b.custom_link_4_mode ?? 'browser') as 'iframe' | 'browser',
         custom_link_5_title: b.custom_link_5_title ?? '',
         custom_link_5_url: b.custom_link_5_url ?? '',
+        custom_link_5_mode: (b.custom_link_5_mode ?? 'browser') as 'iframe' | 'browser',
       });
     } catch {
       setError('Failed to load branding settings');
@@ -238,11 +250,11 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
 
   const moveDrawerLink = (index: number, direction: 'up' | 'down') => {
     const links = [
-      { title: form.custom_link_1_title, url: form.custom_link_1_url },
-      { title: form.custom_link_2_title, url: form.custom_link_2_url },
-      { title: form.custom_link_3_title, url: form.custom_link_3_url },
-      { title: form.custom_link_4_title, url: form.custom_link_4_url },
-      { title: form.custom_link_5_title, url: form.custom_link_5_url },
+      { title: form.custom_link_1_title, url: form.custom_link_1_url, mode: form.custom_link_1_mode },
+      { title: form.custom_link_2_title, url: form.custom_link_2_url, mode: form.custom_link_2_mode },
+      { title: form.custom_link_3_title, url: form.custom_link_3_url, mode: form.custom_link_3_mode },
+      { title: form.custom_link_4_title, url: form.custom_link_4_url, mode: form.custom_link_4_mode },
+      { title: form.custom_link_5_title, url: form.custom_link_5_url, mode: form.custom_link_5_mode },
     ];
     const swapIndex = direction === 'up' ? index - 1 : index + 1;
     if (swapIndex < 0 || swapIndex > 4) return;
@@ -251,14 +263,19 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
       ...prev,
       custom_link_1_title: links[0].title,
       custom_link_1_url: links[0].url,
+      custom_link_1_mode: links[0].mode,
       custom_link_2_title: links[1].title,
       custom_link_2_url: links[1].url,
+      custom_link_2_mode: links[1].mode,
       custom_link_3_title: links[2].title,
       custom_link_3_url: links[2].url,
+      custom_link_3_mode: links[2].mode,
       custom_link_4_title: links[3].title,
       custom_link_4_url: links[3].url,
+      custom_link_4_mode: links[3].mode,
       custom_link_5_title: links[4].title,
       custom_link_5_url: links[4].url,
+      custom_link_5_mode: links[4].mode,
     }));
   };
 
@@ -699,6 +716,30 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
                   placeholder="https://mychurch.com/give"
                   className="w-full border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold"
                 />
+                <div>
+                  <p className="text-xs text-foreground-muted mb-1.5">Open mode</p>
+                  <div className="flex rounded-lg border border-card-border overflow-hidden w-fit">
+                    <button
+                      type="button"
+                      onClick={() => setForm(prev => ({ ...prev, custom_tab_mode: 'browser' }))}
+                      className={`px-3 py-1.5 text-xs font-medium transition-colors ${form.custom_tab_mode === 'browser' ? 'bg-navy text-white' : 'bg-white text-foreground-muted hover:bg-gray-50'}`}
+                    >
+                      In Browser
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setForm(prev => ({ ...prev, custom_tab_mode: 'iframe' }))}
+                      className={`px-3 py-1.5 text-xs font-medium border-l border-card-border transition-colors ${form.custom_tab_mode === 'iframe' ? 'bg-navy text-white' : 'bg-white text-foreground-muted hover:bg-gray-50'}`}
+                    >
+                      In App (iframe)
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">
+                    {form.custom_tab_mode === 'iframe'
+                      ? 'Loads the URL inside the app. Only works if the site allows embedding.'
+                      : 'Opens the URL in the device\'s default browser. Works with any site.'}
+                  </p>
+                </div>
               </div>
               <p className="text-xs text-foreground-muted">Both label and URL are required. Leave blank to show the default ARK Courses tab.</p>
             </div>
@@ -714,12 +755,12 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
               </div>
 
               {[
-                { titleKey: 'custom_link_1_title' as const, urlKey: 'custom_link_1_url' as const, num: 1 },
-                { titleKey: 'custom_link_2_title' as const, urlKey: 'custom_link_2_url' as const, num: 2 },
-                { titleKey: 'custom_link_3_title' as const, urlKey: 'custom_link_3_url' as const, num: 3 },
-                { titleKey: 'custom_link_4_title' as const, urlKey: 'custom_link_4_url' as const, num: 4 },
-                { titleKey: 'custom_link_5_title' as const, urlKey: 'custom_link_5_url' as const, num: 5 },
-              ].map(({ titleKey, urlKey, num }, index) => (
+                { titleKey: 'custom_link_1_title' as const, urlKey: 'custom_link_1_url' as const, modeKey: 'custom_link_1_mode' as const, num: 1 },
+                { titleKey: 'custom_link_2_title' as const, urlKey: 'custom_link_2_url' as const, modeKey: 'custom_link_2_mode' as const, num: 2 },
+                { titleKey: 'custom_link_3_title' as const, urlKey: 'custom_link_3_url' as const, modeKey: 'custom_link_3_mode' as const, num: 3 },
+                { titleKey: 'custom_link_4_title' as const, urlKey: 'custom_link_4_url' as const, modeKey: 'custom_link_4_mode' as const, num: 4 },
+                { titleKey: 'custom_link_5_title' as const, urlKey: 'custom_link_5_url' as const, modeKey: 'custom_link_5_mode' as const, num: 5 },
+              ].map(({ titleKey, urlKey, modeKey, num }, index) => (
                 <div key={num} className="flex gap-2 items-start">
                   {/* Reorder buttons */}
                   <div className="flex flex-col gap-1 pt-1 shrink-0">
@@ -747,7 +788,7 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
                     </button>
                   </div>
 
-                  {/* Number badge + inputs */}
+                  {/* Number badge + inputs + mode toggle */}
                   <div className="flex-1 space-y-1.5">
                     <div className="flex items-center gap-2 mb-1">
                       <span className="w-5 h-5 rounded-full bg-navy/10 text-navy text-xs font-medium flex items-center justify-center shrink-0">{num}</span>
@@ -766,6 +807,25 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
                       placeholder="https://mychurch.com/give"
                       className="w-full border border-card-border rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold"
                     />
+                    {/* Mode toggle — only show when a URL is entered */}
+                    {form[urlKey] && (
+                      <div className="flex rounded-lg border border-card-border overflow-hidden w-fit">
+                        <button
+                          type="button"
+                          onClick={() => setForm(prev => ({ ...prev, [modeKey]: 'browser' }))}
+                          className={`px-3 py-1 text-xs font-medium transition-colors ${form[modeKey] === 'browser' ? 'bg-navy text-white' : 'bg-white text-foreground-muted hover:bg-gray-50'}`}
+                        >
+                          In Browser
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => setForm(prev => ({ ...prev, [modeKey]: 'iframe' }))}
+                          className={`px-3 py-1 text-xs font-medium border-l border-card-border transition-colors ${form[modeKey] === 'iframe' ? 'bg-navy text-white' : 'bg-white text-foreground-muted hover:bg-gray-50'}`}
+                        >
+                          In App (iframe)
+                        </button>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
