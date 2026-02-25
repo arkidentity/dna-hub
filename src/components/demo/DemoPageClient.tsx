@@ -196,11 +196,11 @@ export default function DemoPageClient({
         .dp-faq-q {
           width: 100%; background: none; border: none; text-align: left; cursor: pointer;
           padding: 1.125rem 0; display: flex; justify-content: space-between; align-items: center;
-          font-family: inherit; font-size: 1rem; font-weight: 500; color: #0f0e0c; gap: 1rem;
+          font-family: inherit; font-size: 1.05rem; font-weight: 500; color: #0f0e0c; gap: 1rem;
         }
         .dp-faq-a {
           max-height: 0; overflow: hidden; transition: max-height 0.3s ease;
-          color: #555; line-height: 1.7; font-size: 0.95rem;
+          color: #555; line-height: 1.7; font-size: 1rem;
         }
         .dp-faq-a.open { max-height: 300px; padding-bottom: 1.125rem; }
 
@@ -253,17 +253,16 @@ export default function DemoPageClient({
         position: 'fixed', top: 0, left: 0, right: 0, zIndex: 100,
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         padding: '1rem 1.25rem',
-        background: 'rgba(255,255,255,0.95)', backdropFilter: 'blur(10px)',
-        borderBottom: '1px solid rgba(0,0,0,0.07)',
+        background: '#1A2332',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
           {!logoError ? (
             <Image
-              src="/dna-logo-black.png"
+              src="/dna-logo-gold.png"
               alt="DNA"
               width={28}
               height={28}
-              style={{ opacity: 0.85 }}
               onError={() => setLogoError(true)}
             />
           ) : (
@@ -276,7 +275,7 @@ export default function DemoPageClient({
               DNA
             </span>
           )}
-          <span style={{ fontWeight: 600, fontSize: '0.875rem', color: '#555' }}>Discipleship</span>
+          <span style={{ fontWeight: 600, fontSize: '0.875rem', color: 'rgba(255,255,255,0.85)' }}>Discipleship</span>
         </div>
         {church.logo_url && (
           <img src={church.logo_url} alt={church.name} style={{ height: '26px', objectFit: 'contain', opacity: 0.9 }} />
@@ -297,16 +296,18 @@ export default function DemoPageClient({
           <h1 style={{
             fontFamily: "'Playfair Display', serif",
             fontSize: 'clamp(1.875rem, 6vw, 2.875rem)',
-            lineHeight: 1.1,
+            lineHeight: 1.2,
             fontWeight: 700,
             color: '#0f0e0c',
             margin: 0,
           }}>
-            {headline}
+            This is what discipleship<br />
+            looks like at<br />
+            <span style={{ whiteSpace: 'nowrap' }}>{church.name}.</span>
           </h1>
 
           {/* Subline */}
-          <p style={{ fontSize: '1.05rem', color: '#666', margin: 0, lineHeight: 1.5 }}>
+          <p style={{ fontSize: '1.15rem', color: '#666', margin: 0, lineHeight: 1.5 }}>
             {subline}
           </p>
         </div>
@@ -377,8 +378,8 @@ export default function DemoPageClient({
       >
         <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
           {/* Label + headline */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.18em', textTransform: 'uppercase', color: accent }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem', alignItems: 'center' }}>
+            <span style={{ fontSize: '1.0rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: accent }}>
               Your Branded App
             </span>
             <h2 style={{
@@ -389,7 +390,7 @@ export default function DemoPageClient({
               margin: 0,
               lineHeight: 1.15,
             }}>
-              {church.name}&apos;s app — ready to explore.
+              Ready to explore.
             </h2>
           </div>
 
@@ -427,7 +428,7 @@ export default function DemoPageClient({
           </div>
 
           {/* Tagline */}
-          <p style={{ fontSize: '0.875rem', color: '#888', margin: 0, lineHeight: 1.5 }}>
+          <p style={{ fontSize: '1.05rem', color: '#888', margin: 0, lineHeight: 1.5 }}>
             This is exactly what your disciples would see on Day 1.
           </p>
         </div>
@@ -443,7 +444,7 @@ export default function DemoPageClient({
           ].map((p, i) => (
             <div key={i} className="dp-proof-item">
               <span style={{ fontSize: '1.75rem', lineHeight: 1 }}>{p.emoji}</span>
-              <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#333', textAlign: 'center', lineHeight: 1.3 }}>
+              <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#333', textAlign: 'center', lineHeight: 1.3 }}>
                 {p.label}
               </span>
             </div>
@@ -457,35 +458,35 @@ export default function DemoPageClient({
           <div style={{
             maxWidth: '480px', margin: '0 auto',
             background: '#fff', border: '1px solid #e5e5e5', borderRadius: '16px',
-            padding: '1.75rem 1.5rem',
-            display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'flex-start',
+            padding: '2rem 1.75rem',
+            display: 'flex', flexDirection: 'column', gap: '1.75rem', alignItems: 'flex-start',
           }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
               <h3 style={{
                 fontFamily: "'Playfair Display', serif",
                 fontSize: '1.25rem', fontWeight: 700, color: '#0f0e0c', margin: 0, lineHeight: 1.2,
               }}>
                 {"There's a dashboard behind every app."}
               </h3>
-              <p style={{ color: '#666', fontSize: '0.9rem', margin: 0, lineHeight: 1.6 }}>
+              <p style={{ color: '#666', fontSize: '0.95rem', margin: 0, lineHeight: 1.65 }}>
                 Pastors get full visibility into how their disciples are growing.
               </p>
             </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.375rem', width: '100%' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', width: '100%' }}>
               <Link
                 href={hubDemoUrl}
                 style={{
                   display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                  padding: '0.7rem 1.25rem', borderRadius: '7px',
+                  padding: '0.8rem 1.375rem', borderRadius: '8px',
                   background: primary, color: '#fff',
-                  fontWeight: 600, fontSize: '0.9rem', textDecoration: 'none',
+                  fontWeight: 600, fontSize: '0.95rem', textDecoration: 'none',
                   alignSelf: 'flex-start',
                 }}
               >
                 Explore the Leader Dashboard
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <span style={{ fontSize: '0.78rem', color: '#aaa' }}>No login required</span>
+              <span style={{ fontSize: '0.8rem', color: '#aaa' }}>No login required</span>
             </div>
           </div>
         </section>
