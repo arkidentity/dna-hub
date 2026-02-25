@@ -88,7 +88,7 @@ const GATE_GOLD = '#C4922A';
 const FAQ_ITEMS = [
   {
     q: 'Is the app really free?',
-    a: "Yes. The white-labeled app — with your church name, logo, and branding — is completely free. Your disciples get access to the 3D Journal and 4D Prayer at no cost. The full DNA experience, including the 90-Day Pathway, DNA Groups, and the Leader Dashboard, unlocks through a coaching partnership. We'll talk through what that looks like on a discovery call.",
+    a: "Yes. The white-labeled app — with your church name, logo, and branding — is completely free. Your disciples get access to the 3D Journal and 4D Prayer at no cost. The full DNA experience, including the 90-Day Toolkit, DNA Groups, and the Leader Dashboard, unlocks through a coaching partnership. We'll talk through what that looks like on a discovery call.",
   },
   {
     q: 'How is this different from a Bible app or devotional?',
@@ -100,7 +100,7 @@ const FAQ_ITEMS = [
   },
   {
     q: 'How long does it take to get started?',
-    a: 'Most churches are fully configured within a week of their strategy call. Your first group can be discipling within 7–10 days of launch.',
+    a: "Getting the free app into your disciples' hands can happen within days. But DNA Groups — the real engine of multiplication — take time to embed into the culture of your church. Most churches see their first groups launch within 3–6 months of committing to the process. This isn't microwave discipleship. It's a long game, and we walk every step with you.",
   },
 ];
 
@@ -365,12 +365,6 @@ export default function DemoPageClient({
                 {cta.ctaText}
                 <ArrowRight className="w-4 h-4" />
               </Link>
-              <Link
-                href={assessmentUrl}
-                style={{ fontSize: '0.875rem', color: '#888', textDecoration: 'none', borderBottom: '1px solid #ddd', paddingBottom: '1px' }}
-              >
-                Or take the 5-min church assessment →
-              </Link>
             </div>
           </div>
         </section>
@@ -436,38 +430,18 @@ export default function DemoPageClient({
                 style={{ width: '100%', height: '100%', border: 'none' }}
               />
             )}
-            {/* Locked overlay — covers bottom nav tab area */}
-            {iframeSrc && (
-              <div style={{
-                position: 'absolute', bottom: 0, left: 0, right: 0,
-                height: '11%',
-                background: 'rgba(8,8,8,0.82)',
-                backdropFilter: 'blur(8px)',
-                display: 'flex', alignItems: 'center', justifyContent: 'center',
-                gap: '0.5rem',
-                zIndex: 2,
-              }}>
-                <Lock size={13} style={{ color: GATE_GOLD, flexShrink: 0 }} />
-                <span style={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.7rem', fontWeight: 600 }}>
-                  Groups · Pathway · Dashboard — unlock below
-                </span>
-              </div>
-            )}
           </div>
 
           {/* Label below */}
           <p style={{ fontSize: '1rem', color: '#888', margin: 0, lineHeight: 1.5 }}>
-            Tap around. This is exactly what your disciples would see on Day 1.
+            Tap around. This is exactly what your disciples would see.
           </p>
-        </div>
-      </section>
 
-      {/* ── 5. FREE TIER CTA ─────────────────────────────────────── */}
-      <section className="dp-section" style={{ background: '#fff', textAlign: 'center' }}>
-        <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'center' }}>
-          <p style={{ fontSize: '1.05rem', color: '#555', margin: 0, lineHeight: 1.7 }}>
+          {/* Gift copy — bold */}
+          <p style={{ fontSize: '1.05rem', color: '#222', margin: '0.5rem 0 0', lineHeight: 1.7, fontWeight: 700 }}>
             The app is our gift to the body of Christ. Start using it today — no strings attached.
           </p>
+
           <Link href={bookCallUrl} className="dp-btn-primary" style={{ background: primary }}>
             Book a Discovery Call
             <ArrowRight className="w-4 h-4" />
@@ -582,17 +556,17 @@ export default function DemoPageClient({
           </section>
 
           {/* 7B — Leader Dashboard */}
-          <section className="dp-section" style={{ background: '#fff' }}>
+          <section className="dp-section" style={{ background: '#1A2332' }}>
             <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.75rem', alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                 <h2 style={{
                   fontFamily: "'Playfair Display', serif",
                   fontSize: 'clamp(1.375rem, 4vw, 1.875rem)',
-                  fontWeight: 700, color: '#0f0e0c', margin: 0, lineHeight: 1.2,
+                  fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.2,
                 }}>
                   Behind every disciple is a leader who knows where they are.
                 </h2>
-                <p style={{ color: '#666', fontSize: '0.975rem', margin: 0, lineHeight: 1.7 }}>
+                <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.975rem', margin: 0, lineHeight: 1.7 }}>
                   The DNA dashboard gives you full visibility into every group, every disciple, and every stage of the journey — without being intrusive. This is where multiplication becomes measurable.
                 </p>
               </div>
@@ -603,14 +577,14 @@ export default function DemoPageClient({
                     style={{
                       display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
                       padding: '0.875rem 1.5rem', borderRadius: '8px',
-                      border: `1.5px solid ${primary}`, color: primary,
+                      border: '1.5px solid rgba(255,255,255,0.4)', color: '#fff',
                       fontFamily: 'inherit', fontWeight: 600, fontSize: '0.95rem', textDecoration: 'none',
                     }}
                   >
                     Explore the Leader Dashboard
                     <ArrowRight className="w-4 h-4" />
                   </Link>
-                  <span style={{ fontSize: '0.8rem', color: '#aaa' }}>No login required · Full preview available</span>
+                  <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.35)' }}>No login required · Full preview available</span>
                 </div>
               )}
             </div>
@@ -620,7 +594,7 @@ export default function DemoPageClient({
           <section className="dp-section" style={{ background: '#f7f7f5' }}>
             <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: accent }}>
+                <span style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: accent }}>
                   Partnership
                 </span>
                 <h2 style={{

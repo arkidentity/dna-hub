@@ -37,7 +37,7 @@ export async function POST(request: NextRequest) {
     // Create magic link token using unified system
     const token = crypto.randomBytes(32).toString('hex');
     const expiresAt = new Date();
-    expiresAt.setHours(expiresAt.getHours() + 24);
+    expiresAt.setDate(expiresAt.getDate() + 7); // 7 days to match session cookie
 
     const { error: tokenError } = await supabase
       .from('magic_link_tokens')

@@ -35,6 +35,7 @@ export default function FlowAssessmentPage() {
   const [assessmentData, setAssessmentData] = useState<AssessmentData>(initialAssessmentData);
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [expandedActions, setExpandedActions] = useState(false);
+  const [completeError, setCompleteError] = useState<string | null>(null);
 
   // Load existing draft or create new assessment
   useEffect(() => {
@@ -174,6 +175,7 @@ export default function FlowAssessmentPage() {
 
   const handleComplete = async () => {
     setIsSaving(true);
+    setCompleteError(null);
 
     try {
       const response = await fetch('/api/training/assessment/complete', {
@@ -195,9 +197,15 @@ export default function FlowAssessmentPage() {
       if (response.ok) {
         setView('completion');
         window.scrollTo(0, 0);
+      } else if (response.status === 401) {
+        setCompleteError('Your session has expired. Please log in again to complete the assessment — your progress is saved.');
+      } else {
+        const result = await response.json().catch(() => ({}));
+        setCompleteError(result.error || 'Something went wrong. Please try again.');
       }
     } catch (error) {
       console.error('Failed to complete assessment:', error);
+      setCompleteError('Unable to reach the server. Please check your connection and try again.');
     } finally {
       setIsSaving(false);
     }
@@ -563,6 +571,11 @@ export default function FlowAssessmentPage() {
             </section>
 
             {/* Complete Button */}
+            {completeError && (
+              <div style={{ background: '#fef2f2', border: '1px solid #fca5a5', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px', color: '#991b1b', fontSize: '14px' }}>
+                {completeError}
+              </div>
+            )}
             <div className="summary-actions">
               <button className="btn-primary" onClick={handleComplete} disabled={isSaving}>
                 {isSaving ? 'Completing...' : 'Complete Assessment'}

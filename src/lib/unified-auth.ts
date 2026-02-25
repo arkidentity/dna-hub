@@ -145,15 +145,14 @@ async function resolveLegacySession(token: string): Promise<UserSession | null> 
 
   const { data: tokenData, error: tokenError } = await adminDb
     .from('magic_link_tokens')
-    .select('email, expires_at, used')
+    .select('email, used')
     .eq('token', token)
     .single()
 
+  // Token must exist and have been used (verified). Session duration is
+  // governed by the cookie's own maxAge — not the token's expires_at.
+  // expires_at only gates the initial magic link click, not re-verification.
   if (tokenError || !tokenData || !tokenData.used) {
-    return null
-  }
-
-  if (new Date(tokenData.expires_at) < new Date()) {
     return null
   }
 
