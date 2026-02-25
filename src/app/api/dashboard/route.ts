@@ -14,8 +14,14 @@ export async function GET() {
       );
     }
 
-    // Check if user is a church leader
+    // Check if user is a church leader — if not, redirect to their appropriate area
     if (!hasRole(session, 'church_leader') && !isAdmin(session)) {
+      if (hasRole(session, 'dna_leader')) {
+        return NextResponse.json({ redirect: '/groups' }, { status: 307 });
+      }
+      if (hasRole(session, 'training_participant')) {
+        return NextResponse.json({ redirect: '/training' }, { status: 307 });
+      }
       return NextResponse.json(
         { error: 'Forbidden - Church leader access required' },
         { status: 403 }
