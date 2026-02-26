@@ -51,6 +51,7 @@ export async function POST(request: Request, { params }: RouteParams) {
         .insert({
           user_id: session.userId,
           content_type: `manual_session_${sessionId}`,
+          unlocked: true,
           unlocked_at: new Date().toISOString(),
           unlock_trigger: 'lesson_access',
           metadata: { lessonsCompleted: [], completed: false }

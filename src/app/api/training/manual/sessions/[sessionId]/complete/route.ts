@@ -74,6 +74,7 @@ export async function POST(request: Request, { params }: RouteParams) {
         .upsert({
           user_id: session.userId,
           content_type: `manual_session_${nextSessionId}`,
+          unlocked: true,
           unlocked_at: new Date().toISOString(),
           unlock_trigger: `session_${sessionId}_complete`,
           metadata: { lessonsCompleted: [], completed: false }

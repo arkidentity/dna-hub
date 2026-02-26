@@ -45,6 +45,7 @@ export async function GET(request: Request, { params }: RouteParams) {
         .insert({
           user_id: session.userId,
           content_type: `manual_session_${sessionId}`,
+          unlocked: true,
           unlocked_at: new Date().toISOString(),
           unlock_trigger: sessionId === 1 ? 'flow_assessment_complete' : `session_${sessionId - 1}_complete`,
           metadata: { lessonsCompleted: [], completed: false }
