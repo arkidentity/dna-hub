@@ -152,6 +152,24 @@ export async function PATCH(
         console.error('[ROLES] Remove error:', error);
         return NextResponse.json({ error: 'Failed to remove role' }, { status: 500 });
       }
+
+      // Sync secondary tables on remove
+      if (role === 'dna_leader') {
+        // Soft-deactivate the dna_leaders record — preserves history/cohort data
+        await supabase
+          .from('dna_leaders')
+          .update({ is_active: false })
+          .eq('user_id', userId);
+      }
+
+      if (role === 'church_leader' && church_id) {
+        // Remove from church_leaders so they no longer appear in the church dashboard
+        await supabase
+          .from('church_leaders')
+          .delete()
+          .eq('user_id', userId)
+          .eq('church_id', church_id);
+      }
     }
 
     return NextResponse.json({ success: true });

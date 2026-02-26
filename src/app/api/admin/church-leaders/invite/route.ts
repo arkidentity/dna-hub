@@ -121,6 +121,7 @@ export async function POST(request: NextRequest) {
 
     // 1. Create or find the user in the unified users table
     let userId: string;
+    let wasExistingUser = false;
     const { data: existingUser } = await supabase
       .from('users')
       .select('id, name')
@@ -129,6 +130,7 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       userId = existingUser.id;
+      wasExistingUser = true;
     } else {
       const { data: newUser, error: userError } = await supabase
         .from('users')
@@ -288,18 +290,25 @@ export async function POST(request: NextRequest) {
       console.warn('[Church Leaders] Could not generate recovery link, falling back to login URL:', linkErr);
     }
 
-    const emailResult = await sendChurchLeaderInviteEmail(
-      normalizedEmail,
-      name?.trim() || 'Church Leader',
-      setupUrl,
-      churchName,
-      inviterName,
-      message
-    );
-
-    if (!emailResult.success) {
-      console.error('[Church Leaders] Email send error:', emailResult.error);
-      // Don't fail the request - the record is created, they can request a new magic link
+    // Skip invite email for users who already have an active account — they
+    // know their login and an unexpected "set your password" email would confuse them.
+    let emailSent = false;
+    if (!wasExistingUser) {
+      const emailResult = await sendChurchLeaderInviteEmail(
+        normalizedEmail,
+        name?.trim() || 'Church Leader',
+        setupUrl,
+        churchName,
+        inviterName,
+        message
+      );
+      emailSent = emailResult.success;
+      if (!emailResult.success) {
+        console.error('[Church Leaders] Email send error:', emailResult.error);
+        // Don't fail the request - the record is created, they can request a new magic link
+      }
+    } else {
+      console.log(`[Church Leaders] Skipping invite email for existing user ${normalizedEmail}`);
     }
 
     return NextResponse.json({
@@ -309,7 +318,8 @@ export async function POST(request: NextRequest) {
         name: name?.trim() || null,
         church_id: finalChurchId,
       },
-      emailSent: emailResult.success,
+      emailSent,
+      wasExistingUser,
     });
 
   } catch (error) {
