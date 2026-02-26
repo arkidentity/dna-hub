@@ -106,6 +106,32 @@ export async function PATCH(
           { onConflict: 'email' }
         );
       }
+
+      // When adding church_leader, also ensure a church_leaders record exists.
+      // The church dashboard reads from this table, not user_roles.
+      if (role === 'church_leader' && effectiveChurchId) {
+        const { data: existingCL } = await supabase
+          .from('church_leaders')
+          .select('id')
+          .eq('email', user.email)
+          .eq('church_id', effectiveChurchId)
+          .maybeSingle();
+
+        if (!existingCL) {
+          const { error: clError } = await supabase
+            .from('church_leaders')
+            .insert({
+              email: user.email,
+              name: user.name,
+              church_id: effectiveChurchId,
+              user_id: userId,
+            });
+          if (clError) {
+            console.error('[ROLES] church_leaders insert error:', clError);
+            // Non-fatal — role was already added to user_roles successfully
+          }
+        }
+      }
     } else {
       // Remove — use .is() for null church_id, .eq() for non-null
       const { error } = church_id
