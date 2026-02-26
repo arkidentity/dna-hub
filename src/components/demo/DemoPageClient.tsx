@@ -168,15 +168,14 @@ export default function DemoPageClient({
       setIframeSrc(base);
     }
 
-    // Free-tier session (role=disciple, no group — shows NoGroupView on pathway)
+    // Free-tier session (role=disciple, no group — lands on journal, pathway is locked)
     async function fetchFreeSession() {
       try {
         const res = await fetch(`/api/demo/app-session-free/${church.subdomain}`);
         if (res.ok) {
           const data = await res.json();
           if (data.access_token) {
-            // Land on /pathway so the no-group gate is immediately visible
-            setFreeIframeSrc(`${base}/demo-entry?at=${data.access_token}&rt=${data.refresh_token}&redirect=/pathway`);
+            setFreeIframeSrc(`${base}/demo-entry?at=${data.access_token}&rt=${data.refresh_token}&redirect=/journal`);
             return;
           }
         }
@@ -399,7 +398,7 @@ export default function DemoPageClient({
       >
         <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
           {/* Section label */}
-          <span style={{ fontSize: '0.95rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: BRAND_GREEN }}>
+          <span style={{ fontSize: '1.15rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: BRAND_GREEN }}>
             Your Free App
           </span>
 
@@ -412,7 +411,7 @@ export default function DemoPageClient({
             margin: 0,
             lineHeight: 1.15,
           }}>
-            Your free app — branded and ready.
+            Branded and ready.
           </h2>
 
           {/* Subline */}
@@ -420,7 +419,9 @@ export default function DemoPageClient({
             The 3D Journal and 4D Prayer are yours free. No cost. No commitment. Just your church&rsquo;s name on a tool that builds real disciples.
           </p>
 
-          {/* iframe — free-tier view (no group, shows pathway gate + DNA tools) */}
+          {/* iframe — free-tier view (no group, lands on journal, pathway is locked) */}
+          {/* key changes when gate opens to re-establish the free session in localStorage,
+              preventing the full-experience iframe from contaminating this one. */}
           <div style={{
             width: '100%',
             maxWidth: '430px',
@@ -444,6 +445,7 @@ export default function DemoPageClient({
             )}
             {freeIframeSrc && (
               <iframe
+                key={gateOpen ? 'free-gate-open' : 'free-initial'}
                 src={freeIframeSrc}
                 title={`${church.name} DNA Daily App`}
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups"

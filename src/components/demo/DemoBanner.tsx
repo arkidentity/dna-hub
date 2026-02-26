@@ -11,20 +11,24 @@ import { Info, X } from 'lucide-react';
  * the auth session is established:
  *   - dna_demo_mode = '1'
  *   - dna_demo_church = '<church name>'
+ *   - dna_demo_page_url = '/demo/<slug>'
  *
- * Dismissing the banner clears both keys so it doesn't reappear.
+ * Dismissing the banner clears all keys so it doesn't reappear.
  */
 export default function DemoBanner() {
   const [show, setShow] = useState(false);
   const [churchName, setChurchName] = useState('');
+  const [demoPageUrl, setDemoPageUrl] = useState('');
 
   useEffect(() => {
     try {
       const mode = localStorage.getItem('dna_demo_mode');
       const church = localStorage.getItem('dna_demo_church');
+      const pageUrl = localStorage.getItem('dna_demo_page_url');
       if (mode === '1') {
         setShow(true);
         setChurchName(church ?? '');
+        setDemoPageUrl(pageUrl ?? '');
       }
     } catch {
       // localStorage unavailable
@@ -35,6 +39,7 @@ export default function DemoBanner() {
     try {
       localStorage.removeItem('dna_demo_mode');
       localStorage.removeItem('dna_demo_church');
+      localStorage.removeItem('dna_demo_page_url');
     } catch {
       // ignore
     }
@@ -65,6 +70,23 @@ export default function DemoBanner() {
         You&apos;re previewing a demo of{churchName ? ` ${churchName}'s` : ''} DNA Hub.{' '}
         <span style={{ opacity: 0.7 }}>This is sample data only.</span>
       </span>
+      {demoPageUrl && (
+        <a
+          href={demoPageUrl}
+          style={{
+            color: 'rgba(255,255,255,0.7)',
+            fontSize: '0.8rem',
+            fontWeight: 500,
+            textDecoration: 'none',
+            borderBottom: '1px solid rgba(255,255,255,0.3)',
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
+            paddingBottom: '1px',
+          }}
+        >
+          ← Back to demo
+        </a>
+      )}
       <a
         href="https://calendly.com/travisdna/discovery"
         target="_blank"

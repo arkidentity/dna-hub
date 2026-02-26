@@ -522,6 +522,7 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
         try {
           localStorage.setItem('dna_demo_mode', '1');
           localStorage.setItem('dna_demo_church', church.name);
+          localStorage.setItem('dna_demo_page_url', demoPageUrl);
         } catch {
           // ignore
         }
