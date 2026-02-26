@@ -106,6 +106,7 @@ export default function DNALeadersTab() {
 
   // Role toggle state — key is `${leaderId}-${role}`
   const [togglingRole, setTogglingRole] = useState<string | null>(null);
+  const [roleToggleError, setRoleToggleError] = useState<{ leaderId: string; message: string } | null>(null);
 
   // Edit modal state
   const [editingLeader, setEditingLeader] = useState<LeaderWithStats | null>(null);
@@ -222,6 +223,11 @@ export default function DNALeadersTab() {
       );
     } catch (err) {
       console.error('Toggle role error:', err);
+      setRoleToggleError({
+        leaderId: leader.id,
+        message: err instanceof Error ? err.message : 'Failed to update role',
+      });
+      setTimeout(() => setRoleToggleError(null), 5000);
     } finally {
       setTogglingRole(null);
     }
@@ -622,6 +628,11 @@ export default function DNALeadersTab() {
                         </span>
                       )}
                     </div>
+                    {roleToggleError?.leaderId === leader.id && (
+                      <p className="text-xs text-red-600 mt-1">
+                        Role update failed: {roleToggleError.message}
+                      </p>
+                    )}
                   </div>
 
                   <button
