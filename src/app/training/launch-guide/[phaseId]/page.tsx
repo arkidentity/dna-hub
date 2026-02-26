@@ -39,6 +39,7 @@ export default function PhasePage({
   });
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [actionError, setActionError] = useState<string | null>(null);
   const [expandedSections, setExpandedSections] = useState<string[]>([]);
   const [isSaving, setIsSaving] = useState(false);
   const sectionRefs = useRef<Record<string, HTMLDivElement | null>>({});
@@ -111,6 +112,7 @@ export default function PhasePage({
 
   const toggleChecklistItem = async (itemId: string) => {
     if (isSaving) return;
+    setActionError(null);
 
     const isCurrentlyCompleted = progress.checklistCompleted.includes(itemId);
     const newCompleted = isCurrentlyCompleted
@@ -158,6 +160,7 @@ export default function PhasePage({
 
   const toggleSectionCheck = async (checkId: string) => {
     if (isSaving) return;
+    setActionError(null);
 
     const currentChecks = progress.sectionChecks || [];
     const isCurrentlyChecked = currentChecks.includes(checkId);
@@ -214,7 +217,7 @@ export default function PhasePage({
     }));
 
     try {
-      await fetch(
+      const response = await fetch(
         `/api/training/launch-guide/phases/${phaseId}/user-data`,
         {
           method: 'POST',
@@ -222,8 +225,29 @@ export default function PhasePage({
           body: JSON.stringify({ fieldId, value }),
         }
       );
+
+      if (response.ok) {
+        const data = await response.json();
+        setProgress(data.progress);
+      } else if (response.status === 401) {
+        router.push('/login');
+      } else {
+        // Revert on error
+        setProgress((prev) => ({
+          ...prev,
+          userData: currentData,
+        }));
+        const result = await response.json().catch(() => ({}));
+        setActionError(result.error || 'Failed to save. Please try again.');
+      }
     } catch (err) {
       console.error('Failed to save user data:', err);
+      // Revert on error
+      setProgress((prev) => ({
+        ...prev,
+        userData: currentData,
+      }));
+      setActionError('Failed to save. Please check your connection and try again.');
     }
   };
 
@@ -231,6 +255,7 @@ export default function PhasePage({
     if (isSaving) return;
 
     setIsSaving(true);
+    setActionError(null);
     try {
       const response = await fetch(
         `/api/training/launch-guide/phases/${phaseId}/complete`,
@@ -247,9 +272,15 @@ export default function PhasePage({
         } else {
           router.push('/training/launch-guide');
         }
+      } else if (response.status === 401) {
+        router.push('/login');
+      } else {
+        const result = await response.json().catch(() => ({}));
+        setActionError(result.error || 'Failed to complete phase. Please try again.');
       }
     } catch (err) {
       console.error('Failed to complete phase:', err);
+      setActionError('Failed to complete phase. Please check your connection and try again.');
     } finally {
       setIsSaving(false);
     }
@@ -546,6 +577,14 @@ export default function PhasePage({
                   );
                 })}
               </div>
+            </div>
+          )}
+
+          {/* Action error display */}
+          {actionError && (
+            <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px', color: '#FCA5A5', fontSize: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>{actionError}</span>
+              <button onClick={() => setActionError(null)} style={{ background: 'none', border: 'none', color: '#FCA5A5', cursor: 'pointer', fontSize: '18px', lineHeight: 1, padding: '0 0 0 12px' }}>×</button>
             </div>
           )}
 
