@@ -128,7 +128,10 @@ export default function DemoPageClient({
 
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
   const [stickyHidden, setStickyHidden] = useState(false);
+  // Full-experience iframe (gate section — dna_leader role, has group + pathway data)
   const [iframeSrc, setIframeSrc] = useState('');
+  // Free-tier iframe (first preview — role=disciple, no group, shows NoGroupView)
+  const [freeIframeSrc, setFreeIframeSrc] = useState('');
   const [logoError, setLogoError] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
   const finalCtaRef = useRef<HTMLDivElement>(null);
@@ -146,29 +149,44 @@ export default function DemoPageClient({
     return () => obs.disconnect();
   }, []);
 
-  // Fetch demo session tokens for auto-login iframe
+  // Fetch both demo sessions in parallel
   useEffect(() => {
-    async function fetchSession() {
+    const base = `https://${church.subdomain}.dailydna.app`;
+
+    // Full-experience session (dna_leader role — bypasses group gate, shows full pathway)
+    async function fetchFullSession() {
       try {
         const res = await fetch(`/api/demo/app-session/${church.subdomain}`);
         if (res.ok) {
           const data = await res.json();
           if (data.access_token) {
-            // Point to /demo-entry which calls setSession() explicitly before
-            // navigating to /journal. Using query params (not hash) because
-            // the root page.tsx does a server-side redirect that strips hashes.
-            setIframeSrc(
-              `https://${church.subdomain}.dailydna.app/demo-entry?at=${data.access_token}&rt=${data.refresh_token}`
-            );
+            setIframeSrc(`${base}/demo-entry?at=${data.access_token}&rt=${data.refresh_token}`);
             return;
           }
         }
-      } catch {
-        // fallthrough to plain URL
-      }
-      setIframeSrc(`https://${church.subdomain}.dailydna.app`);
+      } catch { /* fallthrough */ }
+      setIframeSrc(base);
     }
-    fetchSession();
+
+    // Free-tier session (role=disciple, no group — shows NoGroupView on pathway)
+    async function fetchFreeSession() {
+      try {
+        const res = await fetch(`/api/demo/app-session-free/${church.subdomain}`);
+        if (res.ok) {
+          const data = await res.json();
+          if (data.access_token) {
+            // Land on /pathway so the no-group gate is immediately visible
+            setFreeIframeSrc(`${base}/demo-entry?at=${data.access_token}&rt=${data.refresh_token}&redirect=/pathway`);
+            return;
+          }
+        }
+      } catch { /* fallthrough */ }
+      // Fallback: unauthenticated — app will redirect to login, not ideal but safe
+      setFreeIframeSrc(base);
+    }
+
+    void fetchFullSession();
+    void fetchFreeSession();
   }, [church.subdomain]);
 
   const headline = `This is what discipleship looks like at ${church.name}.`;
@@ -294,7 +312,7 @@ export default function DemoPageClient({
       {/* ── 2. HERO ──────────────────────────────────────────────── */}
       <section style={{
         paddingTop: '5.5rem', // clears fixed header
-        paddingBottom: '3.5rem',
+        paddingBottom: '1.75rem',
         paddingLeft: '1.25rem',
         paddingRight: '1.25rem',
         textAlign: 'center',
@@ -364,7 +382,7 @@ export default function DemoPageClient({
 
             {/* CTAs */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.625rem', marginTop: '0.5rem' }}>
-              <Link href={bookCallUrl} className="dp-btn-primary" style={{ background: primary }}>
+              <Link href={bookCallUrl} className="dp-btn-primary" style={{ background: BRAND_GREEN }}>
                 {cta.ctaText}
                 <ArrowRight className="w-4 h-4" />
               </Link>
@@ -381,7 +399,7 @@ export default function DemoPageClient({
       >
         <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
           {/* Section label */}
-          <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: BRAND_GREEN }}>
+          <span style={{ fontSize: '0.95rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: BRAND_GREEN }}>
             Your Free App
           </span>
 
@@ -394,7 +412,7 @@ export default function DemoPageClient({
             margin: 0,
             lineHeight: 1.15,
           }}>
-            {church.name}&rsquo;s app — branded and ready.
+            Your free app — branded and ready.
           </h2>
 
           {/* Subline */}
@@ -402,7 +420,7 @@ export default function DemoPageClient({
             The 3D Journal and 4D Prayer are yours free. No cost. No commitment. Just your church&rsquo;s name on a tool that builds real disciples.
           </p>
 
-          {/* iframe — locked view */}
+          {/* iframe — free-tier view (no group, shows pathway gate + DNA tools) */}
           <div style={{
             width: '100%',
             maxWidth: '430px',
@@ -413,7 +431,7 @@ export default function DemoPageClient({
             background: '#fff',
             position: 'relative',
           }}>
-            {!iframeSrc && (
+            {!freeIframeSrc && (
               <div style={{
                 position: 'absolute', inset: 0,
                 display: 'flex', flexDirection: 'column',
@@ -424,9 +442,9 @@ export default function DemoPageClient({
                 <p style={{ color: '#888', fontSize: '0.875rem', margin: 0 }}>Loading your app…</p>
               </div>
             )}
-            {iframeSrc && (
+            {freeIframeSrc && (
               <iframe
-                src={iframeSrc}
+                src={freeIframeSrc}
                 title={`${church.name} DNA Daily App`}
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                 loading="lazy"
@@ -485,7 +503,7 @@ export default function DemoPageClient({
             style={{
               width: '100%', maxWidth: '360px',
               padding: '1rem 1.5rem',
-              background: GATE_GOLD,
+              background: BRAND_GREEN,
               color: '#fff',
               border: 'none', borderRadius: '8px',
               fontFamily: 'inherit', fontSize: '1rem', fontWeight: 700,

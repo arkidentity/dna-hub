@@ -436,13 +436,94 @@ export async function POST(
       },
     ]);
 
-    // ── 10. Update church_demo_settings ────────────────────────────────────
+    // ── 10. Seed free-tier demo user (no group, role=disciple) ─────────────
+    // This powers the first "locked" iframe on the demo landing page.
+    const demoFreeEmail = `demo-free-${subdomain}@dna.demo`;
+    const demoFreePassword = `dna-demo-free-${subdomain}-session`;
+
+    const { data: existingFreeSettings } = await supabase
+      .from('church_demo_settings')
+      .select('demo_free_user_id')
+      .eq('church_id', churchId)
+      .single();
+
+    let freeAuthUserId: string | null = existingFreeSettings?.demo_free_user_id ?? null;
+
+    if (!freeAuthUserId) {
+      const { data: freeAuthData, error: freeAuthError } = await supabase.auth.admin.createUser({
+        email: demoFreeEmail,
+        password: demoFreePassword,
+        email_confirm: true,
+        user_metadata: {
+          is_demo: true,
+          demo_tier: 'free',
+          church_id: churchId,
+          church_subdomain: subdomain,
+        },
+      });
+
+      if (freeAuthData?.user) {
+        freeAuthUserId = freeAuthData.user.id;
+      } else if (
+        freeAuthError?.message?.toLowerCase().includes('already been registered') ||
+        freeAuthError?.message?.toLowerCase().includes('already registered') ||
+        freeAuthError?.code === 'email_exists' ||
+        freeAuthError?.status === 422
+      ) {
+        const { data: listData } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+        const existingFree = listData?.users?.find((u) => u.email === demoFreeEmail);
+        if (existingFree) freeAuthUserId = existingFree.id;
+      } else if (freeAuthError) {
+        console.error('[DEMO] Free-tier auth user creation error:', freeAuthError);
+        // Non-fatal — continue without free tier
+      }
+    }
+
+    if (freeAuthUserId) {
+      // Ensure password is always current
+      await supabase.auth.admin.updateUserById(freeAuthUserId, { password: demoFreePassword });
+
+      // Upsert disciples record for free user
+      const { data: freeDisciple } = await supabase
+        .from('disciples')
+        .upsert(
+          { email: demoFreeEmail, name: 'Demo Disciple' },
+          { onConflict: 'email', ignoreDuplicates: false }
+        )
+        .select('id')
+        .single();
+
+      if (freeDisciple) {
+        // disciple_app_accounts: role='disciple' — no leader shortcut, no group
+        await supabase
+          .from('disciple_app_accounts')
+          .upsert(
+            {
+              id: freeAuthUserId,
+              disciple_id: freeDisciple.id,
+              email: demoFreeEmail,
+              display_name: 'Demo Disciple',
+              church_id: churchId,
+              church_subdomain: subdomain,
+              email_verified: true,
+              is_active: true,
+              auth_provider: 'email',
+              role: 'disciple', // NOT a leader — will hit the group gate
+            },
+            { onConflict: 'id' }
+          );
+        // Intentionally NO group_disciples row — this is the "not yet in a group" state
+      }
+    }
+
+    // ── 11. Update church_demo_settings ────────────────────────────────────
     await supabase
       .from('church_demo_settings')
       .upsert(
         {
           church_id: churchId,
           demo_user_id: authUserId,
+          demo_free_user_id: freeAuthUserId,
           demo_seeded_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         },
@@ -454,6 +535,8 @@ export async function POST(
       seeded: {
         auth_user_id: authUserId,
         demo_email: demoEmail,
+        free_auth_user_id: freeAuthUserId,
+        demo_free_email: demoFreeEmail,
         disciple_id: discipleId,
         group: seededGroup,
         checkpoints: checkpointRows.length,
