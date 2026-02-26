@@ -16,7 +16,20 @@ import {
   EyeOff,
   User,
   LayoutDashboard,
+  ChevronDown,
+  ChevronUp,
+  Plus,
+  Trash2,
+  Pencil,
+  X,
 } from 'lucide-react';
+
+interface DnaCoach {
+  id: string;
+  name: string;
+  email: string | null;
+  booking_embed: string | null;
+}
 
 interface DemoTabProps {
   churchId: string;
@@ -32,6 +45,7 @@ interface DemoSettings {
   hub_demo_seeded_at: string | null;
   coach_name: string;
   booking_url: string;
+  coach_id: string | null;
 }
 
 const TEMPS = [
@@ -78,6 +92,7 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
     hub_demo_seeded_at: null,
     coach_name: 'Travis',
     booking_url: '',
+    coach_id: null,
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -93,29 +108,54 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
   const [hubSeedSuccess, setHubSeedSuccess] = useState(false);
   const [copiedHub, setCopiedHub] = useState(false);
 
+  // ── Coach state ──────────────────────────────────────────────────────────
+  const [coaches, setCoaches] = useState<DnaCoach[]>([]);
+  const [showCoachManager, setShowCoachManager] = useState(false);
+  const [showAddCoach, setShowAddCoach] = useState(false);
+  const [newCoach, setNewCoach] = useState({ name: '', email: '', booking_embed: '' });
+  const [addingCoach, setAddingCoach] = useState(false);
+  const [deletingCoachId, setDeletingCoachId] = useState<string | null>(null);
+  const [editingCoachId, setEditingCoachId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState({ name: '', email: '', booking_embed: '' });
+  const [savingCoachId, setSavingCoachId] = useState<string | null>(null);
+  const [coachError, setCoachError] = useState<string | null>(null);
+
   const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://dnadiscipleship.com';
   const demoBaseUrl = subdomain ? `${BASE_URL}/demo/${subdomain}` : null;
   const hubDemoUrl = subdomain ? `${BASE_URL}/demo-hub/${subdomain}` : null;
 
   useEffect(() => {
-    fetchSettings();
+    void fetchAll();
   }, [churchId]);
 
-  const fetchSettings = async () => {
+  // ── Data fetching ────────────────────────────────────────────────────────
+
+  const fetchAll = async () => {
+    setLoading(true);
     try {
-      const res = await fetch(`/api/admin/demo/${churchId}`);
-      if (!res.ok) throw new Error('Failed to fetch');
-      const data = await res.json();
-      if (data.settings) {
+      const [settingsRes, coachesRes] = await Promise.all([
+        fetch(`/api/admin/demo/${churchId}`),
+        fetch('/api/admin/coaches'),
+      ]);
+
+      if (!settingsRes.ok) throw new Error('Failed to fetch settings');
+      const settingsData = await settingsRes.json();
+      if (settingsData.settings) {
         setSettings({
-          video_url: data.settings.video_url ?? '',
-          demo_enabled: data.settings.demo_enabled ?? false,
-          default_temp: data.settings.default_temp ?? 'warm',
-          demo_seeded_at: data.settings.demo_seeded_at ?? null,
-          hub_demo_seeded_at: data.settings.hub_demo_seeded_at ?? null,
-          coach_name: data.settings.coach_name ?? 'Travis',
-          booking_url: data.settings.booking_url ?? '',
+          video_url: settingsData.settings.video_url ?? '',
+          demo_enabled: settingsData.settings.demo_enabled ?? false,
+          default_temp: settingsData.settings.default_temp ?? 'warm',
+          demo_seeded_at: settingsData.settings.demo_seeded_at ?? null,
+          hub_demo_seeded_at: settingsData.settings.hub_demo_seeded_at ?? null,
+          coach_name: settingsData.settings.coach_name ?? 'Travis',
+          booking_url: settingsData.settings.booking_url ?? '',
+          coach_id: settingsData.settings.coach_id ?? null,
         });
+      }
+
+      if (coachesRes.ok) {
+        const coachesData = await coachesRes.json();
+        setCoaches(coachesData.coaches ?? []);
       }
     } catch (err) {
       setError('Failed to load demo settings');
@@ -124,6 +164,120 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
       setLoading(false);
     }
   };
+
+  // ── Coach actions ────────────────────────────────────────────────────────
+
+  const handleSelectCoach = (coachId: string) => {
+    if (!coachId) {
+      setSettings(prev => ({ ...prev, coach_id: null }));
+      return;
+    }
+    const coach = coaches.find(c => c.id === coachId);
+    if (coach) {
+      setSettings(prev => ({
+        ...prev,
+        coach_id: coach.id,
+        coach_name: coach.name,
+        booking_url: coach.booking_embed ?? '',
+      }));
+    }
+  };
+
+  const handleAddCoach = async () => {
+    if (!newCoach.name.trim()) return;
+    setAddingCoach(true);
+    setCoachError(null);
+    try {
+      const res = await fetch('/api/admin/coaches', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: newCoach.name.trim(),
+          email: newCoach.email.trim() || null,
+          booking_embed: newCoach.booking_embed.trim() || null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? 'Failed to add coach');
+      }
+      const data = await res.json();
+      setCoaches(prev => [...prev, data.coach]);
+      setNewCoach({ name: '', email: '', booking_embed: '' });
+      setShowAddCoach(false);
+    } catch (err) {
+      setCoachError(err instanceof Error ? err.message : 'Failed to add coach');
+    } finally {
+      setAddingCoach(false);
+    }
+  };
+
+  const handleStartEdit = (coach: DnaCoach) => {
+    setEditingCoachId(coach.id);
+    setEditDraft({
+      name: coach.name,
+      email: coach.email ?? '',
+      booking_embed: coach.booking_embed ?? '',
+    });
+  };
+
+  const handleSaveCoach = async (coachId: string) => {
+    if (!editDraft.name.trim()) return;
+    setSavingCoachId(coachId);
+    setCoachError(null);
+    try {
+      const res = await fetch(`/api/admin/coaches/${coachId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editDraft.name.trim(),
+          email: editDraft.email.trim() || null,
+          booking_embed: editDraft.booking_embed.trim() || null,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? 'Failed to update coach');
+      }
+      const data = await res.json();
+      setCoaches(prev => prev.map(c => (c.id === coachId ? data.coach : c)));
+      // Sync auto-filled fields if this is the selected coach
+      if (settings.coach_id === coachId) {
+        setSettings(prev => ({
+          ...prev,
+          coach_name: data.coach.name,
+          booking_url: data.coach.booking_embed ?? '',
+        }));
+      }
+      setEditingCoachId(null);
+    } catch (err) {
+      setCoachError(err instanceof Error ? err.message : 'Failed to update coach');
+    } finally {
+      setSavingCoachId(null);
+    }
+  };
+
+  const handleDeleteCoach = async (coachId: string) => {
+    setDeletingCoachId(coachId);
+    setCoachError(null);
+    try {
+      const res = await fetch(`/api/admin/coaches/${coachId}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? 'Failed to delete coach');
+      }
+      setCoaches(prev => prev.filter(c => c.id !== coachId));
+      if (settings.coach_id === coachId) {
+        setSettings(prev => ({ ...prev, coach_id: null }));
+      }
+    } catch (err) {
+      setCoachError(err instanceof Error ? err.message : 'Failed to delete coach');
+    } finally {
+      setDeletingCoachId(null);
+    }
+  };
+
+  // ── Demo settings actions ────────────────────────────────────────────────
 
   const handleSave = async () => {
     setSaving(true);
@@ -140,6 +294,7 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
           default_temp: settings.default_temp,
           coach_name: settings.coach_name?.trim() || 'Travis',
           booking_url: settings.booking_url?.trim() || null,
+          coach_id: settings.coach_id,
         }),
       });
 
@@ -173,7 +328,7 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
       }
 
       const now = new Date().toISOString();
-      setSettings(prev => ({ ...prev, demo_seeded_at: now, hub_demo_seeded_at: prev.hub_demo_seeded_at }));
+      setSettings(prev => ({ ...prev, demo_seeded_at: now }));
       setSeedSuccess(true);
       setTimeout(() => setSeedSuccess(false), 4000);
     } catch (err) {
@@ -224,6 +379,63 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
     setTimeout(() => setCopiedTemp(null), 2000);
   };
 
+  // ── Shared mini-styles for coach manager ─────────────────────────────────
+
+  const cmInputStyle: React.CSSProperties = {
+    padding: '0.5rem 0.625rem',
+    border: '1px solid #e0e0e0',
+    borderRadius: '6px',
+    fontSize: '0.875rem',
+    outline: 'none',
+    fontFamily: 'inherit',
+    width: '100%',
+    boxSizing: 'border-box',
+  };
+
+  const cmSaveBtnStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.3rem',
+    padding: '0.35rem 0.75rem',
+    background: '#1a3a52',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    fontSize: '0.825rem',
+    fontWeight: 600,
+    fontFamily: 'inherit',
+  };
+
+  const cmCancelBtnStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.3rem',
+    padding: '0.35rem 0.75rem',
+    background: 'transparent',
+    color: '#555',
+    border: '1px solid #ddd',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    fontSize: '0.825rem',
+    fontFamily: 'inherit',
+  };
+
+  const cmIconBtnStyle: React.CSSProperties = {
+    padding: '0.3rem',
+    background: 'none',
+    border: '1px solid #e8e8e8',
+    borderRadius: '5px',
+    cursor: 'pointer',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    color: '#888',
+    flexShrink: 0,
+  };
+
+  // ── Render guards ────────────────────────────────────────────────────────
+
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '2rem', color: '#888' }}>
@@ -246,7 +458,8 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', maxWidth: '720px' }}>
-      {/* Header */}
+
+      {/* ── Header ─────────────────────────────────────────────────────── */}
       <div>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#1a2332', margin: 0 }}>
           Demo Page
@@ -256,7 +469,7 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
         </p>
       </div>
 
-      {/* Demo Enabled Toggle */}
+      {/* ── Demo Enabled Toggle ─────────────────────────────────────────── */}
       <div className="card" style={{ padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <div style={{ fontWeight: 600, color: '#1a2332', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -301,7 +514,306 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
         </button>
       </div>
 
-      {/* Video URL */}
+      {/* ── DNA Coach Selector ──────────────────────────────────────────── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <label style={{ fontWeight: 600, color: '#1a2332', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <User className="w-4 h-4" />
+          DNA Coach
+        </label>
+        <p style={{ color: '#666', fontSize: '0.85rem', margin: 0 }}>
+          Select a coach to auto-fill their name and booking link, or enter details manually below.
+        </p>
+
+        {/* Selector row */}
+        <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'center', flexWrap: 'wrap' }}>
+          <select
+            value={settings.coach_id ?? ''}
+            onChange={e => handleSelectCoach(e.target.value)}
+            style={{
+              padding: '0.625rem 0.75rem',
+              border: '1px solid #e0e0e0',
+              borderRadius: '6px',
+              fontSize: '0.9rem',
+              outline: 'none',
+              fontFamily: 'inherit',
+              background: '#fff',
+              cursor: 'pointer',
+              minWidth: '200px',
+              flex: '1 1 200px',
+              maxWidth: '320px',
+            }}
+          >
+            <option value="">— Select a coach —</option>
+            {coaches.map(c => (
+              <option key={c.id} value={c.id}>
+                {c.name}{c.email ? ` (${c.email})` : ''}
+              </option>
+            ))}
+          </select>
+
+          <button
+            onClick={() => {
+              setShowCoachManager(prev => !prev);
+              if (showCoachManager) {
+                // closing — also reset edit/add state
+                setEditingCoachId(null);
+                setShowAddCoach(false);
+                setCoachError(null);
+              }
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.35rem',
+              padding: '0.55rem 0.875rem',
+              border: '1px solid #ddd',
+              borderRadius: '6px',
+              background: showCoachManager ? '#f0f4f8' : '#fff',
+              cursor: 'pointer',
+              fontSize: '0.875rem',
+              color: '#333',
+              fontFamily: 'inherit',
+              flexShrink: 0,
+              transition: 'background 0.15s',
+            }}
+          >
+            {showCoachManager ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+            Manage Coaches
+          </button>
+        </div>
+
+        {/* ── Inline Coach Manager ──────────────────────────────────────── */}
+        {showCoachManager && (
+          <div style={{
+            border: '1px solid #e0e0e0',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            marginTop: '0.25rem',
+          }}>
+            {/* Manager header */}
+            <div style={{
+              padding: '0.625rem 1rem',
+              background: '#f5f7fa',
+              borderBottom: '1px solid #e8e8e8',
+              fontSize: '0.82rem',
+              fontWeight: 600,
+              color: '#555',
+              letterSpacing: '0.04em',
+              textTransform: 'uppercase',
+            }}>
+              Coach Registry
+            </div>
+
+            {/* Coach list */}
+            <div>
+              {coaches.length === 0 && (
+                <div style={{ padding: '1.25rem', color: '#aaa', fontSize: '0.875rem', textAlign: 'center' }}>
+                  No coaches added yet — add one below.
+                </div>
+              )}
+
+              {coaches.map(coach => (
+                <div key={coach.id} style={{ borderBottom: '1px solid #f0f0f0' }}>
+                  {editingCoachId === coach.id ? (
+                    /* Edit form */
+                    <div style={{ padding: '0.875rem 1rem', background: '#fafffe' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <input
+                          type="text"
+                          value={editDraft.name}
+                          onChange={e => setEditDraft(p => ({ ...p, name: e.target.value }))}
+                          placeholder="Name *"
+                          style={cmInputStyle}
+                        />
+                        <input
+                          type="email"
+                          value={editDraft.email}
+                          onChange={e => setEditDraft(p => ({ ...p, email: e.target.value }))}
+                          placeholder="Email (optional)"
+                          style={cmInputStyle}
+                        />
+                        <textarea
+                          value={editDraft.booking_embed}
+                          onChange={e => setEditDraft(p => ({ ...p, booking_embed: e.target.value }))}
+                          placeholder="Booking URL or full <iframe> embed code (optional)"
+                          rows={3}
+                          style={{ ...cmInputStyle, fontFamily: 'monospace', fontSize: '0.8rem', resize: 'vertical', lineHeight: 1.5 }}
+                        />
+                        <div style={{ display: 'flex', gap: '0.5rem' }}>
+                          <button
+                            onClick={() => void handleSaveCoach(coach.id)}
+                            disabled={savingCoachId === coach.id || !editDraft.name.trim()}
+                            style={{ ...cmSaveBtnStyle, opacity: (!editDraft.name.trim()) ? 0.5 : 1 }}
+                          >
+                            {savingCoachId === coach.id
+                              ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              : <Check className="w-3.5 h-3.5" />
+                            }
+                            Save
+                          </button>
+                          <button onClick={() => setEditingCoachId(null)} style={cmCancelBtnStyle}>
+                            <X className="w-3.5 h-3.5" />
+                            Cancel
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    /* Display row */
+                    <div style={{ padding: '0.625rem 1rem', display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <div style={{ fontWeight: 600, fontSize: '0.875rem', color: '#1a2332', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                          {coach.name}
+                          {settings.coach_id === coach.id && (
+                            <span style={{
+                              fontSize: '0.7rem',
+                              fontWeight: 600,
+                              color: '#1a3a52',
+                              background: '#dce8f5',
+                              padding: '0.1rem 0.45rem',
+                              borderRadius: '10px',
+                              letterSpacing: '0.02em',
+                            }}>
+                              Selected
+                            </span>
+                          )}
+                        </div>
+                        {coach.email && (
+                          <div style={{ fontSize: '0.78rem', color: '#888', marginTop: '0.1rem' }}>{coach.email}</div>
+                        )}
+                        {coach.booking_embed ? (
+                          <div style={{ fontSize: '0.75rem', color: '#27ae60', display: 'flex', alignItems: 'center', gap: '0.25rem', marginTop: '0.2rem' }}>
+                            <CheckCircle2 className="w-3 h-3" />
+                            Booking configured
+                          </div>
+                        ) : (
+                          <div style={{ fontSize: '0.75rem', color: '#bbb', marginTop: '0.2rem' }}>
+                            No booking link
+                          </div>
+                        )}
+                      </div>
+                      <button
+                        onClick={() => handleStartEdit(coach)}
+                        title="Edit coach"
+                        style={cmIconBtnStyle}
+                      >
+                        <Pencil className="w-3.5 h-3.5" />
+                      </button>
+                      <button
+                        onClick={() => void handleDeleteCoach(coach.id)}
+                        disabled={deletingCoachId === coach.id}
+                        title="Delete coach"
+                        style={{ ...cmIconBtnStyle, color: '#c0392b', borderColor: '#fce4e4' }}
+                      >
+                        {deletingCoachId === coach.id
+                          ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          : <Trash2 className="w-3.5 h-3.5" />
+                        }
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            {/* Add new coach */}
+            <div style={{ padding: '0.75rem 1rem', borderTop: coaches.length > 0 ? '1px solid #eee' : 'none', background: '#fafafa' }}>
+              {!showAddCoach ? (
+                <button
+                  onClick={() => setShowAddCoach(true)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '0.4rem',
+                    width: '100%',
+                    background: 'none',
+                    border: '1px dashed #ccc',
+                    borderRadius: '6px',
+                    padding: '0.5rem 0.75rem',
+                    cursor: 'pointer',
+                    fontSize: '0.85rem',
+                    color: '#666',
+                    fontFamily: 'inherit',
+                    transition: 'border-color 0.15s, color 0.15s',
+                  }}
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  Add New Coach
+                </button>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  <div style={{ fontWeight: 600, fontSize: '0.875rem', color: '#1a2332', marginBottom: '0.1rem' }}>
+                    New Coach
+                  </div>
+                  <input
+                    type="text"
+                    value={newCoach.name}
+                    onChange={e => setNewCoach(p => ({ ...p, name: e.target.value }))}
+                    placeholder="Name *"
+                    style={cmInputStyle}
+                  />
+                  <input
+                    type="email"
+                    value={newCoach.email}
+                    onChange={e => setNewCoach(p => ({ ...p, email: e.target.value }))}
+                    placeholder="Email (optional)"
+                    style={cmInputStyle}
+                  />
+                  <textarea
+                    value={newCoach.booking_embed}
+                    onChange={e => setNewCoach(p => ({ ...p, booking_embed: e.target.value }))}
+                    placeholder="Booking URL or full <iframe> embed code (optional)"
+                    rows={3}
+                    style={{ ...cmInputStyle, fontFamily: 'monospace', fontSize: '0.8rem', resize: 'vertical', lineHeight: 1.5 }}
+                  />
+                  <div style={{ display: 'flex', gap: '0.5rem' }}>
+                    <button
+                      onClick={() => void handleAddCoach()}
+                      disabled={addingCoach || !newCoach.name.trim()}
+                      style={{ ...cmSaveBtnStyle, opacity: !newCoach.name.trim() ? 0.5 : 1 }}
+                    >
+                      {addingCoach
+                        ? <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                        : <Plus className="w-3.5 h-3.5" />
+                      }
+                      Add Coach
+                    </button>
+                    <button
+                      onClick={() => {
+                        setShowAddCoach(false);
+                        setNewCoach({ name: '', email: '', booking_embed: '' });
+                      }}
+                      style={cmCancelBtnStyle}
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Coach error */}
+            {coachError && (
+              <div style={{
+                padding: '0.5rem 1rem',
+                background: '#fff5f5',
+                borderTop: '1px solid #fce4e4',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                fontSize: '0.85rem',
+                color: '#c0392b',
+              }}>
+                <AlertCircle className="w-3.5 h-3.5" style={{ flexShrink: 0 }} />
+                {coachError}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* ── Video URL ───────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         <label style={{ fontWeight: 600, color: '#1a2332', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Play className="w-4 h-4" />
@@ -340,7 +852,7 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
         )}
       </div>
 
-      {/* Coach Name */}
+      {/* ── Coach Name ──────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         <label style={{ fontWeight: 600, color: '#1a2332', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <User className="w-4 h-4" />
@@ -368,7 +880,7 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
         />
       </div>
 
-      {/* Booking Link / Embed Code */}
+      {/* ── Booking Link / Embed Code ───────────────────────────────────── */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
         <label style={{ fontWeight: 600, color: '#1a2332', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Link2 className="w-4 h-4" />
@@ -419,7 +931,7 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
         })()}
       </div>
 
-      {/* Default Temperature */}
+      {/* ── Default Temperature ─────────────────────────────────────────── */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         <label style={{ fontWeight: 600, color: '#1a2332', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Thermometer className="w-4 h-4" />
@@ -454,10 +966,10 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
         </div>
       </div>
 
-      {/* Save Button */}
+      {/* ── Save Button ─────────────────────────────────────────────────── */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
         <button
-          onClick={handleSave}
+          onClick={() => void handleSave()}
           disabled={saving}
           className="btn-primary"
           style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}
@@ -479,10 +991,10 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
         )}
       </div>
 
-      {/* Divider */}
+      {/* ── Divider ─────────────────────────────────────────────────────── */}
       <hr style={{ border: 'none', borderTop: '1px solid #eee', margin: 0 }} />
 
-      {/* Generated Links */}
+      {/* ── Generated Links ─────────────────────────────────────────────── */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         <div style={{ fontWeight: 600, color: '#1a2332', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Link2 className="w-4 h-4" />
@@ -490,7 +1002,7 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
         </div>
         {!subdomain ? (
           <div style={{ padding: '1rem', background: '#fff8e1', borderRadius: '8px', color: '#7d5a00', fontSize: '0.875rem', border: '1px solid #ffe082' }}>
-            ⚠️ This church doesn't have a subdomain set yet. Configure one in the Branding tab first.
+            ⚠️ This church doesn&apos;t have a subdomain set yet. Configure one in the Branding tab first.
           </div>
         ) : !settings.demo_enabled ? (
           <div style={{ padding: '1rem', background: '#f5f5f5', borderRadius: '8px', color: '#888', fontSize: '0.875rem' }}>
@@ -550,10 +1062,10 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
         )}
       </div>
 
-      {/* Divider */}
+      {/* ── Divider ─────────────────────────────────────────────────────── */}
       <hr style={{ border: 'none', borderTop: '1px solid #eee', margin: 0 }} />
 
-      {/* Seed Data */}
+      {/* ── Demo Seed Data ──────────────────────────────────────────────── */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         <div style={{ fontWeight: 600, color: '#1a2332', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <Database className="w-4 h-4" />
@@ -639,10 +1151,10 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
         </div>
       </div>
 
-      {/* Divider */}
+      {/* ── Divider ─────────────────────────────────────────────────────── */}
       <hr style={{ border: 'none', borderTop: '1px solid #eee', margin: 0 }} />
 
-      {/* Hub Dashboard Demo */}
+      {/* ── Hub Dashboard Demo ──────────────────────────────────────────── */}
       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
         <div style={{ fontWeight: 600, color: '#1a2332', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
           <LayoutDashboard className="w-4 h-4" />
