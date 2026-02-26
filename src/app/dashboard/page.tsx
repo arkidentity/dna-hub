@@ -36,6 +36,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const [redirecting, setRedirecting] = useState(false);
   const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'team' | 'groups' | 'gifts'>('overview');
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [compactPhases, setCompactPhases] = useState<Set<string>>(new Set());
@@ -75,8 +76,9 @@ export default function DashboardPage() {
       }
 
       if (response.status === 307) {
-        const data = await response.json();
-        router.push(data.redirect || '/portal');
+        const redirectData = await response.json();
+        setRedirecting(true);
+        router.push(redirectData.redirect || '/portal');
         return;
       }
 
@@ -87,6 +89,7 @@ export default function DashboardPage() {
       const dashboardData = await response.json();
 
       if (dashboardData.redirect) {
+        setRedirecting(true);
         router.push(dashboardData.redirect);
         return;
       }
@@ -387,7 +390,7 @@ export default function DashboardPage() {
     window.location.href = url;
   };
 
-  if (loading) {
+  if (loading || redirecting) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <Loader2 className="w-8 h-8 text-gold animate-spin" />

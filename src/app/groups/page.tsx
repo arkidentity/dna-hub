@@ -54,10 +54,7 @@ function DNALeaderDashboardContent() {
   useEffect(() => {
     async function fetchDashboard() {
       try {
-        const [response, invitationsResponse] = await Promise.all([
-          fetch('/api/groups/dashboard'),
-          fetch('/api/groups/invitations'),
-        ]);
+        const response = await fetch('/api/groups/dashboard');
 
         if (response.status === 401) {
           router.push('/login');
@@ -73,12 +70,6 @@ function DNALeaderDashboardContent() {
         }
 
         setData(result);
-
-        if (invitationsResponse.ok) {
-          const invData = await invitationsResponse.json();
-          setPendingInvitations(invData.invitations || []);
-        }
-
         setLoading(false);
       } catch (err) {
         console.error('Dashboard fetch error:', err);
