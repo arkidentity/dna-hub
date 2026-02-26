@@ -1,4 +1,4 @@
-import { getUnifiedSession, isAdmin } from '@/lib/unified-auth'
+import { getUnifiedSession, isAdmin, isDNACoach } from '@/lib/unified-auth'
 import Link from 'next/link'
 import UserMenu from './UserMenu'
 
@@ -15,6 +15,7 @@ export default async function TopNav() {
   }
 
   const admin = isAdmin(session)
+  const coach = isDNACoach(session)
 
   return (
     <nav className="bg-[var(--navy)] text-white border-b border-gray-700">
@@ -49,12 +50,12 @@ export default async function TopNav() {
 
           {/* Right: Admin badge + User menu */}
           <div className="flex items-center gap-4">
-            {admin && (
+            {(admin || coach) && (
               <Link
                 href="/admin"
                 className="px-3 py-1 bg-[var(--gold)] text-white text-xs font-semibold rounded-full hover:opacity-90 transition-opacity"
               >
-                Admin
+                {admin ? 'Admin' : 'My Churches'}
               </Link>
             )}
             <UserMenu session={session} />

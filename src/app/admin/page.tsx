@@ -11,10 +11,11 @@ import {
   Settings,
   Download,
   UserCheck,
+  UserCircle,
   BookOpen,
   Palette,
 } from 'lucide-react';
-import { DNALeadersTab, ChurchesTab, ResourcesTab, BrandingTab } from '@/components/admin';
+import { DNALeadersTab, ChurchesTab, ResourcesTab, BrandingTab, CoachesTab } from '@/components/admin';
 import AuthAuditPanel from '@/components/admin/AuthAuditPanel';
 
 interface ChurchSummary {
@@ -45,9 +46,10 @@ interface AdminStats {
 
 export default function AdminPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'churches' | 'dna-leaders' | 'resources' | 'branding'>('churches');
+  const [activeTab, setActiveTab] = useState<'churches' | 'dna-leaders' | 'coaches' | 'resources' | 'branding'>('churches');
   const [churches, setChurches] = useState<ChurchSummary[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
+  const [userRole, setUserRole] = useState<'admin' | 'dna_coach'>('admin');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
@@ -78,6 +80,7 @@ export default function AdminPage() {
       const data = await response.json();
       setChurches(data.churches);
       setStats(data.stats);
+      if (data.user_role) setUserRole(data.user_role);
     } catch (error) {
       console.error('Admin error:', error);
       setError(true);
@@ -128,8 +131,12 @@ export default function AdminPage() {
       <div className="bg-navy text-white py-4 px-6">
         <div className="max-w-6xl mx-auto flex items-center justify-between">
           <div>
-            <p className="text-gold font-medium text-sm tracking-wide">DNA ADMIN</p>
-            <p className="font-semibold">Church Management</p>
+            <p className="text-gold font-medium text-sm tracking-wide">
+              {userRole === 'dna_coach' ? 'DNA COACH' : 'DNA ADMIN'}
+            </p>
+            <p className="font-semibold">
+              {userRole === 'dna_coach' ? 'My Churches' : 'Church Management'}
+            </p>
           </div>
           <div className="flex items-center gap-4">
             <AuthAuditPanel />
@@ -165,11 +172,12 @@ export default function AdminPage() {
         <div className="max-w-6xl mx-auto px-6">
           <div className="flex gap-6">
             {[
-              { id: 'churches', label: 'Churches', icon: Building2 },
-              { id: 'dna-leaders', label: 'DNA Leaders', icon: UserCheck },
-              { id: 'resources', label: 'Resources', icon: BookOpen },
-              { id: 'branding', label: 'Branding', icon: Palette },
-            ].map((tab) => (
+              { id: 'churches', label: 'Churches', icon: Building2, showFor: 'both' },
+              { id: 'dna-leaders', label: 'DNA Leaders', icon: UserCheck, showFor: 'both' },
+              { id: 'coaches', label: 'Coaches', icon: UserCircle, showFor: 'admin' },
+              { id: 'resources', label: 'Resources', icon: BookOpen, showFor: 'admin' },
+              { id: 'branding', label: 'Branding', icon: Palette, showFor: 'admin' },
+            ].filter(tab => tab.showFor === 'both' || userRole === 'admin').map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
@@ -199,6 +207,9 @@ export default function AdminPage() {
             onRefresh={fetchAdminData}
           />
         )}
+
+        {/* Coaches Tab */}
+        {activeTab === 'coaches' && <CoachesTab />}
 
         {/* Resources Tab */}
         {activeTab === 'resources' && <ResourcesTab />}

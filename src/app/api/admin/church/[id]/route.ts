@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin, isDNACoach, isAdminOrCoach } from '@/lib/unified-auth';
 
 export async function GET(
   request: NextRequest,
@@ -14,9 +14,12 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!isAdmin(session)) {
+    if (!isAdminOrCoach(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    const adminUser = isAdmin(session);
+    const coachUser = isDNACoach(session);
 
     const supabase = getSupabaseAdmin();
 
@@ -29,6 +32,29 @@ export async function GET(
 
     if (churchError || !church) {
       return NextResponse.json({ error: 'Church not found' }, { status: 404 });
+    }
+
+    // Coach scope check: coaches can only view churches assigned to them
+    if (coachUser && !adminUser) {
+      const { data: coachProfile } = await supabase
+        .from('dna_coaches')
+        .select('id')
+        .eq('email', session.email.toLowerCase())
+        .single();
+      if (!coachProfile || church.coach_id !== coachProfile.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
+
+    // Fetch coach info if assigned
+    let coachInfo: { id: string; name: string; email: string | null } | null = null;
+    if (church.coach_id) {
+      const { data: coachData } = await supabase
+        .from('dna_coaches')
+        .select('id, name, email')
+        .eq('id', church.coach_id)
+        .single();
+      coachInfo = coachData ?? null;
     }
 
     // Get leader
@@ -171,6 +197,7 @@ export async function GET(
 
     return NextResponse.json({
       church,
+      coach: coachInfo,
       leader: leader || { id: '', name: 'Unknown', email: '' },
       assessment: assessment || null,
       documents: documents || [],

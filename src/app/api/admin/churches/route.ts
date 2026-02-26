@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin, isDNACoach, isAdminOrCoach } from '@/lib/unified-auth';
 import {
   sendProposalReadyEmail,
   sendAgreementConfirmedEmail,
@@ -18,24 +18,45 @@ export async function GET() {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!isAdmin(session)) {
+    const adminUser = isAdmin(session);
+    const coachUser = isDNACoach(session);
+
+    if (!adminUser && !coachUser) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
     const supabase = getSupabaseAdmin();
 
-    // Get all churches with leader info
-    const { data: churches, error: churchesError } = await supabase
+    // If the requester is a DNA coach (not super admin), scope to their assigned churches
+    let scopedCoachId: string | null = null;
+    if (coachUser && !adminUser) {
+      const { data: coachProfile } = await supabase
+        .from('dna_coaches')
+        .select('id')
+        .eq('email', session.email.toLowerCase())
+        .single();
+      scopedCoachId = coachProfile?.id ?? null;
+    }
+
+    // Get all churches with leader info (scoped for coaches)
+    let churchQuery = supabase
       .from('churches')
       .select(`
         id,
         name,
         status,
         current_phase,
+        coach_id,
         created_at,
         updated_at
       `)
       .order('created_at', { ascending: false });
+
+    if (scopedCoachId) {
+      churchQuery = churchQuery.eq('coach_id', scopedCoachId);
+    }
+
+    const { data: churches, error: churchesError } = await churchQuery;
 
     if (churchesError) {
       console.error('[ADMIN] Churches error:', churchesError);
@@ -46,11 +67,15 @@ export async function GET() {
     const churchIds = churches?.map(c => c.id) || [];
     const activeChurchIds = churches?.filter(c => c.status === 'active').map(c => c.id) || [];
 
+    // Collect unique coach IDs to fetch their names
+    const uniqueCoachIds = [...new Set((churches ?? []).map(c => c.coach_id).filter(Boolean))] as string[];
+
     const [
       leadersResult,
       progressResult,
       phasesResult,
       scheduledCallsResult,
+      coachesResult,
     ] = await Promise.all([
       supabase
         .from('church_leaders')
@@ -76,12 +101,20 @@ export async function GET() {
             .gt('scheduled_at', new Date().toISOString())
             .order('scheduled_at', { ascending: true })
         : Promise.resolve({ data: [] as { church_id: string; call_type: string; scheduled_at: string }[] }),
+      uniqueCoachIds.length > 0
+        ? supabase.from('dna_coaches').select('id, name').in('id', uniqueCoachIds)
+        : Promise.resolve({ data: [] as { id: string; name: string }[] }),
     ]);
 
     const { data: leaders } = leadersResult as { data: { id: string; church_id: string; name: string; email: string }[] | null };
     const progress = ('data' in progressResult ? progressResult.data : progressResult) as { church_id: string; completed: boolean; target_date: string }[] | null;
     const { data: phases } = phasesResult as { data: { id: string }[] | null };
     const scheduledCalls = ('data' in scheduledCallsResult ? scheduledCallsResult.data : scheduledCallsResult) as { church_id: string; call_type: string; scheduled_at: string }[] | null;
+    const coachList = ('data' in coachesResult ? coachesResult.data : coachesResult) as { id: string; name: string }[] | null;
+
+    // Build coach name lookup map
+    const coachNameMap = new Map<string, string>();
+    (coachList ?? []).forEach(c => coachNameMap.set(c.id, c.name));
 
     // Get milestones count (depends on phases result)
     const phaseIds = phases?.map(p => p.id) || [];
@@ -117,6 +150,8 @@ export async function GET() {
         name: church.name,
         status: church.status,
         current_phase: church.current_phase,
+        coach_id: church.coach_id ?? null,
+        coach_name: church.coach_id ? (coachNameMap.get(church.coach_id) ?? null) : null,
         created_at: church.created_at,
         updated_at: church.updated_at,
         leader_name: churchLeader?.name || 'Unknown',
@@ -154,6 +189,7 @@ export async function GET() {
     return NextResponse.json({
       churches: churchSummaries,
       stats,
+      user_role: adminUser ? 'admin' : 'dna_coach',
     });
   } catch (error) {
     console.error('[ADMIN] Error:', error);
@@ -167,9 +203,12 @@ export async function POST(request: NextRequest) {
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    if (!isAdmin(session)) {
+    if (!isAdminOrCoach(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
+
+    const adminUser = isAdmin(session);
+    const coachUser = isDNACoach(session);
 
     const body = await request.json();
     const {
@@ -180,6 +219,7 @@ export async function POST(request: NextRequest) {
       leaderEmail,
       leaderPhone,
       leaderRole,
+      coachId,
       initialStatus = 'prospect',
     } = body;
 
@@ -196,12 +236,26 @@ export async function POST(request: NextRequest) {
     const supabase = getSupabaseAdmin();
     const normalizedEmail = leaderEmail.trim().toLowerCase();
 
+    // Resolve the coach ID for the new church
+    // - If coach is creating: auto-assign their own coach profile
+    // - If admin is creating: use the explicit coachId from the body (optional)
+    let resolvedCoachId: string | null = coachId ?? null;
+    if (coachUser && !adminUser) {
+      const { data: coachProfile } = await supabase
+        .from('dna_coaches')
+        .select('id')
+        .eq('email', session.email.toLowerCase())
+        .single();
+      resolvedCoachId = coachProfile?.id ?? null;
+    }
+
     // 1. Create the church record
     const { data: church, error: churchError } = await supabase
       .from('churches')
       .insert({
         name: churchName.trim(),
         status: initialStatus,
+        coach_id: resolvedCoachId,
       })
       .select()
       .single();
@@ -323,7 +377,7 @@ export async function PATCH(request: NextRequest) {
       return handleBulkUpdate(supabase, session, body);
     }
 
-    const { churchId, status, current_phase, tierName, aliases, sendEmail = true } = body;
+    const { churchId, status, current_phase, tierName, aliases, coachId: newCoachId, sendEmail = true } = body;
 
     if (!churchId) {
       return NextResponse.json({ error: 'Church ID required' }, { status: 400 });
@@ -363,6 +417,11 @@ export async function PATCH(request: NextRequest) {
     // Update church aliases for calendar matching
     if (aliases !== undefined) {
       updates.aliases = aliases;
+    }
+
+    // Update coach assignment (admin-only — coaches cannot reassign to other coaches)
+    if (newCoachId !== undefined) {
+      updates.coach_id = newCoachId || null;
     }
 
     const { error: updateError } = await supabase

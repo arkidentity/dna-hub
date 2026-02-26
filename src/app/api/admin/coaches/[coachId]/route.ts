@@ -1,11 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
 import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
+import { ensureCoachAccount } from '@/lib/coachAuth';
 
 /**
  * PATCH /api/admin/coaches/[coachId]
- * Updates an existing DNA coach.
- * Body: { name?, email?, booking_embed? }
+ * Updates an existing DNA coach. Admin-only.
+ * Body: { name?, email?, phone?, booking_embed? }
+ * If email is set, re-provisions the login account (fire-and-forget).
  */
 export async function PATCH(
   request: NextRequest,
@@ -18,7 +20,7 @@ export async function PATCH(
 
     const { coachId } = await params;
     const body = await request.json();
-    const { name, email, booking_embed } = body;
+    const { name, email, phone, booking_embed } = body;
 
     if (name !== undefined && !name?.trim()) {
       return NextResponse.json({ error: 'Coach name cannot be empty' }, { status: 400 });
@@ -27,6 +29,7 @@ export async function PATCH(
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (name !== undefined) updates.name = name.trim();
     if (email !== undefined) updates.email = email?.trim() || null;
+    if (phone !== undefined) updates.phone = phone?.trim() || null;
     if (booking_embed !== undefined) updates.booking_embed = booking_embed?.trim() || null;
 
     const supabase = getSupabaseAdmin();
@@ -34,12 +37,21 @@ export async function PATCH(
       .from('dna_coaches')
       .update(updates)
       .eq('id', coachId)
-      .select('id, name, email, booking_embed, created_at')
+      .select('id, name, email, phone, booking_embed, user_id, created_at')
       .single();
 
     if (error) {
       console.error('[ADMIN] Coach update error:', error);
       return NextResponse.json({ error: 'Failed to update coach' }, { status: 500 });
+    }
+
+    // Re-provision login account if coach has an email (fire-and-forget)
+    const resolvedEmail = data.email;
+    const resolvedName = data.name;
+    if (resolvedEmail) {
+      void (async () => {
+        await ensureCoachAccount(coachId, resolvedEmail, resolvedName);
+      })();
     }
 
     return NextResponse.json({ coach: data });
@@ -51,7 +63,12 @@ export async function PATCH(
 
 /**
  * DELETE /api/admin/coaches/[coachId]
- * Deletes a DNA coach. church_demo_settings.coach_id will be SET NULL via FK cascade.
+ * Deletes a DNA coach. Admin-only.
+ * FK cascades:
+ *   - churches.coach_id → SET NULL (unassigns from churches)
+ *   - church_demo_settings.coach_id → SET NULL (unassigns from demo settings)
+ * NOTE: The linked user account and dna_coach role row are NOT deleted automatically.
+ *       Remove manually in Supabase Auth if needed.
  */
 export async function DELETE(
   _request: NextRequest,

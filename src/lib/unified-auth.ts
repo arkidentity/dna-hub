@@ -22,7 +22,7 @@ import { createServerSupabase } from './supabase-server'
 const adminDb = { from: (table: string) => getSupabaseAdmin().from(table) }
 
 export interface UserRole {
-  role: 'church_leader' | 'dna_leader' | 'training_participant' | 'admin'
+  role: 'church_leader' | 'dna_leader' | 'training_participant' | 'admin' | 'dna_coach'
   churchId: string | null
 }
 
@@ -208,6 +208,25 @@ export function hasRole(
  */
 export function isAdmin(session: UserSession | null): boolean {
   return hasRole(session, 'admin')
+}
+
+/**
+ * Check if the user is a DNA coach
+ * @param session - The user session
+ * @returns true if user has the dna_coach role
+ */
+export function isDNACoach(session: UserSession | null): boolean {
+  return hasRole(session, 'dna_coach')
+}
+
+/**
+ * Check if the user is an admin OR a DNA coach
+ * Both roles are permitted to access the admin panel (coaches see a scoped view)
+ * @param session - The user session
+ * @returns true if user is admin or dna_coach
+ */
+export function isAdminOrCoach(session: UserSession | null): boolean {
+  return isAdmin(session) || isDNACoach(session)
 }
 
 /**

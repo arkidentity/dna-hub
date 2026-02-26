@@ -30,6 +30,7 @@ interface ChurchDetail {
     name: string;
     status: string;
     current_phase: number;
+    coach_id?: string | null;
     created_at: string;
     subdomain?: string | null;
     start_date?: string;
@@ -83,6 +84,7 @@ interface ChurchDetail {
     notes?: string;
     meet_link?: string;
   }>;
+  coach?: { id: string; name: string; email: string | null } | null;
   phases?: Array<{
     id: string;
     phase_number: number;
@@ -132,6 +134,17 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
   const [editingAliases, setEditingAliases] = useState(false);
   const [aliasInput, setAliasInput] = useState('');
   const [savingAliases, setSavingAliases] = useState(false);
+
+  // Coach assignment state (admin-only)
+  const [coachOptions, setCoachOptions] = useState<{ id: string; name: string }[]>([]);
+  const [savingCoach, setSavingCoach] = useState(false);
+
+  useEffect(() => {
+    fetch('/api/admin/coaches')
+      .then(r => r.ok ? r.json() : { coaches: [] })
+      .then(d => setCoachOptions((d.coaches ?? []).map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }))))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     fetchChurchData();
@@ -252,6 +265,24 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  const handleCoachChange = async (newCoachId: string) => {
+    setSavingCoach(true);
+    try {
+      const res = await fetch('/api/admin/churches', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ churchId, coachId: newCoachId || null }),
+      });
+      if (!res.ok) throw new Error('Failed to update coach');
+      await fetchChurchData();
+    } catch (error) {
+      console.error('Coach update error:', error);
+      alert('Failed to update coach assignment');
+    } finally {
+      setSavingCoach(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -268,7 +299,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
     );
   }
 
-  const { church, leader, assessment, documents, calls, phases } = data;
+  const { church, coach, leader, assessment, documents, calls, phases } = data;
 
   return (
     <div className="min-h-screen bg-background">
@@ -361,6 +392,30 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
                   </button>
                 )}
               </div>
+              {/* Assigned Coach */}
+              {(coach || coachOptions.length > 0) && (
+                <div className="flex items-center gap-2 mt-2">
+                  <Users className="w-3 h-3 text-gray-400" />
+                  {coachOptions.length > 0 ? (
+                    <div className="flex items-center gap-2">
+                      <select
+                        value={church.coach_id ?? ''}
+                        onChange={e => handleCoachChange(e.target.value)}
+                        disabled={savingCoach}
+                        className="text-xs px-2 py-1 bg-white/10 border border-gray-500 rounded text-white disabled:opacity-50"
+                      >
+                        <option value="">— No coach —</option>
+                        {coachOptions.map(c => (
+                          <option key={c.id} value={c.id}>{c.name}</option>
+                        ))}
+                      </select>
+                      {savingCoach && <Loader2 className="w-3 h-3 animate-spin text-gold" />}
+                    </div>
+                  ) : coach ? (
+                    <span className="text-xs text-gray-300">Coach: {coach.name}</span>
+                  ) : null}
+                </div>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <button

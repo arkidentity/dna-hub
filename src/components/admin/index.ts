@@ -7,3 +7,4 @@ export { default as ResourcesTab } from './ResourcesTab';
 export { default as BrandingTab } from './BrandingTab';
 export { default as AdminCohortTab } from './AdminCohortTab';
 export { default as DemoTab } from './DemoTab';
+export { default as CoachesTab } from './CoachesTab';

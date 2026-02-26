@@ -36,6 +36,8 @@ interface ChurchSummary {
   name: string;
   status: string;
   current_phase: number;
+  coach_id: string | null;
+  coach_name: string | null;
   created_at: string;
   updated_at: string;
   leader_name: string;
@@ -142,10 +144,21 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
     leaderEmail: '',
     leaderPhone: '',
     leaderRole: '',
+    coachId: '',
     initialStatus: 'prospect',
   });
   const [addChurchLoading, setAddChurchLoading] = useState(false);
   const [addChurchError, setAddChurchError] = useState<string | null>(null);
+
+  // Coaches list for assignment dropdown
+  const [coachOptions, setCoachOptions] = useState<{ id: string; name: string }[]>([]);
+
+  useEffect(() => {
+    fetch('/api/admin/coaches')
+      .then(r => r.ok ? r.json() : { coaches: [] })
+      .then(d => setCoachOptions((d.coaches ?? []).map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }))))
+      .catch(() => {});
+  }, []);
 
   useEffect(() => {
     if (showAnalytics && !analytics) {
@@ -189,7 +202,7 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
       setShowAddChurch(false);
       setAddChurchForm({
         churchName: '', city: '', state: '', leaderName: '',
-        leaderEmail: '', leaderPhone: '', leaderRole: '', initialStatus: 'prospect',
+        leaderEmail: '', leaderPhone: '', leaderRole: '', coachId: '', initialStatus: 'prospect',
       });
       await onRefresh();
     } catch (err) {
@@ -644,7 +657,7 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
             </select>
           </div>
           <button
-            onClick={() => { setAddChurchForm({ churchName: '', city: '', state: '', leaderName: '', leaderEmail: '', leaderPhone: '', leaderRole: '', initialStatus: 'prospect' }); setAddChurchError(null); setShowAddChurch(true); }}
+            onClick={() => { setAddChurchForm({ churchName: '', city: '', state: '', leaderName: '', leaderEmail: '', leaderPhone: '', leaderRole: '', coachId: '', initialStatus: 'prospect' }); setAddChurchError(null); setShowAddChurch(true); }}
             className="btn-primary inline-flex items-center gap-2 whitespace-nowrap self-start"
           >
             <PlusCircle className="w-4 h-4" />
@@ -774,6 +787,12 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
                         <Mail className="w-4 h-4" />
                         {church.leader_email}
                       </a>
+                      {church.coach_name && (
+                        <span className="flex items-center gap-1 text-xs text-gold/80 bg-gold/10 px-2 py-0.5 rounded-full">
+                          <Building2 className="w-3 h-3" />
+                          {church.coach_name}
+                        </span>
+                      )}
                     </div>
 
                     {/* Progress bar for active churches */}
@@ -1137,6 +1156,21 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
                         <option value="active">Active (full dashboard access)</option>
                       </select>
                     </div>
+                    {coachOptions.length > 0 && (
+                      <div>
+                        <label className="block text-sm font-medium text-navy mb-1">Assign DNA Coach</label>
+                        <select
+                          value={addChurchForm.coachId}
+                          onChange={(e) => setAddChurchForm({ ...addChurchForm, coachId: e.target.value })}
+                          className="w-full"
+                        >
+                          <option value="">— No coach assigned —</option>
+                          {coachOptions.map(c => (
+                            <option key={c.id} value={c.id}>{c.name}</option>
+                          ))}
+                        </select>
+                      </div>
+                    )}
                   </div>
                 </div>
 
