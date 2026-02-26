@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { roadblocks, assessmentIntro, assessmentConclusion } from '@/lib/flow-assessment-data';
@@ -36,6 +36,10 @@ export default function FlowAssessmentPage() {
   const [assessmentId, setAssessmentId] = useState<string | null>(null);
   const [expandedActions, setExpandedActions] = useState(false);
   const [completeError, setCompleteError] = useState<string | null>(null);
+
+  // Ref so the auto-save interval always reads the latest data without resetting the timer
+  const latestDataRef = useRef(assessmentData);
+  useEffect(() => { latestDataRef.current = assessmentData; }, [assessmentData]);
 
   // Load existing draft or create new assessment
   useEffect(() => {
@@ -82,16 +86,33 @@ export default function FlowAssessmentPage() {
     loadAssessment();
   }, [router]);
 
-  // Auto-save every 30 seconds
+  // Auto-save every 30 seconds.
+  // Uses latestDataRef so the timer only resets when the assessment loads,
+  // not on every keystroke (which would prevent the save from ever firing).
   useEffect(() => {
     const interval = setInterval(() => {
-      if (assessmentId && Object.keys(assessmentData.ratings).length > 0) {
-        saveProgress(true);
+      const data = latestDataRef.current;
+      if (assessmentId && Object.keys(data.ratings).length > 0) {
+        fetch('/api/training/assessment', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            assessmentId,
+            data: {
+              roadblock_ratings: data.ratings,
+              reflections: data.reflections,
+              top_roadblocks: data.topRoadblocks,
+              action_plan: data.actionPlan,
+              accountability_partner: data.accountabilityPartner,
+              accountability_date: data.accountabilityDate
+            }
+          })
+        }).catch(err => console.error('[Auto-save] Failed:', err));
       }
     }, 30000);
 
     return () => clearInterval(interval);
-  }, [assessmentId, assessmentData]);
+  }, [assessmentId]); // Only resets when the assessment ID loads, not on every keystroke
 
   const saveProgress = useCallback(async (silent = false) => {
     if (!silent) setIsSaving(true);
