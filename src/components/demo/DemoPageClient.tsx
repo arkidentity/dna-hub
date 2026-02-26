@@ -4,6 +4,7 @@ import { useState, useEffect, useRef } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { ChevronDown, ArrowRight, Lock, Compass, Users, TrendingUp } from 'lucide-react';
+import BookingModal from '@/components/demo/BookingModal';
 
 // ─── Types ──────────────────────────────────────────────────────────────────
 
@@ -128,6 +129,7 @@ export default function DemoPageClient({
 
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
   const [stickyHidden, setStickyHidden] = useState(false);
+  const [bookingOpen, setBookingOpen] = useState(false);
   // Full-experience iframe (gate section — dna_leader role, has group + pathway data)
   const [iframeSrc, setIframeSrc] = useState('');
   // Free-tier iframe (first preview — role=disciple, no group, shows NoGroupView)
@@ -136,6 +138,16 @@ export default function DemoPageClient({
   const [gateOpen, setGateOpen] = useState(false);
   const finalCtaRef = useRef<HTMLDivElement>(null);
   const gateContentRef = useRef<HTMLDivElement>(null);
+
+  // Clear Hub demo-mode keys on mount so DemoBanner doesn't appear on this page
+  // (keys are set by HubDemoClient when navigating into the leader dashboard demo)
+  useEffect(() => {
+    try {
+      localStorage.removeItem('dna_demo_mode');
+      localStorage.removeItem('dna_demo_church');
+      localStorage.removeItem('dna_demo_page_url');
+    } catch { /* ignore */ }
+  }, []);
 
   // Hide sticky mobile bar when final CTA section is in view
   useEffect(() => {
@@ -154,13 +166,15 @@ export default function DemoPageClient({
     const base = `https://${church.subdomain}.dailydna.app`;
 
     // Full-experience session (dna_leader role — bypasses group gate, shows full pathway)
+    // sk=full gives this iframe its own Supabase localStorage key, isolating it from the
+    // free iframe so the two sessions never overwrite each other.
     async function fetchFullSession() {
       try {
         const res = await fetch(`/api/demo/app-session/${church.subdomain}`);
         if (res.ok) {
           const data = await res.json();
           if (data.access_token) {
-            setIframeSrc(`${base}/demo-entry?at=${data.access_token}&rt=${data.refresh_token}&redirect=/pathway`);
+            setIframeSrc(`${base}/demo-entry?at=${data.access_token}&rt=${data.refresh_token}&redirect=/pathway&sk=full`);
             return;
           }
         }
@@ -169,13 +183,15 @@ export default function DemoPageClient({
     }
 
     // Free-tier session (role=disciple, no group — lands on journal, pathway is locked)
+    // sk=free gives this iframe its own Supabase localStorage key, isolating it from the
+    // full iframe so the two sessions never overwrite each other.
     async function fetchFreeSession() {
       try {
         const res = await fetch(`/api/demo/app-session-free/${church.subdomain}`);
         if (res.ok) {
           const data = await res.json();
           if (data.access_token) {
-            setFreeIframeSrc(`${base}/demo-entry?at=${data.access_token}&rt=${data.refresh_token}&redirect=/journal`);
+            setFreeIframeSrc(`${base}/demo-entry?at=${data.access_token}&rt=${data.refresh_token}&redirect=/journal&sk=free`);
             return;
           }
         }
@@ -381,10 +397,10 @@ export default function DemoPageClient({
 
             {/* CTAs */}
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.625rem', marginTop: '0.5rem' }}>
-              <Link href={bookCallUrl} className="dp-btn-primary" style={{ background: BRAND_GREEN }}>
+              <button onClick={() => setBookingOpen(true)} className="dp-btn-primary" style={{ background: BRAND_GREEN }}>
                 {cta.ctaText}
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </button>
             </div>
           </div>
         </section>
@@ -445,7 +461,6 @@ export default function DemoPageClient({
             )}
             {freeIframeSrc && (
               <iframe
-                key={gateOpen ? 'free-gate-open' : 'free-initial'}
                 src={freeIframeSrc}
                 title={`${church.name} DNA Daily App`}
                 sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
@@ -465,10 +480,10 @@ export default function DemoPageClient({
             The app is our gift to the body of Christ. Start using it today — no strings attached.
           </p>
 
-          <Link href={bookCallUrl} className="dp-btn-primary" style={{ background: primary }}>
+          <button onClick={() => setBookingOpen(true)} className="dp-btn-primary" style={{ background: primary }}>
             Book a Discovery Call
             <ArrowRight className="w-4 h-4" />
-          </Link>
+          </button>
           <Link
             href={assessmentUrl}
             style={{ fontSize: '0.875rem', color: '#888', textDecoration: 'none', borderBottom: '1px solid #ddd', paddingBottom: '1px' }}
@@ -659,10 +674,10 @@ export default function DemoPageClient({
 
               {/* CTAs */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', alignItems: 'flex-start' }}>
-                <Link href={bookCallUrl} className="dp-btn-primary" style={{ background: primary }}>
+                <button onClick={() => setBookingOpen(true)} className="dp-btn-primary" style={{ background: primary }}>
                   Book a Discovery Call
                   <ArrowRight className="w-4 h-4" />
-                </Link>
+                </button>
                 <Link
                   href={assessmentUrl}
                   style={{ fontSize: '0.875rem', color: '#888', textDecoration: 'none', borderBottom: '1px solid #ddd', paddingBottom: '1px' }}
@@ -740,10 +755,10 @@ export default function DemoPageClient({
               30 minutes. No pressure. Just a real conversation about what multiplication could look like at {church.name}.
             </p>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', width: '100%', alignItems: 'center' }}>
-              <Link href={bookCallUrl} className="dp-btn-primary" style={{ background: GATE_GOLD, justifyContent: 'center', width: '100%', maxWidth: '320px' }}>
+              <button onClick={() => setBookingOpen(true)} className="dp-btn-primary" style={{ background: GATE_GOLD, justifyContent: 'center', width: '100%', maxWidth: '320px' }}>
                 Book a Discovery Call
                 <ArrowRight className="w-4 h-4" />
-              </Link>
+              </button>
               <Link href={assessmentUrl} className="dp-btn-outline" style={{ justifyContent: 'center', width: '100%', maxWidth: '320px' }}>
                 Take the Assessment First
               </Link>
@@ -775,20 +790,23 @@ export default function DemoPageClient({
         <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.75rem', margin: '0 0 0.5rem', textAlign: 'center', fontWeight: 500 }}>
           Free to start. No commitment.
         </p>
-        <Link
-          href={bookCallUrl}
+        <button
+          onClick={() => setBookingOpen(true)}
           style={{
             display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
             width: '100%', padding: '0.875rem',
             background: GATE_GOLD, color: '#fff',
             borderRadius: '8px', fontWeight: 700, fontSize: '1rem',
-            textDecoration: 'none',
+            border: 'none', cursor: 'pointer', fontFamily: 'inherit',
           }}
         >
           Book a Discovery Call
           <ArrowRight className="w-4 h-4" />
-        </Link>
+        </button>
       </div>
+
+      {/* ── BOOKING MODAL ────────────────────────────────────────── */}
+      {bookingOpen && <BookingModal onClose={() => setBookingOpen(false)} />}
     </div>
   );
 }

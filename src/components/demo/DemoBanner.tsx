@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { Info, X } from 'lucide-react';
+import BookingModal from '@/components/demo/BookingModal';
 
 /**
  * DemoBanner
@@ -19,6 +20,7 @@ export default function DemoBanner() {
   const [show, setShow] = useState(false);
   const [churchName, setChurchName] = useState('');
   const [demoPageUrl, setDemoPageUrl] = useState('');
+  const [bookingOpen, setBookingOpen] = useState(false);
 
   useEffect(() => {
     try {
@@ -49,79 +51,83 @@ export default function DemoBanner() {
   if (!show) return null;
 
   return (
-    <div
-      style={{
-        background: '#1a3a52',
-        borderBottom: '1px solid rgba(232,181,98,0.3)',
-        padding: '0.625rem 1.25rem',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '0.75rem',
-        justifyContent: 'center',
-        position: 'relative',
-        zIndex: 40,
-      }}
-    >
-      <Info
-        className="w-4 h-4 flex-shrink-0"
-        style={{ color: '#e8b562' }}
-      />
-      <span style={{ color: '#f5f0e8', fontSize: '0.875rem', fontWeight: 500 }}>
-        You&apos;re previewing a demo of{churchName ? ` ${churchName}'s` : ''} DNA Hub.{' '}
-        <span style={{ opacity: 0.7 }}>This is sample data only.</span>
-      </span>
-      {demoPageUrl && (
-        <a
-          href={demoPageUrl}
-          style={{
-            color: 'rgba(255,255,255,0.7)',
-            fontSize: '0.8rem',
-            fontWeight: 500,
-            textDecoration: 'none',
-            borderBottom: '1px solid rgba(255,255,255,0.3)',
-            flexShrink: 0,
-            whiteSpace: 'nowrap',
-            paddingBottom: '1px',
-          }}
-        >
-          ← Back to demo
-        </a>
-      )}
-      <a
-        href="https://calendly.com/travisdna/discovery"
-        target="_blank"
-        rel="noopener noreferrer"
+    <>
+      <div
         style={{
-          background: '#e8b562',
-          color: '#1a2332',
-          fontSize: '0.8rem',
-          fontWeight: 700,
-          padding: '0.25rem 0.875rem',
-          borderRadius: '20px',
-          textDecoration: 'none',
-          flexShrink: 0,
-          whiteSpace: 'nowrap',
-        }}
-      >
-        Book a Call →
-      </a>
-      <button
-        onClick={handleDismiss}
-        aria-label="Dismiss demo banner"
-        style={{
-          position: 'absolute',
-          right: '1rem',
-          background: 'none',
-          border: 'none',
-          cursor: 'pointer',
-          color: 'rgba(255,255,255,0.5)',
+          background: '#1a3a52',
+          borderBottom: '1px solid rgba(232,181,98,0.3)',
+          padding: '0.625rem 1.25rem',
           display: 'flex',
           alignItems: 'center',
-          padding: '0.25rem',
+          gap: '0.75rem',
+          justifyContent: 'center',
+          position: 'relative',
+          zIndex: 40,
         }}
       >
-        <X className="w-4 h-4" />
-      </button>
-    </div>
+        <Info
+          className="w-4 h-4 flex-shrink-0"
+          style={{ color: '#e8b562' }}
+        />
+        <span style={{ color: '#f5f0e8', fontSize: '0.875rem', fontWeight: 500 }}>
+          You&apos;re previewing a demo of{churchName ? ` ${churchName}'s` : ''} DNA Hub.{' '}
+          <span style={{ opacity: 0.7 }}>This is sample data only.</span>
+        </span>
+        {demoPageUrl && (
+          <a
+            href={demoPageUrl}
+            style={{
+              color: 'rgba(255,255,255,0.7)',
+              fontSize: '0.8rem',
+              fontWeight: 500,
+              textDecoration: 'none',
+              borderBottom: '1px solid rgba(255,255,255,0.3)',
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
+              paddingBottom: '1px',
+            }}
+          >
+            ← Back to demo
+          </a>
+        )}
+        <button
+          onClick={() => setBookingOpen(true)}
+          style={{
+            background: '#e8b562',
+            color: '#1a2332',
+            fontSize: '0.8rem',
+            fontWeight: 700,
+            padding: '0.25rem 0.875rem',
+            borderRadius: '20px',
+            border: 'none',
+            cursor: 'pointer',
+            fontFamily: 'inherit',
+            flexShrink: 0,
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Book a Call →
+        </button>
+        <button
+          onClick={handleDismiss}
+          aria-label="Dismiss demo banner"
+          style={{
+            position: 'absolute',
+            right: '1rem',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            color: 'rgba(255,255,255,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            padding: '0.25rem',
+          }}
+        >
+          <X className="w-4 h-4" />
+        </button>
+      </div>
+
+      {bookingOpen && <BookingModal onClose={() => setBookingOpen(false)} />}
+    </>
   );
 }
