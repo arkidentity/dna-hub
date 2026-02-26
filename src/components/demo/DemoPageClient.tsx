@@ -79,9 +79,12 @@ function isDirectVideoUrl(url: string): boolean {
   );
 }
 
-// ─── Gold ─────────────────────────────────────────────────────────────────────
+// ─── Brand Colors ─────────────────────────────────────────────────────────────
 
 const GATE_GOLD = '#C4922A';
+const BRAND_GREEN = '#2E7D5A';
+const CREAM_BG = '#F5EFE0';
+const WARM_NEUTRAL_BG = '#F7F3EC';
 
 // ─── FAQ Items ────────────────────────────────────────────────────────────────
 
@@ -295,7 +298,7 @@ export default function DemoPageClient({
         paddingLeft: '1.25rem',
         paddingRight: '1.25rem',
         textAlign: 'center',
-        background: '#fff',
+        background: CREAM_BG,
       }}>
         <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'center' }}>
           {/* Headline */}
@@ -309,7 +312,7 @@ export default function DemoPageClient({
           }}>
             This is what discipleship<br />
             looks like at<br />
-            <span style={{ whiteSpace: 'nowrap' }}>{church.name}.</span>
+            <span style={{ whiteSpace: 'nowrap', color: GATE_GOLD }}>{church.name}.</span>
           </h1>
 
           {/* Subline */}
@@ -321,7 +324,7 @@ export default function DemoPageClient({
 
       {/* ── 3. PERSONAL VIDEO ────────────────────────────────────── */}
       {hasVideo && (
-        <section style={{ padding: '0 1.25rem 3.5rem', background: '#fff' }}>
+        <section style={{ padding: '0 1.25rem 3.5rem', background: CREAM_BG }}>
           <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '0.875rem', alignItems: 'center' }}>
             {/* 9:16 video */}
             <div style={{
@@ -374,11 +377,11 @@ export default function DemoPageClient({
       <section
         id="app-preview"
         className="dp-section"
-        style={{ background: '#f7f7f5', textAlign: 'center' }}
+        style={{ background: WARM_NEUTRAL_BG, textAlign: 'center' }}
       >
         <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
           {/* Section label */}
-          <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: accent }}>
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: BRAND_GREEN }}>
             Your Free App
           </span>
 
@@ -466,7 +469,7 @@ export default function DemoPageClient({
             fontSize: 'clamp(1.625rem, 5vw, 2.375rem)',
             fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.15,
           }}>
-            What happens when DNA is fully unlocked?
+            What happens when DNA is <span style={{ color: GATE_GOLD }}>fully unlocked?</span>
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '1rem', margin: 0, lineHeight: 1.7 }}>
             Groups. Multiplication. A dashboard that shows you exactly where every disciple is in their journey. This is what coaching partners experience.
@@ -500,9 +503,9 @@ export default function DemoPageClient({
       {gateOpen && (
         <div ref={gateContentRef}>
           {/* 7A — Full App Demo */}
-          <section className="dp-section" style={{ background: '#f7f7f5', textAlign: 'center' }}>
+          <section className="dp-section" style={{ background: WARM_NEUTRAL_BG, textAlign: 'center' }}>
             <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: accent }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: BRAND_GREEN }}>
                 Full DNA Experience
               </span>
               <h2 style={{
@@ -591,10 +594,10 @@ export default function DemoPageClient({
           </section>
 
           {/* 7C — Coaching Partnership */}
-          <section className="dp-section" style={{ background: '#f7f7f5' }}>
+          <section className="dp-section" style={{ background: WARM_NEUTRAL_BG }}>
             <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
-                <span style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: accent }}>
+                <span style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: BRAND_GREEN }}>
                   Partnership
                 </span>
                 <h2 style={{
@@ -653,7 +656,7 @@ export default function DemoPageClient({
       )}
 
       {/* ── 8. FAQ ───────────────────────────────────────────────── */}
-      <section className="dp-section" style={{ background: '#fff' }}>
+      <section className="dp-section" style={{ background: WARM_NEUTRAL_BG }}>
         <div style={{ maxWidth: '580px', margin: '0 auto' }}>
           <h2 style={{
             fontFamily: "'Playfair Display', serif",
@@ -677,7 +680,7 @@ export default function DemoPageClient({
                       flexShrink: 0,
                       transform: faqOpen === i ? 'rotate(180deg)' : 'none',
                       transition: 'transform 0.25s',
-                      color: accent,
+                      color: BRAND_GREEN,
                     }}
                   />
                 </button>
