@@ -516,7 +516,7 @@ export default function DemoPageClient({
                   <button
                     onClick={() => setFreeIframeActive(false)}
                     style={{
-                      position: 'absolute', bottom: '14px', left: '50%',
+                      position: 'absolute', top: '12px', left: '50%',
                       transform: 'translateX(-50%)',
                       background: 'rgba(0,0,0,0.62)',
                       color: '#fff',
@@ -683,7 +683,7 @@ export default function DemoPageClient({
                       <button
                         onClick={() => setFullIframeActive(false)}
                         style={{
-                          position: 'absolute', bottom: '14px', left: '50%',
+                          position: 'absolute', top: '12px', left: '50%',
                           transform: 'translateX(-50%)',
                           background: 'rgba(0,0,0,0.62)',
                           color: '#fff',
@@ -909,7 +909,7 @@ export default function DemoPageClient({
       </footer>
 
       {/* ── STICKY MOBILE CTA BAR ────────────────────────────────── */}
-      <div className={`dp-sticky-bottom${stickyHidden ? ' hidden' : ''}`}>
+      <div className={`dp-sticky-bottom${stickyHidden || freeIframeActive || fullIframeActive ? ' hidden' : ''}`}>
         <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.75rem', margin: '0 0 0.5rem', textAlign: 'center', fontWeight: 500 }}>
           Free to start. No commitment.
         </p>
