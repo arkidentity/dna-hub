@@ -139,6 +139,10 @@ export default function DemoPageClient({
   const [freeIframeSrc, setFreeIframeSrc] = useState('');
   const [logoError, setLogoError] = useState(false);
   const [gateOpen, setGateOpen] = useState(false);
+  // Mobile iframe scroll-trap prevention — touch devices only
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [freeIframeActive, setFreeIframeActive] = useState(false);
+  const [fullIframeActive, setFullIframeActive] = useState(false);
   const finalCtaRef = useRef<HTMLDivElement>(null);
   const gateContentRef = useRef<HTMLDivElement>(null);
 
@@ -151,6 +155,11 @@ export default function DemoPageClient({
       localStorage.removeItem('dna_demo_page_url');
       localStorage.removeItem('dna_demo_booking_url');
     } catch { /* ignore */ }
+  }, []);
+
+  // Detect touch/mobile device for iframe scroll-trap prevention
+  useEffect(() => {
+    setIsTouchDevice(window.matchMedia('(pointer: coarse)').matches);
   }, []);
 
   // Hide sticky mobile bar when final CTA section is in view
@@ -464,13 +473,68 @@ export default function DemoPageClient({
               </div>
             )}
             {freeIframeSrc && (
-              <iframe
-                src={freeIframeSrc}
-                title={`${church.name} DNA Daily App`}
-                sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-                loading="lazy"
-                style={{ width: '100%', height: '100%', border: 'none' }}
-              />
+              <>
+                <iframe
+                  src={freeIframeSrc}
+                  title={`${church.name} DNA Daily App`}
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                  loading="lazy"
+                  style={{
+                    width: '100%', height: '100%', border: 'none',
+                    pointerEvents: isTouchDevice && !freeIframeActive ? 'none' : 'auto',
+                  }}
+                />
+                {/* Tap-to-activate overlay — touch/mobile only */}
+                {isTouchDevice && !freeIframeActive && (
+                  <div
+                    onClick={() => setFreeIframeActive(true)}
+                    style={{
+                      position: 'absolute', inset: 0,
+                      background: 'rgba(0,0,0,0.18)',
+                      display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center',
+                      gap: '0.875rem', cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{
+                      background: 'rgba(255,255,255,0.97)',
+                      borderRadius: '50px',
+                      padding: '0.875rem 1.75rem',
+                      boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    }}>
+                      <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>👆</span>
+                      <span style={{ fontWeight: 700, fontSize: '1rem', color: '#111' }}>Tap to explore</span>
+                    </div>
+                    <span style={{ color: 'rgba(255,255,255,0.92)', fontSize: '0.8rem', fontWeight: 500 }}>
+                      Scroll outside the app to continue
+                    </span>
+                  </div>
+                )}
+                {/* Dismiss chip — returns user to page scroll mode */}
+                {isTouchDevice && freeIframeActive && (
+                  <button
+                    onClick={() => setFreeIframeActive(false)}
+                    style={{
+                      position: 'absolute', bottom: '14px', left: '50%',
+                      transform: 'translateX(-50%)',
+                      background: 'rgba(0,0,0,0.62)',
+                      color: '#fff',
+                      border: 'none', borderRadius: '50px',
+                      padding: '0.5rem 1.25rem',
+                      fontSize: '0.8rem', fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: '0.375rem',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      whiteSpace: 'nowrap',
+                      zIndex: 10,
+                    }}
+                  >
+                    ↕ Scroll page
+                  </button>
+                )}
+              </>
             )}
           </div>
 
