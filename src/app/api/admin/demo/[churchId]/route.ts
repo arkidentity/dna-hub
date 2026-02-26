@@ -51,7 +51,7 @@ export async function POST(
 
     const { churchId } = await params;
     const body = await request.json();
-    const { video_url, demo_enabled, default_temp, coach_name } = body;
+    const { video_url, demo_enabled, default_temp, coach_name, booking_url } = body;
 
     // Validate temp value
     if (default_temp && !['cold', 'warm', 'hot'].includes(default_temp)) {
@@ -76,6 +76,7 @@ export async function POST(
           demo_enabled: demo_enabled ?? false,
           default_temp: default_temp ?? 'warm',
           coach_name: coach_name?.trim() || 'Travis',
+          booking_url: booking_url?.trim() || null,
           updated_at: new Date().toISOString(),
         },
         { onConflict: 'church_id' }

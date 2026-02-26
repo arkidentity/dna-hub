@@ -23,6 +23,7 @@ interface DemoChurchData {
     default_temp: 'cold' | 'warm' | 'hot';
     demo_seeded_at: string | null;
     coach_name: string;
+    booking_url: string | null;
   };
 }
 
@@ -77,6 +78,7 @@ export default async function DemoPage({ params, searchParams }: DemoPageProps) 
       bookCallUrl={bookCallUrl}
       assessmentUrl={assessmentUrl}
       coachName={data.demo.coach_name ?? 'Travis'}
+      bookingUrl={data.demo.booking_url ?? ''}
     />
   );
 }

@@ -33,7 +33,7 @@ export async function GET(
 
     const { data: demo } = await supabase
       .from('church_demo_settings')
-      .select('demo_enabled')
+      .select('demo_enabled, booking_url')
       .eq('church_id', church.id)
       .single();
 
@@ -60,6 +60,7 @@ export async function GET(
         logo_url: church.logo_url ?? null,
       },
       events: events ?? [],
+      booking_url: (demo.booking_url as string | null) ?? null,
     });
   } catch (error) {
     console.error('[DEMO] Hub data error:', error);

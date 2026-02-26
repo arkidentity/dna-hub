@@ -22,6 +22,7 @@ interface HubDemoData {
     end_time: string | null;
     event_type: string;
   }>;
+  booking_url: string | null;
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }) {
@@ -57,6 +58,7 @@ export default async function HubDemoPage({ params }: HubDemoPageProps) {
       church={data.church}
       events={data.events}
       demoPageUrl={demoPageUrl}
+      bookingUrl={data.booking_url ?? ''}
     />
   );
 }

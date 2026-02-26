@@ -13,6 +13,7 @@ import BookingModal from '@/components/demo/BookingModal';
  *   - dna_demo_mode = '1'
  *   - dna_demo_church = '<church name>'
  *   - dna_demo_page_url = '/demo/<slug>'
+ *   - dna_demo_booking_url = '<booking URL>' (optional)
  *
  * Dismissing the banner clears all keys so it doesn't reappear.
  */
@@ -20,6 +21,7 @@ export default function DemoBanner() {
   const [show, setShow] = useState(false);
   const [churchName, setChurchName] = useState('');
   const [demoPageUrl, setDemoPageUrl] = useState('');
+  const [bookingUrl, setBookingUrl] = useState('');
   const [bookingOpen, setBookingOpen] = useState(false);
 
   useEffect(() => {
@@ -27,10 +29,12 @@ export default function DemoBanner() {
       const mode = localStorage.getItem('dna_demo_mode');
       const church = localStorage.getItem('dna_demo_church');
       const pageUrl = localStorage.getItem('dna_demo_page_url');
+      const bUrl = localStorage.getItem('dna_demo_booking_url');
       if (mode === '1') {
         setShow(true);
         setChurchName(church ?? '');
         setDemoPageUrl(pageUrl ?? '');
+        setBookingUrl(bUrl ?? '');
       }
     } catch {
       // localStorage unavailable
@@ -42,6 +46,7 @@ export default function DemoBanner() {
       localStorage.removeItem('dna_demo_mode');
       localStorage.removeItem('dna_demo_church');
       localStorage.removeItem('dna_demo_page_url');
+      localStorage.removeItem('dna_demo_booking_url');
     } catch {
       // ignore
     }
@@ -127,7 +132,7 @@ export default function DemoBanner() {
         </button>
       </div>
 
-      {bookingOpen && <BookingModal onClose={() => setBookingOpen(false)} />}
+      {bookingOpen && <BookingModal onClose={() => setBookingOpen(false)} url={bookingUrl} />}
     </>
   );
 }

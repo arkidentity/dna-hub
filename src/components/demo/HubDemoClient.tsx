@@ -43,6 +43,8 @@ interface HubDemoClientProps {
   church: Church;
   events: CalEvent[];
   demoPageUrl: string;
+  /** Booking URL for the "Book a Call" modal in DemoBanner. Stored in localStorage. */
+  bookingUrl?: string;
 }
 
 // ─── Hardcoded Seed Disciples (fallback mini-dashboard) ───────────────────────
@@ -490,7 +492,7 @@ function StaticMiniDashboard({ church, events, demoPageUrl }: HubDemoClientProps
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 
-export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoClientProps) {
+export default function HubDemoClient({ church, events, demoPageUrl, bookingUrl }: HubDemoClientProps) {
   const [authState, setAuthState] = useState<AuthState>('loading');
 
   useEffect(() => {
@@ -523,6 +525,8 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
           localStorage.setItem('dna_demo_mode', '1');
           localStorage.setItem('dna_demo_church', church.name);
           localStorage.setItem('dna_demo_page_url', demoPageUrl);
+          if (bookingUrl) localStorage.setItem('dna_demo_booking_url', bookingUrl);
+          else localStorage.removeItem('dna_demo_booking_url');
         } catch {
           // ignore
         }
@@ -541,7 +545,8 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
     }
 
     void establishSession();
-  }, [church.subdomain, church.name]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [church.subdomain, church.name, demoPageUrl, bookingUrl]);
 
   if (authState === 'loading' || authState === 'redirecting') {
     return <LoadingScreen church={church} />;

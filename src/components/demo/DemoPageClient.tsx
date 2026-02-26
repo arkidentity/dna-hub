@@ -36,6 +36,8 @@ interface DemoPageClientProps {
   bookCallUrl: string;
   assessmentUrl: string;
   coachName: string;
+  /** Booking URL for the embedded modal (Google Cal, Calendly, etc.) */
+  bookingUrl?: string;
 }
 
 // ─── Temperature CTA Copy ─────────────────────────────────────────────────────
@@ -118,6 +120,7 @@ export default function DemoPageClient({
   bookCallUrl,
   assessmentUrl,
   coachName,
+  bookingUrl,
 }: DemoPageClientProps) {
   const cta = TEMP_CTA[temp];
   const primary = church.primary_color;
@@ -146,6 +149,7 @@ export default function DemoPageClient({
       localStorage.removeItem('dna_demo_mode');
       localStorage.removeItem('dna_demo_church');
       localStorage.removeItem('dna_demo_page_url');
+      localStorage.removeItem('dna_demo_booking_url');
     } catch { /* ignore */ }
   }, []);
 
@@ -806,7 +810,7 @@ export default function DemoPageClient({
       </div>
 
       {/* ── BOOKING MODAL ────────────────────────────────────────── */}
-      {bookingOpen && <BookingModal onClose={() => setBookingOpen(false)} />}
+      {bookingOpen && <BookingModal onClose={() => setBookingOpen(false)} url={bookingUrl} />}
     </div>
   );
 }

@@ -5,11 +5,32 @@ import { X } from 'lucide-react';
 
 interface BookingModalProps {
   onClose: () => void;
+  /** The booking page URL to embed. Falls back to the default DNA scheduling link. */
+  url?: string;
 }
 
-const BOOKING_URL = 'https://calendar.app.google/fe44X2WDFFH5mucH7';
+// Proper Google Calendar embed URL (calendar.google.com supports iframe embedding;
+// calendar.app.google short links do NOT — they block X-Frame-Options).
+const DEFAULT_BOOKING_URL =
+  'https://calendar.google.com/calendar/appointments/schedules/AcZssZ1E8bA8sb4SP7QBJw45-6zKwxVNFu6x7w4YMBABJ1qdiE9ALT7hGvOlJ2RUGcfV9LwopqFiGPGe?gv=true';
 
-export default function BookingModal({ onClose }: BookingModalProps) {
+/**
+ * Accepts either a plain URL or a raw <iframe> embed snippet (e.g. from Google Calendar).
+ * If a snippet is detected, extracts and returns the src URL so it can be used in our modal.
+ */
+function extractBookingUrl(input: string): string {
+  const trimmed = input?.trim() ?? '';
+  if (!trimmed) return DEFAULT_BOOKING_URL;
+  // If the input contains an <iframe>, pull the src attribute value
+  if (trimmed.includes('<iframe')) {
+    const match = trimmed.match(/\bsrc=["']([^"']+)["']/i);
+    if (match?.[1]) return match[1];
+  }
+  return trimmed;
+}
+
+export default function BookingModal({ onClose, url }: BookingModalProps) {
+  const bookingUrl = extractBookingUrl(url ?? '');
   const [loaded, setLoaded] = useState(false);
 
   // Close on Escape + lock body scroll
@@ -121,7 +142,7 @@ export default function BookingModal({ onClose }: BookingModalProps) {
         )}
 
         <iframe
-          src={BOOKING_URL}
+          src={bookingUrl}
           title="Book a Discovery Call"
           style={{ flex: 1, border: 'none', opacity: loaded ? 1 : 0, transition: 'opacity 0.2s' }}
           onLoad={() => setLoaded(true)}

@@ -31,6 +31,7 @@ interface DemoSettings {
   demo_seeded_at: string | null;
   hub_demo_seeded_at: string | null;
   coach_name: string;
+  booking_url: string;
 }
 
 const TEMPS = [
@@ -76,6 +77,7 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
     demo_seeded_at: null,
     hub_demo_seeded_at: null,
     coach_name: 'Travis',
+    booking_url: '',
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -112,6 +114,7 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
           demo_seeded_at: data.settings.demo_seeded_at ?? null,
           hub_demo_seeded_at: data.settings.hub_demo_seeded_at ?? null,
           coach_name: data.settings.coach_name ?? 'Travis',
+          booking_url: data.settings.booking_url ?? '',
         });
       }
     } catch (err) {
@@ -136,6 +139,7 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
           demo_enabled: settings.demo_enabled,
           default_temp: settings.default_temp,
           coach_name: settings.coach_name?.trim() || 'Travis',
+          booking_url: settings.booking_url?.trim() || null,
         }),
       });
 
@@ -362,6 +366,57 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
             boxSizing: 'border-box',
           }}
         />
+      </div>
+
+      {/* Booking Link / Embed Code */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+        <label style={{ fontWeight: 600, color: '#1a2332', fontSize: '0.95rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Link2 className="w-4 h-4" />
+          Booking Link or Embed Code
+        </label>
+        <p style={{ color: '#666', fontSize: '0.85rem', margin: 0 }}>
+          Paste your scheduling URL <em>or</em> the full embed code from Google Calendar / Calendly.
+          Prospects click &ldquo;Book a Discovery Call&rdquo; and it opens as an embedded pop-up.
+        </p>
+        <textarea
+          value={settings.booking_url}
+          onChange={e => setSettings(prev => ({ ...prev, booking_url: e.target.value }))}
+          placeholder={`Paste a URL:\nhttps://calendly.com/yourname/30min\n\nOR the Google Calendar embed snippet:\n<!-- Google Calendar Appointment Scheduling begin -->\n<iframe src="https://calendar.google.com/..." ...></iframe>`}
+          rows={4}
+          style={{
+            padding: '0.625rem 0.75rem',
+            border: '1px solid #e0e0e0',
+            borderRadius: '6px',
+            fontSize: '0.82rem',
+            outline: 'none',
+            fontFamily: 'monospace',
+            width: '100%',
+            boxSizing: 'border-box',
+            resize: 'vertical',
+            lineHeight: 1.5,
+          }}
+        />
+        {settings.booking_url && (() => {
+          const raw = settings.booking_url.trim();
+          const isEmbed = raw.includes('<iframe');
+          const srcMatch = isEmbed ? raw.match(/\bsrc=["']([^"']+)["']/i) : null;
+          const extractedUrl = srcMatch?.[1] ?? null;
+          return (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#27ae60', fontSize: '0.85rem' }}>
+                <CheckCircle2 className="w-4 h-4" />
+                {isEmbed
+                  ? 'Embed code detected — URL extracted and ready to use'
+                  : 'Direct URL saved — will embed as a pop-up for prospects'}
+              </div>
+              {isEmbed && extractedUrl && (
+                <div style={{ fontSize: '0.78rem', color: '#888', paddingLeft: '1.5rem', wordBreak: 'break-all' }}>
+                  Embed URL: {extractedUrl}
+                </div>
+              )}
+            </div>
+          );
+        })()}
       </div>
 
       {/* Default Temperature */}
