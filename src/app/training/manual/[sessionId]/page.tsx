@@ -20,6 +20,7 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
   const [error, setError] = useState('');
   const [expandedLessons, setExpandedLessons] = useState<number[]>([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -82,6 +83,7 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
     if (isSaving) return;
 
     setIsSaving(true);
+    setSaveError(null);
     try {
       const response = await fetch(`/api/training/manual/sessions/${sessionId}/lessons/${lessonId}/complete`, {
         method: 'POST'
@@ -96,9 +98,15 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
         if (session && nextLessonId <= session.lessons.length) {
           setExpandedLessons([nextLessonId]);
         }
+      } else if (response.status === 401) {
+        router.push('/login');
+      } else {
+        const result = await response.json().catch(() => ({}));
+        setSaveError(result.error || 'Failed to save progress. Please try again.');
       }
     } catch (err) {
       console.error('Failed to mark lesson complete:', err);
+      setSaveError('Unable to reach the server. Please check your connection and try again.');
     } finally {
       setIsSaving(false);
     }
@@ -108,6 +116,7 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
     if (isSaving) return;
 
     setIsSaving(true);
+    setSaveError(null);
     try {
       const response = await fetch(`/api/training/manual/sessions/${sessionId}/complete`, {
         method: 'POST'
@@ -121,9 +130,15 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
         } else {
           router.push('/training/manual');
         }
+      } else if (response.status === 401) {
+        router.push('/login');
+      } else {
+        const result = await response.json().catch(() => ({}));
+        setSaveError(result.error || 'Failed to complete session. Please try again.');
       }
     } catch (err) {
       console.error('Failed to complete session:', err);
+      setSaveError('Unable to reach the server. Please check your connection and try again.');
     } finally {
       setIsSaving(false);
     }
@@ -217,6 +232,11 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
           {/* Lessons */}
           <div className="lessons-section">
             <h2>Lessons</h2>
+            {saveError && (
+              <div style={{ background: 'rgba(239,68,68,0.1)', border: '1px solid rgba(239,68,68,0.4)', borderRadius: '8px', padding: '12px 16px', marginBottom: '16px', color: '#FCA5A5', fontSize: '14px' }}>
+                {saveError}
+              </div>
+            )}
             <div className="lessons-list">
               {session.lessons.map((lesson) => {
                 const isComplete = progress.lessonsCompleted.includes(lesson.id);

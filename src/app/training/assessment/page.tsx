@@ -41,6 +41,18 @@ export default function FlowAssessmentPage() {
   const latestDataRef = useRef(assessmentData);
   useEffect(() => { latestDataRef.current = assessmentData; }, [assessmentData]);
 
+  // localStorage backup — writes on every data change so closing the tab never loses work.
+  // Key is scoped to the assessmentId so it's unique per user per draft.
+  useEffect(() => {
+    if (!assessmentId) return;
+    try {
+      localStorage.setItem(`flow_assessment_${assessmentId}`, JSON.stringify({
+        data: assessmentData,
+        savedAt: Date.now()
+      }));
+    } catch { /* ignore storage errors (e.g. private browsing quota) */ }
+  }, [assessmentData, assessmentId]);
+
   // Load existing draft or create new assessment
   useEffect(() => {
     async function loadAssessment() {
@@ -55,21 +67,55 @@ export default function FlowAssessmentPage() {
         const data = await response.json();
 
         if (data.assessment) {
-          setAssessmentId(data.assessment.id);
-          setAssessmentData({
+          const id = data.assessment.id;
+          setAssessmentId(id);
+
+          const supabaseData: AssessmentData = {
             ratings: data.assessment.roadblock_ratings || {},
             reflections: data.assessment.reflections || {},
             topRoadblocks: data.assessment.top_roadblocks || [],
             actionPlan: data.assessment.action_plan || {},
             accountabilityPartner: data.assessment.accountability_partner || '',
             accountabilityDate: data.assessment.accountability_date || ''
-          });
+          };
 
-          // If there are existing ratings, resume from where they left off
-          if (data.assessment.roadblock_ratings && Object.keys(data.assessment.roadblock_ratings).length > 0) {
-            const completedCount = Object.keys(data.assessment.roadblock_ratings).length;
-            if (completedCount < roadblocks.length) {
-              setCurrentRoadblockIndex(completedCount);
+          // Check localStorage for a more complete backup (e.g. user closed tab before save)
+          let loadData = supabaseData;
+          try {
+            const localRaw = localStorage.getItem(`flow_assessment_${id}`);
+            if (localRaw) {
+              const local = JSON.parse(localRaw) as { data: AssessmentData; savedAt: number };
+              const localCount = Object.keys(local.data?.ratings || {}).length;
+              const supabaseCount = Object.keys(supabaseData.ratings).length;
+              if (localCount > supabaseCount) {
+                // Local has more progress — use it and immediately sync back to Supabase
+                loadData = local.data;
+                fetch('/api/training/assessment', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    assessmentId: id,
+                    data: {
+                      roadblock_ratings: local.data.ratings,
+                      reflections: local.data.reflections,
+                      top_roadblocks: local.data.topRoadblocks,
+                      action_plan: local.data.actionPlan,
+                      accountability_partner: local.data.accountabilityPartner,
+                      accountability_date: local.data.accountabilityDate
+                    }
+                  })
+                }).catch(() => {});
+              }
+            }
+          } catch { /* ignore parse/storage errors */ }
+
+          setAssessmentData(loadData);
+
+          // Resume from where they left off
+          const ratingCount = Object.keys(loadData.ratings).length;
+          if (ratingCount > 0) {
+            if (ratingCount < roadblocks.length) {
+              setCurrentRoadblockIndex(ratingCount);
               setView('roadblock');
             } else {
               setView('summary');
@@ -141,10 +187,29 @@ export default function FlowAssessmentPage() {
   }, [assessmentId, assessmentData]);
 
   const handleRatingSelect = (roadblockId: string, rating: number) => {
-    setAssessmentData(prev => ({
-      ...prev,
-      ratings: { ...prev.ratings, [roadblockId]: rating }
-    }));
+    // Merge new rating immediately so we can persist it before Next is clicked
+    const newRatings = { ...latestDataRef.current.ratings, [roadblockId]: rating };
+    setAssessmentData(prev => ({ ...prev, ratings: newRatings }));
+
+    // Fire an immediate silent save — if they close the tab after rating, data is not lost
+    if (assessmentId) {
+      const data = latestDataRef.current;
+      fetch('/api/training/assessment', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          assessmentId,
+          data: {
+            roadblock_ratings: newRatings,
+            reflections: data.reflections,
+            top_roadblocks: data.topRoadblocks,
+            action_plan: data.actionPlan,
+            accountability_partner: data.accountabilityPartner,
+            accountability_date: data.accountabilityDate
+          }
+        })
+      }).catch(err => console.error('[Rating save] Failed:', err));
+    }
   };
 
   const handleReflectionChange = (roadblockId: string, questionIndex: number, value: string) => {
@@ -216,6 +281,8 @@ export default function FlowAssessmentPage() {
       });
 
       if (response.ok) {
+        // Clear the local backup — data is safely stored in Supabase as completed
+        try { localStorage.removeItem(`flow_assessment_${assessmentId}`); } catch {}
         setView('completion');
         window.scrollTo(0, 0);
       } else if (response.status === 401) {
