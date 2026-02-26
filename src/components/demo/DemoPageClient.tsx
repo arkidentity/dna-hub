@@ -435,8 +435,8 @@ export default function DemoPageClient({
           </h2>
 
           {/* Subline */}
-          <p style={{ fontSize: '1rem', color: '#666', margin: 0, lineHeight: 1.65, maxWidth: '400px' }}>
-            The 3D Journal and 4D Prayer are yours free. No cost. No commitment. Just your church&rsquo;s name on a tool that builds real disciples.
+          <p style={{ fontSize: '1rem', color: '#444', margin: 0, lineHeight: 1.65, maxWidth: '400px', fontWeight: 600 }}>
+            This is a live, fully functional app — tap the buttons and explore. This is exactly what a new disciple sees the moment they open the {church.name} app.
           </p>
 
           {/* iframe — free-tier view (no group, lands on journal, pathway is locked) */}
@@ -474,13 +474,8 @@ export default function DemoPageClient({
             )}
           </div>
 
-          {/* Label below */}
-          <p style={{ fontSize: '1rem', color: '#888', margin: 0, lineHeight: 1.5 }}>
-            Tap around. This is exactly what your disciples would see.
-          </p>
-
           {/* Gift copy — bold */}
-          <p style={{ fontSize: '1.05rem', color: '#222', margin: '0.5rem 0 0', lineHeight: 1.7, fontWeight: 700 }}>
+          <p style={{ fontSize: '1.05rem', color: '#222', margin: 0, lineHeight: 1.7, fontWeight: 700 }}>
             The app is our gift to the body of Christ. Start using it today — no strings attached.
           </p>
 
@@ -552,10 +547,10 @@ export default function DemoPageClient({
                 fontSize: 'clamp(1.5rem, 5vw, 2.25rem)',
                 fontWeight: 700, color: '#0f0e0c', margin: 0, lineHeight: 1.15,
               }}>
-                The complete system — unlocked.
+                The full DNA Pathway — unlocked.
               </h2>
               <p style={{ fontSize: '1rem', color: '#666', margin: 0, lineHeight: 1.65, maxWidth: '400px' }}>
-                This is what your disciples experience when your church partners with DNA. The full 90-Day Pathway, group connection, prayer tracking, and everything in between.
+                This is what your disciples experience when your church partners with DNA. The full DNA Pathway, in-progress tracking, and everything you need to multiply disciples.
               </p>
 
               {/* iframe — fully unlocked */}
@@ -591,9 +586,14 @@ export default function DemoPageClient({
                 )}
               </div>
 
-              <p style={{ fontSize: '0.85rem', color: '#aaa', margin: 0 }}>
-                Live preview · {church.name} Discipleship
-              </p>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: BRAND_GREEN }}>
+                  Live Preview
+                </span>
+                <p style={{ fontSize: '1.15rem', color: '#333', margin: 0, fontWeight: 600 }}>
+                  {church.name} Discipleship
+                </p>
+              </div>
             </div>
           </section>
 
