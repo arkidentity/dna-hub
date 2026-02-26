@@ -67,14 +67,27 @@ export async function PATCH(
         effectiveChurchId = await getDnaHqChurchId();
       }
 
-      // Upsert — ignoreDuplicates means this is safe to call repeatedly
-      const { error } = await supabase.from('user_roles').upsert(
-        { user_id: userId, role, church_id: effectiveChurchId },
-        { onConflict: 'user_id,role,church_id', ignoreDuplicates: true }
-      );
-      if (error) {
-        console.error('[ROLES] Add error:', error);
-        return NextResponse.json({ error: error.message || 'Failed to add role' }, { status: 500 });
+      // Check-then-insert — avoids requiring a named unique constraint.
+      // Handle null church_id explicitly (.eq doesn't match NULL rows).
+      const existingQuery = supabase
+        .from('user_roles')
+        .select('user_id')
+        .eq('user_id', userId)
+        .eq('role', role);
+
+      const { data: existing } = effectiveChurchId
+        ? await existingQuery.eq('church_id', effectiveChurchId).maybeSingle()
+        : await existingQuery.is('church_id', null).maybeSingle();
+
+      if (!existing) {
+        const { error } = await supabase
+          .from('user_roles')
+          .insert({ user_id: userId, role, church_id: effectiveChurchId });
+        if (error && error.code !== '23505') {
+          // 23505 = unique violation (race condition) — treat as success
+          console.error('[ROLES] Add error:', error);
+          return NextResponse.json({ error: error.message || 'Failed to add role' }, { status: 500 });
+        }
       }
 
       // When adding dna_leader, also ensure a dna_leaders record exists
