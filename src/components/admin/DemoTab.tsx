@@ -15,6 +15,7 @@ import {
   Eye,
   EyeOff,
   User,
+  LayoutDashboard,
 } from 'lucide-react';
 
 interface DemoTabProps {
@@ -28,6 +29,7 @@ interface DemoSettings {
   demo_enabled: boolean;
   default_temp: 'cold' | 'warm' | 'hot';
   demo_seeded_at: string | null;
+  hub_demo_seeded_at: string | null;
   coach_name: string;
 }
 
@@ -72,6 +74,7 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
     demo_enabled: false,
     default_temp: 'warm',
     demo_seeded_at: null,
+    hub_demo_seeded_at: null,
     coach_name: 'Travis',
   });
   const [loading, setLoading] = useState(true);
@@ -83,9 +86,14 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
   const [copiedTemp, setCopiedTemp] = useState<string | null>(null);
   const [showSeedConfirm, setShowSeedConfirm] = useState(false);
   const [seedSuccess, setSeedSuccess] = useState(false);
+  const [hubSeeding, setHubSeeding] = useState(false);
+  const [showHubSeedConfirm, setShowHubSeedConfirm] = useState(false);
+  const [hubSeedSuccess, setHubSeedSuccess] = useState(false);
+  const [copiedHub, setCopiedHub] = useState(false);
 
   const BASE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://dnadiscipleship.com';
   const demoBaseUrl = subdomain ? `${BASE_URL}/demo/${subdomain}` : null;
+  const hubDemoUrl = subdomain ? `${BASE_URL}/demo-hub/${subdomain}` : null;
 
   useEffect(() => {
     fetchSettings();
@@ -102,6 +110,7 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
           demo_enabled: data.settings.demo_enabled ?? false,
           default_temp: data.settings.default_temp ?? 'warm',
           demo_seeded_at: data.settings.demo_seeded_at ?? null,
+          hub_demo_seeded_at: data.settings.hub_demo_seeded_at ?? null,
           coach_name: data.settings.coach_name ?? 'Travis',
         });
       }
@@ -160,7 +169,7 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
       }
 
       const now = new Date().toISOString();
-      setSettings(prev => ({ ...prev, demo_seeded_at: now }));
+      setSettings(prev => ({ ...prev, demo_seeded_at: now, hub_demo_seeded_at: prev.hub_demo_seeded_at }));
       setSeedSuccess(true);
       setTimeout(() => setSeedSuccess(false), 4000);
     } catch (err) {
@@ -168,6 +177,39 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
     } finally {
       setSeeding(false);
     }
+  };
+
+  const handleHubSeed = async () => {
+    setHubSeeding(true);
+    setHubSeedSuccess(false);
+    setShowHubSeedConfirm(false);
+
+    try {
+      const res = await fetch(`/api/admin/demo/${churchId}/hub-seed`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? 'Hub seed failed');
+      }
+
+      const now = new Date().toISOString();
+      setSettings(prev => ({ ...prev, hub_demo_seeded_at: now }));
+      setHubSeedSuccess(true);
+      setTimeout(() => setHubSeedSuccess(false), 4000);
+    } catch (err) {
+      setSaveError(err instanceof Error ? err.message : 'Hub seed failed');
+    } finally {
+      setHubSeeding(false);
+    }
+  };
+
+  const copyHubLink = () => {
+    if (!hubDemoUrl) return;
+    void navigator.clipboard.writeText(hubDemoUrl);
+    setCopiedHub(true);
+    setTimeout(() => setCopiedHub(false), 2000);
   };
 
   const copyLink = (temp: string) => {
@@ -540,6 +582,141 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
             </div>
           )}
         </div>
+      </div>
+
+      {/* Divider */}
+      <hr style={{ border: 'none', borderTop: '1px solid #eee', margin: 0 }} />
+
+      {/* Hub Dashboard Demo */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div style={{ fontWeight: 600, color: '#1a2332', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <LayoutDashboard className="w-4 h-4" />
+          Hub Dashboard Demo
+        </div>
+        <p style={{ color: '#666', fontSize: '0.85rem', margin: 0 }}>
+          Seeds a full leader account (groups, disciples, cohort, training) in this church&apos;s Hub so prospects
+          can explore the real dashboard without a login. Safe to re-run — prior seed data is replaced.
+        </p>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          {/* Status badge */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.4rem',
+            padding: '0.35rem 0.75rem',
+            borderRadius: '20px',
+            fontSize: '0.82rem',
+            fontWeight: 600,
+            background: settings.hub_demo_seeded_at ? '#e8f5e9' : '#f5f5f5',
+            color: settings.hub_demo_seeded_at ? '#27ae60' : '#999',
+            border: `1px solid ${settings.hub_demo_seeded_at ? '#c8e6c9' : '#e0e0e0'}`,
+          }}>
+            {settings.hub_demo_seeded_at ? (
+              <>
+                <CheckCircle2 className="w-3.5 h-3.5" />
+                Seeded {new Date(settings.hub_demo_seeded_at).toLocaleDateString()}
+              </>
+            ) : (
+              <>
+                <Database className="w-3.5 h-3.5" />
+                Not seeded
+              </>
+            )}
+          </div>
+
+          {/* Seed button or confirm */}
+          {!showHubSeedConfirm ? (
+            <button
+              onClick={() => setShowHubSeedConfirm(true)}
+              disabled={hubSeeding}
+              style={{
+                padding: '0.4rem 0.875rem',
+                borderRadius: '6px',
+                border: '1px solid #ddd',
+                background: '#fff',
+                cursor: 'pointer',
+                fontSize: '0.875rem',
+                color: '#333',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+              }}
+            >
+              {hubSeeding ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <LayoutDashboard className="w-3.5 h-3.5" />}
+              {settings.hub_demo_seeded_at ? 'Re-seed Hub Demo' : 'Seed Hub Demo'}
+            </button>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fff3cd', padding: '0.5rem 0.875rem', borderRadius: '8px', border: '1px solid #ffc107', fontSize: '0.85rem' }}>
+              <span style={{ color: '#856404' }}>Seed Hub demo{settings.hub_demo_seeded_at ? ' (replaces existing)' : ''} for {churchName}?</span>
+              <button
+                onClick={() => void handleHubSeed()}
+                style={{ padding: '0.25rem 0.625rem', background: '#856404', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}
+              >
+                Yes, seed
+              </button>
+              <button
+                onClick={() => setShowHubSeedConfirm(false)}
+                style={{ padding: '0.25rem 0.625rem', background: 'transparent', color: '#856404', border: '1px solid #856404', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem' }}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {hubSeedSuccess && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#27ae60', fontSize: '0.875rem' }}>
+              <CheckCircle2 className="w-4 h-4" />
+              Hub demo seeded!
+            </div>
+          )}
+        </div>
+
+        {/* Hub demo URL */}
+        {settings.hub_demo_seeded_at && hubDemoUrl && (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+            padding: '0.625rem 0.875rem',
+            background: '#f9f9f9',
+            borderRadius: '8px',
+            border: '1px solid #eee',
+            marginTop: '0.25rem',
+          }}>
+            <span style={{
+              width: '52px',
+              fontSize: '0.8rem',
+              fontWeight: 600,
+              color: '#1a2332',
+              flexShrink: 0,
+            }}>
+              Hub
+            </span>
+            <code style={{ flex: 1, fontSize: '0.8rem', color: '#555', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {hubDemoUrl}
+            </code>
+            <div style={{ display: 'flex', gap: '0.5rem', flexShrink: 0 }}>
+              <button
+                onClick={copyHubLink}
+                title="Copy link"
+                style={{ padding: '0.25rem 0.5rem', border: '1px solid #ddd', borderRadius: '4px', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem', fontSize: '0.8rem', color: '#555' }}
+              >
+                {copiedHub ? <Check className="w-3.5 h-3.5" style={{ color: '#27ae60' }} /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedHub ? 'Copied' : 'Copy'}
+              </button>
+              <a
+                href={hubDemoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                title="Preview Hub demo"
+                style={{ padding: '0.25rem 0.5rem', border: '1px solid #ddd', borderRadius: '4px', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', fontSize: '0.8rem', color: '#555', textDecoration: 'none' }}
+              >
+                <ExternalLink className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

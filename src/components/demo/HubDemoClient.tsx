@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Users,
@@ -15,7 +16,9 @@ import {
   MapPin,
   ArrowLeft,
   Info,
+  Loader2,
 } from 'lucide-react';
+import { createClientSupabase } from '@/lib/supabase';
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -43,7 +46,7 @@ interface HubDemoClientProps {
   demoPageUrl: string;
 }
 
-// ─── Hardcoded Seed Disciples ─────────────────────────────────────────────────
+// ─── Hardcoded Seed Disciples (fallback mini-dashboard) ───────────────────────
 
 const SEED_DISCIPLES = [
   {
@@ -92,13 +95,79 @@ const SEED_GROUP = {
   })(),
 };
 
-// ─── Sub-views ────────────────────────────────────────────────────────────────
+// ─── Auth states ──────────────────────────────────────────────────────────────
+
+type AuthState = 'loading' | 'redirecting' | 'fallback';
+
+// ─── Loading / Entry Screen ───────────────────────────────────────────────────
+
+function LoadingScreen({ church }: { church: Church }) {
+  const primary = church.primary_color ?? '#143348';
+  const accent = church.accent_color ?? '#e8b562';
+
+  return (
+    <div
+      style={{
+        minHeight: '100vh',
+        background: '#f7f5f0',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        gap: '1.5rem',
+        fontFamily: "'DM Sans', sans-serif",
+        padding: '2rem',
+      }}
+    >
+      <style>{`@import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600&display=swap');`}</style>
+
+      {/* Church identity */}
+      <div style={{ textAlign: 'center' }}>
+        {church.logo_url ? (
+          <img src={church.logo_url} alt={church.name} style={{ height: '56px', objectFit: 'contain', marginBottom: '0.75rem' }} />
+        ) : (
+          <div style={{
+            width: '56px',
+            height: '56px',
+            borderRadius: '12px',
+            background: primary,
+            color: '#fff',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: '1.5rem',
+            fontWeight: 700,
+            margin: '0 auto 0.75rem',
+          }}>
+            {church.name.charAt(0)}
+          </div>
+        )}
+        <div style={{ fontSize: '1rem', fontWeight: 600, color: '#0f0e0c' }}>{church.name}</div>
+        <div style={{ fontSize: '0.875rem', color: '#888', marginTop: '0.25rem' }}>DNA Hub · Leader Dashboard</div>
+      </div>
+
+      {/* Spinner */}
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.75rem' }}>
+        <Loader2
+          className="animate-spin"
+          style={{ width: '32px', height: '32px', color: accent }}
+        />
+        <div style={{ fontSize: '0.875rem', color: '#888' }}>Preparing your personalized demo…</div>
+      </div>
+
+      {/* DNA branding */}
+      <div style={{ fontSize: '0.75rem', color: '#bbb', marginTop: '1rem' }}>
+        Powered by DNA Discipleship
+      </div>
+    </div>
+  );
+}
+
+// ─── Static Fallback Mini-Dashboard ──────────────────────────────────────────
 
 type HubView = 'overview' | 'disciples' | 'disciple-detail' | 'calendar';
 
-// ─── Main Component ───────────────────────────────────────────────────────────
-
-export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoClientProps) {
+function StaticMiniDashboard({ church, events, demoPageUrl }: HubDemoClientProps) {
   const [activeView, setActiveView] = useState<HubView>('overview');
   const [selectedDisciple, setSelectedDisciple] = useState<typeof SEED_DISCIPLES[0] | null>(null);
   const primary = church.primary_color;
@@ -147,7 +216,7 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
         }
       `}</style>
 
-      {/* ── Demo Notice Banner ──────────────────────────────────── */}
+      {/* ── Demo Notice Banner ──────────────────────────────── */}
       <div style={{ background: accent + 'dd', padding: '0.625rem 1.5rem', display: 'flex', alignItems: 'center', gap: '0.75rem', justifyContent: 'center' }}>
         <Info className="w-4 h-4" style={{ color: '#fff', flexShrink: 0 }} />
         <span style={{ color: '#fff', fontSize: '0.875rem', fontWeight: 500 }}>
@@ -158,7 +227,7 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
         </Link>
       </div>
 
-      {/* ── Top Nav ─────────────────────────────────────────────── */}
+      {/* ── Top Nav ──────────────────────────────────────────── */}
       <header style={{ background: primary, padding: '0 1.5rem', height: '56px', display: 'flex', alignItems: 'center', gap: '1rem' }}>
         {church.logo_url ? (
           <img src={church.logo_url} alt={church.name} style={{ height: '28px', objectFit: 'contain' }} />
@@ -174,7 +243,7 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
         </div>
       </header>
 
-      {/* ── Layout ──────────────────────────────────────────────── */}
+      {/* ── Layout ───────────────────────────────────────────── */}
       <div className="hub-demo-layout" style={{ display: 'flex', flex: 1, maxWidth: '1100px', margin: '0 auto', width: '100%', gap: '1.5rem', padding: '1.5rem' }}>
 
         {/* Sidebar */}
@@ -195,7 +264,6 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
               <span>{item.label}</span>
             </button>
           ))}
-
           <div style={{ marginTop: 'auto', paddingTop: '1rem', borderTop: '1px solid #e8e4dc' }}>
             <div style={{ padding: '0.625rem 1rem', fontSize: '0.8rem', color: '#aaa' }}>
               DNA Discipleship
@@ -206,7 +274,7 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
         {/* Main content */}
         <main style={{ flex: 1, minWidth: 0 }}>
 
-          {/* ── OVERVIEW ─────────────────────────────────────── */}
+          {/* ── OVERVIEW ──────────────────────────────────────── */}
           {activeView === 'overview' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
@@ -215,8 +283,6 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
                 </h1>
                 <p style={{ color: '#888', fontSize: '0.9rem', margin: 0 }}>{church.name} · DNA Leader Overview</p>
               </div>
-
-              {/* Stats row */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
                 {[
                   { label: 'Active Group', value: '1', sub: SEED_GROUP.name, icon: <Users className="w-5 h-5" /> },
@@ -232,8 +298,6 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
                   </div>
                 ))}
               </div>
-
-              {/* Group preview */}
               <div className="hub-demo-card">
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
                   <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 600 }}>{SEED_GROUP.name}</h3>
@@ -265,7 +329,7 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
             </div>
           )}
 
-          {/* ── DISCIPLES ───────────────────────────────────── */}
+          {/* ── DISCIPLES ─────────────────────────────────────── */}
           {activeView === 'disciples' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
@@ -274,15 +338,10 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
                 </h1>
                 <p style={{ color: '#888', fontSize: '0.9rem', margin: 0 }}>{SEED_GROUP.name} · 3 active members</p>
               </div>
-
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
                 {SEED_DISCIPLES.map((d, i) => (
-                  <div
-                    key={i}
-                    className="hub-demo-card"
-                    style={{ cursor: 'pointer', transition: 'box-shadow 0.15s' }}
-                    onClick={() => { setSelectedDisciple(d); setActiveView('disciple-detail'); }}
-                  >
+                  <div key={i} className="hub-demo-card" style={{ cursor: 'pointer' }}
+                    onClick={() => { setSelectedDisciple(d); setActiveView('disciple-detail'); }}>
                     <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                       <div style={{ width: 44, height: 44, borderRadius: '50%', background: primary + '22', color: primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.1rem', flexShrink: 0 }}>
                         {d.name.charAt(0)}
@@ -290,15 +349,9 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: 600, fontSize: '1rem', color: '#0f0e0c', marginBottom: '0.25rem' }}>{d.name}</div>
                         <div style={{ display: 'flex', gap: '1.25rem', flexWrap: 'wrap' }}>
-                          <span style={{ fontSize: '0.82rem', color: '#888', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                            <BookOpen className="w-3 h-3" /> {d.journalCount} journals
-                          </span>
-                          <span style={{ fontSize: '0.82rem', color: '#888', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                            <Heart className="w-3 h-3" /> {d.prayerCount} prayers
-                          </span>
-                          <span style={{ fontSize: '0.82rem', color: '#888', display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
-                            <Clock className="w-3 h-3" /> {d.lastActive}
-                          </span>
+                          <span style={{ fontSize: '0.82rem', color: '#888', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><BookOpen className="w-3 h-3" /> {d.journalCount} journals</span>
+                          <span style={{ fontSize: '0.82rem', color: '#888', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Heart className="w-3 h-3" /> {d.prayerCount} prayers</span>
+                          <span style={{ fontSize: '0.82rem', color: '#888', display: 'flex', alignItems: 'center', gap: '0.25rem' }}><Clock className="w-3 h-3" /> {d.lastActive}</span>
                         </div>
                       </div>
                       <div style={{ textAlign: 'right', flexShrink: 0 }}>
@@ -317,21 +370,17 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
             </div>
           )}
 
-          {/* ── DISCIPLE DETAIL ─────────────────────────────── */}
+          {/* ── DISCIPLE DETAIL ───────────────────────────────── */}
           {activeView === 'disciple-detail' && selectedDisciple && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-                <button
-                  onClick={() => { setActiveView('disciples'); setSelectedDisciple(null); }}
-                  style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.875rem', fontFamily: 'inherit' }}
-                >
+                <button onClick={() => { setActiveView('disciples'); setSelectedDisciple(null); }}
+                  style={{ display: 'flex', alignItems: 'center', gap: '0.25rem', color: '#888', background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.875rem', fontFamily: 'inherit' }}>
                   <ArrowLeft className="w-4 h-4" /> Disciples
                 </button>
                 <ChevronLeft className="w-4 h-4" style={{ color: '#ccc' }} />
                 <span style={{ fontWeight: 500, fontSize: '0.875rem', color: '#333' }}>{selectedDisciple.name}</span>
               </div>
-
-              {/* Profile header */}
               <div className="hub-demo-card" style={{ display: 'flex', gap: '1.25rem', alignItems: 'center' }}>
                 <div style={{ width: 56, height: 56, borderRadius: '50%', background: primary + '22', color: primary, display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: '1.4rem', flexShrink: 0 }}>
                   {selectedDisciple.name.charAt(0)}
@@ -340,12 +389,8 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
                   <h2 style={{ margin: '0 0 0.25rem', fontSize: '1.25rem', fontWeight: 700, color: '#0f0e0c' }}>{selectedDisciple.name}</h2>
                   <p style={{ margin: 0, color: '#888', fontSize: '0.875rem' }}>Phase {selectedDisciple.phase} · Week {selectedDisciple.week} · Last active {selectedDisciple.lastActive}</p>
                 </div>
-                <span style={{ background: '#e8f5e9', color: '#27ae60', fontSize: '0.78rem', fontWeight: 600, padding: '0.25rem 0.625rem', borderRadius: '12px' }}>
-                  Active
-                </span>
+                <span style={{ background: '#e8f5e9', color: '#27ae60', fontSize: '0.78rem', fontWeight: 600, padding: '0.25rem 0.625rem', borderRadius: '12px' }}>Active</span>
               </div>
-
-              {/* Stats */}
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '1rem' }}>
                 {[
                   { label: 'Journal Entries', value: String(selectedDisciple.journalCount), icon: <BookOpen className="w-4 h-4" /> },
@@ -360,8 +405,6 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
                   </div>
                 ))}
               </div>
-
-              {/* Pathway progress */}
               <div className="hub-demo-card">
                 <h3 style={{ margin: '0 0 1rem', fontSize: '1rem', fontWeight: 600 }}>Pathway Progress</h3>
                 <div style={{ marginBottom: '0.75rem' }}>
@@ -385,7 +428,7 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
             </div>
           )}
 
-          {/* ── CALENDAR ──────────────────────────────────── */}
+          {/* ── CALENDAR ──────────────────────────────────────── */}
           {activeView === 'calendar' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
               <div>
@@ -394,17 +437,15 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
                 </h1>
                 <p style={{ color: '#888', fontSize: '0.9rem', margin: 0 }}>Upcoming group events for {church.name}</p>
               </div>
-
               {events.length === 0 ? (
                 <div className="hub-demo-card" style={{ textAlign: 'center', color: '#aaa', padding: '3rem' }}>
-                  No upcoming events yet. Use the Demo tab in admin to seed calendar events.
+                  No upcoming events seeded yet.
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.875rem' }}>
                   {events.map((ev) => (
                     <div key={ev.id} className="hub-demo-card">
                       <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                        {/* Date block */}
                         <div style={{ flexShrink: 0, width: 56, height: 56, borderRadius: '10px', background: primary + '18', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: primary }}>
                           <div style={{ fontSize: '0.65rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.05em' }}>
                             {new Date(ev.start_time).toLocaleDateString('en-US', { weekday: 'short' })}
@@ -413,11 +454,9 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
                             {new Date(ev.start_time).getDate()}
                           </div>
                         </div>
-
                         <div style={{ flex: 1 }}>
-                          {/* Strip [DEMO] prefix for display */}
                           <div style={{ fontWeight: 600, fontSize: '1rem', color: '#0f0e0c', marginBottom: '0.25rem' }}>
-                            {ev.title.replace(/^\[DEMO\]\s*/, '')}
+                            {ev.title.replace(/^\[DEMO[^\]]*\]\s*/, '')}
                           </div>
                           {ev.description && (
                             <p style={{ margin: '0 0 0.5rem', color: '#666', fontSize: '0.875rem', lineHeight: 1.5 }}>{ev.description}</p>
@@ -448,4 +487,65 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
       </div>
     </div>
   );
+}
+
+// ─── Main Component ────────────────────────────────────────────────────────────
+
+export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoClientProps) {
+  const [authState, setAuthState] = useState<AuthState>('loading');
+  const router = useRouter();
+
+  useEffect(() => {
+    async function establishSession() {
+      try {
+        const res = await fetch(`/api/demo/hub-session/${church.subdomain}`);
+        const data = await res.json();
+
+        if (!data.demo_auth) {
+          // Hub not seeded — show static mini-dashboard fallback
+          setAuthState('fallback');
+          return;
+        }
+
+        // Establish Supabase session in the browser
+        const supabase = createClientSupabase();
+        const { error } = await supabase.auth.setSession({
+          access_token: data.access_token,
+          refresh_token: data.refresh_token,
+        });
+
+        if (error) {
+          console.error('[DEMO] setSession error:', error.message);
+          setAuthState('fallback');
+          return;
+        }
+
+        // Store demo context for DemoBanner + useDemoMode
+        try {
+          localStorage.setItem('dna_demo_mode', '1');
+          localStorage.setItem('dna_demo_church', church.name);
+        } catch {
+          // ignore
+        }
+
+        setAuthState('redirecting');
+        // Brief pause so the loading screen is visible
+        setTimeout(() => {
+          router.replace('/groups');
+        }, 600);
+      } catch (err) {
+        console.error('[DEMO] Hub session error:', err);
+        setAuthState('fallback');
+      }
+    }
+
+    void establishSession();
+  }, [church.subdomain, church.name, router]);
+
+  if (authState === 'loading' || authState === 'redirecting') {
+    return <LoadingScreen church={church} />;
+  }
+
+  // Fallback: Hub not yet seeded — show the static mini-dashboard
+  return <StaticMiniDashboard church={church} events={events} demoPageUrl={demoPageUrl} />;
 }
