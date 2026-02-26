@@ -398,20 +398,34 @@ export default function DashboardPage() {
   if (!data) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-center">
+        <div className="text-center max-w-sm">
           <AlertCircle className="w-12 h-12 text-error mx-auto mb-4" />
           <h2 className="text-xl font-semibold text-navy mb-2">Failed to load dashboard</h2>
-          <p className="text-foreground-muted mb-4">Something went wrong. Please try again.</p>
-          <button
-            onClick={() => {
-              setLoading(true);
-              fetchDashboard();
-            }}
-            className="btn-primary inline-flex items-center gap-2"
-          >
-            <RefreshCw className="w-4 h-4" />
-            Try Again
-          </button>
+          <p className="text-foreground-muted mb-6">Something went wrong loading your data.</p>
+          <div className="flex flex-col gap-3">
+            <button
+              onClick={() => {
+                setLoading(true);
+                fetchDashboard();
+              }}
+              className="btn-primary inline-flex items-center justify-center gap-2"
+            >
+              <RefreshCw className="w-4 h-4" />
+              Try Again
+            </button>
+            <a
+              href="/api/auth/logout"
+              className="btn-secondary inline-flex items-center justify-center gap-2"
+            >
+              Sign Out &amp; Log Back In
+            </a>
+            <p className="text-xs text-foreground-muted mt-2">
+              Still having trouble?{' '}
+              <a href="mailto:info@dnadiscipleship.com" className="text-teal hover:underline">
+                Contact support
+              </a>
+            </p>
+          </div>
         </div>
       </div>
     );

@@ -30,17 +30,66 @@ export async function GET() {
 
     const supabase = getSupabaseAdmin();
 
-    // Get church_leader record to find church_id
-    const { data: churchLeader, error: leaderError } = await supabase
+    // Get church_leader record to find church_id.
+    // Use maybeSingle() so a missing row returns null instead of an error.
+    const { data: rawChurchLeader } = await supabase
       .from('church_leaders')
       .select(`
         *,
         church:churches(*)
       `)
       .eq('email', session.email)
-      .single();
+      .maybeSingle();
 
-    if (leaderError || !churchLeader) {
+    // Fallback: if church_leaders record is missing but the user has the role in user_roles,
+    // look up the church via user_roles and auto-repair the missing record.
+    // This silently fixes a data integrity gap that can occur when leaders are migrated
+    // or added through paths that don't create the church_leaders row.
+    let churchLeader = rawChurchLeader;
+    if (!churchLeader) {
+      const { data: userRecord } = await supabase
+        .from('users')
+        .select('id, name')
+        .eq('email', session.email)
+        .single();
+
+      if (userRecord) {
+        const { data: roleRecord } = await supabase
+          .from('user_roles')
+          .select('church_id')
+          .eq('user_id', userRecord.id)
+          .eq('role', 'church_leader')
+          .not('church_id', 'is', null)
+          .maybeSingle();
+
+        if (roleRecord?.church_id) {
+          // Insert the missing church_leaders row to repair data integrity
+          const { error: insertError } = await supabase.from('church_leaders').insert({
+            email: session.email,
+            name: session.name || userRecord.name || null,
+            church_id: roleRecord.church_id,
+            user_id: userRecord.id,
+          });
+          if (insertError) {
+            console.error('[Dashboard] church_leaders auto-repair insert error:', insertError);
+          }
+
+          // Re-fetch with church joined (whether insert succeeded or record already existed)
+          const { data: repairedLeader } = await supabase
+            .from('church_leaders')
+            .select(`
+              *,
+              church:churches(*)
+            `)
+            .eq('email', session.email)
+            .maybeSingle();
+
+          churchLeader = repairedLeader;
+        }
+      }
+    }
+
+    if (!churchLeader) {
       return NextResponse.json(
         { error: 'Church leader not found' },
         { status: 404 }
