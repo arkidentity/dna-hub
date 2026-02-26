@@ -160,7 +160,7 @@ export default function DemoPageClient({
         if (res.ok) {
           const data = await res.json();
           if (data.access_token) {
-            setIframeSrc(`${base}/demo-entry?at=${data.access_token}&rt=${data.refresh_token}`);
+            setIframeSrc(`${base}/demo-entry?at=${data.access_token}&rt=${data.refresh_token}&redirect=/pathway`);
             return;
           }
         }

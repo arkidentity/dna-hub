@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   Users,
@@ -493,7 +492,6 @@ function StaticMiniDashboard({ church, events, demoPageUrl }: HubDemoClientProps
 
 export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoClientProps) {
   const [authState, setAuthState] = useState<AuthState>('loading');
-  const router = useRouter();
 
   useEffect(() => {
     async function establishSession() {
@@ -529,9 +527,11 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
         }
 
         setAuthState('redirecting');
-        // Brief pause so the loading screen is visible
+        // Brief pause so the loading screen is visible, then do a FULL navigation
+        // (not router.replace) so the root layout re-mounts and DemoBanner reads
+        // the localStorage value we just set above.
         setTimeout(() => {
-          router.replace('/groups');
+          window.location.href = '/groups';
         }, 600);
       } catch (err) {
         console.error('[DEMO] Hub session error:', err);
@@ -540,7 +540,7 @@ export default function HubDemoClient({ church, events, demoPageUrl }: HubDemoCl
     }
 
     void establishSession();
-  }, [church.subdomain, church.name, router]);
+  }, [church.subdomain, church.name]);
 
   if (authState === 'loading' || authState === 'redirecting') {
     return <LoadingScreen church={church} />;
