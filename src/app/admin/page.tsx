@@ -23,6 +23,8 @@ interface ChurchSummary {
   name: string;
   status: string;
   current_phase: number;
+  coach_id: string | null;
+  coach_name: string | null;
   created_at: string;
   updated_at: string;
   leader_name: string;
