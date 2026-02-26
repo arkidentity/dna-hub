@@ -74,7 +74,7 @@ export async function PATCH(
       );
       if (error) {
         console.error('[ROLES] Add error:', error);
-        return NextResponse.json({ error: 'Failed to add role' }, { status: 500 });
+        return NextResponse.json({ error: error.message || 'Failed to add role' }, { status: 500 });
       }
 
       // When adding dna_leader, also ensure a dna_leaders record exists
