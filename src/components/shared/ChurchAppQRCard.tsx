@@ -79,8 +79,8 @@ export default function ChurchAppQRCard({
           const x = (size - logoSize) / 2;
           const y = (size - logoSize) / 2;
           const pad = 12;
-          // White backing square
-          ctx.fillStyle = '#ffffff';
+          // Dark navy backing square (matches logo dark-background design)
+          ctx.fillStyle = '#143348';
           ctx.fillRect(x - pad, y - pad, logoSize + pad * 2, logoSize + pad * 2);
           ctx.drawImage(logoImg, x, y, logoSize, logoSize);
         } catch {
@@ -131,8 +131,8 @@ export default function ChurchAppQRCard({
         {logoUrl && (
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div
-              className="bg-white rounded-lg shadow-sm flex items-center justify-center"
-              style={{ width: logoOverlaySize + 8, height: logoOverlaySize + 8, padding: 4 }}
+              className="rounded-lg flex items-center justify-center"
+              style={{ width: logoOverlaySize + 8, height: logoOverlaySize + 8, padding: 4, backgroundColor: '#143348' }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img
