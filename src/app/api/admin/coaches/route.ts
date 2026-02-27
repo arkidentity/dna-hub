@@ -20,7 +20,7 @@ export async function GET(_request: NextRequest) {
     const [coachesResult, churchesResult, demoResult] = await Promise.all([
       supabase
         .from('dna_coaches')
-        .select('id, name, email, phone, booking_embed, user_id, created_at')
+        .select('id, name, email, login_email, phone, booking_embed, user_id, created_at')
         .order('name', { ascending: true }),
       supabase
         .from('churches')
@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     if (!isAdmin(session)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const body = await request.json();
-    const { name, email, phone, booking_embed } = body;
+    const { name, email, login_email, phone, booking_embed } = body;
 
     if (!name?.trim()) {
       return NextResponse.json({ error: 'Coach name is required' }, { status: 400 });
@@ -93,11 +93,12 @@ export async function POST(request: NextRequest) {
       .insert({
         name: name.trim(),
         email: email?.trim() || null,
+        login_email: login_email?.trim() || null,
         phone: phone?.trim() || null,
         booking_embed: booking_embed?.trim() || null,
         updated_at: new Date().toISOString(),
       })
-      .select('id, name, email, phone, booking_embed, user_id, created_at')
+      .select('id, name, email, login_email, phone, booking_embed, user_id, created_at')
       .single();
 
     if (error) {
@@ -105,10 +106,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to create coach' }, { status: 500 });
     }
 
-    // Auto-provision login account if email provided (fire-and-forget)
-    if (data && email?.trim()) {
+    // Auto-provision login account. Use login_email if provided (the email they log in with),
+    // otherwise fall back to the display email.
+    const authEmail = login_email?.trim() || email?.trim();
+    if (data && authEmail) {
       void (async () => {
-        await ensureCoachAccount(data.id, email.trim(), name.trim());
+        await ensureCoachAccount(data.id, authEmail, name.trim());
       })();
     }
 

@@ -27,13 +27,15 @@ export async function GET() {
 
     const supabase = getSupabaseAdmin();
 
-    // If the requester is a DNA coach (not super admin), scope to their assigned churches
+    // If the requester is a DNA coach (not super admin), scope to their assigned churches.
+    // Match by user_id (set by ensureCoachAccount) — most reliable since login_email
+    // may differ from the display email stored in dna_coaches.email.
     let scopedCoachId: string | null = null;
     if (coachUser && !adminUser) {
       const { data: coachProfile } = await supabase
         .from('dna_coaches')
         .select('id')
-        .eq('email', session.email.toLowerCase())
+        .eq('user_id', session.userId)
         .single();
       scopedCoachId = coachProfile?.id ?? null;
     }
@@ -239,12 +241,13 @@ export async function POST(request: NextRequest) {
     // Resolve the coach ID for the new church
     // - If coach is creating: auto-assign their own coach profile
     // - If admin is creating: use the explicit coachId from the body (optional)
+    // Match by user_id (reliable even when login_email differs from display email).
     let resolvedCoachId: string | null = coachId ?? null;
     if (coachUser && !adminUser) {
       const { data: coachProfile } = await supabase
         .from('dna_coaches')
         .select('id')
-        .eq('email', session.email.toLowerCase())
+        .eq('user_id', session.userId)
         .single();
       resolvedCoachId = coachProfile?.id ?? null;
     }

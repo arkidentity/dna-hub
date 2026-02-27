@@ -23,6 +23,7 @@ interface Coach {
   id: string;
   name: string;
   email: string | null;
+  login_email: string | null;
   phone: string | null;
   booking_embed: string | null;
   user_id: string | null;
@@ -34,11 +35,12 @@ interface Coach {
 type EditForm = {
   name: string;
   email: string;
+  login_email: string;
   phone: string;
   booking_embed: string;
 };
 
-const emptyForm: EditForm = { name: '', email: '', phone: '', booking_embed: '' };
+const emptyForm: EditForm = { name: '', email: '', login_email: '', phone: '', booking_embed: '' };
 
 export default function CoachesTab() {
   const [coaches, setCoaches] = useState<Coach[]>([]);
@@ -93,6 +95,7 @@ export default function CoachesTab() {
         body: JSON.stringify({
           name: addForm.name.trim(),
           email: addForm.email.trim() || null,
+          login_email: addForm.login_email.trim() || null,
           phone: addForm.phone.trim() || null,
           booking_embed: addForm.booking_embed.trim() || null,
         }),
@@ -117,6 +120,7 @@ export default function CoachesTab() {
     setEditForm({
       name: coach.name,
       email: coach.email ?? '',
+      login_email: coach.login_email ?? '',
       phone: coach.phone ?? '',
       booking_embed: coach.booking_embed ?? '',
     });
@@ -140,6 +144,7 @@ export default function CoachesTab() {
         body: JSON.stringify({
           name: editForm.name.trim(),
           email: editForm.email.trim() || null,
+          login_email: editForm.login_email.trim() || null,
           phone: editForm.phone.trim() || null,
           booking_embed: editForm.booking_embed.trim() || null,
         }),
@@ -234,12 +239,22 @@ export default function CoachesTab() {
                 />
               </div>
               <div>
-                <label className="block text-xs font-medium text-navy mb-1">Email</label>
+                <label className="block text-xs font-medium text-navy mb-1">Display Email</label>
                 <input
                   type="email"
                   value={addForm.email}
                   onChange={e => setAddForm(f => ({ ...f, email: e.target.value }))}
-                  placeholder="coach@example.com"
+                  placeholder="Public-facing email"
+                  className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-navy bg-white"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-navy mb-1">Login Email</label>
+                <input
+                  type="email"
+                  value={addForm.login_email}
+                  onChange={e => setAddForm(f => ({ ...f, login_email: e.target.value }))}
+                  placeholder="Email used to log in (if different)"
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-navy bg-white"
                 />
               </div>
@@ -253,7 +268,7 @@ export default function CoachesTab() {
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-navy bg-white"
                 />
               </div>
-              <div>
+              <div className="sm:col-span-2">
                 <label className="block text-xs font-medium text-navy mb-1">Booking Embed / URL</label>
                 <input
                   type="text"
@@ -264,9 +279,9 @@ export default function CoachesTab() {
                 />
               </div>
             </div>
-            {addForm.email && (
+            {(addForm.login_email || addForm.email) && (
               <p className="text-xs text-teal bg-teal/5 border border-teal/20 rounded-lg px-3 py-2">
-                A login account will be automatically created for this email address.
+                A login account will be provisioned for <strong>{addForm.login_email.trim() || addForm.email.trim()}</strong>.
               </p>
             )}
             {addError && (
@@ -383,11 +398,22 @@ function CoachCard({
             />
           </div>
           <div>
-            <label className="block text-xs font-medium text-navy mb-1">Email</label>
+            <label className="block text-xs font-medium text-navy mb-1">Display Email</label>
             <input
               type="email"
               value={editForm.email}
               onChange={e => onEditFormChange({ ...editForm, email: e.target.value })}
+              placeholder="Public-facing email"
+              className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-navy bg-white"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-navy mb-1">Login Email</label>
+            <input
+              type="email"
+              value={editForm.login_email}
+              onChange={e => onEditFormChange({ ...editForm, login_email: e.target.value })}
+              placeholder="Email used to log in (if different)"
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-navy bg-white"
             />
           </div>
@@ -400,7 +426,7 @@ function CoachCard({
               className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:border-navy bg-white"
             />
           </div>
-          <div>
+          <div className="sm:col-span-2">
             <label className="block text-xs font-medium text-navy mb-1">Booking Embed / URL</label>
             <input
               type="text"
@@ -510,9 +536,17 @@ function CoachCard({
         {coach.email && (
           <div className="flex items-center gap-2 text-xs text-foreground-muted">
             <Mail className="w-3.5 h-3.5 flex-shrink-0" />
+            <span className="text-foreground-muted/60 flex-shrink-0">Display:</span>
             <a href={`mailto:${coach.email}`} className="hover:text-navy transition-colors truncate">
               {coach.email}
             </a>
+          </div>
+        )}
+        {coach.login_email && (
+          <div className="flex items-center gap-2 text-xs text-foreground-muted">
+            <Mail className="w-3.5 h-3.5 flex-shrink-0 text-teal/70" />
+            <span className="text-foreground-muted/60 flex-shrink-0">Login:</span>
+            <span className="truncate text-teal/80">{coach.login_email}</span>
           </div>
         )}
         {coach.phone && (

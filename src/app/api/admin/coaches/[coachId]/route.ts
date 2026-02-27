@@ -20,7 +20,7 @@ export async function PATCH(
 
     const { coachId } = await params;
     const body = await request.json();
-    const { name, email, phone, booking_embed } = body;
+    const { name, email, login_email, phone, booking_embed } = body;
 
     if (name !== undefined && !name?.trim()) {
       return NextResponse.json({ error: 'Coach name cannot be empty' }, { status: 400 });
@@ -29,6 +29,7 @@ export async function PATCH(
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
     if (name !== undefined) updates.name = name.trim();
     if (email !== undefined) updates.email = email?.trim() || null;
+    if (login_email !== undefined) updates.login_email = login_email?.trim() || null;
     if (phone !== undefined) updates.phone = phone?.trim() || null;
     if (booking_embed !== undefined) updates.booking_embed = booking_embed?.trim() || null;
 
@@ -37,7 +38,7 @@ export async function PATCH(
       .from('dna_coaches')
       .update(updates)
       .eq('id', coachId)
-      .select('id, name, email, phone, booking_embed, user_id, created_at')
+      .select('id, name, email, login_email, phone, booking_embed, user_id, created_at')
       .single();
 
     if (error) {
@@ -45,12 +46,13 @@ export async function PATCH(
       return NextResponse.json({ error: 'Failed to update coach' }, { status: 500 });
     }
 
-    // Re-provision login account if coach has an email (fire-and-forget)
-    const resolvedEmail = data.email;
+    // Re-provision login account (fire-and-forget).
+    // Use login_email (the email they log in with) if set, otherwise fall back to display email.
+    const resolvedAuthEmail = data.login_email || data.email;
     const resolvedName = data.name;
-    if (resolvedEmail) {
+    if (resolvedAuthEmail) {
       void (async () => {
-        await ensureCoachAccount(coachId, resolvedEmail, resolvedName);
+        await ensureCoachAccount(coachId, resolvedAuthEmail, resolvedName);
       })();
     }
 
