@@ -163,65 +163,105 @@ export default function TeamGiftsTab({ churchId, subdomain }: TeamGiftsTabProps)
       )}
 
       {!loading && !error && members.length > 0 && (
-        <div className="overflow-x-auto rounded-xl border border-gray-200">
-          <table className="w-full text-sm">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-200">
-                <th className="text-left px-4 py-3 font-semibold text-gray-700">Name</th>
-                <th className="text-left px-4 py-3 font-semibold text-blue-700">
-                  Serving Gift
-                  <span className="font-normal text-gray-400 ml-1 text-xs">Rom 12</span>
-                </th>
-                <th className="text-left px-4 py-3 font-semibold text-purple-700">
-                  Supernatural Gift
-                  <span className="font-normal text-gray-400 ml-1 text-xs">1 Cor 12</span>
-                </th>
-                <th className="text-left px-4 py-3 font-semibold text-amber-700">
-                  Leadership Calling
-                  <span className="font-normal text-gray-400 ml-1 text-xs">Eph 4</span>
-                </th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-500">Completed</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {members.map((m) => (
-                <tr key={m.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-4 py-3">
-                    <p className="font-medium text-gray-900">{m.name}</p>
-                    <p className="text-gray-400 text-xs">{m.email}</p>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col gap-1">
-                      <GiftBadge gift={m.tier1_primary} score={m.tier1_primary_score} tier={1} />
-                      {m.tier1_secondary && (
-                        <span className="text-xs text-gray-400">{capitalize(m.tier1_secondary)}</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col gap-1">
-                      <GiftBadge gift={m.tier2_primary} score={m.tier2_primary_score} tier={2} />
-                      {m.tier2_secondary && (
-                        <span className="text-xs text-gray-400">{capitalize(m.tier2_secondary)}</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-col gap-1">
-                      <GiftBadge gift={m.tier3_primary} score={m.tier3_primary_score} tier={3} />
-                      {m.tier3_secondary && (
-                        <span className="text-xs text-gray-400">{capitalize(m.tier3_secondary)}</span>
-                      )}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
-                    {new Date(m.completed_at).toLocaleDateString()}
-                  </td>
+        <>
+          {/* Mobile: card view */}
+          <div className="md:hidden space-y-3">
+            {members.map((m) => (
+              <div key={m.id} className="border border-gray-200 rounded-xl p-4 space-y-3">
+                <div>
+                  <p className="font-medium text-gray-900">{m.name}</p>
+                  <p className="text-gray-400 text-xs">{m.email}</p>
+                </div>
+                <div className="space-y-2">
+                  {([1, 2, 3] as const).map((tier) => {
+                    const t = TIER_LABELS[tier];
+                    const primaryGift = tier === 1 ? m.tier1_primary : tier === 2 ? m.tier2_primary : m.tier3_primary;
+                    const primaryScore = tier === 1 ? m.tier1_primary_score : tier === 2 ? m.tier2_primary_score : m.tier3_primary_score;
+                    const secondaryGift = tier === 1 ? m.tier1_secondary : tier === 2 ? m.tier2_secondary : m.tier3_secondary;
+                    return (
+                      <div key={tier} className="flex items-start justify-between gap-2">
+                        <span className={`text-xs font-medium ${t.color} shrink-0 pt-0.5`}>
+                          {t.label}
+                          <span className="text-gray-400 font-normal ml-1">{t.scripture}</span>
+                        </span>
+                        <div className="flex flex-col items-end gap-0.5">
+                          <GiftBadge gift={primaryGift} score={primaryScore} tier={tier} />
+                          {secondaryGift && (
+                            <span className="text-xs text-gray-400">{capitalize(secondaryGift)}</span>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+                <p className="text-xs text-gray-400">
+                  Completed {new Date(m.completed_at).toLocaleDateString()}
+                </p>
+              </div>
+            ))}
+          </div>
+
+          {/* Desktop: table view */}
+          <div className="hidden md:block overflow-x-auto rounded-xl border border-gray-200">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-200">
+                  <th className="text-left px-4 py-3 font-semibold text-gray-700">Name</th>
+                  <th className="text-left px-4 py-3 font-semibold text-blue-700">
+                    Serving Gift
+                    <span className="font-normal text-gray-400 ml-1 text-xs">Rom 12</span>
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-purple-700">
+                    Supernatural Gift
+                    <span className="font-normal text-gray-400 ml-1 text-xs">1 Cor 12</span>
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-amber-700">
+                    Leadership Calling
+                    <span className="font-normal text-gray-400 ml-1 text-xs">Eph 4</span>
+                  </th>
+                  <th className="text-left px-4 py-3 font-semibold text-gray-500">Completed</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {members.map((m) => (
+                  <tr key={m.id} className="hover:bg-gray-50 transition-colors">
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-gray-900">{m.name}</p>
+                      <p className="text-gray-400 text-xs">{m.email}</p>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col gap-1">
+                        <GiftBadge gift={m.tier1_primary} score={m.tier1_primary_score} tier={1} />
+                        {m.tier1_secondary && (
+                          <span className="text-xs text-gray-400">{capitalize(m.tier1_secondary)}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col gap-1">
+                        <GiftBadge gift={m.tier2_primary} score={m.tier2_primary_score} tier={2} />
+                        {m.tier2_secondary && (
+                          <span className="text-xs text-gray-400">{capitalize(m.tier2_secondary)}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-col gap-1">
+                        <GiftBadge gift={m.tier3_primary} score={m.tier3_primary_score} tier={3} />
+                        {m.tier3_secondary && (
+                          <span className="text-xs text-gray-400">{capitalize(m.tier3_secondary)}</span>
+                        )}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-gray-400 text-xs whitespace-nowrap">
+                      {new Date(m.completed_at).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </>
       )}
     </div>
   );

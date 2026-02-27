@@ -412,37 +412,37 @@ export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabPr
 
             return (
               <div key={leader.id} className="card">
-                <div className="flex items-start justify-between">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 mb-2">
                       <h3 className="font-semibold text-navy">{leader.name}</h3>
                       {isPending ? (
-                        <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700">
+                        <span className="text-xs px-2 py-1 rounded-full bg-yellow-100 text-yellow-700 whitespace-nowrap">
                           Pending Invite
                         </span>
                       ) : (
-                        <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700">
+                        <span className="text-xs px-2 py-1 rounded-full bg-green-100 text-green-700 whitespace-nowrap">
                           Active
                         </span>
                       )}
                       {healthStatus && (
-                        <span className={`flex items-center gap-1 text-xs ${healthStatus.color}`}>
+                        <span className={`flex items-center gap-1 text-xs whitespace-nowrap ${healthStatus.color}`}>
                           <healthStatus.icon className="w-3 h-3" />
                           {healthStatus.label}
                         </span>
                       )}
                     </div>
 
-                    <div className="flex items-center gap-4 text-sm text-foreground-muted mb-2">
+                    <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-foreground-muted mb-2">
                       <a
                         href={`mailto:${leader.email}`}
-                        className="flex items-center gap-1 text-teal hover:text-teal-light"
+                        className="flex items-center gap-1 text-teal hover:text-teal-light min-w-0"
                       >
-                        <Mail className="w-4 h-4" />
-                        {leader.email}
+                        <Mail className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{leader.email}</span>
                       </a>
                       {leader.phone && (
-                        <span>{leader.phone}</span>
+                        <span className="whitespace-nowrap">{leader.phone}</span>
                       )}
                     </div>
 
@@ -490,21 +490,21 @@ export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabPr
                         <p className="text-xs text-foreground-muted mb-2">
                           {leaderGroups.length} Group{leaderGroups.length !== 1 ? 's' : ''}
                         </p>
-                        <div className="flex flex-wrap gap-2">
+                        <div className="flex flex-col gap-2 sm:flex-row sm:flex-wrap">
                           {leaderGroups.map((group) => {
                             const phaseInfo = PHASE_LABELS[group.current_phase as DNAGroupPhase] || PHASE_LABELS['pre-launch'];
                             return (
                               <div
                                 key={group.id}
-                                className="flex items-center gap-2 px-3 py-1.5 bg-background-secondary rounded-lg"
+                                className="flex items-center gap-2 px-3 py-1.5 bg-background-secondary rounded-lg min-w-0"
                               >
-                                <span className="font-medium text-sm text-navy">
+                                <span className="font-medium text-sm text-navy truncate">
                                   {group.group_name}
                                 </span>
-                                <span className={`text-xs px-2 py-0.5 rounded-full ${phaseInfo.color}`}>
+                                <span className={`text-xs px-2 py-0.5 rounded-full whitespace-nowrap flex-shrink-0 ${phaseInfo.color}`}>
                                   {phaseInfo.label}
                                 </span>
-                                <span className="text-xs text-foreground-muted">
+                                <span className="text-xs text-foreground-muted whitespace-nowrap flex-shrink-0">
                                   {group.disciple_count || 0} disciples
                                 </span>
                               </div>

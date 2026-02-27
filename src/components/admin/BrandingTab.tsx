@@ -15,6 +15,7 @@ import {
   LayoutTemplate,
 } from 'lucide-react';
 import { ChurchBranding } from '@/lib/types';
+import ChurchAppQRCard from '@/components/shared/ChurchAppQRCard';
 
 interface Church {
   id: string;
@@ -955,6 +956,18 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
                 </div>
               </div>
             </div>
+
+            {/* QR Code — only shown when subdomain is set */}
+            {subdomainPreview && (
+              <div className="w-56 mx-auto">
+                <ChurchAppQRCard
+                  url={subdomainPreview}
+                  logoUrl={form.icon_url || form.logo_url}
+                  downloadName={form.subdomain || 'church'}
+                  compact
+                />
+              </div>
+            )}
           </div>
         </div>
       )}

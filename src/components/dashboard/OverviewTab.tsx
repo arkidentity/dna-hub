@@ -7,6 +7,7 @@ import ScheduleCallCard from './ScheduleCallCard';
 import DocumentsCard from './DocumentsCard';
 import ResourcesCard from './ResourcesCard';
 import QuickStats from './QuickStats';
+import ChurchAppQRCard from '@/components/shared/ChurchAppQRCard';
 
 interface OverviewTabProps {
   phases: PhaseWithMilestones[];
@@ -53,6 +54,15 @@ export default function OverviewTab({
 
       {/* DNA Resources Section */}
       <ResourcesCard resources={globalResources} />
+
+      {/* Church App Link & QR Code — shown when subdomain is configured */}
+      {church.subdomain && (
+        <ChurchAppQRCard
+          url={`https://${church.subdomain}.dailydna.app`}
+          logoUrl={church.splash_logo_url || church.logo_url}
+          downloadName={church.subdomain}
+        />
+      )}
 
       {/* Quick Stats */}
       <QuickStats phases={phases} church={church} />

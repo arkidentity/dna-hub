@@ -167,10 +167,10 @@ export default function TeamTab({ churchId, churchName }: TeamTabProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center justify-between gap-3">
+        <div className="min-w-0">
           <h2 className="text-xl font-semibold text-navy flex items-center gap-2">
-            <Users className="w-5 h-5 text-gold" />
+            <Users className="w-5 h-5 text-gold flex-shrink-0" />
             Your Team
           </h2>
           <p className="text-sm text-foreground-muted mt-1">
@@ -179,7 +179,7 @@ export default function TeamTab({ churchId, churchName }: TeamTabProps) {
         </div>
         <button
           onClick={() => setShowInviteModal(true)}
-          className="btn-primary flex items-center gap-2"
+          className="btn-primary flex items-center gap-2 flex-shrink-0 whitespace-nowrap"
         >
           <UserPlus className="w-4 h-4" />
           Invite Leader
@@ -201,32 +201,32 @@ export default function TeamTab({ churchId, churchName }: TeamTabProps) {
             {leaders.map((leader) => (
               <div
                 key={leader.id}
-                className="py-4 flex items-center justify-between"
+                className="py-4 flex items-center justify-between gap-3"
               >
-                <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-gold/10 rounded-full flex items-center justify-center">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="w-10 h-10 bg-gold/10 rounded-full flex items-center justify-center flex-shrink-0">
                     <span className="text-gold font-medium">
                       {(leader.name || leader.email)[0].toUpperCase()}
                     </span>
                   </div>
-                  <div>
-                    <p className="font-medium text-navy">
+                  <div className="min-w-0">
+                    <p className="font-medium text-navy truncate">
                       {leader.name || 'Name not provided'}
                     </p>
-                    <p className="text-sm text-foreground-muted flex items-center gap-1">
-                      <Mail className="w-3 h-3" />
-                      {leader.email}
+                    <p className="text-sm text-foreground-muted flex items-center gap-1 min-w-0">
+                      <Mail className="w-3 h-3 flex-shrink-0" />
+                      <span className="truncate">{leader.email}</span>
                     </p>
                   </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-xs text-foreground-muted">
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className="hidden sm:block text-xs text-foreground-muted whitespace-nowrap">
                     Added {formatDate(leader.created_at)}
                   </span>
                   <button
                     onClick={() => handleSendLoginLink(leader.email, leader.name || undefined)}
                     disabled={sendingLink === leader.email}
-                    className="flex items-center gap-1 px-2 py-1 text-xs text-teal hover:bg-teal/10 rounded transition-colors"
+                    className="flex items-center gap-1 px-2 py-1 text-xs text-teal hover:bg-teal/10 rounded transition-colors whitespace-nowrap"
                     title="Send login link"
                   >
                     {sendingLink === leader.email ? (

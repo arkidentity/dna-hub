@@ -439,7 +439,7 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Page Title with Church Info */}
-      <div className="bg-navy text-white py-3 px-6">
+      <div className="bg-navy text-white py-3 px-4 sm:px-6">
         <div className="max-w-5xl mx-auto flex items-center gap-4">
           {(church.splash_logo_url || church.logo_url) ? (
             <Image
@@ -457,8 +457,8 @@ export default function DashboardPage() {
 
       {/* Tab Navigation */}
       <div className="bg-white border-b border-card-border">
-        <div className="max-w-5xl mx-auto px-6">
-          <div className="flex gap-6">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6">
+          <div className="flex overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
             {[
               { id: 'overview', label: 'Overview', icon: LayoutDashboard },
               { id: 'journey', label: 'DNA Journey', icon: Map },
@@ -469,7 +469,7 @@ export default function DashboardPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`flex items-center gap-2 py-4 border-b-2 transition-colors ${
+                className={`flex items-center gap-1.5 py-4 px-3 sm:px-0 sm:mr-6 last:sm:mr-0 border-b-2 transition-colors whitespace-nowrap flex-shrink-0 text-sm ${
                   activeTab === tab.id
                     ? 'border-gold text-navy font-medium'
                     : 'border-transparent text-foreground-muted hover:text-navy'
@@ -483,7 +483,7 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      <main className="max-w-5xl mx-auto px-6 py-8">
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-8">
         {activeTab === 'overview' && (
           <OverviewTab
             phases={phases}

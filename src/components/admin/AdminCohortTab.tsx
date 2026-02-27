@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Users, MessageSquare, Rss, Calendar, Loader2, Plus, X, Pin, Globe, ExternalLink } from 'lucide-react';
+import ChurchAppQRCard from '@/components/shared/ChurchAppQRCard';
 
 // ── Types ─────────────────────────────────────────────────────────
 
@@ -818,6 +819,16 @@ export default function AdminCohortTab({ churchId }: { churchId: string }) {
           </div>
         </div>
       </div>
+
+      {/* Church App QR Code — shown when subdomain is configured */}
+      {data.cohort.church_subdomain && (
+        <div className="mb-6">
+          <ChurchAppQRCard
+            url={`https://${data.cohort.church_subdomain}.dailydna.app`}
+            downloadName={data.cohort.church_subdomain}
+          />
+        </div>
+      )}
 
       {/* Sub-tab navigation */}
       <div className="flex gap-1 mb-6 border-b border-gray-200">
