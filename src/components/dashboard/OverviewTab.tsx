@@ -59,7 +59,7 @@ export default function OverviewTab({
       {church.subdomain && (
         <ChurchAppQRCard
           url={`https://${church.subdomain}.dailydna.app`}
-          logoUrl={church.splash_logo_url || church.logo_url}
+          logoUrl={church.icon_url || church.splash_logo_url}
           downloadName={church.subdomain}
         />
       )}

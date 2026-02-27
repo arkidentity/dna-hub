@@ -92,6 +92,7 @@ export interface Church {
   id: string;
   name: string;
   logo_url?: string;
+  icon_url?: string | null;
   splash_logo_url?: string | null;
   subdomain?: string | null;
   status: ChurchStatus;

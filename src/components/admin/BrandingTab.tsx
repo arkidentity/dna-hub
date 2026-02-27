@@ -962,7 +962,7 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
               <div className="w-56 mx-auto">
                 <ChurchAppQRCard
                   url={subdomainPreview}
-                  logoUrl={form.icon_url || form.logo_url}
+                  logoUrl={form.icon_url || form.splash_logo_url}
                   downloadName={form.subdomain || 'church'}
                   compact
                 />

@@ -176,7 +176,7 @@ export async function GET() {
         .order('display_order', { ascending: true }),
       supabase
         .from('church_branding_settings')
-        .select('splash_logo_url')
+        .select('icon_url, splash_logo_url')
         .eq('church_id', church.id)
         .maybeSingle(),
     ]);
@@ -273,7 +273,7 @@ export async function GET() {
     });
 
     return NextResponse.json({
-      church: { ...church, splash_logo_url: branding?.splash_logo_url ?? null },
+      church: { ...church, icon_url: branding?.icon_url ?? null, splash_logo_url: branding?.splash_logo_url ?? null },
       leader,
       phases: phasesWithMilestones,
       documents: documents || [],
