@@ -123,7 +123,7 @@ export default function DNAManualPage() {
                 </span>
               </div>
               <div className="progress-bar-container">
-                <div className="progress-bar" style={{ width: `${progressPercent}%` }} />
+                <div className={`progress-bar ${progressPercent === 100 ? 'complete' : ''}`} style={{ width: `${progressPercent}%` }} />
               </div>
               {progress.isManualComplete && (
                 <div className="completion-badge">
@@ -222,7 +222,7 @@ export default function DNAManualPage() {
           <section className="exponential-section">
             <h3>Let's Get Exponential</h3>
             <div className="exponential-grid">
-              {[2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536].map((num, i) => (
+              {[2, 4, 8, 16, 32, 64, 128, 256, 512, 1024, 2048, 4096, 8192, 16384, 32768, 65536, 131072, 262144].map((num, i) => (
                 <div key={num} className="exponential-item" style={{ animationDelay: `${i * 0.05}s` }}>
                   {num.toLocaleString()}
                 </div>
@@ -377,9 +377,13 @@ const styles = `
 
   .progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, #D4A853, #E5B964);
+    background: #D4A853;
     border-radius: 4px;
-    transition: width 0.5s ease;
+    transition: width 0.3s ease, background-color 0.3s ease;
+  }
+
+  .progress-bar.complete {
+    background: #2E7D5E;
   }
 
   .completion-badge {
@@ -528,18 +532,20 @@ const styles = `
   }
 
   .session-card.current .session-number {
-    background: rgba(212, 168, 83, 0.15);
+    background: #1A2332;
     color: #D4A853;
+    border: 1px solid #D4A853;
   }
 
   .session-card.completed .session-number {
-    background: rgba(74, 158, 127, 0.15);
-    color: #4A9E7F;
+    background: #2E7D5E;
+    color: #FFFFFF;
   }
 
   .session-card.locked .session-number {
     background: #1A2332;
     color: #5A6577;
+    border: 1px solid #3D4A5C;
   }
 
   .session-content h3 {

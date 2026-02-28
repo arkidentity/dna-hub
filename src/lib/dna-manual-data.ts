@@ -12,7 +12,8 @@ export type ContentBlockType =
   | 'discussion'
   | 'checklist'
   | 'numbered'
-  | 'header';
+  | 'header'
+  | 'reflection';
 
 export interface ContentBlock {
   type: ContentBlockType;
@@ -21,6 +22,7 @@ export interface ContentBlock {
   questions?: string[];
   items?: string[];
   title?: string;
+  label?: string;
 }
 
 export interface Lesson {
@@ -61,8 +63,8 @@ export const dnaManualData: DNAManualData = {
   description:
     'A practical guide to making disciples who make disciples through intentional apprenticeship and Spirit-led multiplication.',
   epigraph: {
-    text: 'And He gave some as apostles, some as prophets, some as evangelists, some as pastors and teachers, for the equipping of the saints for the work of ministry, for the building up of the body of Christ; until we all attain to the unity of the faith, and of the knowledge of the Son of God, to a mature man, to the measure of the stature which belongs to the fullness of Christ.',
-    reference: 'Ephesians 4:11-13 NASB',
+    text: 'And He gave some as apostles, some as prophets, some as evangelists, some as pastors and teachers, for the equipping of the saints for the work of ministry, for the building up of the body of Christ; until we all attain to the unity of the faith, and of the knowledge of the Son of God, to a mature man, to the measure of the stature which belongs to the fullness of Christ. As a result, we are no longer to be children, tossed here and there by waves and carried about by every wind of doctrine, by the trickery of people, by craftiness in deceitful scheming; but speaking the truth in love, we are to grow up in all aspects into Him who is the head, that is, Christ, from whom the whole body, being fitted and held together by what every joint supplies, according to the proper working of each individual part, causes the growth of the body for the building up of itself in love.',
+    reference: 'Ephesians 4:11-16 NASB',
   },
   teleiosDefinition: {
     term: 'Teleios',
@@ -105,7 +107,7 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: 'Ultimately, we are apprentices of Jesus. However, Jesus chooses to disciple us through other people just like us. The apprentice being discipled should be committed to soaking up everything they can from the teacher (coach, leader, mentor). A heart posture to receive and a desire to imitate Christ is necessary and should be expected in both the student and mentor.',
+              text: "Ultimately, we are apprentices of Jesus. However, Jesus chooses to disciple us through other people just like us. Discipleship is not accidental, it's loving people with a plan. The apprentice being discipled should be committed to soaking up everything they can from the teacher (coach, leader, mentor). A heart posture to receive and a desire to imitate Christ is necessary and should be expected in both the student and mentor.",
             },
             {
               type: 'scripture',
@@ -118,11 +120,11 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: "I believe that entering into a discipleship relationship means we give someone we trust permission to question our lives. What are you afraid of? What gets you fired up? What makes you angry? What drives your spending habits? You can tell a lot about someone by the way they answer such questions. Yes, this is personal but this is what Jesus wants. Vulnerability. True discipleship requires a safe place for dirt to be exposed, removed and healed. This is surgery \"by the body to the body\".",
+              text: 'I believe that entering into a discipleship relationship means we give someone we trust permission to question our lives. What are you afraid of? What gets you fired up? What makes you angry? What drives your spending habits? You can tell a lot about someone by the way they answer such questions. Yes, this is personal but this is what Jesus wants. Vulnerability. True discipleship requires a safe place for brokenness to be exposed, removed and healed. Discipleship is surgery "by the body to the body", meaning we allow others to cut things out of our lives that don\'t belong.',
             },
             {
               type: 'scripture',
-              text: 'A person who is blind cannot guide another who is blind, can he? Will they not both fall into a pit? A student is not above the teacher; but everyone, when he has been fully trained, will be like his teacher.',
+              text: 'Now He also spoke a parable to them: "A person who is blind CANNOT guide another who is blind, can he? Will they not both fall into a pit? A student is NOT ABOVE the teacher; but everyone, when he has been FULLY TRAINED, will be like his teacher.',
               ref: 'Luke 6:39-40 NASB',
             },
             {
@@ -143,7 +145,7 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: 'If you have the seed of Christ living in you then that means you have the DNA of Christ in you. You are no longer just human. You now have the Spirit of Christ living in you. You are now a holy human. If this is true, you will naturally produce the fruit of the Holy Spirit. And in that fruit is more seed that will multiply the DNA of Christ in others. This is not a maybe; this is the nature of Christ in us and through us. Discipleship and multiplication is a mandate for all Christians to participate in.',
+              text: 'If you have the seed of Christ living in you then that means you have the DNA of Christ in you. You are no longer just human. You now have the Spirit of Christ living in you. You are a new kind of human. A "holy human"; a new creation. If this is true, you will naturally produce the fruit of the Holy Spirit. And in that fruit is more seed that will multiply the DNA of Christ in others. This is not a maybe; this is the nature of Christ in us and through us. Discipleship and multiplication is a mandate for all Christians to participate in.',
             },
             {
               type: 'scripture',
@@ -161,12 +163,12 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: "Is it the right kind of fruit? We must be mindful of the seeds we sow into the lives of those we disciple. If you are a born again believer, you now have the seed of Christ growing in you. But we also have seeds of the enemy that need to be uprooted and removed from our hearts. As a leader, you must be aware of the condition of the soil in your heart and the seeds that are actively growing in your life. You may have a root of bitterness that is undealt with. And you may be unaware that some of the seed you're planting in a disciple's life is having an effect on their growth.",
+              text: "Is it the right kind of fruit? We must be mindful of the seeds we sow into the lives of those we disciple. If you are a born again believer, you now have the seed of Christ growing in you. But we also have seeds of the enemy that need to be uprooted and removed from our hearts. As a leader, you must be aware of the condition of the soil in your heart and the seeds that are actively growing in your life. You may have a root of bitterness that is unresolved. And you may be unaware that some of the seed you're planting in a disciple's life is having an effect on their growth.",
             },
             {
               type: 'scripture',
-              text: 'You will know them by their fruits. Grapes are not gathered from thorn bushes, nor figs from thistles, are they? So every good tree bears good fruit, but the bad tree bears bad fruit. A good tree cannot bear bad fruit, nor can a bad tree bear good fruit.',
-              ref: 'Matthew 7:16-18 NASB',
+              text: 'You will know them by their fruits. Grapes are not gathered from thorn bushes, nor figs from thistles, are they? So every good tree bears good fruit, but the bad tree bears bad fruit. A good tree cannot bear bad fruit, nor can a bad tree bear good fruit. Every tree that does not bear good fruit is cut down and thrown into the fire. So then, you will know them by their fruits.',
+              ref: 'Matthew 7:16-20 NASB',
             },
           ],
         },
@@ -182,14 +184,44 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: "We should all have people we trust, who can call us higher in our identity. This is why we don't believe in maverick (solo mission) discipleship. We encourage community discipleship where leaders overlap their efforts to produce Spirit-filled believers who are full of the DNA of Jesus. After all, we should be able to test the fruit of one another's lives. It comes down to these questions:",
+              text: "We should all have people we trust, who can call us higher in our identity. This is why we don't believe in maverick (solo mission) discipleship. We encourage community discipleship where leaders overlap their efforts. The goal isn't just Spirit-filled individuals — it's Spirit-filled multipliers who carry the DNA of Jesus. And if we carry his DNA we should accept the fact that multiplication is His nature. That's why DNA stands for discipleship naturally activated.",
+            },
+            {
+              type: 'paragraph',
+              text: 'We should be able to test the fruit of one another\'s lives. It comes down to this question.',
             },
             {
               type: 'discussion',
+              label: 'Introspective',
               questions: [
                 'Who do you trust to test the soil and seed of your life?',
                 'Who trusts you to test the soil and seed of their life?',
               ],
+            },
+          ],
+        },
+        {
+          id: 4,
+          title: 'Your First Step Before Session Two',
+          duration: '2 min read',
+          content: [
+            {
+              type: 'scripture',
+              text: 'Search me, O God, and know my heart; Try me and know my anxious thoughts; And see if there be any hurtful way in me, And lead me in the everlasting way.',
+              ref: 'Psalm 139:23-24 NASB',
+            },
+            {
+              type: 'reflection',
+              label: 'Next Step',
+              text: "Before you go any further, take the Flow Assessment at dnadiscipleship.com. This assessment identifies 7 roadblocks that can hold back the river of God flowing through your life. It's not a test you pass or fail. It's an honest look at what might need to be addressed before you lead others.",
+            },
+            {
+              type: 'paragraph',
+              text: "Here's the reality — you can't lead people past places you haven't gone yourself. The Flow Assessment helps you see clearly so you can lead clearly.",
+            },
+            {
+              type: 'paragraph',
+              text: 'Take it before Session Two. Bring your results with you. They\'ll surface in conversations throughout the rest of this manual.',
             },
           ],
         },
@@ -214,7 +246,7 @@ export const dnaManualData: DNAManualData = {
           content: [
             {
               type: 'paragraph',
-              text: 'Discipleship can be seen as a church small group program but they are different. DNA groups are not seasonal where small groups tend to break for summers and holidays. DNA groups are more intentional and effective at producing deep relationships that are forged by life on life experiences. This may involve breaking false mindsets, correcting unseen wounds and calling each other higher into God-given identity.',
+              text: "DNA groups are built for one purpose — multiplication. Unlike seasonal programs that pause for summers and holidays, DNA is a year-round commitment to life-on-life relationship. This isn't a curriculum you complete. It's a covenant you live; one that addresses false mindsets, heals hidden wounds, and calls people higher into their God-given identity.",
             },
             {
               type: 'scripture',
@@ -236,11 +268,15 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: "In this model, you will spend 12 months (minimum 6 months in some situations) with the same group. The leader will raise up the co-leader to be a confident disciple maker and the apprentices will become future co-leads. We must communicate this so people aren't surprised when it's time to multiply. They expect it and look forward to it.",
+              text: "For one cycle of DNA, you will spend 12 months (minimum 6 months in some situations) with the same group. The leader will raise up the co-leader to be a confident disciple maker and the apprentices will become future co-leads. We must communicate this upfront so people aren't surprised when it's time to multiply. They expect it and look forward to completing cycle 1 and starting cycle 2 as a co-leader.",
             },
             {
               type: 'paragraph',
-              text: 'Yes, we multiply in groups but the relationship is not over. It just looks a little different as we step into the call of exponential growth. I have discipled many people and I still keep in contact with many of them. They still ask for help in their journey of discipling others. The goal is not to abandon people but to release them for success. Someone who has effectively been discipled should be able to repeat the process. This does not mean every disciple relationship looks the same but they are united by "the mission of multiplication".',
+              text: 'Yes, we multiply in groups but the relationship is not over. It just looks a little different as we step into the call of exponential growth. I have discipled many people and I still keep in contact with many of them. They still ask for help in their journey of discipling others. The goal is not to abandon people but to release them for success.',
+            },
+            {
+              type: 'paragraph',
+              text: 'Someone who has effectively been discipled should be able to repeat the process. This does not mean every disciple relationship looks the same but they are united by "the mission of multiplication". The purpose is to multiply the seed of Jesus. This will include laying doctrinal foundations and moving in supernatural living.',
             },
           ],
         },
@@ -251,7 +287,7 @@ export const dnaManualData: DNAManualData = {
           content: [
             {
               type: 'paragraph',
-              text: 'You may be eager to add people to your group but it is vital that you grow as a leader in your ability to cultivate more than one or two people at once. Keep in mind you may also be cultivating a marriage, children, career relationships and friendships that still require care.',
+              text: 'You may be eager to take on more disciples but it is vital that you grow as a leader in your ability to cultivate more than one or two people at once. Keep in mind you may also be cultivating a marriage, children, career relationships and friendships that still require care.',
             },
             {
               type: 'discussion',
@@ -281,6 +317,7 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'discussion',
+              label: 'Consider this…',
               questions: [
                 'Is your house in order?',
                 'Is your relationship with God thriving?',
@@ -297,7 +334,7 @@ export const dnaManualData: DNAManualData = {
           content: [
             {
               type: 'paragraph',
-              text: 'Your mission as a leader is to reproduce Christ in those you are raising up. With Christ, naturally comes the mission of discipleship. This can take 6 months to 1 year depending on the maturity level of the apprentice when starting. As a leader, you should be proficient in the following areas. We believe these are reasonable expectations that every mature believer can rise up and be successful at.',
+              text: 'Your mission as a leader is to reproduce Christ in those you are raising up. With Christ, naturally comes the mission of discipleship. One cycle of DNA can take 6 months to 1 year depending on the maturity level of the apprentice when starting. As a leader, you should be proficient in the following areas. We believe these are reasonable expectations that every mature believer can rise up and be successful at.',
             },
             {
               type: 'header',
@@ -317,7 +354,7 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: '1. Fully equipped in New Covenant Doctrine. You do not need to be an ARK Trainer but you should have experience with our core classes. ID3, Freedom, Sabbath and The Bridge. You should be able to break down the core beliefs of Christianity and the reality of the New Covenant.',
+              text: '1. Fully equipped in New Covenant Doctrine. You should have experience with the core doctrines of faith, be able to explain the core beliefs of Christianity and the reality of the New Covenant. There are many great resources to equip leaders with these core beliefs.',
             },
             {
               type: 'scripture',
@@ -326,7 +363,7 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: '2. Intentional and consistent communication. You should care about those you are discipling and helping them reach their full potential in Christ. This requires consistent communication through various methods. You should also be consistent in communication with other DNA leaders in your community.',
+              text: "2. Intentional and consistent communication. You should care about those you are discipling and helping them reach their full potential in Christ. This requires consistent communication through various methods. You should also be consistent in communication with other DNA leaders in your community. But your disciples should also be pursuing you. Don't become an island where your group becomes distant from the local body of believers.",
             },
             {
               type: 'paragraph',
@@ -341,6 +378,11 @@ export const dnaManualData: DNAManualData = {
               type: 'paragraph',
               text: '4. Living with godliness and integrity. As a leader or co-leader, you are expected to be walking in freedom, without any lifestyle of ongoing sin. We all make mistakes at times, but when we do, we experience conviction, confess to people we trust and keep it moving towards the high calling.',
             },
+            {
+              type: 'scripture',
+              text: 'Deacons likewise must be men of dignity, not insincere, not prone to drink much wine, not greedy for money, but holding to the mystery of the faith with a clear conscience. These men must also first be tested; then have them serve as deacons if they are beyond reproach. Women must likewise be dignified, not malicious gossips, but temperate, faithful in all things. Deacons must be husbands of one wife, and good managers of their children and their own households. For those who have served well as deacons obtain for themselves a high standing and great confidence in the faith that is in Christ Jesus.',
+              ref: '1 Timothy 3:8-13 NASB',
+            },
           ],
         },
         {
@@ -350,7 +392,7 @@ export const dnaManualData: DNAManualData = {
           content: [
             {
               type: 'paragraph',
-              text: "Paul had partnerships. We should have partnerships; people we have come into agreement with to make disciples together. This person should be faithful and able to meet the reasonable expectations we listed in the previous lesson. This is someone you should be able to count on and they should be able to count on you to live with integrity and follow through.",
+              text: "Paul had partnerships. We should have partnerships; people we have come into agreement with to make disciples together. This person should be faithful and able to meet the reasonable expectations we listed in the previous lesson. This is someone you should be able to count on and they should be able to count on you to live with integrity and follow through. Paul had a partnership that ended in division because of a disagreement about someone's integrity.",
             },
             {
               type: 'scripture',
@@ -359,16 +401,16 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: "Division in the Body? Let it never be. We see here that our opinions will not always reveal someone's true character. Paul was holding a past experience with Mark against him. So we see division between two ministers because they did not see the same thing in a disciple. The good news is that Paul trusted John Mark again as he proved to be a faithful worker of the gospel.",
+              text: "Division in the Body? Let it never be. We see here that our opinions will not always reveal someone's true character. Paul was holding a past experience with Mark against him. So we see division between two ministers because they did not see the same thing in a disciple. Barnabas took Mark and Paul chose Silas who is also referred to in scripture as Silvanus. The good news is that Paul trusted John Mark again as he proved to be a faithful worker of the gospel, unlike Demas who is mentioned here in 2 Timothy.",
             },
             {
               type: 'scripture',
-              text: 'Make every effort to come to me soon; for Demas, having loved this present world, has deserted me and gone to Thessalonica... Only Luke is with me. Take along Mark and bring him with you, for he is useful to me for service.',
+              text: 'Make every effort to come to me soon; for Demas, having loved this present world, has deserted me and gone to Thessalonica; Crescens has gone to Galatia, Titus to Dalmatia. Only Luke is with me. Take along Mark and bring him with you, for he is useful to me for service.',
               ref: '2 Timothy 4:9-11 NASB',
             },
             {
               type: 'paragraph',
-              text: "Maybe you have been identified as a leader in your community, who is ready to start leading a DNA group. Before you ask God to send some disciples you should be asking for a co-leader; someone who is mature but still growing in their ability to lead a group on their own. This decision should be made with the Holy Spirit. Who is He leading you to partner with?",
+              text: "Maybe you have been identified as a leader in your community, who is ready to start leading a DNA group. Before you ask God to send some disciples you should be asking for a co-leader; someone who is mature but still growing in their ability to lead a group on their own. This decision should be made with the Holy Spirit. Who is He leading you to partner with? What if it is someone you least expected?",
             },
           ],
         },
@@ -379,7 +421,7 @@ export const dnaManualData: DNAManualData = {
           content: [
             {
               type: 'paragraph',
-              text: 'Pray! I know it sounds cliche, but pray. Jesus spent time with The Father before He went out and selected the men that would follow Him the next 3.5 years. This is such an important part of the process. Many people say they want discipleship but when it comes down to it they much rather just have some friends to hang out with.',
+              text: 'Pray! I know it sounds cliche, but pray. Jesus spent time with The Father before He went out and selected the men that would follow Him the next 3 \u00bd years. (Luke 6:12-16) This is such an important part of the process. Many people say they want discipleship but when it comes down to it they much rather just have some friends to hang out with.',
             },
             {
               type: 'scripture',
@@ -388,11 +430,11 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: 'We love and receive people right where they are at but they must be teachable, correctable and willing to be transformed by the power of Holy Spirit. When Jesus said "put down your way of living and follow me", they could have said no. The point is this: Let the Father lead you to the right person who is ready to receive what you have to offer.',
+              text: 'We love and receive people right where they are at but they must be teachable, correctable and willing to be transformed by the power of Holy Spirit. When Jesus said "put down your way of living and follow me", they could have said no. In Peter\'s case he left it all to follow Jesus only to return to his fishing net after the crucifixion.',
             },
             {
               type: 'paragraph',
-              text: 'Jesus had large crowds that would follow him but not always for the right reasons. Big difference between fans and followers.',
+              text: 'The point being is this… Let the Father lead you to the right person who is ready to receive what you have to offer. This means that you have to tell some people "not right now. I have to focus on the one or two that God has spoken to me about." Jesus had large crowds that would follow him but not always for the right reasons. Big difference between fans and followers. Look what he says to the fans.',
             },
             {
               type: 'scripture',
@@ -401,7 +443,7 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'keyDefinition',
-              text: 'Every time I ask God to send more disciples He does.',
+              text: 'Every time I ask God to send more disciples, He does.',
             },
             {
               type: 'scripture',
@@ -410,6 +452,7 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'discussion',
+              label: 'Ask God?',
               questions: [
                 'Lord, am I ready to disciple someone?',
                 'Is there anyone you would like me to disciple?',
@@ -438,7 +481,7 @@ export const dnaManualData: DNAManualData = {
           content: [
             {
               type: 'paragraph',
-              text: 'People come into church and hear us using words like fellowship, discipleship and evangelism. The average person has no idea what we are talking about. They are probably more familiar with words like coach, mentor, apprenticeship and promoting. When inviting someone into a discipleship relationship, take notice of their current understanding. Are they ready or not?',
+              text: 'People come into church and hear us using words like fellowship, discipleship and evangelism. The average person has no idea what we are talking about. They are probably more familiar with words like coach, mentor, and apprenticeship. When inviting someone into a discipleship relationship, take notice of their current understanding. Are they ready or not?',
             },
             {
               type: 'paragraph',
@@ -455,7 +498,7 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: 'Personally, I don\'t ever ask someone to disciple them. I ask them to grab coffee and I begin to pour into them. I develop relationships and If they are receptive, I continue. Do they attend our weekly gatherings? Do they respond when I invite them to something? At the end of the day, are they crying out for nourishment?',
+              text: "Personally, I don't ever ask someone to disciple them. I ask them to grab coffee and I begin to pour into them. I develop relationships and If they are receptive, I continue. Do they attend our weekly gatherings? Do they respond when I invite them to something? At the end of the day, are they crying out for nourishment? If they are not really open to this process you will be kicking yourself a few months down the road. It's happened to me many times.",
             },
             {
               type: 'paragraph',
@@ -483,7 +526,7 @@ export const dnaManualData: DNAManualData = {
           content: [
             {
               type: 'paragraph',
-              text: 'Pay attention to the level of relationship people can handle. You may even find that you need to grow in your ability to manage relationships that increase in intimacy. Discipleship will challenge you to step past the surface level, leap past the vulnerability phase of confession and dive into the mysterious world of change. This is where demolition and reconstruction happen by grace of God.',
+              text: 'Pay attention to the level of relationship people can handle. You may even find that you need to grow in your ability to manage relationships that increase in intimacy. Discipleship will challenge you to step past the surface level, leap past the vulnerability phase of confession and dive into the mysterious world of change. This is where demolition and reconstruction happen by the grace of God.',
             },
             {
               type: 'paragraph',
@@ -506,7 +549,7 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: "When working with a new disciple, start with our 4 session course, 100X. It's about the parable of the four soils and how to protect what God is planting in your heart. This course will help lay a foundation for new disciples to understand where they are at and where they want to be.",
+              text: "When working with a new disciple, start by assessing the condition of their heart before diving into deeper discipleship content. DNA is a ministry of ARK Identity. They have free foundational courses designed to prepare new disciples for this journey. See the Free Resources section at the back of this manual for details.",
             },
           ],
         },
@@ -516,8 +559,13 @@ export const dnaManualData: DNAManualData = {
           duration: '6 min read',
           content: [
             {
+              type: 'scripture',
+              text: 'When Jesus came back to Capernaum a few days later, it was heard that He was at home. And many were gathered together, so that there was no longer space, not even near the door; and He was speaking the word to them. And some people came, bringing to Him a man who was paralyzed, carried by four men. And when they were unable to get to Him because of the crowd, they removed the roof above Him; and after digging an opening, they let down the pallet on which the paralyzed man was lying. And Jesus, seeing their faith, said to the paralyzed man, "Son, your sins are forgiven." But some of the scribes were sitting there and thinking it over in their hearts, "Why does this man speak that way? He is blaspheming! Who can forgive sins except God alone?" Immediately Jesus, aware in His spirit that they were thinking that way within themselves, said to them, "Why are you thinking about these things in your hearts? Which is easier, to say to the paralyzed man, \'Your sins are forgiven\'; or to say, \'Get up, and pick up your pallet and walk\'? But so that you may know that the Son of Man has authority on earth to forgive sins"\u2014He said to the paralyzed man, "I say to you, get up, pick up your pallet, and go home." And he got up and immediately picked up the pallet and went out in the sight of everyone, so that they were all amazed and were glorifying God, saying, "We have never seen anything like this!"',
+              ref: 'Mark 2:1-12 NASB',
+            },
+            {
               type: 'paragraph',
-              text: 'Read Mark 2:1-12. There are 7 categories of people in this passage. Each one starts with a C.',
+              text: 'There are 7 categories of people in this passage we just read. What do you think they are? Each one starts with a C.',
             },
             {
               type: 'paragraph',
@@ -549,6 +597,7 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'discussion',
+              label: 'Introspective',
               questions: [
                 'Who do you identify with most out of these 7 categories? Why?',
                 'Think about a potential disciple. What category would you put them in? Why?',
@@ -584,15 +633,11 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: 'The common "committed" Christian in America will spend up to 4 hours a week doing Christian activities. 2 hours on Sundays and 2 hours on Wednesdays. Then you have devoted Christians who want to serve in some way. That\'s another 2-4 hours a week? Then you have radical followers of Jesus who have become living sacrifices.',
-            },
-            {
-              type: 'keyDefinition',
-              text: 'We are not looking for common American Christians. We are looking for followers of Christ; living sacrificial lives as a witness to the world around them.',
+              text: "The common \"committed\" Christian in America will spend up to 4 hours a week doing Christian activities. 2 hours on Sundays and 2 hours on Wednesdays. Then you have devoted Christians who want to serve in some way. That's another 2-4 hours a week? Then you have radical followers of Jesus who have become living sacrifices. They live to commune with God and the Body of Christ as we read in the passage above.",
             },
             {
               type: 'paragraph',
-              text: 'Even so, we need to be mindful that there are only so many hours in a week; 168 to be exact. And we must be honest with ourselves. How many hours a week can you realistically devote to the multiplication of disciples? Is this a healthy weekly commitment that you can make for an extended period of time?',
+              text: "Casual \"consumer\" Christianity was never the goal. We're looking for followers of Christ willing to live sacrificial lives as a witness to the world around them. Even so, we need to be mindful that there are only so many hours in a week; 168 to be exact. And we must be honest with ourselves. How many hours a week can you realistically devote to the multiplication of disciples? Is this a healthy weekly commitment that you can make for an extended period of time? Then we must also consider, what are healthy time expectations to have of those you are leading?",
             },
             {
               type: 'header',
@@ -602,16 +647,50 @@ export const dnaManualData: DNAManualData = {
               type: 'checklist',
               items: [
                 'Corporate Edification Gathering (Fellowship of the Saints) - 1.5 hours',
-                'Weekly ARK Trainings (Theology and Experience) - 1.5 hours',
-                'DNA Group (Life on Life Discipleship) - 1-2 hours',
+                'Biblical Training (Theology, Doctrine and Experience) - 1.5 hours',
+                'DNA Group (Discipleship Naturally Activated) - 1-2 hours',
                 'Prayer Call (Via Conference Call) - 30 mins (Once a week)',
-                'Prayer, Bible, Journal (20-30 mins daily)',
+                'Prayer, Bible, Journal (20 mins daily)',
                 'Serving People (Charity of time) - 1-2 hours',
               ],
             },
             {
+              type: 'paragraph',
+              text: 'Some disciples may look at this and say, "I\'m out." It\'s too much all at once. We need to find a way to make healthy steps towards a life devoted to Jesus.',
+            },
+            {
               type: 'discussion',
               text: 'Does this seem doable for a devoted follower of Christ? Or is this asking too much in our culture? Why do you feel this way?',
+            },
+            {
+              type: 'header',
+              title: 'How often should you gather?',
+            },
+            {
+              type: 'paragraph',
+              text: "Ideally, groups should meet consistently at the same time each week. But this is not always feasible. We suggest 90 minutes (minimum 60 minutes if needed). This can take place in person, over the phone or through video call. I like a mixture of in-person and Video calls because it enables groups to continue meeting even when people are traveling. Groups do not break seasonally. We may take a week or two off for Holidays or special occasions but they continue year round as the leaders and students do life together no matter what.",
+            },
+            {
+              type: 'paragraph',
+              text: "In addition to the weekly meetings, we should find opportunities to share life together on a regular basis. Maybe it's a child's birthday or sporting event. Maybe plan an outreach opportunity to serve others or evangelize. We need to keep it fresh with different ways to engage. If I am invested in discipling people, I am hosting dinners at my house, scheduling worship nights, and creating opportunities for evangelism.",
+            },
+            {
+              type: 'paragraph',
+              text: "As you may be thinking, discipleship requires a certain level of care for your people. Utilize a chat group where you can leave encouraging words, prayer requests are heard and testimonies are shared. You may spend time in prayer each day for your people and God may speak to you about them as they need guidance. God often prompts me to call people and see how they are doing, only to find out they needed a call at that exact moment.",
+            },
+            {
+              type: 'scripture',
+              text: 'A new commandment I give to you, that you love one another, even as I have loved you, that you also love one another. By this all men will know that you are My disciples, if you have love for one another.',
+              ref: 'John 13:34-35 NASB',
+            },
+            {
+              type: 'paragraph',
+              text: "Will you welcome your disciples into your life so they can see how you handle family, finances, and freedom in Christ? This takes vulnerability in your heart as well. Consider this, when your disciples look at the way you live, would they desire to imitate Jesus in you?",
+            },
+            {
+              type: 'scripture',
+              text: 'Behold, how good and how pleasant it is for brothers to live together in unity!',
+              ref: 'Psalm 133:1 NASB',
             },
           ],
         },
@@ -660,6 +739,19 @@ export const dnaManualData: DNAManualData = {
               type: 'paragraph',
               text: "When disciples struggle with consistency, don't shame them—help them problem-solve. Is it a time issue? A \"don't know what to do\" issue? Or a motivation issue that signals they may not be ready yet?",
             },
+            {
+              type: 'header',
+              title: "It's Built Into The Toolkit",
+            },
+            {
+              type: 'paragraph',
+              text: "You don't have to figure out how to teach PBJ—it's built into the 90-Day Toolkit. Week 1 sets the expectation. Week 2 teaches the 3D Journal method. Week 3 teaches the 4D Prayer rhythm. Week 4 onward, you check in weekly and celebrate consistency. By Week 4, disciples should have the full PB&J rhythm established.",
+            },
+            {
+              type: 'reflection',
+              label: 'The Bottom Line',
+              text: "Before you start Phase 0, ask yourself: Am I doing daily PB&J myself? Am I willing to set this as a non-negotiable expectation? If yes, you're ready. If not, spend the next 30 days building your own devotional rhythm first. You can't give what you don't have.",
+            },
           ],
         },
         {
@@ -677,35 +769,43 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: '3D Journal - Pick a chapter of the Bible and meditate on the scripture. We encourage people to use the 3D Journal method of processing scripture and revelation: HEAD (understanding), HEART (application), and HANDS (action). Everyone then gets the opportunity to deliver the revelation they received to the group and give each other feedback.',
+              text: '3D Journal - Pick a chapter of the Bible and meditate on the scripture. We encourage people to use the 3D Journal method of processing scripture and revelation: HEAD (understanding), HEART (application), and HANDS (action). Everyone then gets the opportunity to deliver the revelation they received to the group and give each other feedback. This is a powerful way to activate the gift of teaching in your disciples.',
             },
             {
               type: 'paragraph',
-              text: "4D Prayer - A four-dimensional prayer rhythm designed to deepen your relationship with God, moving you from distraction to intimacy. It begins by Revering God through worship, then moves to Reflect on His goodness with specific gratitude. Next, you Request by bringing your needs and intercessions. Finally, you Rest in His presence, practicing stillness to listen.",
+              text: "4D Prayer - A four-dimensional prayer rhythm designed to deepen your relationship with God, moving you from distraction to intimacy. It begins by Revering God through worship and focusing on His character, then moves to Reflect on His goodness with specific gratitude. Next, you Request by bringing your needs and intercessions to Him. Finally, you Rest in His presence, practicing stillness to listen and receive His peace. This consistent practice builds faith through celebrating the prayers God Answers.",
             },
             {
               type: 'paragraph',
-              text: 'Creed Cards - An interactive collection of foundational pieces of truth that will help your students understand and wrestle with the core beliefs of the Christian Faith. These truths are rooted in the essential creeds that are non-negotiables for our faith.',
+              text: 'Creed Cards - An interactive collection of foundational pieces of truth that will help your students understand and wrestle with the core beliefs of the Christian Faith. These truths are rooted in the essential creeds that are non negotiables for our faith. If we say we believe then we must agree on these things. Dealing with doctrinal distortions can be the difference between a productive group and one that is stagnant.',
             },
             {
               type: 'paragraph',
-              text: "Listening Prayer - This activity involves everyone circling up and praying for the person clockwise to them. Everyone takes a few minutes to listen to what God might be saying for their assigned person. Then each of you takes time to share what you sensed and receive feedback.",
+              text: "Listening Prayer - This activity involves everyone circling up and praying for the person clockwise to them. Everyone takes a few minutes to listen to what God might be saying for their assigned person. Then each of you takes time to share what you sensed and receive feedback. This helps develop a culture of hearing God for one another in your DNA group and can be a powerful tool to bring encouragement, insight, and loving correction to those you are discipling.",
             },
             {
               type: 'paragraph',
-              text: 'Testimony Time - This should be done often. Disciples need to bring back good news to the group. The stories of Jesus in and through our lives are the life force to our ministry.',
+              text: 'Testimony Time - This should be done often. Disciples need to bring back good news to the group. The stories of Jesus in and through our lives are the life force to our ministry. Not only do we need to hear them but people need to declare them. Make time for this when God shows up in someone\'s life. This could be a specific time of testimony or included in other gatherings.',
             },
             {
               type: 'paragraph',
-              text: 'Q and A Discussions - Question and answer sessions can be a great way to open up theological discussions on many topics. Your disciples have burning questions about God that they never felt safe to ask.',
+              text: "Q and A Discussions - Question and answer sessions can be a great way to open up theological discussions on many topics. Your disciples have burning questions about God that they never felt safe to ask. If you open up the conversation you will be surprised what comes up. This can also reveal a lot about who they are and maybe some lies they believe about God, the Church or the Bible.",
             },
             {
               type: 'paragraph',
-              text: 'Simple Fellowship - Sometimes we simply need time to get to know each other. Hanging out on a friendship level can be a major breakthrough in the Supernatural growth in your group.',
+              text: "Simple Fellowship - Sometimes we simply need time to get to know each other. Hanging out on a friendship level can be a major breakthrough in the Supernatural growth in your group. Listen to God when it's time to put away the lesson plan and just be with each other in life talking, listening and learning.",
             },
             {
               type: 'paragraph',
-              text: "Outing - Outreach or Mission - No permission slips needed! A well placed field trip works well to shake up the group and get them out of routine. Think of something exciting and maybe a little dangerous.",
+              text: "Outing - Outreach or Mission - No permission slips needed! A well placed field trip works well to shake up the group and get them out of routine. Think of something exciting and maybe a little dangerous. You could include homeless ministry, street evangelism, serving somewhere as a group or maybe worshiping at a park. But it doesn't have to be a ministry activity. It could be hiking, sports, or something creative. This will stretch your students' ability to see God in every activity of life.",
+            },
+            {
+              type: 'paragraph',
+              text: "Activations (Weekly and Experiences) - We have designed powerful weekly activities that help people experience freedom through Biblical truth and encounters with Holy Spirit. Often we see things exposed in these activations that would have gone unnoticed without this resource. These activities can be the difference between complete freedom and lies that continue to linger in a disciple's life.",
+            },
+            {
+              type: 'paragraph',
+              text: "Prayer Calls Online (30 mins) - Weekly prayer call over the phone or online. Don't underestimate this tool. Prayer calls are key for uniting the hearts of everyone in the group. Nothing brings people together like encountering God's presence corporately and releasing what God is saying. When you first start discipling someone they may be too shy to pray out loud. That's ok. These calls are designed so everyone gets an opportunity to pray and grow in their voice, even if it is short and to the point at first.",
             },
           ],
         },
@@ -737,7 +837,7 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: 'If you have stepped into a leadership role for any length of time you will realize that correction is a necessary part of the process. But how we bring correction is important. God has a plan for discipleship as we can see here in 2 Timothy 3:',
+              text: 'If you have stepped into a leadership role for any length of time you will realize that correction is a necessary part of the process. But how we bring correction is important. God has a plan for discipleship as we can see here in 2 Tim 3. Teaching, Rebuke, Correction and Training.',
             },
             {
               type: 'numbered',
@@ -749,20 +849,12 @@ export const dnaManualData: DNAManualData = {
               ],
             },
             {
-              type: 'keyDefinition',
-              text: "People don't care how much you know until they know how much you care.",
+              type: 'paragraph',
+              text: "There is a saying which you may have heard before that \"People don't care how much you know until they know how much you care.\" As clich\u00e9 as this may sound, it's true. Kids test us in this everyday as they observe and learn the way we connect and love them. Adults do the same thing. The lack of connection in our childhood produces skepticism. We become guarded from disappointment and true intimacy is now replaced with busyness and surface level relationships.",
             },
             {
               type: 'paragraph',
-              text: "As cliche as this may sound, it's true. Kids test us in this everyday as they observe and learn the way we connect and love them. Adults do the same thing. The lack of connection in our childhood produces skepticism. We become guarded from disappointment and true intimacy is now replaced with busyness and surface level relationships.",
-            },
-            {
-              type: 'paragraph',
-              text: 'One of the ways that a father displays His love for us is through correction and discipline. It is a necessary part of the parenting process yet misused in families throughout history where fathers will demand obedience at the cost of relationship.',
-            },
-            {
-              type: 'keyDefinition',
-              text: 'Correction without connection will create division.',
+              text: "One of the ways that a father displays His love for us is through correction and discipline. It is a necessary part of the parenting process yet misused in families throughout history where fathers demand obedience at the cost of relationship. Correction without connection will create division. Yet If correction is executed properly it will create and build a relationship based on truth. The one being corrected must be willing and trust in order to receive the blessing even if it hurts in the moment.",
             },
             {
               type: 'scripture',
@@ -778,7 +870,7 @@ export const dnaManualData: DNAManualData = {
           content: [
             {
               type: 'paragraph',
-              text: "How do you establish connection when you've only had poor examples in your life? Let's use an example from the Bible. One of the most famous father-son relationships in the new testament is the apostle Paul and a young man named Timothy.",
+              text: "How do you establish connection when you've only had poor examples in your life? You may look back on your life and feel this way but let's use an example from the Bible. One of the most famous father-son relationships in the New Testament, besides God the Father and God the Son is The apostle Paul and a young man named Timothy.",
             },
             {
               type: 'scripture',
@@ -799,7 +891,7 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'scripture',
-              text: 'For though you may have ten thousand instructors in Christ, you do not have many fathers, because I became your father in Christ Jesus through the gospel. Therefore I urge you, imitate me. For this reason I have sent Timothy to you, who is my beloved and faithful son in the Lord.',
+              text: 'For though you may have ten thousand instructors in Christ, you do not have many fathers, because I became your father in Christ Jesus through the gospel. Therefore I urge you, imitate me. For this reason I have sent Timothy to you, who is my beloved and faithful son in the Lord, who will remind you of my ways in Christ, as I teach everywhere in every church.',
               ref: '1 Corinthians 4:15-17',
             },
             {
@@ -808,6 +900,7 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'discussion',
+              label: 'Introspection',
               questions: [
                 'Do you have this kind of relationship with God?',
                 'Who would you trust with a "blade"?',
@@ -832,7 +925,11 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: "Are you able to live \"unoffendable\" when your student does not respond the way you hoped they would? Christ wants to walk you through an experience He is well acquainted with; loving people who can't yet love you back. This is what it means to answer the call of disciple making.",
+              text: "Are you able to live \"unoffendable\" when your student does not respond the way you hoped they would? Christ wants to walk you through an experience He is well acquainted with; loving people who can't yet love you back. This is what it means to answer the call of disciple making. We are saying yes to washing the feet of people who could betray us, gossip about us and take what we offer without ever being able to repay.",
+            },
+            {
+              type: 'paragraph',
+              text: "The discipleship process brings out just as much growth in you as a leader as it does for the student. It challenges your ability to love people who are not ready to reciprocate the way we would expect. In my experience, I have wanted to give up after pouring so much into someone only to see them make terrible life decisions. Even after you have advised them appropriately.",
             },
             {
               type: 'scripture',
@@ -841,7 +938,7 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: "There are things that God wants to teach you that you will only learn by answering the call of disciple making. You will learn long suffering, sacrificial love, consistency, and hearing God for people who can't hear yet. You will come face to face with frustration and disappointment that can only be remedied through surrender to God.",
+              text: "There are things that God wants to teach you that you will only learn by answering the call of disciple making. You will learn long suffering, sacrificial love, consistency, and hearing God for people who can't hear yet. You will come face to face with frustration and disappointment that can only be remedied through surrender to God. In all the exposure I have helped to bring about in the hearts of others, I have been equally exposed.",
             },
           ],
         },
@@ -852,8 +949,8 @@ export const dnaManualData: DNAManualData = {
           content: [
             {
               type: 'scripture',
-              text: 'Suffer hardship with me, as a good soldier of Christ Jesus. No soldier in active service entangles himself in the affairs of everyday life, so that he may please the one who enlisted him as a soldier.',
-              ref: '2 Timothy 2:3-4 NASB',
+              text: 'Suffer hardship with me, as a good soldier of Christ Jesus. No soldier in active service entangles himself in the affairs of everyday life, so that he may please the one who enlisted him as a soldier. Also if anyone competes as an athlete, he does not win the prize unless he competes according to the rules. The hard-working farmer ought to be the first to receive his share of the crops. Consider what I say, for the Lord will give you understanding in everything.',
+              ref: '2 Timothy 2:3-7 NASB',
             },
             {
               type: 'paragraph',
@@ -909,15 +1006,19 @@ export const dnaManualData: DNAManualData = {
             },
             {
               type: 'paragraph',
-              text: 'For example, If you had an infection in your finger and no medicine to kill the infection, would you allow me to cut off your finger to save your whole body? In the same way there are things in our lives that can\'t go where Jesus is taking us. Those branches must get pruned from us to allow new healthy growth to occur.',
+              text: 'Think of it this way; if you had an infection in your finger and no medicine to kill the infection, would you allow me to cut off your finger to save your whole body? In the same way there are things in our lives that can\'t go where Jesus is taking us. Those branches must get pruned from us to allow new healthy growth to occur.',
             },
             {
               type: 'paragraph',
-              text: "Ultimately, Jesus is the gardener who tends to the growth of our lives. He decides what gets pruned and what doesn't. We are essentially assistants to the chief gardener.",
+              text: "Ultimately, Jesus is the gardener who tends to the growth of our lives. He decides what gets pruned and what doesn't. We are essentially assistants to the chief gardener. Amen?",
             },
             {
               type: 'paragraph',
-              text: "There is a strategy for pruning. You can't go chop crazy and cut off too much too quickly. For one, we are dealing with human beings here and they need to be willing to allow an assistant gardener to come close with the clippers. Secondly, as someone who is pruning with Jesus you better be sure that this is what the Master gardener envisions.",
+              text: "There is a strategy for pruning. You can't go \"clip crazy\" and cut off too much too quickly. For one, we are dealing with human beings here and they need to be willing to allow an assistant gardener to come close with the clippers. Secondly, as someone who is pruning with Jesus you better be sure that this is what the Master gardener envisions. It's like the Japanese art of Bonsai. The artist trims and wraps the tree in a very intentional way that creates a masterpiece over many years of dedication.",
+            },
+            {
+              type: 'paragraph',
+              text: "Let's tie this together. Are you able to see what God sees and desires in someone's life? Are you able to go back and consult with God and your team throughout the discipleship process? Remember, you are the gardener's assistant and at the end of the day, you must answer to Him. This is a great honor that comes with great responsibility. Let us also be willing to allow the pruning to take place in our own lives.",
             },
             {
               type: 'keyDefinition',
@@ -939,33 +1040,33 @@ export const dnaManualData: DNAManualData = {
         },
         {
           id: 2,
-          title: 'Are You Ready to Lead?',
-          duration: '5 min read',
+          title: 'The Flow Assessment Revealed. Now What?',
+          duration: '4 min read',
           content: [
             {
               type: 'paragraph',
-              text: "Jesus said 'count the cost' before building a tower (Luke 14:28). Before you jump out and start discipling others, you need to be honest with yourself. This isn't about perfection—it's about preparation.",
+              text: 'Weeks ago, before Session One, you took the Personal Flow Assessment. You identified the roadblocks. You looked honestly at what could hold back the river of God in your life.',
+            },
+            {
+              type: 'keyDefinition',
+              text: "Here's the question now — what did you do with it?",
             },
             {
               type: 'paragraph',
-              text: 'We have carefully created a few assessments leading up to your DNA launch along with spiritual health check-ins throughout your disciple making journey. The first is called the Personal Flow Assessment (some of you have already taken this before going through this manual). The Flow Assessment addresses 7 roadblocks that could hold back the river of God from flowing properly in your life.',
+              text: "Awareness without action is just information. The Flow Assessment wasn't designed to make you feel stuck. It was designed to show you what needs attention before you start investing in others.",
             },
             {
-              type: 'paragraph',
-              text: 'The next is the DNA Readiness Quiz. This assessment includes a variety of questions in 4 categories:',
-            },
-            {
-              type: 'numbered',
-              items: [
-                'Spiritual Maturity - Do you have a consistent devotional life?',
-                'Life Stability - Is your life stable enough to commit for 12 months?',
-                'Leadership Readiness - Do you naturally initiate spiritual conversations?',
-                'DNA Competencies - Do you know the 3 phases of DNA?',
+              type: 'reflection',
+              label: 'Before You Launch',
+              questions: [
+                'Have I addressed the roadblocks I identified?',
+                'Am I leading myself well in the areas I said needed work?',
+                'Is my house in order enough to invite others in?',
               ],
             },
             {
               type: 'paragraph',
-              text: "If you're not ready yet, that's okay. Being honest about it now saves you and your disciples from pain later. Keep growing. Your time will come.",
+              text: "You don't have to be perfect. But you do have to be honest. Being honest about where you are now saves you and your disciples a lot of pain later.",
             },
           ],
         },
@@ -1011,35 +1112,28 @@ export const dnaManualData: DNAManualData = {
         {
           id: 4,
           title: 'Your Next Step: The DNA Launch Guide',
-          duration: '4 min read',
+          duration: '3 min read',
           content: [
             {
               type: 'paragraph',
-              text: "You've completed the heart training. Now it's time for launch training. The DNA Launch Guide will walk you step-by-step from 'I want to make disciples' to 'I'm actively discipling someone.'",
-            },
-            {
-              type: 'header',
-              title: "What's in the Launch Guide?",
+              text: "You've done the heart work. Six sessions. Now it's time for the launch work.",
             },
             {
               type: 'paragraph',
-              text: 'Phase 0: Pre-Launch (6 weeks) - Self-assessment, finding a co-leader, setting up rhythms, prayer strategy, the coffee conversation, the direct ask, setting expectations.',
+              text: 'The DNA Launch Guide is your step-by-step blueprint from "I want to make disciples" to "I\'m actively discipling someone." It will walk you through Phase 0 — finding your co-leader, identifying your disciples, setting expectations, and having the conversations that matter.',
             },
             {
               type: 'paragraph',
-              text: 'Phase 1: Foundation (Months 1-3) - Building trust, life assessment, introducing DNA tools, addressing strongholds.',
+              text: "Inside Phase 0, you'll complete the DNA Readiness Quiz — the final checkpoint before you launch. It covers four areas: Spiritual Maturity, Life Stability, Leadership Readiness, and DNA Competency. If you're not ready yet, the quiz will tell you where to focus. If you are, it will release you to go.",
             },
             {
-              type: 'paragraph',
-              text: 'Phase 2: Growth (Months 4-6) - Empowering disciples to lead, giving them "reps," processing failures, increasing ownership.',
+              type: 'keyDefinition',
+              text: "Don't wait until you feel fully ready. You never will.",
             },
             {
-              type: 'paragraph',
-              text: 'Phase 3: Multiplication (Months 7-12) - Recognizing readiness, helping them find their first disciples, the multiplication conversation, releasing them to launch.',
-            },
-            {
-              type: 'paragraph',
-              text: "You'll also get the 90-Day Toolkit—a week-by-week plan for your first 12 meetings using the DNA tools (3D Journal, 4D Prayer, Creed Cards, Listening Prayer, etc.).",
+              type: 'reflection',
+              label: 'Next Step',
+              text: 'Go to dnadiscipleship.com, find the DNA Launch Guide, and begin Phase 0 this week.',
             },
           ],
         },
@@ -1103,6 +1197,11 @@ export const dnaManualData: DNAManualData = {
             {
               type: 'paragraph',
               text: 'I surrender this journey to You. Not my will, but Yours. In Jesus\' name, Amen.',
+            },
+            {
+              type: 'reflection',
+              label: 'Now Go',
+              text: 'The Launch Guide is waiting. dnadiscipleship.com',
             },
           ],
         },

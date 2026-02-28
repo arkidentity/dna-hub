@@ -200,7 +200,7 @@ export default function SessionPage({ params }: { params: Promise<{ sessionId: s
               <span className="progress-count">{progress.lessonsCompleted.length}/{session.lessons.length}</span>
             </div>
             <div className="progress-bar-container">
-              <div className="progress-bar" style={{ width: `${progressPercent}%` }} />
+              <div className={`progress-bar ${progressPercent === 100 ? 'complete' : ''}`} style={{ width: `${progressPercent}%` }} />
             </div>
           </div>
 
@@ -366,12 +366,27 @@ function ContentBlockRenderer({ block }: { block: ContentBlock }) {
     case 'discussion':
       return (
         <div className="discussion-block">
-          <h5>
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+          <span className="block-label">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
             </svg>
-            Discussion
-          </h5>
+            {block.label || 'Discussion'}
+          </span>
+          {block.text && <p>{block.text}</p>}
+          {block.questions && (
+            <ul>
+              {block.questions.map((q, i) => (
+                <li key={i}>{q}</li>
+              ))}
+            </ul>
+          )}
+        </div>
+      );
+
+    case 'reflection':
+      return (
+        <div className="reflection-block">
+          <span className="block-label">{block.label || 'Reflection'}</span>
           {block.text && <p>{block.text}</p>}
           {block.questions && (
             <ul>
@@ -545,9 +560,13 @@ const styles = `
 
   .progress-bar {
     height: 100%;
-    background: linear-gradient(90deg, #D4A853, #E5B964);
+    background: #D4A853;
     border-radius: 3px;
-    transition: width 0.5s ease;
+    transition: width 0.3s ease, background-color 0.3s ease;
+  }
+
+  .progress-bar.complete {
+    background: #2E7D5E;
   }
 
   /* Session Verse */
@@ -578,11 +597,11 @@ const styles = `
     font-weight: 600;
   }
 
-  /* Warm Up */
+  /* Warm Up — Green block */
   .warmup-section {
-    background: #242D3D;
-    border-radius: 12px;
-    padding: 24px;
+    background: #2E7D5E;
+    border-radius: 8px;
+    padding: 20px 24px;
     margin-bottom: 32px;
   }
 
@@ -590,21 +609,24 @@ const styles = `
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 16px;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
     color: #D4A853;
-    margin: 0 0 16px 0;
+    margin: 0 0 10px 0;
   }
 
   .warmup-questions {
     margin: 0;
     padding-left: 20px;
-    color: #E2E8F0;
+    color: #FFFFFF;
   }
 
   .warmup-questions li {
     margin-bottom: 8px;
-    font-size: 15px;
-    line-height: 1.5;
+    font-size: 1rem;
+    line-height: 1.6;
   }
 
   .warmup-questions li:last-child {
@@ -662,7 +684,7 @@ const styles = `
   .lesson-number {
     width: 40px;
     height: 40px;
-    border-radius: 10px;
+    border-radius: 6px;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -670,15 +692,18 @@ const styles = `
     font-weight: 700;
     background: #1A2332;
     color: #D4A853;
+    border: 1px solid #D4A853;
   }
 
   .lesson-card.completed .lesson-number {
-    background: rgba(74, 158, 127, 0.15);
-    color: #4A9E7F;
+    background: #2E7D5E;
+    color: #FFFFFF;
+    border: none;
   }
 
   .lesson-card.locked .lesson-number {
     color: #5A6577;
+    border-color: #3D4A5C;
   }
 
   .lesson-info {
@@ -726,79 +751,143 @@ const styles = `
     margin: 24px 0 12px 0;
   }
 
+  /* Scripture — Cream block */
   .scripture-block {
-    background: #1A2332;
+    background: #F5F0E8;
     border-left: 3px solid #D4A853;
+    border-radius: 6px;
     padding: 16px 20px;
     margin: 20px 0;
-    border-radius: 0 8px 8px 0;
+  }
+
+  .scripture-block + .scripture-block {
+    margin-top: 8px;
   }
 
   .scripture-text {
-    font-size: 15px;
-    line-height: 1.6;
-    color: #E2E8F0;
+    color: #0D0D0D;
     font-style: italic;
+    font-size: 0.95rem;
+    line-height: 1.65;
     margin: 0 0 8px 0;
   }
 
   .scripture-ref {
-    font-size: 13px;
     color: #D4A853;
+    font-weight: 700;
+    font-size: 0.8rem;
+    letter-spacing: 0.03em;
     font-style: normal;
-    font-weight: 600;
   }
 
+  /* Key Definition — Gold top/bottom rule */
   .key-definition {
-    background: linear-gradient(135deg, rgba(212, 168, 83, 0.1) 0%, rgba(212, 168, 83, 0.05) 100%);
-    border: 1px solid rgba(212, 168, 83, 0.3);
-    border-radius: 8px;
-    padding: 16px 20px;
-    margin: 20px 0;
+    background: #1A2332;
+    border-top: 2px solid #D4A853;
+    border-bottom: 2px solid #D4A853;
+    border-radius: 4px;
+    padding: 18px 20px;
+    margin: 24px 0;
   }
 
   .key-definition p {
-    font-size: 15px;
-    font-weight: 600;
     color: #D4A853;
+    font-weight: 600;
+    font-size: 1.05rem;
+    line-height: 1.55;
     margin: 0;
-    line-height: 1.5;
   }
 
+  /* Discussion — Green block */
   .discussion-block {
-    background: #2D3748;
+    background: #2E7D5E;
     border-radius: 8px;
-    padding: 20px;
-    margin: 20px 0;
+    padding: 20px 24px;
+    margin: 24px 0;
   }
 
-  .discussion-block h5 {
+  .discussion-block .block-label {
     display: flex;
     align-items: center;
     gap: 8px;
-    font-size: 14px;
-    color: #A0AEC0;
-    margin: 0 0 12px 0;
+    color: #D4A853;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
     text-transform: uppercase;
-    letter-spacing: 0.5px;
+    margin-bottom: 10px;
   }
 
   .discussion-block p {
-    font-size: 15px;
-    color: #E2E8F0;
-    margin: 0;
+    color: #FFFFFF;
+    font-size: 1rem;
     line-height: 1.6;
+    margin: 0 0 8px 0;
+  }
+
+  .discussion-block p:last-child {
+    margin-bottom: 0;
   }
 
   .discussion-block ul {
     margin: 0;
     padding-left: 20px;
-    color: #E2E8F0;
+    color: #FFFFFF;
   }
 
   .discussion-block li {
     margin-bottom: 8px;
-    font-size: 15px;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  .discussion-block li:last-child {
+    margin-bottom: 0;
+  }
+
+  /* Reflection — Cream2 block */
+  .reflection-block {
+    background: #EDE8DE;
+    border-radius: 8px;
+    padding: 20px 24px;
+    margin: 24px 0;
+  }
+
+  .reflection-block .block-label {
+    display: block;
+    color: #2E7D5E;
+    font-size: 0.7rem;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  .reflection-block p {
+    color: #0D0D0D;
+    font-size: 0.95rem;
+    line-height: 1.65;
+    margin: 0 0 8px 0;
+  }
+
+  .reflection-block p:last-child {
+    margin-bottom: 0;
+  }
+
+  .reflection-block ul {
+    margin: 0;
+    padding-left: 20px;
+    color: #0D0D0D;
+  }
+
+  .reflection-block li {
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    line-height: 1.65;
+  }
+
+  .reflection-block li:last-child {
+    margin-bottom: 0;
   }
 
   .checklist {
