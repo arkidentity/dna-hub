@@ -696,10 +696,9 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
             {/* Custom Tab (5th nav tab) */}
             <div className="bg-card rounded-xl border border-card-border p-5 space-y-4">
               <div>
-                <h3 className="font-medium text-navy">Custom Tab</h3>
+                <h3 className="font-medium text-navy">5th Tab — Default Link</h3>
                 <p className="text-xs text-foreground-muted mt-0.5">
-                  Configures the 5th tab in the bottom navigation bar. Opens a full-screen in-app page at the URL you provide.
-                  Leave blank to show the default ARK Courses tab.
+                  Sets the label for the 5th tab icon and the first link shown in its links drawer. Leave blank to show the default ARK Courses tab.
                 </p>
               </div>
               <div className="space-y-2">
@@ -745,13 +744,12 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
               <p className="text-xs text-foreground-muted">Both label and URL are required. Leave blank to show the default ARK Courses tab.</p>
             </div>
 
-            {/* More Drawer Links */}
+            {/* 5th Tab Drawer Links */}
             <div className="bg-card rounded-xl border border-card-border p-5 space-y-4">
               <div>
-                <h3 className="font-medium text-navy">More Drawer Links</h3>
+                <h3 className="font-medium text-navy">5th Tab — Additional Links</h3>
                 <p className="text-xs text-foreground-muted mt-0.5">
-                  Up to 5 links shown in the More menu (≡) below the Profile button. Links open inside the app in a branded page.
-                  Use the arrows to reorder.
+                  Up to 5 additional links shown in the 5th tab drawer, below the default link above. Use the arrows to reorder.
                 </p>
               </div>
 
@@ -830,7 +828,7 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
                   </div>
                 </div>
               ))}
-              <p className="text-xs text-foreground-muted">Leave both fields blank to hide a link. Both title and URL are required for a link to appear.</p>
+              <p className="text-xs text-foreground-muted">Leave both fields blank to hide a link. Both title and URL are required for a link to appear. Combined with the default link above, up to 6 links can appear in the drawer.</p>
             </div>
 
             {/* Error / Save */}
