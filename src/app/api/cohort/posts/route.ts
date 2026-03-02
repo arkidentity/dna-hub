@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
           cohort_id: adminCohortId,
           author_id: authorId,
           post_type: resolvedType,
-          author_role: 'trainer',
+          author_role: 'coach',
           title: title.trim(),
           body: post_body.trim(),
           pinned: pinned === true,

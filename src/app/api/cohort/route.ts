@@ -225,7 +225,7 @@ export async function GET(req: Request) {
           .limit(20),
         supabase
           .from('dna_cohort_discussion')
-          .select('id, body, created_at, author:dna_leaders(id, name), parent_id')
+          .select('id, body, created_at, is_coach_post, author:dna_leaders(id, name), parent_id')
           .eq('cohort_id', cohortId)
           .is('parent_id', null)
           .order('created_at', { ascending: false })
@@ -289,7 +289,9 @@ export async function GET(req: Request) {
           title: p.title,
           body: p.body,
           pinned: p.pinned,
-          author_name: (p.author as unknown as { name: string } | null)?.name || 'Trainer',
+          author_name: (p as any).author_role === 'coach'
+            ? 'DNA Coach'
+            : (p.author as unknown as { name: string } | null)?.name || 'Trainer',
           author_role: (p as any).author_role || 'trainer',
           created_at: p.created_at,
         })),
@@ -298,8 +300,12 @@ export async function GET(req: Request) {
           return {
             id: d.id,
             body: d.body,
-            author_name: (d.author as unknown as { name: string } | null)?.name || 'Leader',
-            author_role: authorId && trainerIds.has(authorId) ? 'trainer' : 'leader',
+            author_name: (d as any).is_coach_post
+              ? 'DNA Coach'
+              : (d.author as unknown as { name: string } | null)?.name || 'Leader',
+            author_role: (d as any).is_coach_post
+              ? 'trainer'
+              : authorId && trainerIds.has(authorId) ? 'trainer' : 'leader',
             reply_count: replyCounts[d.id] || 0,
             created_at: d.created_at,
           };
@@ -374,7 +380,7 @@ export async function GET(req: Request) {
         .limit(20),
       supabase
         .from('dna_cohort_discussion')
-        .select('id, body, created_at, author:dna_leaders(id, name), parent_id')
+        .select('id, body, created_at, is_coach_post, author:dna_leaders(id, name), parent_id')
         .eq('cohort_id', cohortId)
         .is('parent_id', null)
         .order('created_at', { ascending: false })
@@ -441,7 +447,9 @@ export async function GET(req: Request) {
         title: p.title,
         body: p.body,
         pinned: p.pinned,
-        author_name: (p.author as unknown as { name: string } | null)?.name || 'Trainer',
+        author_name: (p as any).author_role === 'coach'
+          ? 'DNA Coach'
+          : (p.author as unknown as { name: string } | null)?.name || 'Trainer',
         author_role: (p as any).author_role || 'trainer',
         created_at: p.created_at,
       })),
@@ -450,8 +458,12 @@ export async function GET(req: Request) {
         return {
           id: d.id,
           body: d.body,
-          author_name: (d.author as unknown as { name: string } | null)?.name || 'Leader',
-          author_role: authorId && trainerIds.has(authorId) ? 'trainer' : 'leader',
+          author_name: (d as any).is_coach_post
+            ? 'DNA Coach'
+            : (d.author as unknown as { name: string } | null)?.name || 'Leader',
+          author_role: (d as any).is_coach_post
+            ? 'trainer'
+            : authorId && trainerIds.has(authorId) ? 'trainer' : 'leader',
           reply_count: replyCounts[d.id] || 0,
           created_at: d.created_at,
         };

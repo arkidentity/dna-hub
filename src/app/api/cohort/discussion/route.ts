@@ -82,6 +82,7 @@ export async function POST(request: NextRequest) {
           author_id: authorId,
           body: post_body.trim(),
           parent_id: null,
+          is_coach_post: true,
         })
         .select('id, body, created_at')
         .single();
