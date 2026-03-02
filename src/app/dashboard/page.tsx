@@ -82,6 +82,15 @@ export default function DashboardPage() {
         return;
       }
 
+      // 403 means the user is logged in but is not a church leader.
+      // DNA leaders should be in /groups — redirect there rather than
+      // showing the confusing "Failed to load dashboard" message.
+      if (response.status === 403) {
+        setRedirecting(true);
+        router.push('/groups');
+        return;
+      }
+
       if (!response.ok) {
         throw new Error('Failed to fetch dashboard');
       }

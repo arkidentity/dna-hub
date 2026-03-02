@@ -3,17 +3,21 @@ import { createServerClient } from '@supabase/ssr'
 import { getSupabaseAdmin } from '@/lib/auth'
 
 /**
- * OAuth callback handler.
- * Supabase redirects here after Google OAuth approval with a `code` param.
- * We exchange the code for a session, then redirect to the dashboard.
+ * OAuth / magic-link callback handler.
+ * Supabase redirects here after Google OAuth or magic-link approval with a `code` param.
+ * We exchange the code for a session, look up the user's role, and redirect to the
+ * appropriate area (church leaders → /dashboard, DNA leaders → /groups,
+ * training participants → /training).  An explicit `?next=` param always wins.
  */
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/dashboard'
+  const next = searchParams.get('next') // explicit override, if present
 
   if (code) {
-    const response = NextResponse.redirect(new URL(next, origin))
+    // Start with a /dashboard redirect; we'll update the Location header below
+    // once we know the user's role.  Cookies are set on this response object.
+    const response = NextResponse.redirect(new URL(next ?? '/dashboard', origin))
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -35,13 +39,39 @@ export async function GET(request: NextRequest) {
     const { data: sessionData, error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      // Stamp last_login_at for the authenticated user
       const email = sessionData?.user?.email
       if (email) {
-        await getSupabaseAdmin()
+        const adminClient = getSupabaseAdmin()
+
+        // Stamp last_login_at
+        await adminClient
           .from('users')
           .update({ last_login_at: new Date().toISOString() })
           .eq('email', email.toLowerCase())
+
+        // If no explicit next param, route by role so DNA leaders land directly
+        // in /groups instead of bouncing through /dashboard first.
+        if (!next) {
+          const { data: userRecord } = await adminClient
+            .from('users')
+            .select('id, user_roles(role)')
+            .eq('email', email.toLowerCase())
+            .maybeSingle()
+
+          const roles: string[] = ((userRecord as { user_roles?: { role: string }[] } | null)
+            ?.user_roles ?? []).map(r => r.role)
+
+          let dest = '/dashboard'
+          if (roles.includes('admin') || roles.includes('church_leader')) {
+            dest = '/dashboard'
+          } else if (roles.includes('dna_leader')) {
+            dest = '/groups'
+          } else if (roles.includes('training_participant')) {
+            dest = '/training'
+          }
+
+          response.headers.set('Location', new URL(dest, origin).toString())
+        }
       }
       return response
     }
