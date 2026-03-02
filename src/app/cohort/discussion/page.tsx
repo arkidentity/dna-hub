@@ -40,6 +40,7 @@ function avatarColor(name: string) {
 export default function CohortDiscussionPage() {
   const router = useRouter();
   const [posts, setPosts] = useState<DiscussionPost[]>([]);
+  const [cohortId, setCohortId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isMock, setIsMock] = useState(false);
   const [newPost, setNewPost] = useState('');
@@ -57,6 +58,7 @@ export default function CohortDiscussionPage() {
         if (d) {
           setPosts(d.discussion || []);
           setIsMock(d.mock || false);
+          setCohortId(d.cohort?.id || null);
         }
         setLoading(false);
       })
@@ -74,7 +76,7 @@ export default function CohortDiscussionPage() {
       const res = await fetch('/api/cohort/discussion', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ post_body: newPost.trim() }),
+        body: JSON.stringify({ post_body: newPost.trim(), cohort_id: cohortId }),
       });
 
       if (!res.ok) {

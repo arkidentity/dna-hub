@@ -35,9 +35,10 @@ const postTypeConfig: Record<string, { label: string; color: string; bg: string 
 // NEW POST MODAL
 // ============================================
 
-function NewPostModal({ onClose, onSuccess }: {
+function NewPostModal({ onClose, onSuccess, cohortId }: {
   onClose: () => void;
   onSuccess: (post: FeedPost) => void;
+  cohortId: string | null;
 }) {
   const [form, setForm] = useState({
     post_type: 'announcement',
@@ -60,7 +61,7 @@ function NewPostModal({ onClose, onSuccess }: {
       const res = await fetch('/api/cohort/posts', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(form),
+        body: JSON.stringify({ ...form, cohort_id: cohortId }),
       });
 
       if (!res.ok) {
@@ -167,6 +168,7 @@ function NewPostModal({ onClose, onSuccess }: {
 export default function CohortFeedPage() {
   const router = useRouter();
   const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [cohortId, setCohortId] = useState<string | null>(null);
   const [userRole, setUserRole] = useState('leader');
   const [loading, setLoading] = useState(true);
   const [isMock, setIsMock] = useState(false);
@@ -183,6 +185,7 @@ export default function CohortFeedPage() {
           setPosts(d.feed || []);
           setUserRole(d.currentUserRole || 'leader');
           setIsMock(d.mock || false);
+          setCohortId(d.cohort?.id || null);
         }
         setLoading(false);
       })
@@ -258,6 +261,7 @@ export default function CohortFeedPage() {
       {showNewPost && (
         <NewPostModal
           onClose={() => setShowNewPost(false)}
+          cohortId={cohortId}
           onSuccess={(post) => {
             setPosts((prev) => {
               const updated = [post, ...prev];
