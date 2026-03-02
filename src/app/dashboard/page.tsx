@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { createClientSupabase } from '@/lib/supabase';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import {
@@ -34,6 +35,7 @@ interface DashboardData {
 
 export default function DashboardPage() {
   const router = useRouter();
+  const supabase = createClientSupabase();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
@@ -83,11 +85,11 @@ export default function DashboardPage() {
       }
 
       // 403 means the user is logged in but is not a church leader.
-      // DNA leaders should be in /groups — redirect there rather than
+      // DNA leaders should be in /cohort — redirect there rather than
       // showing the confusing "Failed to load dashboard" message.
       if (response.status === 403) {
         setRedirecting(true);
-        router.push('/groups');
+        router.push('/cohort');
         return;
       }
 
@@ -425,12 +427,15 @@ export default function DashboardPage() {
               <RefreshCw className="w-4 h-4" />
               Try Again
             </button>
-            <a
-              href="/api/auth/logout"
+            <button
+              onClick={async () => {
+                await supabase.auth.signOut();
+                router.push('/login');
+              }}
               className="btn-secondary inline-flex items-center justify-center gap-2"
             >
               Sign Out &amp; Log Back In
-            </a>
+            </button>
             <p className="text-xs text-foreground-muted mt-2">
               Still having trouble?{' '}
               <a href="mailto:info@dnadiscipleship.com" className="text-teal hover:underline">

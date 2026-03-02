@@ -65,7 +65,7 @@ export async function GET(request: NextRequest) {
           if (roles.includes('admin') || roles.includes('church_leader')) {
             dest = '/dashboard'
           } else if (roles.includes('dna_leader')) {
-            dest = '/groups'
+            dest = '/cohort'
           } else if (roles.includes('training_participant')) {
             dest = '/training'
           }
