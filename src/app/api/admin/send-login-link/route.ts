@@ -52,7 +52,11 @@ export async function POST(request: NextRequest) {
         type: 'recovery',
         email: normalizedEmail,
         options: {
-          redirectTo: `${baseUrl}/auth/reset-password`,
+          // Route through /auth/callback so the PKCE code is exchanged for a real
+          // session before the user lands on the password form.  Without this the
+          // reset-password page has no session and updateUser() throws
+          // "Auth session missing".
+          redirectTo: `${baseUrl}/auth/callback?next=/auth/reset-password`,
         },
       });
 

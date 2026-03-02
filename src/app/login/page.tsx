@@ -87,7 +87,7 @@ function LoginContent() {
       // it sends a "set your password" link to /auth/reset-password, no confirmation needed.
       const { error } = await supabase.auth.resetPasswordForEmail(
         email.toLowerCase().trim(),
-        { redirectTo: `${window.location.origin}/auth/reset-password` }
+        { redirectTo: `${window.location.origin}/auth/callback?next=/auth/reset-password` }
       );
 
       if (error) {
@@ -112,7 +112,7 @@ function LoginContent() {
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(
         email.toLowerCase().trim(),
-        { redirectTo: `${window.location.origin}/auth/reset-password` }
+        { redirectTo: `${window.location.origin}/auth/callback?next=/auth/reset-password` }
       );
 
       if (error) {

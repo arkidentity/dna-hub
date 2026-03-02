@@ -248,7 +248,7 @@ export async function POST(request: NextRequest) {
         type: 'recovery',
         email: normalizedEmail,
         options: {
-          redirectTo: `${baseUrl}/auth/reset-password`,
+          redirectTo: `${baseUrl}/auth/callback?next=/auth/reset-password`,
         },
       });
       if (linkData?.properties?.action_link) {

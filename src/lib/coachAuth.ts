@@ -85,7 +85,7 @@ export async function ensureCoachAccount(
     const { data: linkData } = await supabase.auth.admin.generateLink({
       type: 'recovery',
       email: normalizedEmail,
-      options: { redirectTo: `${baseUrl}/auth/reset-password` },
+      options: { redirectTo: `${baseUrl}/auth/callback?next=/auth/reset-password` },
     })
     const setupUrl = linkData?.properties?.action_link ?? `${baseUrl}/login`
     console.log('[COACH AUTH] Setup link for', normalizedEmail, '→', setupUrl)

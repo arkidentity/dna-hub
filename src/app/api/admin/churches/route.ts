@@ -570,7 +570,7 @@ export async function PATCH(request: NextRequest) {
             const { data: linkData } = await supabase.auth.admin.generateLink({
               type: 'recovery',
               email: normalizedLeaderEmail,
-              options: { redirectTo: `${baseUrl}/auth/reset-password` },
+              options: { redirectTo: `${baseUrl}/auth/callback?next=/auth/reset-password` },
             });
             if (linkData?.properties?.action_link) {
               setupUrl = linkData.properties.action_link;
