@@ -16,6 +16,7 @@ import {
   Filter,
   Heart,
   Pencil,
+  Send,
 } from 'lucide-react';
 import { DNALeader } from '@/lib/types';
 
@@ -104,6 +105,9 @@ export default function DNALeadersTab() {
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState(false);
 
+  // Send login link state
+  const [sendingLink, setSendingLink] = useState<string | null>(null);
+
   // Role toggle state — key is `${leaderId}-${role}`
   const [togglingRole, setTogglingRole] = useState<string | null>(null);
   const [roleToggleError, setRoleToggleError] = useState<{ leaderId: string; message: string } | null>(null);
@@ -170,6 +174,28 @@ export default function DNALeadersTab() {
       church_id: leader.church_id || '',
     });
     setSaveError(null);
+  };
+
+  const handleSendLoginLink = async (leader: LeaderWithStats) => {
+    setSendingLink(leader.email);
+    try {
+      const response = await fetch('/api/admin/send-login-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: leader.email,
+          name: leader.name,
+          linkType: 'setup',
+          churchName: leader.church_name || null,
+        }),
+      });
+      if (!response.ok) throw new Error('Failed to send setup email');
+      alert(`Account setup email sent to ${leader.email}`);
+    } catch {
+      alert('Failed to send setup email. Please try again.');
+    } finally {
+      setSendingLink(null);
+    }
   };
 
   const handleToggleRole = async (
@@ -635,13 +661,26 @@ export default function DNALeadersTab() {
                     )}
                   </div>
 
-                  <button
-                    onClick={() => handleOpenEditModal(leader)}
-                    className="ml-4 p-2 text-foreground-muted hover:text-navy hover:bg-background-secondary rounded-lg transition-colors"
-                    title="Edit leader"
-                  >
-                    <Pencil className="w-4 h-4" />
-                  </button>
+                  <div className="ml-4 flex items-center gap-1">
+                    <button
+                      onClick={() => handleSendLoginLink(leader)}
+                      disabled={sendingLink === leader.email}
+                      className="p-2 text-foreground-muted hover:text-teal hover:bg-background-secondary rounded-lg transition-colors disabled:opacity-50"
+                      title="Send login link"
+                    >
+                      {sendingLink === leader.email
+                        ? <Loader2 className="w-4 h-4 animate-spin" />
+                        : <Send className="w-4 h-4" />
+                      }
+                    </button>
+                    <button
+                      onClick={() => handleOpenEditModal(leader)}
+                      className="p-2 text-foreground-muted hover:text-navy hover:bg-background-secondary rounded-lg transition-colors"
+                      title="Edit leader"
+                    >
+                      <Pencil className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
               </div>
             );

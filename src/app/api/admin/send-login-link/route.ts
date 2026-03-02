@@ -1,17 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getUnifiedSession, isAdmin, hasRole } from '@/lib/unified-auth';
-import { sendMagicLinkEmail } from '@/lib/email';
+import { sendMagicLinkEmail, sendDNALeaderDirectInviteEmail } from '@/lib/email';
 
 /**
  * POST /api/admin/send-login-link
  *
- * Sends a Supabase-native one-time login link to a leader.
- * Replaces the old custom magic_link_tokens system.
+ * Sends a login email to a leader. Two modes:
  *
- * The generated link routes through Supabase's auth endpoint, then
- * redirects to /auth/callback where exchangeCodeForSession() creates
- * a real Supabase session — no custom cookies or tokens needed.
+ * linkType: 'magiclink' (default) — one-click login, no password needed.
+ *   Used for church leaders and login reminders.
+ *
+ * linkType: 'setup' — password setup + Google auth option for first-time DNA leaders.
+ *   Generates a recovery link → /auth/reset-password so they can create a password
+ *   OR use Google sign-in with the same email address.
  *
  * Auth: admin or church_leader only.
  */
@@ -27,7 +29,7 @@ export async function POST(request: NextRequest) {
   }
 
   const body = await request.json();
-  const { email, name } = body;
+  const { email, name, linkType = 'magiclink', churchName } = body;
 
   if (!email) {
     return NextResponse.json({ error: 'Email is required' }, { status: 400 });
@@ -43,34 +45,64 @@ export async function POST(request: NextRequest) {
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dnadiscipleship.com';
 
   try {
-    // Generate a Supabase OTP magic link (one-time login, no password required).
-    // When clicked: Supabase verifies → redirects to /auth/callback with a code →
-    // exchangeCodeForSession() creates a real Supabase session → dashboard.
-    const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
-      type: 'magiclink',
-      email: normalizedEmail,
-      options: {
-        redirectTo: `${baseUrl}/auth/callback`,
-      },
-    });
+    if (linkType === 'setup') {
+      // Recovery link — sends them to /auth/reset-password to create a password.
+      // The email also mentions Google sign-in as an alternative.
+      const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+        type: 'recovery',
+        email: normalizedEmail,
+        options: {
+          redirectTo: `${baseUrl}/auth/reset-password`,
+        },
+      });
 
-    if (linkError || !linkData?.properties?.action_link) {
-      console.error('[send-login-link] Failed to generate link:', linkError);
-      return NextResponse.json({ error: 'Failed to generate login link' }, { status: 500 });
-    }
+      if (linkError || !linkData?.properties?.action_link) {
+        console.error('[send-login-link] Failed to generate setup link:', linkError);
+        return NextResponse.json({ error: 'Failed to generate setup link' }, { status: 500 });
+      }
 
-    const loginLink = linkData.properties.action_link;
+      const setupLink = linkData.properties.action_link;
 
-    // Send via Resend using the existing branded email template
-    const emailResult = await sendMagicLinkEmail(
-      normalizedEmail,
-      name || 'Leader',
-      loginLink
-    );
+      const emailResult = await sendDNALeaderDirectInviteEmail(
+        normalizedEmail,
+        name || 'Leader',
+        setupLink,
+        churchName || null,
+        'DNA Hub Admin',
+        undefined
+      );
 
-    if (!emailResult.success) {
-      console.error('[send-login-link] Email send failed:', emailResult.error);
-      return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
+      if (!emailResult.success) {
+        console.error('[send-login-link] Setup email send failed:', emailResult.error);
+        return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
+      }
+    } else {
+      // Magic link — one-click login, no password required.
+      const { data: linkData, error: linkError } = await supabase.auth.admin.generateLink({
+        type: 'magiclink',
+        email: normalizedEmail,
+        options: {
+          redirectTo: `${baseUrl}/auth/callback`,
+        },
+      });
+
+      if (linkError || !linkData?.properties?.action_link) {
+        console.error('[send-login-link] Failed to generate magic link:', linkError);
+        return NextResponse.json({ error: 'Failed to generate login link' }, { status: 500 });
+      }
+
+      const loginLink = linkData.properties.action_link;
+
+      const emailResult = await sendMagicLinkEmail(
+        normalizedEmail,
+        name || 'Leader',
+        loginLink
+      );
+
+      if (!emailResult.success) {
+        console.error('[send-login-link] Email send failed:', emailResult.error);
+        return NextResponse.json({ error: 'Failed to send email' }, { status: 500 });
+      }
     }
 
     return NextResponse.json({ success: true });
