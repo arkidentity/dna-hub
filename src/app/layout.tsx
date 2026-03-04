@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Inter, Playfair_Display, DM_Sans } from "next/font/google";
 import "./globals.css";
 import TopNav from "@/components/TopNav";
-import DemoBanner from "@/components/demo/DemoBanner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -36,7 +35,6 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${inter.variable} ${playfair.variable} ${dmSans.variable} antialiased`}>
         <TopNav />
-        <DemoBanner />
         {children}
       </body>
     </html>

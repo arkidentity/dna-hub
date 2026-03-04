@@ -136,17 +136,6 @@ export default function HubDemoClient({ church, events: _events, demoPageUrl, bo
           return;
         }
 
-        // Set demo mode localStorage keys so DemoBanner shows in the Hub
-        try {
-          localStorage.setItem('dna_demo_mode', '1');
-          localStorage.setItem('dna_demo_church', church.name);
-          localStorage.setItem('dna_demo_page_url', demoPageUrl);
-          if (bookingUrl) localStorage.setItem('dna_demo_booking_url', bookingUrl);
-          else localStorage.removeItem('dna_demo_booking_url');
-        } catch {
-          // ignore
-        }
-
         setAuthState('redirecting');
         setTimeout(() => {
           window.location.href = '/groups';

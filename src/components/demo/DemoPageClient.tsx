@@ -144,17 +144,6 @@ export default function DemoPageClient({
   const [hubIframeActive, setHubIframeActive] = useState(false);
   const finalCtaRef = useRef<HTMLDivElement>(null);
 
-  // Clear Hub demo-mode keys on mount so DemoBanner doesn't appear on this page
-  // (keys are set by HubDemoClient when navigating into the leader dashboard demo)
-  useEffect(() => {
-    try {
-      localStorage.removeItem('dna_demo_mode');
-      localStorage.removeItem('dna_demo_church');
-      localStorage.removeItem('dna_demo_page_url');
-      localStorage.removeItem('dna_demo_booking_url');
-    } catch { /* ignore */ }
-  }, []);
-
   // Detect touch/mobile device for iframe scroll-trap prevention
   useEffect(() => {
     setIsTouchDevice(window.matchMedia('(pointer: coarse)').matches);
@@ -224,7 +213,7 @@ export default function DemoPageClient({
         @media (min-width: 600px) { .dp-section { padding: 5rem 2.5rem; } }
 
         /* Hub dashboard iframe — landscape on desktop, phone-frame on mobile */
-        .dp-hub-frame { aspect-ratio: 16 / 10; border-radius: 12px; max-width: 960px; }
+        .dp-hub-frame { aspect-ratio: 4 / 3; border-radius: 12px; max-width: 1100px; }
         @media (max-width: 640px) { .dp-hub-frame { aspect-ratio: 9 / 16; max-width: 430px; border-radius: 24px; } }
 
         /* FAQ */
@@ -562,7 +551,7 @@ export default function DemoPageClient({
         <div>
           {/* 7A — Leader Dashboard (live preview) */}
           <section className="dp-section" style={{ background: WARM_NEUTRAL_BG, textAlign: 'center' }}>
-            <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
+            <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: BRAND_GREEN }}>
                 Leader Dashboard
               </span>
