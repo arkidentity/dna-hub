@@ -223,6 +223,10 @@ export default function DemoPageClient({
         .dp-section { padding: 4rem 1.25rem; }
         @media (min-width: 600px) { .dp-section { padding: 5rem 2.5rem; } }
 
+        /* Hub dashboard iframe — landscape on desktop, phone-frame on mobile */
+        .dp-hub-frame { aspect-ratio: 16 / 10; border-radius: 12px; max-width: 960px; }
+        @media (max-width: 640px) { .dp-hub-frame { aspect-ratio: 9 / 16; max-width: 430px; border-radius: 24px; } }
+
         /* FAQ */
         .dp-faq-item { border-bottom: 1px solid #ebebeb; }
         .dp-faq-q {
@@ -402,7 +406,7 @@ export default function DemoPageClient({
         className="dp-section"
         style={{ background: WARM_NEUTRAL_BG, textAlign: 'center' }}
       >
-        <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
+        <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
           {/* Section label */}
           <span style={{ fontSize: '1.15rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: BRAND_GREEN }}>
             Your Free App
@@ -536,7 +540,7 @@ export default function DemoPageClient({
 
       {/* ── 6. LEADER DASHBOARD INTRO ────────────────────────────── */}
       <section style={{ background: '#1A2332', textAlign: 'center', padding: '3.5rem 1.25rem' }}>
-        <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'center' }}>
+        <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'center' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}>
             The Full DNA Experience
           </span>
@@ -558,7 +562,7 @@ export default function DemoPageClient({
         <div>
           {/* 7A — Leader Dashboard (live preview) */}
           <section className="dp-section" style={{ background: WARM_NEUTRAL_BG, textAlign: 'center' }}>
-            <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
+            <div style={{ maxWidth: '960px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: BRAND_GREEN }}>
                 Leader Dashboard
               </span>
@@ -567,23 +571,23 @@ export default function DemoPageClient({
                 fontSize: 'clamp(1.5rem, 5vw, 2.25rem)',
                 fontWeight: 700, color: '#0f0e0c', margin: 0, lineHeight: 1.15,
               }}>
-                See every disciple.<br />Know where they are.
+                See every disciple. Know where they are.
               </h2>
-              <p style={{ fontSize: '1rem', color: '#666', margin: 0, lineHeight: 1.65, maxWidth: '400px' }}>
+              <p style={{ fontSize: '1rem', color: '#666', margin: 0, lineHeight: 1.65, maxWidth: '540px' }}>
                 The DNA Hub gives leaders full visibility — journals, prayers, pathway progress, and group health — without micromanaging the relationship.
               </p>
 
-              {/* iframe — hub leader dashboard (live preview) */}
-              <div style={{
-                width: '100%',
-                maxWidth: '430px',
-                aspectRatio: '9 / 16',
-                borderRadius: '24px',
-                overflow: 'hidden',
-                boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
-                background: '#fff',
-                position: 'relative',
-              }}>
+              {/* iframe — hub leader dashboard (landscape on desktop, phone-frame on mobile) */}
+              <div
+                className="dp-hub-frame"
+                style={{
+                  width: '100%',
+                  overflow: 'hidden',
+                  boxShadow: '0 24px 64px rgba(0,0,0,0.2)',
+                  background: '#fff',
+                  position: 'relative',
+                }}
+              >
                 <iframe
                   src={`${hubDemoUrl}?embed=1`}
                   title={`${church.name} DNA Leader Dashboard`}
@@ -645,27 +649,12 @@ export default function DemoPageClient({
                   </button>
                 )}
               </div>
-
-              {hubDemoUrl && (
-                <Link
-                  href={hubDemoUrl}
-                  style={{
-                    display: 'inline-flex', alignItems: 'center', gap: '0.375rem',
-                    fontSize: '0.9rem', color: BRAND_GREEN, fontWeight: 600,
-                    textDecoration: 'none', borderBottom: `1px solid ${BRAND_GREEN}`,
-                    paddingBottom: '1px',
-                  }}
-                >
-                  Explore the full leader dashboard
-                  <ArrowRight className="w-3 h-3" />
-                </Link>
-              )}
             </div>
           </section>
 
           {/* 7B — Features (Group Management, Cohort, Training) */}
           <section className="dp-section" style={{ background: '#1A2332' }}>
-            <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', alignItems: 'flex-start' }}>
+            <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
                 <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>
                   Built for DNA Leaders
@@ -718,7 +707,7 @@ export default function DemoPageClient({
 
           {/* 7C — Coaching Partnership */}
           <section className="dp-section" style={{ background: WARM_NEUTRAL_BG }}>
-            <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', alignItems: 'flex-start' }}>
+            <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
                 <span style={{ fontSize: '1rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: BRAND_GREEN }}>
                   Partnership
@@ -780,7 +769,7 @@ export default function DemoPageClient({
 
       {/* ── 8. FAQ ───────────────────────────────────────────────── */}
       <section className="dp-section" style={{ background: WARM_NEUTRAL_BG }}>
-        <div style={{ maxWidth: '580px', margin: '0 auto' }}>
+        <div style={{ maxWidth: '680px', margin: '0 auto' }}>
           <h2 style={{
             fontFamily: "'Playfair Display', serif",
             fontSize: 'clamp(1.5rem, 4vw, 2rem)',
@@ -831,7 +820,7 @@ export default function DemoPageClient({
           className="dp-section"
           style={{ background: '#0d1520', textAlign: 'center' }}
         >
-          <div style={{ maxWidth: '520px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
+          <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
             <h2 style={{
               fontFamily: "'Playfair Display', serif",
               fontSize: 'clamp(2rem, 6vw, 3rem)',
