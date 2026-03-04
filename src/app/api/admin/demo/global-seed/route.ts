@@ -17,8 +17,14 @@ import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
  *   4. disciple_checkpoint_completions  (8 checkpoints — weeks 1–6)
  *   5. disciple_journal_entries         (5 entries, Head/Heart/Hands)
  *   6. disciple_prayer_cards            (4 active + 1 answered)
+ *   7. Demo leader auth user + records  (demo-leader@dna.demo / "Sarah Mitchell")
+ *   8. dna_leaders record               (for group FK)
+ *   9. dna_groups                       (Life Group Alpha, foundation phase)
+ *  10. group_disciples                  (demo-global + leader as members)
+ *  11. group_messages                   (8 realistic chat messages)
+ *  12. group_message_reads              (partial unread for demo user)
+ *  13. dna_calendar_events              (4 upcoming group meetings)
  *
- * No groups, no calendar events — those are church-specific.
  * Church branding in the iframe comes from the Daily DNA URL subdomain
  * (e.g. grace-church.dailydna.app), not from this account.
  */
@@ -284,8 +290,314 @@ export async function POST() {
       // Non-fatal
     }
 
-    // ── 7. Verify sign-in works ────────────────────────────────────────────
-    // Quick smoke-test: sign in as the global user to confirm credentials work
+    // ── 7. Create demo leader auth user (demo-leader@dna.demo) ─────────────
+    const leaderEmail = 'demo-leader@dna.demo';
+    const leaderPassword = 'dna-demo-leader-session';
+    let leaderAuthUserId: string | null = null;
+
+    const { data: leaderAuthData, error: leaderAuthError } = await supabase.auth.admin.createUser({
+      email: leaderEmail,
+      password: leaderPassword,
+      email_confirm: true,
+      user_metadata: {
+        is_demo: true,
+        demo_scope: 'global-leader',
+        display_name: 'Sarah Mitchell',
+      },
+    });
+
+    if (leaderAuthData?.user) {
+      leaderAuthUserId = leaderAuthData.user.id;
+      console.log('[GLOBAL-SEED] Created leader auth user:', leaderAuthUserId);
+    } else if (
+      leaderAuthError?.message?.toLowerCase().includes('already been registered') ||
+      leaderAuthError?.message?.toLowerCase().includes('already registered') ||
+      leaderAuthError?.code === 'email_exists' ||
+      leaderAuthError?.status === 422
+    ) {
+      const { data: listData } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+      const existing = listData?.users?.find((u) => u.email === leaderEmail);
+      if (existing) {
+        leaderAuthUserId = existing.id;
+        console.log('[GLOBAL-SEED] Found existing leader auth user:', leaderAuthUserId);
+      }
+    }
+
+    if (!leaderAuthUserId) {
+      console.error('[GLOBAL-SEED] Could not obtain leader auth user ID');
+      return NextResponse.json({ error: 'Failed to create leader auth user' }, { status: 500 });
+    }
+
+    await supabase.auth.admin.updateUserById(leaderAuthUserId, { password: leaderPassword });
+
+    // ── 8. Upsert leader's disciples + disciple_app_accounts ─────────────
+    const { data: leaderDisciple } = await supabase
+      .from('disciples')
+      .upsert(
+        { email: leaderEmail, name: 'Sarah Mitchell' },
+        { onConflict: 'email', ignoreDuplicates: false }
+      )
+      .select('id')
+      .single();
+
+    const leaderDiscipleId = leaderDisciple?.id as string;
+
+    await supabase
+      .from('disciple_app_accounts')
+      .upsert(
+        {
+          id: leaderAuthUserId,
+          disciple_id: leaderDiscipleId,
+          email: leaderEmail,
+          display_name: 'Sarah Mitchell',
+          church_id: null,
+          church_subdomain: null,
+          email_verified: true,
+          is_active: true,
+          auth_provider: 'email',
+          role: 'dna_leader',
+        },
+        { onConflict: 'id' }
+      );
+
+    // ── 9. Upsert dna_leaders record ─────────────────────────────────────
+    const { data: dnaLeader } = await supabase
+      .from('dna_leaders')
+      .upsert(
+        {
+          email: leaderEmail,
+          name: 'Sarah Mitchell',
+          church_id: null,
+          is_active: true,
+        },
+        { onConflict: 'email', ignoreDuplicates: false }
+      )
+      .select('id')
+      .single();
+
+    if (!dnaLeader) {
+      console.error('[GLOBAL-SEED] Could not upsert dna_leaders record');
+      return NextResponse.json({ error: 'Failed to upsert dna_leaders' }, { status: 500 });
+    }
+
+    const dnaLeaderId = dnaLeader.id as string;
+
+    // ── 10. Upsert dna_groups (Life Group Alpha) ─────────────────────────
+    const groupStartDate = new Date(now.getTime() - 21 * 24 * 60 * 60 * 1000);
+    const groupStartStr = groupStartDate.toISOString().split('T')[0];
+
+    // Query first — no unique constraint on (leader_id, group_name)
+    let demoGroupId: string;
+    const { data: existingGroup } = await supabase
+      .from('dna_groups')
+      .select('id')
+      .eq('leader_id', dnaLeaderId)
+      .eq('group_name', 'Life Group Alpha')
+      .maybeSingle();
+
+    if (existingGroup) {
+      demoGroupId = existingGroup.id as string;
+      // Update to ensure current values
+      await supabase
+        .from('dna_groups')
+        .update({ current_phase: 'foundation', start_date: groupStartStr, is_active: true })
+        .eq('id', demoGroupId);
+      console.log('[GLOBAL-SEED] Updated existing group:', demoGroupId);
+    } else {
+      const { data: newGroup, error: groupError } = await supabase
+        .from('dna_groups')
+        .insert({
+          group_name: 'Life Group Alpha',
+          leader_id: dnaLeaderId,
+          church_id: null,
+          current_phase: 'foundation',
+          start_date: groupStartStr,
+          is_active: true,
+        })
+        .select('id')
+        .single();
+
+      if (groupError || !newGroup) {
+        console.error('[GLOBAL-SEED] Group creation error:', groupError);
+        return NextResponse.json({ error: 'Failed to create demo group' }, { status: 500 });
+      }
+      demoGroupId = newGroup.id as string;
+      console.log('[GLOBAL-SEED] Created new group:', demoGroupId);
+    }
+
+    // ── 11. Upsert group_disciples (demo user + leader) ──────────────────
+    const memberJoinDate = new Date(now.getTime() - 18 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+
+    await supabase.from('group_disciples').upsert(
+      [
+        { group_id: demoGroupId, disciple_id: discipleId, joined_date: memberJoinDate, current_status: 'active' },
+        { group_id: demoGroupId, disciple_id: leaderDiscipleId, joined_date: groupStartStr, current_status: 'active' },
+      ],
+      { onConflict: 'group_id,disciple_id', ignoreDuplicates: false }
+    );
+
+    // ── 12. Seed group_messages (delete + re-insert) ─────────────────────
+    await supabase.from('group_messages').delete().eq('group_id', demoGroupId);
+
+    const msgBase = now.getTime();
+    const DAY = 24 * 60 * 60 * 1000;
+
+    const demoMessages = [
+      {
+        group_id: demoGroupId,
+        sender_account_id: leaderAuthUserId,
+        sender_name: 'Sarah Mitchell',
+        content: 'Welcome to Life Group Alpha! Excited to walk through the Foundation phase together. Let me know if you have any questions as we get started.',
+        message_type: 'text',
+        created_at: new Date(msgBase - 10 * DAY).toISOString(),
+      },
+      {
+        group_id: demoGroupId,
+        sender_account_id: authUserId,
+        sender_name: 'Demo Disciple',
+        content: 'Thank you, Sarah! I just finished the Week 1 life assessment. Really eye-opening.',
+        message_type: 'text',
+        created_at: new Date(msgBase - 9 * DAY).toISOString(),
+      },
+      {
+        group_id: demoGroupId,
+        sender_account_id: leaderAuthUserId,
+        sender_name: 'Sarah Mitchell',
+        content: "That's great to hear! What stood out to you most?",
+        message_type: 'text',
+        created_at: new Date(msgBase - 9 * DAY + 2 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        group_id: demoGroupId,
+        sender_account_id: authUserId,
+        sender_name: 'Demo Disciple',
+        content: "Honestly, how low I scored on Scripture engagement. I want to grow there.",
+        message_type: 'text',
+        created_at: new Date(msgBase - 8 * DAY).toISOString(),
+      },
+      {
+        group_id: demoGroupId,
+        sender_account_id: leaderAuthUserId,
+        sender_name: 'Sarah Mitchell',
+        content: "That's actually where the 3D Journal comes in. Try journaling through John 15 this week — Head, Heart, and Hands.",
+        message_type: 'text',
+        created_at: new Date(msgBase - 8 * DAY + 3 * 60 * 60 * 1000).toISOString(),
+      },
+      {
+        group_id: demoGroupId,
+        sender_account_id: authUserId,
+        sender_name: 'Demo Disciple',
+        content: null,
+        message_type: 'shared_journal',
+        shared_content: {
+          type: 'journal',
+          title: 'John 15:5',
+          preview: 'Jesus describes himself as the vine and his followers as branches. Apart from him, we have no source of life or fruitfulness.',
+        },
+        created_at: new Date(msgBase - 6 * DAY).toISOString(),
+      },
+      {
+        group_id: demoGroupId,
+        sender_account_id: leaderAuthUserId,
+        sender_name: 'Sarah Mitchell',
+        content: "Love that reflection! The 'abide' insight is powerful. Let's talk more at our next meeting.",
+        message_type: 'text',
+        created_at: new Date(msgBase - 5 * DAY).toISOString(),
+      },
+      {
+        group_id: demoGroupId,
+        sender_account_id: authUserId,
+        sender_name: 'Demo Disciple',
+        content: 'Looking forward to it! This group has been really encouraging.',
+        message_type: 'text',
+        created_at: new Date(msgBase - 3 * DAY).toISOString(),
+      },
+    ];
+
+    const { error: msgError } = await supabase.from('group_messages').insert(demoMessages);
+    if (msgError) {
+      console.error('[GLOBAL-SEED] Message seed error:', msgError);
+      // Non-fatal
+    }
+
+    // ── 13. Seed group_message_reads (partial unread) ────────────────────
+    await supabase.from('group_message_reads').upsert(
+      {
+        account_id: authUserId,
+        group_id: demoGroupId,
+        last_read_at: new Date(msgBase - 5.5 * DAY).toISOString(),
+      },
+      { onConflict: 'account_id,group_id' }
+    );
+
+    // ── 14. Seed dna_calendar_events (upcoming group meetings) ───────────
+    await supabase.from('dna_calendar_events').delete().eq('group_id', demoGroupId);
+
+    // Calculate next Wednesday from today
+    const nextWed = new Date(now);
+    nextWed.setDate(nextWed.getDate() + ((3 - nextWed.getDay() + 7) % 7 || 7));
+    nextWed.setHours(19, 0, 0, 0);
+
+    const calendarEvents = [
+      {
+        title: 'Group Meeting — Foundation Week 4',
+        description: 'Continue through the Foundation phase together. Bring your journals.',
+        location: 'Main Campus Room 204',
+        start_time: new Date(nextWed).toISOString(),
+        end_time: new Date(nextWed.getTime() + 90 * 60 * 1000).toISOString(),
+        event_type: 'group_meeting',
+        group_id: demoGroupId,
+        created_by: dnaLeaderId,
+      },
+      {
+        title: 'Group Meeting — Foundation Week 5',
+        description: 'Q&A deep-dive and checkpoint review.',
+        location: 'Main Campus Room 204',
+        start_time: new Date(nextWed.getTime() + 7 * DAY).toISOString(),
+        end_time: new Date(nextWed.getTime() + 7 * DAY + 90 * 60 * 1000).toISOString(),
+        event_type: 'group_meeting',
+        group_id: demoGroupId,
+        created_by: dnaLeaderId,
+      },
+      {
+        title: 'Group Meeting — Foundation Week 6',
+        description: 'Listening prayer practice and phase reflection.',
+        location: 'Main Campus Room 204',
+        start_time: new Date(nextWed.getTime() + 14 * DAY).toISOString(),
+        end_time: new Date(nextWed.getTime() + 14 * DAY + 90 * 60 * 1000).toISOString(),
+        event_type: 'group_meeting',
+        group_id: demoGroupId,
+        created_by: dnaLeaderId,
+      },
+      {
+        title: 'Scripture Deep-Dive',
+        description: 'Casual coffee and extended time in the Word together.',
+        location: 'Coffee House',
+        start_time: (() => {
+          const sat = new Date(now);
+          sat.setDate(sat.getDate() + ((6 - sat.getDay() + 7) % 7 || 7));
+          sat.setHours(9, 0, 0, 0);
+          return sat.toISOString();
+        })(),
+        end_time: (() => {
+          const sat = new Date(now);
+          sat.setDate(sat.getDate() + ((6 - sat.getDay() + 7) % 7 || 7));
+          sat.setHours(10, 0, 0, 0);
+          return sat.toISOString();
+        })(),
+        event_type: 'group_meeting',
+        group_id: demoGroupId,
+        created_by: dnaLeaderId,
+      },
+    ];
+
+    const { error: calError } = await supabase.from('dna_calendar_events').insert(calendarEvents);
+    if (calError) {
+      console.error('[GLOBAL-SEED] Calendar seed error:', calError);
+      // Non-fatal
+    }
+
+    // ── 15. Verify sign-in works ─────────────────────────────────────────
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     let signInOk = false;
@@ -305,9 +617,15 @@ export async function POST() {
         auth_user_id: authUserId,
         demo_email: demoEmail,
         disciple_id: discipleId,
+        leader_auth_user_id: leaderAuthUserId,
+        leader_email: leaderEmail,
+        dna_leader_id: dnaLeaderId,
+        group_id: demoGroupId,
         checkpoints: checkpointRows.length,
         journal_entries: journalEntries.length,
         prayer_cards: prayerCards.length,
+        group_messages: demoMessages.length,
+        calendar_events: calendarEvents.length,
         sign_in_verified: signInOk,
       },
     });

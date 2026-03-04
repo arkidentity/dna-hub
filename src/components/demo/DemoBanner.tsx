@@ -1,17 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Info, X } from 'lucide-react';
+import { ArrowLeft, X } from 'lucide-react';
 import BookingModal from '@/components/demo/BookingModal';
 
 /**
  * DemoBanner
  *
- * A fixed top banner shown when a prospect is viewing the Hub in demo mode.
- * Demo mode is signalled by localStorage keys set by HubDemoClient after
- * the auth session is established:
+ * A top banner shown when a prospect is viewing the Hub in demo mode.
+ * Shows only "Back to demo" + "Book a Call" — minimal and unobtrusive.
+ * Hidden on narrow viewports (mobile / iframe embed widths).
+ *
+ * Demo mode is signalled by localStorage keys set by HubDemoClient:
  *   - dna_demo_mode = '1'
- *   - dna_demo_church = '<church name>'
  *   - dna_demo_page_url = '/demo/<slug>'
  *   - dna_demo_booking_url = '<booking URL>' (optional)
  *
@@ -19,7 +20,6 @@ import BookingModal from '@/components/demo/BookingModal';
  */
 export default function DemoBanner() {
   const [show, setShow] = useState(false);
-  const [churchName, setChurchName] = useState('');
   const [demoPageUrl, setDemoPageUrl] = useState('');
   const [bookingUrl, setBookingUrl] = useState('');
   const [bookingOpen, setBookingOpen] = useState(false);
@@ -27,12 +27,10 @@ export default function DemoBanner() {
   useEffect(() => {
     try {
       const mode = localStorage.getItem('dna_demo_mode');
-      const church = localStorage.getItem('dna_demo_church');
       const pageUrl = localStorage.getItem('dna_demo_page_url');
       const bUrl = localStorage.getItem('dna_demo_booking_url');
       if (mode === '1') {
         setShow(true);
-        setChurchName(church ?? '');
         setDemoPageUrl(pageUrl ?? '');
         setBookingUrl(bUrl ?? '');
       }
@@ -57,79 +55,78 @@ export default function DemoBanner() {
 
   return (
     <>
+      <style>{`
+        @media (max-width: 500px) {
+          .demo-banner-top { display: none !important; }
+        }
+      `}</style>
       <div
+        className="demo-banner-top"
         style={{
           background: '#1a3a52',
           borderBottom: '1px solid rgba(232,181,98,0.3)',
-          padding: '0.625rem 1.25rem',
+          padding: '0.5rem 1.25rem',
           display: 'flex',
           alignItems: 'center',
-          gap: '0.75rem',
-          justifyContent: 'center',
+          justifyContent: 'space-between',
           position: 'relative',
           zIndex: 40,
         }}
       >
-        <Info
-          className="w-4 h-4 flex-shrink-0"
-          style={{ color: '#e8b562' }}
-        />
-        <span style={{ color: '#f5f0e8', fontSize: '0.875rem', fontWeight: 500 }}>
-          You&apos;re previewing a demo of{churchName ? ` ${churchName}'s` : ''} DNA Hub.{' '}
-          <span style={{ opacity: 0.7 }}>This is sample data only.</span>
-        </span>
-        {demoPageUrl && (
-          <a
-            href={demoPageUrl}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {demoPageUrl && (
+            <a
+              href={demoPageUrl}
+              style={{
+                color: 'rgba(255,255,255,0.85)',
+                fontSize: '0.8rem',
+                fontWeight: 500,
+                textDecoration: 'none',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.25rem',
+                whiteSpace: 'nowrap',
+              }}
+            >
+              <ArrowLeft className="w-3.5 h-3.5" /> Back to demo
+            </a>
+          )}
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
+          <button
+            onClick={() => setBookingOpen(true)}
             style={{
-              color: 'rgba(255,255,255,0.7)',
+              background: '#e8b562',
+              color: '#1a2332',
               fontSize: '0.8rem',
-              fontWeight: 500,
-              textDecoration: 'none',
-              borderBottom: '1px solid rgba(255,255,255,0.3)',
+              fontWeight: 700,
+              padding: '0.25rem 0.875rem',
+              borderRadius: '20px',
+              border: 'none',
+              cursor: 'pointer',
+              fontFamily: 'inherit',
               flexShrink: 0,
               whiteSpace: 'nowrap',
-              paddingBottom: '1px',
             }}
           >
-            ← Back to demo
-          </a>
-        )}
-        <button
-          onClick={() => setBookingOpen(true)}
-          style={{
-            background: '#e8b562',
-            color: '#1a2332',
-            fontSize: '0.8rem',
-            fontWeight: 700,
-            padding: '0.25rem 0.875rem',
-            borderRadius: '20px',
-            border: 'none',
-            cursor: 'pointer',
-            fontFamily: 'inherit',
-            flexShrink: 0,
-            whiteSpace: 'nowrap',
-          }}
-        >
-          Book a Call →
-        </button>
-        <button
-          onClick={handleDismiss}
-          aria-label="Dismiss demo banner"
-          style={{
-            position: 'absolute',
-            right: '1rem',
-            background: 'none',
-            border: 'none',
-            cursor: 'pointer',
-            color: 'rgba(255,255,255,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            padding: '0.25rem',
-          }}
-        >
-          <X className="w-4 h-4" />
-        </button>
+            Book a Call →
+          </button>
+          <button
+            onClick={handleDismiss}
+            aria-label="Dismiss demo banner"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'rgba(255,255,255,0.5)',
+              display: 'flex',
+              alignItems: 'center',
+              padding: '0.25rem',
+            }}
+          >
+            <X className="w-4 h-4" />
+          </button>
+        </div>
       </div>
 
       {bookingOpen && <BookingModal onClose={() => setBookingOpen(false)} url={bookingUrl} />}
