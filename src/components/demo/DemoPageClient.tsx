@@ -184,7 +184,7 @@ export default function DemoPageClient({
   }, [church.subdomain]);
 
   const headline = `This is what discipleship looks like at ${church.name}.`;
-  const subline = 'We built this for you.';
+  const subline = 'A fully branded discipleship app — free. The coaching that makes it multiply.';
 
   return (
     <div
@@ -334,6 +334,11 @@ export default function DemoPageClient({
           {/* Subline */}
           <p style={{ fontSize: '1.15rem', color: '#666', margin: 0, lineHeight: 1.5 }}>
             {subline}
+          </p>
+
+          {/* Social proof */}
+          <p style={{ fontSize: '0.875rem', color: '#999', margin: 0, letterSpacing: '0.01em' }}>
+            Already multiplying in churches across the country.
           </p>
         </div>
       </section>
@@ -511,7 +516,7 @@ export default function DemoPageClient({
 
           {/* Gift copy — bold */}
           <p style={{ fontSize: '1.05rem', color: '#222', margin: 0, lineHeight: 1.7, fontWeight: 700 }}>
-            The app is our gift to the body of Christ. Start using it today — no strings attached.
+            The app is free — our gift to the body of Christ. The coaching that makes it multiply is where we partner together.
           </p>
 
           <button onClick={() => setBookingOpen(true)} className="dp-btn-primary" style={{ background: primary }}>
@@ -825,8 +830,11 @@ export default function DemoPageClient({
                 Book a Discovery Call
                 <ArrowRight className="w-4 h-4" />
               </button>
-              <Link href={assessmentUrl} className="dp-btn-outline" style={{ justifyContent: 'center', width: '100%', maxWidth: '320px' }}>
-                Take the Assessment First
+              <Link
+                href={assessmentUrl}
+                style={{ fontSize: '0.875rem', color: 'rgba(255,255,255,0.55)', textDecoration: 'none', borderBottom: '1px solid rgba(255,255,255,0.25)', paddingBottom: '1px' }}
+              >
+                Take the 5-min assessment first →
               </Link>
             </div>
           </div>
