@@ -45,6 +45,12 @@ interface HubDemoClientProps {
   demoPageUrl: string;
   /** Booking URL for the "Book a Call" modal in DemoBanner. Stored in localStorage. */
   bookingUrl?: string;
+  /**
+   * When true, skip auth entirely and render the static mini-dashboard immediately.
+   * Used when the hub demo is embedded as an iframe on the church demo landing page —
+   * no real DB data needed, no session pollution, instant render.
+   */
+  embed?: boolean;
 }
 
 // ─── Hardcoded Seed Disciples (fallback mini-dashboard) ───────────────────────
@@ -492,10 +498,14 @@ function StaticMiniDashboard({ church, events, demoPageUrl }: HubDemoClientProps
 
 // ─── Main Component ────────────────────────────────────────────────────────────
 
-export default function HubDemoClient({ church, events, demoPageUrl, bookingUrl }: HubDemoClientProps) {
-  const [authState, setAuthState] = useState<AuthState>('loading');
+export default function HubDemoClient({ church, events, demoPageUrl, bookingUrl, embed }: HubDemoClientProps) {
+  // embed=true → start in fallback state immediately, skip the auth effect entirely
+  const [authState, setAuthState] = useState<AuthState>(embed ? 'fallback' : 'loading');
 
   useEffect(() => {
+    // Embed mode: static mini-dashboard only — no auth, no session, no DB reads
+    if (embed) return;
+
     async function establishSession() {
       try {
         const res = await fetch(`/api/demo/hub-session/${church.subdomain}`);
@@ -546,12 +556,12 @@ export default function HubDemoClient({ church, events, demoPageUrl, bookingUrl 
 
     void establishSession();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [church.subdomain, church.name, demoPageUrl, bookingUrl]);
+  }, [embed, church.subdomain, church.name, demoPageUrl, bookingUrl]);
 
   if (authState === 'loading' || authState === 'redirecting') {
     return <LoadingScreen church={church} />;
   }
 
-  // Fallback: Hub not yet seeded — show the static mini-dashboard
+  // Fallback / embed: show the static mini-dashboard (hardcoded data, church branding applied)
   return <StaticMiniDashboard church={church} events={events} demoPageUrl={demoPageUrl} />;
 }

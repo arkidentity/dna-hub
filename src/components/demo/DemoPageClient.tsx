@@ -582,7 +582,7 @@ export default function DemoPageClient({
                 position: 'relative',
               }}>
                 <iframe
-                  src={hubDemoUrl}
+                  src={`${hubDemoUrl}?embed=1`}
                   title={`${church.name} DNA Leader Dashboard`}
                   sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                   loading="lazy"

@@ -3,6 +3,7 @@ import HubDemoClient from '@/components/demo/HubDemoClient';
 
 interface HubDemoPageProps {
   params: Promise<{ slug: string }>;
+  searchParams: Promise<{ embed?: string }>;
 }
 
 interface HubDemoData {
@@ -34,8 +35,10 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   };
 }
 
-export default async function HubDemoPage({ params }: HubDemoPageProps) {
+export default async function HubDemoPage({ params, searchParams }: HubDemoPageProps) {
   const { slug } = await params;
+  const { embed } = await searchParams;
+  const isEmbed = embed === '1';
 
   if (!slug || !/^[a-z0-9-]+$/.test(slug)) {
     notFound();
@@ -59,6 +62,7 @@ export default async function HubDemoPage({ params }: HubDemoPageProps) {
       events={data.events}
       demoPageUrl={demoPageUrl}
       bookingUrl={data.booking_url ?? ''}
+      embed={isEmbed}
     />
   );
 }
