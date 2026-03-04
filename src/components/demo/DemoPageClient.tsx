@@ -534,9 +534,9 @@ export default function DemoPageClient({
 
       {/* ── 6. LEADER DASHBOARD INTRO ────────────────────────────── */}
       <section style={{ background: '#1A2332', textAlign: 'center', padding: '3.5rem 1.25rem' }}>
-        <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'center' }}>
+        <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1rem', alignItems: 'center' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}>
-            The Full DNA Experience
+            The Full DNA System
           </span>
           <h2 style={{
             fontFamily: "'Playfair Display', serif",
@@ -545,8 +545,11 @@ export default function DemoPageClient({
           }}>
             A dashboard <span style={{ color: GATE_GOLD }}>built for multiplication.</span>
           </h2>
-          <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '1rem', margin: 0, lineHeight: 1.7 }}>
-            Groups. Accountability. A live view of every disciple&rsquo;s journey — from first journal entry to leading their own group.
+          <p style={{ color: '#fff', fontSize: 'clamp(1.1rem, 3vw, 1.35rem)', fontWeight: 600, margin: 0, lineHeight: 1.4 }}>
+            See every disciple. Know where they are.
+          </p>
+          <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '1rem', margin: 0, lineHeight: 1.7 }}>
+            Give leaders full visibility — journals, prayers, pathway progress, and group health — without micromanaging the relationship.
           </p>
         </div>
       </section>
@@ -557,20 +560,6 @@ export default function DemoPageClient({
           {/* 7A — Leader Dashboard (live preview) */}
           <section className="dp-section" style={{ background: WARM_NEUTRAL_BG, textAlign: 'center' }}>
             <div style={{ maxWidth: '1100px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: BRAND_GREEN }}>
-                Leader Dashboard
-              </span>
-              <h2 style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: 'clamp(1.5rem, 5vw, 2.25rem)',
-                fontWeight: 700, color: '#0f0e0c', margin: 0, lineHeight: 1.15,
-              }}>
-                See every disciple. Know where they are.
-              </h2>
-              <p style={{ fontSize: '1rem', color: '#666', margin: 0, lineHeight: 1.65, maxWidth: '540px' }}>
-                The DNA Hub gives leaders full visibility — journals, prayers, pathway progress, and group health — without micromanaging the relationship.
-              </p>
-
               {/* iframe — hub leader dashboard (landscape on desktop, phone-frame on mobile) */}
               <div
                 className="dp-hub-frame"
@@ -808,7 +797,58 @@ export default function DemoPageClient({
         </div>
       </section>
 
-      {/* ── 9. FINAL CTA ─────────────────────────────────────────── */}
+      {/* ── 9. 3-STEP PROCESS MAP ────────────────────────────────── */}
+      <section className="dp-section" style={{ background: '#fff', textAlign: 'center' }}>
+        <div style={{ maxWidth: '720px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2.5rem', alignItems: 'center' }}>
+          <h2 style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 'clamp(1.375rem, 4vw, 1.875rem)',
+            fontWeight: 700, color: '#0f0e0c', margin: 0, lineHeight: 1.2,
+          }}>
+            Here&rsquo;s what happens next.
+          </h2>
+          <div style={{
+            display: 'flex', flexDirection: 'row', gap: '0', width: '100%',
+            flexWrap: 'wrap', justifyContent: 'center',
+          }}>
+            {([
+              { n: '1', label: 'Take the Assessment', body: 'Five minutes. Tells us where you are and helps us make the call count.' },
+              { n: '2', label: 'Book a Discovery Call', body: '30 minutes, no pressure. A real conversation about multiplication at your church.' },
+              { n: '3', label: 'Launch Your Branded App', body: 'Your church name. Your colors. Ready for disciples in days.' },
+            ]).map(({ n, label, body }, i, arr) => (
+              <div key={n} style={{ display: 'flex', flex: '1 1 200px', minWidth: '180px', maxWidth: '240px', flexDirection: 'column', alignItems: 'center', gap: '0.75rem', padding: '0 1.25rem', position: 'relative' }}>
+                {/* connector line — between steps, desktop only */}
+                {i < arr.length - 1 && (
+                  <div style={{
+                    position: 'absolute', top: '20px', left: 'calc(50% + 24px)', right: 'calc(-50% + 24px)',
+                    height: '1px', background: '#e0e0e0',
+                  }} />
+                )}
+                <div style={{
+                  width: '40px', height: '40px', borderRadius: '50%',
+                  background: BRAND_GREEN, color: '#fff',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontWeight: 700, fontSize: '1rem', flexShrink: 0, position: 'relative', zIndex: 1,
+                }}>
+                  {n}
+                </div>
+                <p style={{ fontWeight: 700, color: '#0f0e0c', margin: 0, fontSize: '0.975rem' }}>{label}</p>
+                <p style={{ color: '#777', margin: 0, fontSize: '0.875rem', lineHeight: 1.6 }}>{body}</p>
+              </div>
+            ))}
+          </div>
+          <button
+            onClick={() => setBookingOpen(true)}
+            className="dp-btn-primary"
+            style={{ background: BRAND_GREEN }}
+          >
+            Book a Discovery Call
+            <ArrowRight className="w-4 h-4" />
+          </button>
+        </div>
+      </section>
+
+      {/* ── 10. FINAL CTA ─────────────────────────────────────────── */}
       <div ref={finalCtaRef}>
         <section
           className="dp-section"
@@ -841,7 +881,7 @@ export default function DemoPageClient({
         </section>
       </div>
 
-      {/* ── 10. FOOTER ───────────────────────────────────────────── */}
+      {/* ── 11. FOOTER ───────────────────────────────────────────── */}
       <footer style={{
         background: '#0a0a0a',
         padding: '1.5rem 1.25rem',
