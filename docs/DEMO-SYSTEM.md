@@ -21,10 +21,18 @@ DemoPage (server component)
             │
             ├─► Section 4 iframe: https://[slug].dailydna.app/demo-entry
             │       ?at=...&rt=...&redirect=/pathway&church=[slug]
-            │       (auto-logged-in as global demo, shows full DNA Pathway)
+            │       (auto-logged-in as global demo, scaled to 85%)
             │
             └─► Section 7 iframe: /demo-hub/[slug]?embed=1
-                    (StaticMiniDashboard — zero DB reads, pure UI)
+                    │
+                    ▼ HubDemoClient authenticates via hub-session
+                GET /api/demo/hub-session/[slug]
+                    │  per-church credentials if hub-seeded,
+                    │  else falls back to global "demo-church" credentials
+                    │
+                    └─► Redirects to /groups (real Hub dashboard)
+                            DemoBanner shows "Back to demo" + "Book a Call"
+                            (hidden in embed mode / narrow viewports)
 ```
 
 ---
@@ -34,20 +42,23 @@ DemoPage (server component)
 | File | Role |
 |---|---|
 | `src/app/demo/[slug]/page.tsx` | Server component — fetches config, resolves temp, renders client |
-| `src/components/demo/DemoPageClient.tsx` | Client component — full page UI, iframes, FAQ, CTAs |
+| `src/components/demo/DemoPageClient.tsx` | Client component — full page UI, iframes (85% scaled), FAQ, CTAs |
 | `src/app/demo-hub/[slug]/page.tsx` | Hub demo server component — reads `?embed=1` param |
-| `src/components/demo/HubDemoClient.tsx` | Hub demo client — if `embed=true`, skips auth, shows StaticMiniDashboard |
+| `src/components/demo/HubDemoClient.tsx` | Hub demo client — authenticates via hub-session, redirects to real /groups |
+| `src/components/demo/DemoBanner.tsx` | Top banner on Hub pages in demo mode — "Back to demo" + "Book a Call" |
 | `src/app/api/demo/church/[slug]/route.ts` | Public API — returns branding + demo config (only if `demo_enabled`) |
 | `src/app/api/demo/app-session/[slug]/route.ts` | Public API — signs in as global demo account, returns tokens |
+| `src/app/api/demo/hub-session/[slug]/route.ts` | Public API — signs in as Hub demo leader, returns tokens. Falls back to global demo church |
+| `src/app/api/demo/hub-data/[slug]/route.ts` | Public API — returns church branding + calendar events for Hub demo |
 | `src/app/api/admin/demo/[churchId]/route.ts` | Admin API — GET/POST demo settings per church |
-| `src/app/api/admin/demo/[churchId]/seed/route.ts` | Admin API — seeds per-church groups + calendar events (still used for Hub calendar in StaticMiniDashboard is hardcoded — less critical now) |
-| `src/app/api/admin/demo/global-seed/route.ts` | **Admin API — one-time global seed. Creates demo-global@dna.demo + disciples + checkpoints/journal/prayers** |
+| `src/app/api/admin/demo/[churchId]/hub-seed/route.ts` | Admin API — seeds per-church Hub leader experience (optional — global seed covers all) |
+| `src/app/api/admin/demo/global-seed/route.ts` | **Admin API — one-time global seed. Creates everything needed for both app + Hub demos** |
 | `src/components/admin/DemoTab.tsx` | Admin UI — configure + seed a church's demo page |
 | `daily-dna/app/demo-entry/page.tsx` | Daily DNA — receives tokens via query params, calls setSession, redirects to /pathway |
 
 ---
 
-## Global Demo Account (Option B — active)
+## Global Demo Account (Daily DNA app iframe)
 
 **All church app demo iframes share one account: `demo-global@dna.demo`**
 
@@ -60,7 +71,7 @@ DemoPage (server component)
 **Why global over per-church:**
 Previously each church required running a seed that created `demo-{slug}@dna.demo` auth users + `[DEMO] Life Group Alpha` groups + disciples — polluting real tables. The global approach eliminates all of that. Church branding in the iframe is purely from the URL subdomain (`grace-church.dailydna.app` → Grace Church theme).
 
-**Seed data (global, shared):**
+**Daily DNA seed data (global, shared):**
 - 8 checkpoint completions (weeks 1–6)
 - 5 journal entries (John 15:5, Romans 12:2, Psalm 23:1, Matthew 28:19, Philippians 4:13)
 - 5 prayer cards (4 active + 1 answered)
@@ -75,19 +86,49 @@ Previously each church required running a seed that created `demo-{slug}@dna.dem
 
 ---
 
-## Hub Demo iframe (`?embed=1`)
+## Hub Demo (real dashboard)
 
-The leader dashboard preview (Section 7 of the demo page) uses a completely different approach:
+**All church Hub demo iframes share one "Demo Church" with real Hub data.**
 
-- Hub page at `/demo-hub/[slug]?embed=1` passes `embed={true}` to `HubDemoClient`
-- `HubDemoClient` detects `embed=true` → initializes `authState = 'fallback'`, skips all auth fetches
-- Renders `StaticMiniDashboard` immediately — fully hardcoded, zero DB reads
-- Nav tabs: Groups | Cohort | Training (mirrors real Hub UserMenu structure)
-- Groups view: stat cards + group card → click for detail (disciples, calendar, chat preview)
-- Cohort view: identity card, stats, announcements, next event
-- Training view: Assessment, Manual, Launch Guide, Create Group cards
-- Church branding (name, colors, logo) comes from props passed by the server component
-- Demo banner hidden in embed mode and on narrow viewports (&lt;500px)
+The global seed creates a "DNA Discipleship" church (subdomain: `demo-church`) and seeds it with full Hub leader data. When any church demo page embeds the Hub iframe, `hub-session` authenticates using the demo church's credentials and redirects to the real `/groups` page.
+
+### Demo Church details
+- Church: "DNA Discipleship" (subdomain: `demo-church`, status: active)
+- Hub leader: `demo-hub-demo-church@dna.demo` / `dna-hub-demo-demo-church-session`
+- Roles: `dna_leader` + `church_leader` + `training_participant`
+- 3 DNA groups (Life Group Alpha/Beta/Gamma — foundation + growth phases)
+- 12 disciples across all groups (realistic names)
+- 3 cohort posts (announcement, resource, update)
+- 3 calendar events (one per group)
+
+### Hub iframe flow
+1. DemoPageClient renders iframe: `/demo-hub/[slug]?embed=1`
+2. HubDemoClient calls `GET /api/demo/hub-session/[slug]`
+3. hub-session checks if the requesting church has `hub_demo_leader_id` set
+4. If not (most churches), falls back to demo-church's credentials
+5. Returns `{ demo_auth: true, access_token, refresh_token }`
+6. HubDemoClient calls `supabase.auth.setSession()` → redirects to `/groups`
+7. Real Hub dashboard loads with demo church's groups, cohort, training data
+8. DemoBanner (if visible) shows "← Back to demo" + "Book a Call →"
+9. Banner hidden in embed mode and on narrow viewports (<500px)
+
+### "Explore the full leader dashboard" link
+Opens `/demo-hub/[slug]` (no `?embed=1`) → same auth flow → redirects to `/groups` at full width. DemoBanner visible with back link + booking button.
+
+---
+
+## Daily DNA iframe scaling
+
+The Daily DNA app iframe (Section 4) is rendered at 85% scale to prevent content from appearing magnified inside the phone-frame container:
+
+```css
+width: 117.647%;     /* 100 / 0.85 */
+height: 117.647%;
+transform: scale(0.85);
+transform-origin: top left;
+```
+
+The iframe content "thinks" it has more viewport width, then is scaled down to fit the container naturally.
 
 ---
 
@@ -97,8 +138,10 @@ The leader dashboard preview (Section 7 of the demo page) uses a completely diff
 |---|---|---|
 | `church_id` | uuid | FK to `churches` (unique) |
 | `demo_enabled` | boolean | Gate — page 404s if false |
-| `demo_user_id` | uuid | Legacy — per-church demo auth user ID (no longer used by app-session route) |
-| `demo_free_user_id` | uuid | Legacy — free-tier demo user (free-tier iframe removed) |
+| `hub_demo_leader_id` | uuid | Auth user ID for per-church Hub demo leader (set by hub-seed) |
+| `hub_demo_seeded_at` | timestamptz | Last Hub seed timestamp |
+| `demo_user_id` | uuid | Legacy — per-church demo auth user ID (no longer used) |
+| `demo_free_user_id` | uuid | Legacy — free-tier demo user (no longer used) |
 | `demo_seeded_at` | timestamptz | Last per-church seed timestamp |
 | `video_url` | text | YouTube URL or direct video URL for coach video |
 | `default_temp` | text | `cold` / `warm` / `hot` — default CTA tone |
@@ -143,9 +186,9 @@ Three CTA tone variants. Coaches send the appropriate link to each prospect.
 1. **Header** — DNA logo + church logo (fixed)
 2. **Hero** — personalized headline ("This is what discipleship looks like at {Church}.")
 3. **Coach Video** — 9:16 iframe (YouTube or direct video), coach name caption
-4. **Your Free App** (Section 4) — 9:16 iframe, full DNA Pathway, `dna_leader` role. Subline: "This is the complete DNA Pathway, branded for {church}."
+4. **Your Free App** (Section 4) — 9:16 iframe at 85% scale, full DNA Pathway, `dna_leader` role.
 5. **Gate intro** (Section 6) — dark section, "A dashboard built for multiplication." Always open (no toggle).
-6. **Leader Dashboard** (Section 7A) — 9:16 hub iframe at `/demo-hub/[slug]?embed=1` (StaticMiniDashboard). "Explore the full leader dashboard →" link below.
+6. **Leader Dashboard** (Section 7A) — 9:16 hub iframe at `/demo-hub/[slug]?embed=1` → real Hub dashboard. "Explore the full leader dashboard →" link below.
 7. **Built for DNA Leaders** (Section 7B) — dark section, 3 feature cards: Group Management, Peer-to-Peer Cohort, Discipleship Training.
 8. **Coaching Partnership** (Section 7C) — warm section, 3 proof points, book call CTA.
 9. **FAQ** — accordion, 4 items
@@ -157,17 +200,19 @@ Three CTA tone variants. Coaches send the appropriate link to each prospect.
 
 ## Admin: Seeding
 
-### Global seed (one-time, done ✓)
+### Global seed (one-time)
 - Button: `/admin/settings` → "Global Demo Account" card → "Seed / Re-seed Global Demo"
 - Endpoint: `POST /api/admin/demo/global-seed`
-- Creates: 2 auth users (demo-global + demo-leader) + disciples + disciple_app_accounts + dna_leaders + dna_groups + group_disciples + checkpoints/journal/prayers + group_messages + calendar events
-- No church_id — branding comes from URL subdomain
+- Creates:
+  - **Daily DNA:** 2 auth users (demo-global + demo-leader) + disciples + disciple_app_accounts + dna_leaders + dna_groups + group_disciples + checkpoints/journal/prayers + group_messages + calendar events
+  - **Hub Demo Church:** "DNA Discipleship" church (subdomain: demo-church) + church_branding_settings + church_demo_settings + Hub leader auth user + users + user_roles + church_leaders + dna_leaders + 3 dna_groups + 12 disciples + cohort posts + calendar events
+- Idempotent — safe to re-run at any time
 
-### Per-church seed (optional, for Hub calendar events)
-- Button: `/admin/church/[id]` → Demo tab → "Seed Demo Data"
-- Endpoint: `POST /api/admin/demo/[churchId]/seed`
-- Still creates: `[DEMO] Life Group Alpha` group + `[DEMO]` calendar events
-- Hub iframe no longer reads from DB (StaticMiniDashboard is hardcoded), so per-church seed is optional
+### Per-church hub-seed (optional)
+- Button: `/admin/church/[id]` → Demo tab → "Seed Hub Demo Data"
+- Endpoint: `POST /api/admin/demo/[churchId]/hub-seed`
+- Creates per-church Hub leader + groups + disciples + cohort posts + calendar events
+- Only needed if a church wants its OWN Hub demo data (rare — the global demo church covers most cases)
 
 ---
 
@@ -176,16 +221,18 @@ Three CTA tone variants. Coaches send the appropriate link to each prospect.
 - Delete legacy `demo-{slug}@dna.demo` auth users in Supabase → Authentication → Users
 - Delete legacy `demo-free-{slug}@dna.demo` auth users
 - `demo-leader@dna.demo` auth user is permanent (needed for global seed group messages FK)
+- `demo-hub-demo-church@dna.demo` auth user is permanent (Hub demo church leader)
 - The per-church `seed/route.ts` step 10 (free-tier user creation) is now dead code — can be removed
-- `church_demo_settings.demo_user_id` and `demo_free_user_id` columns are legacy — no longer read by `app-session`
+- `church_demo_settings.demo_user_id` and `demo_free_user_id` columns are legacy — no longer read
 
 ---
 
 ## Public API Security
 
-Both public demo endpoints require no auth. Security enforced by:
+All public demo endpoints require no auth. Security enforced by:
 
 1. **`demo_enabled` gate** — returns 403 if demo not enabled
 2. **Slug validation** — rejects anything not matching `[a-z0-9-]+`
 3. **`noindex, nofollow` meta** — demo pages not indexed
-4. **Global creds not exposed** — `DEMO_GLOBAL_EMAIL` / `DEMO_GLOBAL_PASSWORD` are server-side env vars; the client only receives short-lived JWT tokens
+4. **Global creds not exposed** — `DEMO_GLOBAL_EMAIL` / `DEMO_GLOBAL_PASSWORD` and Hub demo creds are server-side env vars; the client only receives short-lived JWT tokens
+5. **Hub session fallback** — hub-session endpoint resolves credentials server-side; client never sees the demo church email/password

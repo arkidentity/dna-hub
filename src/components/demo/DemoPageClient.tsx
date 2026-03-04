@@ -426,6 +426,7 @@ export default function DemoPageClient({
           </p>
 
           {/* iframe — full pathway session (dna_leader role, full pathway + group data) */}
+          {/* Scaled to 85% so content fits the phone frame without magnification */}
           <div style={{
             width: '100%',
             maxWidth: '430px',
@@ -455,7 +456,9 @@ export default function DemoPageClient({
                   sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                   loading="lazy"
                   style={{
-                    width: '100%', height: '100%', border: 'none',
+                    width: `${100 / 0.85}%`, height: `${100 / 0.85}%`, border: 'none',
+                    transform: 'scale(0.85)',
+                    transformOrigin: 'top left',
                     pointerEvents: isTouchDevice && !appIframeActive ? 'none' : 'auto',
                   }}
                 />

@@ -24,9 +24,16 @@ import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
  *  11. group_messages                   (8 realistic chat messages)
  *  12. group_message_reads              (partial unread for demo user)
  *  13. dna_calendar_events              (4 upcoming group meetings)
+ *  14. "DNA Discipleship" demo church   (churches + branding + demo_settings)
+ *  15. Hub demo leader                  (auth user + users + user_roles + dna_leaders)
+ *  16. 3 Hub demo groups + 12 disciples (Alpha/Beta/Gamma with realistic names)
+ *  17. dna_cohort_posts                 (3 posts in demo church's cohort)
+ *  18. Hub calendar events              (1 per group)
  *
- * Church branding in the iframe comes from the Daily DNA URL subdomain
+ * Church branding in the Daily DNA iframe comes from the URL subdomain
  * (e.g. grace-church.dailydna.app), not from this account.
+ * Hub demo uses a shared "Demo Church" — all church demos show the same
+ * real Hub dashboard authenticated as the demo church's leader.
  */
 export async function POST() {
   try {
@@ -597,7 +604,411 @@ export async function POST() {
       // Non-fatal
     }
 
-    // ── 15. Verify sign-in works ─────────────────────────────────────────
+    // ── 15. Create / find "DNA Discipleship" demo church ────────────────
+    const DEMO_CHURCH_SUBDOMAIN = 'demo-church';
+    const DEMO_CHURCH_NAME = 'DNA Discipleship';
+
+    const { data: existingDemoChurch } = await supabase
+      .from('churches')
+      .select('id')
+      .eq('subdomain', DEMO_CHURCH_SUBDOMAIN)
+      .maybeSingle();
+
+    let demoChurchId: string;
+
+    if (existingDemoChurch) {
+      demoChurchId = existingDemoChurch.id as string;
+      await supabase
+        .from('churches')
+        .update({ name: DEMO_CHURCH_NAME, status: 'active' })
+        .eq('id', demoChurchId);
+      console.log('[GLOBAL-SEED] Updated existing demo church:', demoChurchId);
+    } else {
+      const { data: newChurch, error: churchError } = await supabase
+        .from('churches')
+        .insert({
+          name: DEMO_CHURCH_NAME,
+          subdomain: DEMO_CHURCH_SUBDOMAIN,
+          primary_color: '#143348',
+          accent_color: '#e8b562',
+          status: 'active',
+        })
+        .select('id')
+        .single();
+
+      if (churchError || !newChurch) {
+        console.error('[GLOBAL-SEED] Demo church creation error:', churchError);
+        return NextResponse.json({ error: 'Failed to create demo church' }, { status: 500 });
+      }
+      demoChurchId = newChurch.id as string;
+      console.log('[GLOBAL-SEED] Created demo church:', demoChurchId);
+    }
+
+    // Ensure church_branding_settings exist
+    await supabase
+      .from('church_branding_settings')
+      .upsert(
+        {
+          church_id: demoChurchId,
+          app_title: 'DNA Daily',
+          header_style: 'text',
+        },
+        { onConflict: 'church_id' }
+      );
+
+    // Ensure church_demo_settings exist (demo_enabled: true)
+    await supabase
+      .from('church_demo_settings')
+      .upsert(
+        {
+          church_id: demoChurchId,
+          demo_enabled: true,
+        },
+        { onConflict: 'church_id' }
+      );
+
+    // ── 16. Hub demo leader auth user ─────────────────────────────────────
+    const hubLeaderEmail = `demo-hub-${DEMO_CHURCH_SUBDOMAIN}@dna.demo`;
+    const hubLeaderPassword = `dna-hub-demo-${DEMO_CHURCH_SUBDOMAIN}-session`;
+    let hubLeaderAuthId: string | null = null;
+
+    const { data: hubAuthData, error: hubAuthError } = await supabase.auth.admin.createUser({
+      email: hubLeaderEmail,
+      password: hubLeaderPassword,
+      email_confirm: true,
+      user_metadata: {
+        is_demo: true,
+        is_hub_demo: true,
+        church_id: demoChurchId,
+        church_subdomain: DEMO_CHURCH_SUBDOMAIN,
+      },
+    });
+
+    if (hubAuthData?.user) {
+      hubLeaderAuthId = hubAuthData.user.id;
+      console.log('[GLOBAL-SEED] Created Hub leader auth user:', hubLeaderAuthId);
+    } else if (
+      hubAuthError?.message?.toLowerCase().includes('already been registered') ||
+      hubAuthError?.message?.toLowerCase().includes('already registered') ||
+      hubAuthError?.code === 'email_exists' ||
+      hubAuthError?.status === 422
+    ) {
+      const { data: listData } = await supabase.auth.admin.listUsers({ perPage: 1000 });
+      const existing = listData?.users?.find((u) => u.email === hubLeaderEmail);
+      if (existing) {
+        hubLeaderAuthId = existing.id;
+        console.log('[GLOBAL-SEED] Found existing Hub leader auth user:', hubLeaderAuthId);
+      }
+    }
+
+    if (!hubLeaderAuthId) {
+      console.error('[GLOBAL-SEED] Could not obtain Hub leader auth user ID');
+      return NextResponse.json({ error: 'Failed to create Hub demo leader' }, { status: 500 });
+    }
+
+    await supabase.auth.admin.updateUserById(hubLeaderAuthId, { password: hubLeaderPassword });
+
+    // ── 17. Upsert unified `users` + `user_roles` for Hub auth ────────────
+    const { data: hubUserRow } = await supabase
+      .from('users')
+      .upsert(
+        { email: hubLeaderEmail, name: 'Demo Leader' },
+        { onConflict: 'email', ignoreDuplicates: false }
+      )
+      .select('id')
+      .single();
+
+    if (!hubUserRow) {
+      console.error('[GLOBAL-SEED] Hub users upsert failed');
+      return NextResponse.json({ error: 'Failed to upsert Hub users row' }, { status: 500 });
+    }
+
+    const hubUserId = hubUserRow.id as string;
+
+    // User roles: dna_leader + church_leader (with church_id) + training_participant (no church_id)
+    const hubRoles: { user_id: string; role: string; church_id: string | null }[] = [
+      { user_id: hubUserId, role: 'dna_leader', church_id: demoChurchId },
+      { user_id: hubUserId, role: 'church_leader', church_id: demoChurchId },
+      { user_id: hubUserId, role: 'training_participant', church_id: null },
+    ];
+
+    for (const roleRow of hubRoles) {
+      const query = supabase
+        .from('user_roles')
+        .select('id')
+        .eq('user_id', hubUserId)
+        .eq('role', roleRow.role);
+
+      if (roleRow.church_id) {
+        query.eq('church_id', roleRow.church_id);
+      } else {
+        query.is('church_id', null);
+      }
+
+      const { data: existingRole } = await query.maybeSingle();
+      if (!existingRole) {
+        await supabase.from('user_roles').insert(roleRow);
+      }
+    }
+
+    // church_leaders backward compat
+    const { data: existingCL } = await supabase
+      .from('church_leaders')
+      .select('id')
+      .eq('email', hubLeaderEmail)
+      .eq('church_id', demoChurchId)
+      .maybeSingle();
+
+    if (!existingCL) {
+      await supabase.from('church_leaders').insert({
+        email: hubLeaderEmail,
+        name: 'Demo Leader',
+        church_id: demoChurchId,
+        user_id: hubUserId,
+      });
+    }
+
+    // ── 18. Hub dna_leaders record ────────────────────────────────────────
+    const { data: hubDnaLeader } = await supabase
+      .from('dna_leaders')
+      .upsert(
+        {
+          email: hubLeaderEmail,
+          name: 'Demo Leader',
+          church_id: demoChurchId,
+          user_id: hubUserId,
+          is_active: true,
+          activated_at: new Date().toISOString(),
+        },
+        { onConflict: 'email' }
+      )
+      .select('id')
+      .single();
+
+    if (!hubDnaLeader) {
+      console.error('[GLOBAL-SEED] Hub dna_leaders upsert failed');
+      return NextResponse.json({ error: 'Failed to upsert Hub dna_leaders' }, { status: 500 });
+    }
+
+    const hubDnaLeaderId = hubDnaLeader.id as string;
+
+    // ── 19. Hub demo groups + disciples ───────────────────────────────────
+    const HUB_GROUPS = [
+      {
+        key: 'alpha', name: 'Life Group Alpha', phase: 'foundation' as const,
+        startDaysAgo: 21, eventDay: 4, location: 'Church Fellowship Hall',
+        disciples: [
+          { key: 'disc-1', name: 'Marcus Webb' },
+          { key: 'disc-2', name: 'Jordan Salinas' },
+          { key: 'disc-3', name: 'Priya Nair' },
+          { key: 'disc-4', name: 'Taylor Brooks' },
+          { key: 'disc-5', name: 'Cameron Osei' },
+        ],
+      },
+      {
+        key: 'beta', name: 'Life Group Beta', phase: 'foundation' as const,
+        startDaysAgo: 49, eventDay: 3, location: 'Room 204',
+        disciples: [
+          { key: 'disc-6', name: 'Layla Torres' },
+          { key: 'disc-7', name: 'Devon Marsh' },
+          { key: 'disc-8', name: 'Amara Okafor' },
+          { key: 'disc-9', name: 'Chris Nguyen' },
+        ],
+      },
+      {
+        key: 'gamma', name: 'Life Group Gamma', phase: 'growth' as const,
+        startDaysAgo: 91, eventDay: 2, location: 'Main Campus — Room 101',
+        disciples: [
+          { key: 'disc-10', name: 'Zoe Petersen' },
+          { key: 'disc-11', name: 'Isaiah Flores' },
+          { key: 'disc-12', name: 'Micah Chen' },
+        ],
+      },
+    ];
+
+    const hubGroupIds: string[] = [];
+
+    for (const groupDef of HUB_GROUPS) {
+      const startDate = new Date(now);
+      startDate.setDate(now.getDate() - groupDef.startDaysAgo);
+      const startDateStr = startDate.toISOString().split('T')[0];
+
+      const { data: existingHubGroup } = await supabase
+        .from('dna_groups')
+        .select('id')
+        .eq('leader_id', hubDnaLeaderId)
+        .eq('group_name', groupDef.name)
+        .maybeSingle();
+
+      let hubGroupId: string;
+
+      if (existingHubGroup) {
+        hubGroupId = existingHubGroup.id as string;
+        await supabase
+          .from('dna_groups')
+          .update({ current_phase: groupDef.phase, start_date: startDateStr, is_active: true, church_id: demoChurchId })
+          .eq('id', hubGroupId);
+      } else {
+        const { data: newGroup, error: groupError } = await supabase
+          .from('dna_groups')
+          .insert({
+            group_name: groupDef.name,
+            leader_id: hubDnaLeaderId,
+            church_id: demoChurchId,
+            current_phase: groupDef.phase,
+            start_date: startDateStr,
+            is_active: true,
+          })
+          .select('id')
+          .single();
+
+        if (groupError || !newGroup) {
+          console.error('[GLOBAL-SEED] Hub group creation error:', groupError);
+          continue;
+        }
+        hubGroupId = newGroup.id as string;
+      }
+
+      hubGroupIds.push(hubGroupId);
+
+      // Upsert disciples + group_disciples
+      for (const discDef of groupDef.disciples) {
+        const discEmail = `demo-${discDef.key}-${DEMO_CHURCH_SUBDOMAIN}@dna.demo`;
+
+        const { data: disc } = await supabase
+          .from('disciples')
+          .upsert(
+            { email: discEmail, name: discDef.name },
+            { onConflict: 'email', ignoreDuplicates: false }
+          )
+          .select('id')
+          .single();
+
+        if (disc?.id) {
+          await supabase
+            .from('group_disciples')
+            .upsert(
+              { group_id: hubGroupId, disciple_id: disc.id, joined_date: startDateStr, current_status: 'active' },
+              { onConflict: 'group_id,disciple_id' }
+            );
+        }
+      }
+    }
+
+    // ── 20. Hub cohort posts ──────────────────────────────────────────────
+    const { data: hubCohort } = await supabase
+      .from('dna_cohorts')
+      .select('id')
+      .eq('church_id', demoChurchId)
+      .eq('status', 'active')
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    let hubCohortPosts = 0;
+    if (hubCohort?.id) {
+      await supabase
+        .from('dna_cohort_posts')
+        .delete()
+        .eq('author_id', hubDnaLeaderId);
+
+      const cohortPostRows = [
+        {
+          cohort_id: hubCohort.id,
+          author_id: hubDnaLeaderId,
+          post_type: 'announcement' as const,
+          author_role: 'trainer' as const,
+          title: 'Week 4 Training Recap — Listening Prayer',
+          body: 'Great session this week! The depth of sharing during the listening prayer exercise was incredible. Several of you heard things that were clearly Spirit-led.',
+          pinned: true,
+          created_at: new Date(now.getTime() - 2 * DAY).toISOString(),
+        },
+        {
+          cohort_id: hubCohort.id,
+          author_id: hubDnaLeaderId,
+          post_type: 'resource' as const,
+          author_role: 'trainer' as const,
+          title: 'DNA Manual — Session 3 Discussion Guide',
+          body: "Sharing the Session 3 discussion guide for relational discipleship. Use this in your group time this week.",
+          pinned: false,
+          created_at: new Date(now.getTime() - 5 * DAY).toISOString(),
+        },
+        {
+          cohort_id: hubCohort.id,
+          author_id: hubDnaLeaderId,
+          post_type: 'update' as const,
+          author_role: 'trainer' as const,
+          title: 'Mid-Cohort Retreat Details',
+          body: 'Our mid-cohort retreat is coming up next month. Two days of reflection, prayer, and peer accountability.',
+          pinned: false,
+          created_at: new Date(now.getTime() - 9 * DAY).toISOString(),
+        },
+      ];
+
+      const { error: postError } = await supabase.from('dna_cohort_posts').insert(cohortPostRows);
+      if (postError) {
+        console.error('[GLOBAL-SEED] Hub cohort posts error:', postError);
+      } else {
+        hubCohortPosts = cohortPostRows.length;
+      }
+    }
+
+    // ── 21. Hub calendar events (one per group) ───────────────────────────
+    if (hubGroupIds.length > 0) {
+      await supabase.from('dna_calendar_events').delete().in('group_id', hubGroupIds);
+    }
+
+    function nextWeekday(dayOfWeek: number, offsetWeeks = 0): Date {
+      const today = new Date();
+      const current = today.getDay();
+      const daysUntil = ((dayOfWeek - current + 7) % 7) || 7;
+      const d = new Date(today);
+      d.setDate(today.getDate() + daysUntil + offsetWeeks * 7);
+      d.setHours(19, 0, 0, 0);
+      return d;
+    }
+
+    const hubEventRows = HUB_GROUPS.map((groupDef, i) => {
+      const groupId = hubGroupIds[i];
+      if (!groupId) return null;
+      const start = nextWeekday(groupDef.eventDay, 0);
+      const end = new Date(start.getTime() + 90 * 60 * 1000);
+      return {
+        title: `${groupDef.name} Meeting`,
+        description: `Weekly DNA Life Group meeting — ${groupDef.phase === 'growth' ? 'Growth' : 'Foundation'} phase.`,
+        location: groupDef.location,
+        start_time: start.toISOString(),
+        end_time: end.toISOString(),
+        event_type: 'church_event' as const,
+        church_id: demoChurchId,
+        group_id: groupId,
+        cohort_id: null,
+        is_recurring: false,
+        created_by: null,
+      };
+    }).filter(Boolean);
+
+    if (hubEventRows.length > 0) {
+      const { error: eventError } = await supabase.from('dna_calendar_events').insert(hubEventRows);
+      if (eventError) {
+        console.error('[GLOBAL-SEED] Hub calendar events error:', eventError);
+      }
+    }
+
+    // ── 22. Update church_demo_settings with Hub leader ID ────────────────
+    await supabase
+      .from('church_demo_settings')
+      .upsert(
+        {
+          church_id: demoChurchId,
+          demo_enabled: true,
+          hub_demo_leader_id: hubLeaderAuthId,
+          hub_demo_seeded_at: new Date().toISOString(),
+        },
+        { onConflict: 'church_id' }
+      );
+
+    // ── 23. Verify sign-in works ─────────────────────────────────────────
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
     let signInOk = false;
@@ -614,6 +1025,7 @@ export async function POST() {
     return NextResponse.json({
       success: true,
       seeded: {
+        // Daily DNA (app iframe)
         auth_user_id: authUserId,
         demo_email: demoEmail,
         disciple_id: discipleId,
@@ -627,6 +1039,16 @@ export async function POST() {
         group_messages: demoMessages.length,
         calendar_events: calendarEvents.length,
         sign_in_verified: signInOk,
+        // Hub demo church
+        demo_church_id: demoChurchId,
+        demo_church_subdomain: DEMO_CHURCH_SUBDOMAIN,
+        hub_leader_auth_id: hubLeaderAuthId,
+        hub_leader_email: hubLeaderEmail,
+        hub_dna_leader_id: hubDnaLeaderId,
+        hub_groups: hubGroupIds.length,
+        hub_disciples: HUB_GROUPS.reduce((sum, g) => sum + g.disciples.length, 0),
+        hub_cohort_posts: hubCohortPosts,
+        hub_calendar_events: hubEventRows.length,
       },
     });
   } catch (error) {

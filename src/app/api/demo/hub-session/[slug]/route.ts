@@ -12,13 +12,16 @@ import { createClient } from '@supabase/supabase-js';
  *
  * Flow:
  *   1. Verify church + demo_enabled
- *   2. Confirm hub_demo_leader_id is set (i.e. hub-seed has been run)
- *   3. Sign in as the demo Hub leader using signInWithPassword (anon client)
+ *   2. Resolve Hub demo leader — per-church if hub-seeded, else fallback
+ *      to the global "demo-church" seeded by global-seed
+ *   3. Sign in as the Hub demo leader using signInWithPassword (anon client)
  *   4. Return { demo_auth: true, access_token, refresh_token, expires_in }
  *
- * Returns { demo_auth: false } if the church hasn't been Hub-seeded yet.
- * HubDemoClient treats this as "not seeded" and falls back to the static mini-dashboard.
+ * Returns { demo_auth: false } if neither per-church nor global Hub demo is available.
  */
+
+const DEMO_CHURCH_SUBDOMAIN = 'demo-church';
+
 export async function GET(
   _request: NextRequest,
   { params }: { params: Promise<{ slug: string }> }
@@ -53,9 +56,38 @@ export async function GET(
       return NextResponse.json({ error: 'Demo not enabled' }, { status: 403 });
     }
 
-    // ── 2. Check for seeded Hub demo leader ────────────────────────────────
-    if (!demoSettings.hub_demo_leader_id) {
-      return NextResponse.json({ demo_auth: false });
+    // ── 2. Resolve Hub demo credentials ────────────────────────────────────
+    // Per-church if hub-seeded; otherwise fall back to global demo church
+    let resolvedSubdomain: string;
+
+    if (demoSettings.hub_demo_leader_id) {
+      // This church has its own hub-seed — use its credentials
+      resolvedSubdomain = slug;
+    } else {
+      // Fall back to the global "demo-church" created by global-seed
+      const { data: demoChurch } = await supabase
+        .from('churches')
+        .select('id')
+        .eq('subdomain', DEMO_CHURCH_SUBDOMAIN)
+        .single();
+
+      if (!demoChurch) {
+        console.error('[DEMO] Global demo church not found — run global-seed first');
+        return NextResponse.json({ demo_auth: false });
+      }
+
+      const { data: demoChurchSettings } = await supabase
+        .from('church_demo_settings')
+        .select('hub_demo_leader_id')
+        .eq('church_id', demoChurch.id)
+        .single();
+
+      if (!demoChurchSettings?.hub_demo_leader_id) {
+        console.error('[DEMO] Global demo church not hub-seeded — run global-seed');
+        return NextResponse.json({ demo_auth: false });
+      }
+
+      resolvedSubdomain = DEMO_CHURCH_SUBDOMAIN;
     }
 
     // ── 3. Sign in as the Hub demo leader ──────────────────────────────────
@@ -67,10 +99,9 @@ export async function GET(
       return NextResponse.json({ demo_auth: false });
     }
 
-    const demoEmail = `demo-hub-${slug}@dna.demo`;
-    const demoPassword = `dna-hub-demo-${slug}-session`;
+    const demoEmail = `demo-hub-${resolvedSubdomain}@dna.demo`;
+    const demoPassword = `dna-hub-demo-${resolvedSubdomain}-session`;
 
-    // Use anon client — signInWithPassword is a user-facing operation
     const anonClient = createClient(supabaseUrl, supabaseAnonKey);
     const { data: sessionData, error: signInError } = await anonClient.auth.signInWithPassword({
       email: demoEmail,
