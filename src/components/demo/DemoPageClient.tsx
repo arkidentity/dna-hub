@@ -133,18 +133,16 @@ export default function DemoPageClient({
   const [faqOpen, setFaqOpen] = useState<number | null>(null);
   const [stickyHidden, setStickyHidden] = useState(false);
   const [bookingOpen, setBookingOpen] = useState(false);
-  // Full-experience iframe (gate section — dna_leader role, has group + pathway data)
+  // App iframe (section 4 — dna_leader role, full pathway + group data)
   const [iframeSrc, setIframeSrc] = useState('');
-  // Free-tier iframe (first preview — role=disciple, no group, shows NoGroupView)
-  const [freeIframeSrc, setFreeIframeSrc] = useState('');
   const [logoError, setLogoError] = useState(false);
-  const [gateOpen, setGateOpen] = useState(false);
+  // Gate is always open — no toggle needed
+  const [gateOpen] = useState(true);
   // Mobile iframe scroll-trap prevention — touch devices only
   const [isTouchDevice, setIsTouchDevice] = useState(false);
-  const [freeIframeActive, setFreeIframeActive] = useState(false);
-  const [fullIframeActive, setFullIframeActive] = useState(false);
+  const [appIframeActive, setAppIframeActive] = useState(false);
+  const [hubIframeActive, setHubIframeActive] = useState(false);
   const finalCtaRef = useRef<HTMLDivElement>(null);
-  const gateContentRef = useRef<HTMLDivElement>(null);
 
   // Clear Hub demo-mode keys on mount so DemoBanner doesn't appear on this page
   // (keys are set by HubDemoClient when navigating into the leader dashboard demo)
@@ -179,15 +177,13 @@ export default function DemoPageClient({
     const base = `https://${church.subdomain}.dailydna.app`;
 
     // Full-experience session (dna_leader role — bypasses group gate, shows full pathway)
-    // sk=full gives this iframe its own Supabase localStorage key, isolating it from the
-    // free iframe so the two sessions never overwrite each other.
     async function fetchFullSession() {
       try {
         const res = await fetch(`/api/demo/app-session/${church.subdomain}`);
         if (res.ok) {
           const data = await res.json();
           if (data.access_token) {
-            setIframeSrc(`${base}/demo-entry?at=${data.access_token}&rt=${data.refresh_token}&redirect=/pathway&sk=full`);
+            setIframeSrc(`${base}/demo-entry?at=${data.access_token}&rt=${data.refresh_token}&redirect=/pathway`);
             return;
           }
         }
@@ -195,26 +191,7 @@ export default function DemoPageClient({
       setIframeSrc(base);
     }
 
-    // Free-tier session (role=disciple, no group — lands on journal, pathway is locked)
-    // sk=free gives this iframe its own Supabase localStorage key, isolating it from the
-    // full iframe so the two sessions never overwrite each other.
-    async function fetchFreeSession() {
-      try {
-        const res = await fetch(`/api/demo/app-session-free/${church.subdomain}`);
-        if (res.ok) {
-          const data = await res.json();
-          if (data.access_token) {
-            setFreeIframeSrc(`${base}/demo-entry?at=${data.access_token}&rt=${data.refresh_token}&redirect=/journal&sk=free`);
-            return;
-          }
-        }
-      } catch { /* fallthrough */ }
-      // Fallback: unauthenticated — app will redirect to login, not ideal but safe
-      setFreeIframeSrc(base);
-    }
-
     void fetchFullSession();
-    void fetchFreeSession();
   }, [church.subdomain]);
 
   const headline = `This is what discipleship looks like at ${church.name}.`;
@@ -445,12 +422,10 @@ export default function DemoPageClient({
 
           {/* Subline */}
           <p style={{ fontSize: '1rem', color: '#444', margin: 0, lineHeight: 1.65, maxWidth: '400px', fontWeight: 600 }}>
-            This is a live, fully functional app — tap the buttons and explore. This is exactly what a new disciple sees the moment they open the {church.name} app.
+            This is a live, fully functional app — tap the buttons and explore. This is the complete DNA Pathway, branded for {church.name}.
           </p>
 
-          {/* iframe — free-tier view (no group, lands on journal, pathway is locked) */}
-          {/* key changes when gate opens to re-establish the free session in localStorage,
-              preventing the full-experience iframe from contaminating this one. */}
+          {/* iframe — full pathway session (dna_leader role, full pathway + group data) */}
           <div style={{
             width: '100%',
             maxWidth: '430px',
@@ -461,7 +436,7 @@ export default function DemoPageClient({
             background: '#fff',
             position: 'relative',
           }}>
-            {!freeIframeSrc && (
+            {!iframeSrc && (
               <div style={{
                 position: 'absolute', inset: 0,
                 display: 'flex', flexDirection: 'column',
@@ -472,22 +447,22 @@ export default function DemoPageClient({
                 <p style={{ color: '#888', fontSize: '0.875rem', margin: 0 }}>Loading your app…</p>
               </div>
             )}
-            {freeIframeSrc && (
+            {iframeSrc && (
               <>
                 <iframe
-                  src={freeIframeSrc}
+                  src={iframeSrc}
                   title={`${church.name} DNA Daily App`}
                   sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
                   loading="lazy"
                   style={{
                     width: '100%', height: '100%', border: 'none',
-                    pointerEvents: isTouchDevice && !freeIframeActive ? 'none' : 'auto',
+                    pointerEvents: isTouchDevice && !appIframeActive ? 'none' : 'auto',
                   }}
                 />
                 {/* Tap-to-activate overlay — touch/mobile only */}
-                {isTouchDevice && !freeIframeActive && (
+                {isTouchDevice && !appIframeActive && (
                   <div
-                    onClick={() => setFreeIframeActive(true)}
+                    onClick={() => setAppIframeActive(true)}
                     style={{
                       position: 'absolute', inset: 0,
                       background: 'rgba(0,0,0,0.18)',
@@ -512,9 +487,9 @@ export default function DemoPageClient({
                   </div>
                 )}
                 {/* Dismiss chip — returns user to page scroll mode */}
-                {isTouchDevice && freeIframeActive && (
+                {isTouchDevice && appIframeActive && (
                   <button
-                    onClick={() => setFreeIframeActive(false)}
+                    onClick={() => setAppIframeActive(false)}
                     style={{
                       position: 'absolute', top: '12px', left: '50%',
                       transform: 'translateX(-50%)',
@@ -556,68 +531,46 @@ export default function DemoPageClient({
         </div>
       </section>
 
-      {/* ── 6. THE GATE ──────────────────────────────────────────── */}
+      {/* ── 6. LEADER DASHBOARD INTRO ────────────────────────────── */}
       <section style={{ background: '#1A2332', textAlign: 'center', padding: '3.5rem 1.25rem' }}>
-        <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
+        <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.25rem', alignItems: 'center' }}>
           <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}>
-            There&rsquo;s More
+            The Full DNA Experience
           </span>
           <h2 style={{
             fontFamily: "'Playfair Display', serif",
             fontSize: 'clamp(1.625rem, 5vw, 2.375rem)',
             fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.15,
           }}>
-            What happens when DNA is <span style={{ color: GATE_GOLD }}>fully unlocked?</span>
+            A dashboard <span style={{ color: GATE_GOLD }}>built for multiplication.</span>
           </h2>
           <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '1rem', margin: 0, lineHeight: 1.7 }}>
-            Groups. Multiplication. A dashboard that shows you exactly where every disciple is in their journey. This is what coaching partners experience.
+            Groups. Accountability. A live view of every disciple&rsquo;s journey — from first journal entry to leading their own group.
           </p>
-          <button
-            onClick={() => {
-              const next = !gateOpen;
-              setGateOpen(next);
-              if (next) {
-                setTimeout(() => gateContentRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }), 50);
-              }
-            }}
-            style={{
-              width: '100%', maxWidth: '360px',
-              padding: '1rem 1.5rem',
-              background: BRAND_GREEN,
-              color: '#fff',
-              border: 'none', borderRadius: '8px',
-              fontFamily: 'inherit', fontSize: '1rem', fontWeight: 700,
-              cursor: 'pointer',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem',
-              transition: 'opacity 0.15s',
-            }}
-          >
-            {gateOpen ? 'Close ↑' : 'See the Full DNA Experience →'}
-          </button>
         </div>
       </section>
 
-      {/* ── 7. FULL EXPERIENCE (hidden until gate opens) ─────────── */}
+      {/* ── 7. FULL EXPERIENCE ───────────────────────────────────── */}
       {gateOpen && (
-        <div ref={gateContentRef}>
-          {/* 7A — Full App Demo */}
+        <div>
+          {/* 7A — Leader Dashboard (live preview) */}
           <section className="dp-section" style={{ background: WARM_NEUTRAL_BG, textAlign: 'center' }}>
             <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
               <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: BRAND_GREEN }}>
-                Full DNA Experience
+                Leader Dashboard
               </span>
               <h2 style={{
                 fontFamily: "'Playfair Display', serif",
                 fontSize: 'clamp(1.5rem, 5vw, 2.25rem)',
                 fontWeight: 700, color: '#0f0e0c', margin: 0, lineHeight: 1.15,
               }}>
-                The full DNA Pathway — unlocked.
+                See every disciple.<br />Know where they are.
               </h2>
               <p style={{ fontSize: '1rem', color: '#666', margin: 0, lineHeight: 1.65, maxWidth: '400px' }}>
-                This is what your disciples experience when your church partners with DNA. The full DNA Pathway, in-progress tracking, and everything you need to multiply disciples.
+                The DNA Hub gives leaders full visibility — journals, prayers, pathway progress, and group health — without micromanaging the relationship.
               </p>
 
-              {/* iframe — fully unlocked */}
+              {/* iframe — hub leader dashboard (live preview) */}
               <div style={{
                 width: '100%',
                 maxWidth: '430px',
@@ -628,126 +581,135 @@ export default function DemoPageClient({
                 background: '#fff',
                 position: 'relative',
               }}>
-                {!iframeSrc && (
-                  <div style={{
-                    position: 'absolute', inset: 0,
-                    display: 'flex', flexDirection: 'column',
-                    alignItems: 'center', justifyContent: 'center',
-                    gap: '0.875rem', background: '#f0f0f0',
-                  }}>
-                    <div className="dp-spinner" style={{ borderTopColor: primary }} />
-                    <p style={{ color: '#888', fontSize: '0.875rem', margin: 0 }}>Loading your app…</p>
+                <iframe
+                  src={hubDemoUrl}
+                  title={`${church.name} DNA Leader Dashboard`}
+                  sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
+                  loading="lazy"
+                  style={{
+                    width: '100%', height: '100%', border: 'none',
+                    pointerEvents: isTouchDevice && !hubIframeActive ? 'none' : 'auto',
+                  }}
+                />
+                {/* Tap-to-activate overlay — touch/mobile only */}
+                {isTouchDevice && !hubIframeActive && (
+                  <div
+                    onClick={() => setHubIframeActive(true)}
+                    style={{
+                      position: 'absolute', inset: 0,
+                      background: 'rgba(0,0,0,0.18)',
+                      display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center',
+                      gap: '0.875rem', cursor: 'pointer',
+                    }}
+                  >
+                    <div style={{
+                      background: 'rgba(255,255,255,0.97)',
+                      borderRadius: '50px',
+                      padding: '0.875rem 1.75rem',
+                      boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
+                      display: 'flex', alignItems: 'center', gap: '0.5rem',
+                    }}>
+                      <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>👆</span>
+                      <span style={{ fontWeight: 700, fontSize: '1rem', color: '#111' }}>Tap to explore</span>
+                    </div>
+                    <span style={{ color: 'rgba(255,255,255,0.92)', fontSize: '0.8rem', fontWeight: 500 }}>
+                      Scroll outside the dashboard to continue
+                    </span>
                   </div>
                 )}
-                {iframeSrc && (
-                  <>
-                    <iframe
-                      src={iframeSrc}
-                      title={`${church.name} DNA Daily App — Full Experience`}
-                      sandbox="allow-scripts allow-same-origin allow-forms allow-popups"
-                      loading="lazy"
-                      style={{
-                        width: '100%', height: '100%', border: 'none',
-                        pointerEvents: isTouchDevice && !fullIframeActive ? 'none' : 'auto',
-                      }}
-                    />
-                    {/* Tap-to-activate overlay — touch/mobile only */}
-                    {isTouchDevice && !fullIframeActive && (
-                      <div
-                        onClick={() => setFullIframeActive(true)}
-                        style={{
-                          position: 'absolute', inset: 0,
-                          background: 'rgba(0,0,0,0.18)',
-                          display: 'flex', flexDirection: 'column',
-                          alignItems: 'center', justifyContent: 'center',
-                          gap: '0.875rem', cursor: 'pointer',
-                        }}
-                      >
-                        <div style={{
-                          background: 'rgba(255,255,255,0.97)',
-                          borderRadius: '50px',
-                          padding: '0.875rem 1.75rem',
-                          boxShadow: '0 4px 24px rgba(0,0,0,0.18)',
-                          display: 'flex', alignItems: 'center', gap: '0.5rem',
-                        }}>
-                          <span style={{ fontSize: '1.2rem', lineHeight: 1 }}>👆</span>
-                          <span style={{ fontWeight: 700, fontSize: '1rem', color: '#111' }}>Tap to explore</span>
-                        </div>
-                        <span style={{ color: 'rgba(255,255,255,0.92)', fontSize: '0.8rem', fontWeight: 500 }}>
-                          Scroll outside the app to continue
-                        </span>
-                      </div>
-                    )}
-                    {/* Dismiss chip — returns user to page scroll mode */}
-                    {isTouchDevice && fullIframeActive && (
-                      <button
-                        onClick={() => setFullIframeActive(false)}
-                        style={{
-                          position: 'absolute', top: '12px', left: '50%',
-                          transform: 'translateX(-50%)',
-                          background: 'rgba(0,0,0,0.62)',
-                          color: '#fff',
-                          border: 'none', borderRadius: '50px',
-                          padding: '0.5rem 1.25rem',
-                          fontSize: '0.8rem', fontWeight: 600,
-                          cursor: 'pointer',
-                          display: 'flex', alignItems: 'center', gap: '0.375rem',
-                          backdropFilter: 'blur(8px)',
-                          WebkitBackdropFilter: 'blur(8px)',
-                          whiteSpace: 'nowrap',
-                          zIndex: 10,
-                        }}
-                      >
-                        ↕ Scroll page
-                      </button>
-                    )}
-                  </>
+                {/* Dismiss chip — returns user to page scroll mode */}
+                {isTouchDevice && hubIframeActive && (
+                  <button
+                    onClick={() => setHubIframeActive(false)}
+                    style={{
+                      position: 'absolute', top: '12px', left: '50%',
+                      transform: 'translateX(-50%)',
+                      background: 'rgba(0,0,0,0.62)',
+                      color: '#fff',
+                      border: 'none', borderRadius: '50px',
+                      padding: '0.5rem 1.25rem',
+                      fontSize: '0.8rem', fontWeight: 600,
+                      cursor: 'pointer',
+                      display: 'flex', alignItems: 'center', gap: '0.375rem',
+                      backdropFilter: 'blur(8px)',
+                      WebkitBackdropFilter: 'blur(8px)',
+                      whiteSpace: 'nowrap',
+                      zIndex: 10,
+                    }}
+                  >
+                    ↕ Scroll page
+                  </button>
                 )}
               </div>
 
-              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
-                <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', color: BRAND_GREEN }}>
-                  Live Preview
-                </span>
-                <p style={{ fontSize: '1.15rem', color: '#333', margin: 0, fontWeight: 600 }}>
-                  {church.name} Discipleship
-                </p>
-              </div>
+              {hubDemoUrl && (
+                <Link
+                  href={hubDemoUrl}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: '0.375rem',
+                    fontSize: '0.9rem', color: BRAND_GREEN, fontWeight: 600,
+                    textDecoration: 'none', borderBottom: `1px solid ${BRAND_GREEN}`,
+                    paddingBottom: '1px',
+                  }}
+                >
+                  Explore the full leader dashboard
+                  <ArrowRight className="w-3 h-3" />
+                </Link>
+              )}
             </div>
           </section>
 
-          {/* 7B — Leader Dashboard */}
+          {/* 7B — Features (Group Management, Cohort, Training) */}
           <section className="dp-section" style={{ background: '#1A2332' }}>
-            <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.75rem', alignItems: 'flex-start' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            <div style={{ maxWidth: '480px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', alignItems: 'flex-start' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>
+                  Built for DNA Leaders
+                </span>
                 <h2 style={{
                   fontFamily: "'Playfair Display', serif",
                   fontSize: 'clamp(1.375rem, 4vw, 1.875rem)',
                   fontWeight: 700, color: '#fff', margin: 0, lineHeight: 1.2,
                 }}>
-                  Behind every disciple is a leader who knows where they are.
+                  Every tool a leader needs to multiply.
                 </h2>
-                <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.975rem', margin: 0, lineHeight: 1.7 }}>
-                  The DNA dashboard gives you full visibility into every group, every disciple, and every stage of the journey — without being intrusive. This is where multiplication becomes measurable.
-                </p>
               </div>
-              {hubDemoUrl && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <Link
-                    href={hubDemoUrl}
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '0.5rem',
-                      padding: '0.875rem 1.5rem', borderRadius: '8px',
-                      border: '1.5px solid rgba(255,255,255,0.4)', color: '#fff',
-                      fontFamily: 'inherit', fontWeight: 600, fontSize: '0.95rem', textDecoration: 'none',
-                    }}
-                  >
-                    Explore the Leader Dashboard
-                    <ArrowRight className="w-4 h-4" />
-                  </Link>
-                  <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.35)' }}>No login required · Full preview available</span>
-                </div>
-              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem', width: '100%' }}>
+                {([
+                  {
+                    Icon: Users,
+                    label: 'Group Management',
+                    body: 'Create and track DNA Groups, assign phases, and monitor every disciple\'s progress — all from a single leader view.',
+                  },
+                  {
+                    Icon: Compass,
+                    label: 'Peer-to-Peer Cohort',
+                    body: 'Leaders grow in community. DNA Cohorts connect peer leaders across your church, sharing wins and accountability as they multiply.',
+                  },
+                  {
+                    Icon: TrendingUp,
+                    label: 'Discipleship Training',
+                    body: 'From disciple to leader. The DNA training track equips every group leader to reproduce what was built in them — generation after generation.',
+                  },
+                ] as const).map(({ Icon, label, body }) => (
+                  <div key={label} style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                    <div style={{
+                      flexShrink: 0,
+                      width: '40px', height: '40px',
+                      borderRadius: '10px',
+                      background: 'rgba(255,255,255,0.08)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <Icon size={20} style={{ color: GATE_GOLD }} />
+                    </div>
+                    <div>
+                      <p style={{ fontWeight: 600, color: '#fff', margin: '0 0 0.25rem', fontSize: '0.975rem' }}>{label}</p>
+                      <p style={{ color: 'rgba(255,255,255,0.55)', margin: 0, fontSize: '0.9rem', lineHeight: 1.6 }}>{body}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
           </section>
 
@@ -909,7 +871,7 @@ export default function DemoPageClient({
       </footer>
 
       {/* ── STICKY MOBILE CTA BAR ────────────────────────────────── */}
-      <div className={`dp-sticky-bottom${stickyHidden || freeIframeActive || fullIframeActive ? ' hidden' : ''}`}>
+      <div className={`dp-sticky-bottom${stickyHidden || appIframeActive || hubIframeActive ? ' hidden' : ''}`}>
         <p style={{ color: 'rgba(255,255,255,0.65)', fontSize: '0.75rem', margin: '0 0 0.5rem', textAlign: 'center', fontWeight: 500 }}>
           Free to start. No commitment.
         </p>
