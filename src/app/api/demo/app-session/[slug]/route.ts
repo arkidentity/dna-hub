@@ -6,23 +6,27 @@ import { createClient } from '@supabase/supabase-js';
  * GET /api/demo/app-session/[slug]
  * Public endpoint (no auth required).
  *
- * Returns short-lived Supabase access + refresh tokens for the demo disciple
+ * Returns short-lived Supabase access + refresh tokens for the global demo
  * account so DemoPageClient can pass them to the Daily DNA iframe via
- * /demo-entry?at=...&rt=... — giving prospects a signed-in experience
- * without a login screen.
+ * /demo-entry?at=...&rt=...&church={slug} — giving prospects a signed-in
+ * experience without a login screen.
  *
  * Flow:
  *   1. Verify church + demo_enabled
- *   2. Confirm demo_user_id is set (i.e. seed has been run)
- *   3. Sign in as the demo account using signInWithPassword (anon client)
- *   4. Return { access_token, refresh_token, expires_in }
+ *   2. Sign in as the global demo account (demo-global@dna.demo)
+ *   3. Return { access_token, refresh_token, expires_in }
  *
- * Why signInWithPassword instead of magic link token exchange:
- *   The previous generateLink → hashed_token → /auth/v1/verify chain
- *   silently fails when the redirect_to URL isn't in Supabase's allowlist.
- *   signInWithPassword has no URL dependency and works reliably every time.
+ * Global vs per-church:
+ *   Previously each church had its own demo user (demo-{slug}@dna.demo).
+ *   Now all churches share one global demo account. Church-specific branding
+ *   is handled by the Daily DNA iframe URL subdomain, not by the auth user.
+ *   This eliminates per-church group/disciple pollution in the database.
  *
- * Returns { demo_auth: false } if the church hasn't been seeded yet.
+ *   The global account must be seeded once via:
+ *     POST /api/admin/demo/global-seed
+ *
+ * Returns { demo_auth: false } if demo is not enabled for this church,
+ * or if the global seed hasn't been run yet.
  */
 export async function GET(
   _request: NextRequest,
@@ -50,7 +54,7 @@ export async function GET(
 
     const { data: demoSettings } = await supabase
       .from('church_demo_settings')
-      .select('demo_enabled, demo_user_id')
+      .select('demo_enabled')
       .eq('church_id', church.id)
       .single();
 
@@ -58,12 +62,7 @@ export async function GET(
       return NextResponse.json({ error: 'Demo not enabled' }, { status: 403 });
     }
 
-    // ── 2. Check for seeded demo user ──────────────────────────────────────
-    if (!demoSettings.demo_user_id) {
-      return NextResponse.json({ demo_auth: false });
-    }
-
-    // ── 3. Sign in as the demo account ─────────────────────────────────────
+    // ── 2. Sign in as the global demo account ─────────────────────────────
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
@@ -72,8 +71,9 @@ export async function GET(
       return NextResponse.json({ demo_auth: false });
     }
 
-    const demoEmail = `demo-${slug}@dna.demo`;
-    const demoPassword = `dna-demo-${slug}-session`;
+    // One shared account for all churches — branding comes from the iframe URL subdomain
+    const demoEmail = process.env.DEMO_GLOBAL_EMAIL ?? 'demo-global@dna.demo';
+    const demoPassword = process.env.DEMO_GLOBAL_PASSWORD ?? 'dna-demo-global-session';
 
     // Use anon client — signInWithPassword is a user-facing operation
     const anonClient = createClient(supabaseUrl, supabaseAnonKey);
@@ -84,10 +84,11 @@ export async function GET(
 
     if (signInError || !sessionData?.session) {
       console.error('[DEMO] signInWithPassword error:', signInError?.message ?? 'no session returned');
+      // Global seed hasn't been run yet — run POST /api/admin/demo/global-seed
       return NextResponse.json({ demo_auth: false });
     }
 
-    // ── 4. Return tokens ───────────────────────────────────────────────────
+    // ── 3. Return tokens ───────────────────────────────────────────────────
     return NextResponse.json({
       demo_auth: true,
       access_token: sessionData.session.access_token,
