@@ -184,7 +184,7 @@ export default function DemoPageClient({
   }, [church.subdomain]);
 
   const headline = `${church.name} was made to multiply.`;
-  const subline = 'Give your church a simple system that is built for discipleship.';
+  const subline = 'Give your church a simple system that is built for exponential growth.';
 
   return (
     <div
