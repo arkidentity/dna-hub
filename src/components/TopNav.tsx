@@ -1,6 +1,7 @@
 import { getUnifiedSession, isAdmin, isDNACoach } from '@/lib/unified-auth'
 import Link from 'next/link'
 import UserMenu from './UserMenu'
+import MobileNav from './MobileNav'
 
 /**
  * Top navigation bar shown on all authenticated pages
@@ -62,6 +63,7 @@ export default async function TopNav() {
           </div>
         </div>
       </div>
+      <MobileNav />
     </nav>
   )
 }
