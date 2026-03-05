@@ -183,8 +183,8 @@ export default function DemoPageClient({
     void fetchFullSession();
   }, [church.subdomain]);
 
-  const headline = `This is what discipleship looks like at ${church.name}.`;
-  const subline = 'A fully branded discipleship app — free. The coaching that makes it multiply.';
+  const headline = `${church.name} was made to multiply.`;
+  const subline = 'Give your church a simple system that is built for discipleship.';
 
   return (
     <div
@@ -326,9 +326,8 @@ export default function DemoPageClient({
             color: '#0f0e0c',
             margin: 0,
           }}>
-            This is what discipleship<br />
-            looks like at<br />
-            <span style={{ whiteSpace: 'nowrap', color: GATE_GOLD }}>{church.name}.</span>
+            <span style={{ whiteSpace: 'nowrap', color: GATE_GOLD }}>{church.name}</span><br />
+            was made to multiply.
           </h1>
 
           {/* Subline */}
@@ -336,10 +335,6 @@ export default function DemoPageClient({
             {subline}
           </p>
 
-          {/* Social proof */}
-          <p style={{ fontSize: '0.875rem', color: '#999', margin: 0, letterSpacing: '0.01em' }}>
-            Already multiplying in churches across the country.
-          </p>
         </div>
       </section>
 
@@ -403,7 +398,7 @@ export default function DemoPageClient({
         <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '1.5rem', alignItems: 'center' }}>
           {/* Section label */}
           <span style={{ fontSize: '1.15rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: BRAND_GREEN }}>
-            Your Free App
+            Your Church App
           </span>
 
           {/* Headline */}
@@ -420,7 +415,7 @@ export default function DemoPageClient({
 
           {/* Subline */}
           <p style={{ fontSize: '1rem', color: '#444', margin: 0, lineHeight: 1.65, maxWidth: '400px', fontWeight: 600 }}>
-            This is a live, fully functional app — tap the buttons and explore. This is the complete DNA Pathway, branded for {church.name}.
+            Simple discipleship tools, branded for {church.name}.
           </p>
 
           {/* iframe — full pathway session (dna_leader role, full pathway + group data) */}
@@ -640,7 +635,7 @@ export default function DemoPageClient({
             <div style={{ maxWidth: '640px', margin: '0 auto', display: 'flex', flexDirection: 'column', gap: '2rem', alignItems: 'flex-start' }}>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
                 <span style={{ fontSize: '0.75rem', fontWeight: 700, letterSpacing: '0.15em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)' }}>
-                  Built for DNA Leaders
+                  Built for Exponential Growth
                 </span>
                 <h2 style={{
                   fontFamily: "'Playfair Display', serif",
