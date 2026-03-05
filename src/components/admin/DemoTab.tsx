@@ -22,6 +22,7 @@ import {
   Trash2,
   Pencil,
   X,
+  Mail,
 } from 'lucide-react';
 
 interface DnaCoach {
@@ -35,6 +36,8 @@ interface DemoTabProps {
   churchId: string;
   churchName: string;
   subdomain?: string | null;
+  leaderEmail?: string;
+  leaderName?: string;
 }
 
 interface DemoSettings {
@@ -83,7 +86,7 @@ function extractYouTubeId(url: string): string | null {
   return null;
 }
 
-export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProps) {
+export default function DemoTab({ churchId, churchName, subdomain, leaderEmail, leaderName }: DemoTabProps) {
   const [settings, setSettings] = useState<DemoSettings>({
     video_url: '',
     demo_enabled: false,
@@ -107,6 +110,12 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
   const [showHubSeedConfirm, setShowHubSeedConfirm] = useState(false);
   const [hubSeedSuccess, setHubSeedSuccess] = useState(false);
   const [copiedHub, setCopiedHub] = useState(false);
+
+  // ── Email state ────────────────────────────────────────────────────────
+  const [sendingEmail, setSendingEmail] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [emailError, setEmailError] = useState<string | null>(null);
+  const [showEmailConfirm, setShowEmailConfirm] = useState(false);
 
   // ── Coach state ──────────────────────────────────────────────────────────
   const [coaches, setCoaches] = useState<DnaCoach[]>([]);
@@ -377,6 +386,31 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
     void navigator.clipboard.writeText(url);
     setCopiedTemp(temp);
     setTimeout(() => setCopiedTemp(null), 2000);
+  };
+
+  const handleSendEmail = async () => {
+    setSendingEmail(true);
+    setEmailError(null);
+    setEmailSent(false);
+    setShowEmailConfirm(false);
+
+    try {
+      const res = await fetch(`/api/admin/demo/${churchId}/send-email`, {
+        method: 'POST',
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error ?? 'Failed to send email');
+      }
+
+      setEmailSent(true);
+      setTimeout(() => setEmailSent(false), 4000);
+    } catch (err) {
+      setEmailError(err instanceof Error ? err.message : 'Failed to send email');
+    } finally {
+      setSendingEmail(false);
+    }
   };
 
   // ── Shared mini-styles for coach manager ─────────────────────────────────
@@ -1059,6 +1093,103 @@ export default function DemoTab({ churchId, churchName, subdomain }: DemoTabProp
               </div>
             ))}
           </div>
+        )}
+      </div>
+
+      {/* ── Divider ─────────────────────────────────────────────────────── */}
+      <hr style={{ border: 'none', borderTop: '1px solid #eee', margin: 0 }} />
+
+      {/* ── Send Demo Invite ──────────────────────────────────────────── */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+        <div style={{ fontWeight: 600, color: '#1a2332', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <Mail className="w-4 h-4" />
+          Send Demo Invite
+        </div>
+
+        {leaderEmail ? (
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.5rem',
+            padding: '0.5rem 0.75rem',
+            background: '#f0f7ff',
+            borderRadius: '8px',
+            border: '1px solid #d0e3f7',
+            fontSize: '0.85rem',
+          }}>
+            <User className="w-3.5 h-3.5" style={{ color: '#4a7ab5', flexShrink: 0 }} />
+            <span style={{ color: '#333' }}>
+              {leaderName ? <strong>{leaderName}</strong> : 'Leader'}{' '}
+              <span style={{ color: '#666' }}>({leaderEmail})</span>
+            </span>
+          </div>
+        ) : (
+          <div style={{ padding: '0.75rem 1rem', background: '#fff8e1', borderRadius: '8px', color: '#7d5a00', fontSize: '0.85rem', border: '1px solid #ffe082' }}>
+            No leader email configured. Add a church leader in the Leaders tab first.
+          </div>
+        )}
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+          {!showEmailConfirm ? (
+            <button
+              onClick={() => setShowEmailConfirm(true)}
+              disabled={!subdomain || !settings.demo_enabled || !leaderEmail || sendingEmail}
+              style={{
+                padding: '0.5rem 1rem',
+                borderRadius: '6px',
+                border: 'none',
+                background: (!subdomain || !settings.demo_enabled || !leaderEmail) ? '#e0e0e0' : '#D4A853',
+                color: (!subdomain || !settings.demo_enabled || !leaderEmail) ? '#999' : '#1A2332',
+                cursor: (!subdomain || !settings.demo_enabled || !leaderEmail) ? 'not-allowed' : 'pointer',
+                fontSize: '0.875rem',
+                fontWeight: 600,
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+              }}
+            >
+              {sendingEmail ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Mail className="w-3.5 h-3.5" />}
+              Send Demo Email
+            </button>
+          ) : (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#fff3cd', padding: '0.5rem 0.875rem', borderRadius: '8px', border: '1px solid #ffc107', fontSize: '0.85rem' }}>
+              <span style={{ color: '#856404' }}>
+                Send demo invite to {leaderName ? leaderName.split(' ')[0] : 'leader'} ({leaderEmail})?
+              </span>
+              <button
+                onClick={() => void handleSendEmail()}
+                style={{ padding: '0.25rem 0.625rem', background: '#856404', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem', fontWeight: 600 }}
+              >
+                Yes, send
+              </button>
+              <button
+                onClick={() => setShowEmailConfirm(false)}
+                style={{ padding: '0.25rem 0.625rem', background: 'transparent', color: '#856404', border: '1px solid #856404', borderRadius: '4px', cursor: 'pointer', fontSize: '0.82rem' }}
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {emailSent && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#27ae60', fontSize: '0.875rem' }}>
+              <CheckCircle2 className="w-4 h-4" />
+              Demo invite sent!
+            </div>
+          )}
+
+          {emailError && (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#c0392b', fontSize: '0.875rem' }}>
+              <AlertCircle className="w-4 h-4" />
+              {emailError}
+            </div>
+          )}
+        </div>
+
+        {(!subdomain || !settings.demo_enabled) && leaderEmail && (
+          <p style={{ color: '#999', fontSize: '0.8rem', margin: 0 }}>
+            {!subdomain ? 'Set a subdomain in the Branding tab' : 'Enable the demo page above'} before sending the invite.
+          </p>
         )}
       </div>
 

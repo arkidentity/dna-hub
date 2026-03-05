@@ -433,6 +433,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
               >
                 <option value="prospect">Prospect</option>
                 <option value="demo">Demo</option>
+                <option value="demo_sent">Demo Sent</option>
                 <option value="pending_assessment">Pending Assessment</option>
                 <option value="awaiting_discovery">Awaiting Discovery</option>
                 <option value="proposal_sent">Proposal Sent</option>
@@ -538,6 +539,8 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
             churchId={churchId}
             churchName={church.name}
             subdomain={church.subdomain}
+            leaderEmail={data?.leader?.email}
+            leaderName={data?.leader?.name}
           />
         )}
       </main>

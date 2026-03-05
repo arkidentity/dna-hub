@@ -1776,3 +1776,77 @@ export async function sendCoLeaderNewUserInviteEmail(
     notificationType: 'co_leader_invitation'
   });
 }
+
+// =====================================================
+// DEMO INVITE EMAIL
+// =====================================================
+
+// Demo Invite Email
+// Sent by admin when a church's demo page is ready — invites the church leader to see their personalized demo.
+export async function sendDemoInviteEmail(
+  to: string,
+  firstName: string,
+  churchName: string,
+  demoUrl: string,
+  churchId?: string
+) {
+  const subject = `${firstName}, I built something for ${churchName}`;
+
+  const html = `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto;">
+      <h2 style="color: #1A2332;">Hey ${firstName},</h2>
+
+      <p style="color: #3D4A5C; font-size: 15px; line-height: 1.7;">
+        I've been working on something for <strong>${churchName}</strong> and I'm excited to show you.
+      </p>
+
+      <p style="color: #3D4A5C; font-size: 15px; line-height: 1.7;">
+        I built a personalized discipleship app — branded with your church's name and colors — along with a
+        leader dashboard where you can manage groups, connect with other leaders, and track discipleship progress.
+        It's completely free to explore.
+      </p>
+
+      <div style="background: #1A2332; padding: 24px; border-radius: 10px; margin: 28px 0;">
+        <h3 style="color: #D4A853; margin: 0 0 16px 0; font-size: 16px;">Here's what you'll see:</h3>
+        <ul style="color: #E8E8E8; margin: 0; padding-left: 20px; font-size: 14px; line-height: 2;">
+          <li><strong style="color: #D4A853;">Your Branded App</strong> — 3D Journal, 4D Prayer, and the full DNA Pathway</li>
+          <li><strong style="color: #D4A853;">Leader Dashboard</strong> — manage groups, peer-to-peer cohort, and training</li>
+          <li><strong style="color: #D4A853;">Church Branding</strong> — ${churchName}'s name and colors throughout</li>
+        </ul>
+      </div>
+
+      <div style="text-align: center; margin: 32px 0;">
+        <a href="${demoUrl}"
+           style="background: #D4A853; color: #1A2332; padding: 16px 36px;
+                  border-radius: 8px; text-decoration: none; font-weight: 600;
+                  display: inline-block; font-size: 16px;">
+          See Your Demo
+        </a>
+      </div>
+
+      <p style="color: #3D4A5C; font-size: 15px; line-height: 1.7;">
+        Take a few minutes to click around — I think you'll be surprised at how much is already built for ${churchName}.
+        No login required, no commitment. Just a look at what's possible.
+      </p>
+
+      <p style="color: #3D4A5C; font-size: 15px; line-height: 1.7;">
+        If you have any questions, just hit reply. I'd love to hear what you think.
+      </p>
+
+      <p style="margin-top: 32px; color: #1A2332;">Travis<br>
+      <span style="color: #5A6577;">DNA Discipleship</span></p>
+
+      <p style="color: #5A6577; font-size: 14px; margin-top: 24px; padding-top: 20px; border-top: 1px solid #E8DDD0;">
+        P.S. This demo was built specifically for ${churchName}. Hit reply if you want me to walk you through it.
+      </p>
+    </div>
+  `;
+
+  return sendEmail({
+    to,
+    subject,
+    html,
+    churchId,
+    notificationType: 'demo_invite'
+  });
+}
