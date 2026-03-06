@@ -21,10 +21,14 @@ import {
   Globe,
   ExternalLink,
   Heart,
+  BookOpen,
+  Shield,
 } from 'lucide-react';
 import { GroupsTab } from '@/components/dashboard';
 import { AdminChurchOverviewTab, AdminChurchJourneyTab, ChurchLeadersTab, BrandingTab, AdminCohortTab, DemoTab } from '@/components/admin';
 import PrayerWallTab from '@/components/admin/PrayerWallTab';
+import TestimonySubmissionsTab from '@/components/admin/TestimonySubmissionsTab';
+import CreedCardPushTab from '@/components/admin/CreedCardPushTab';
 
 interface ChurchDetail {
   church: {
@@ -130,7 +134,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
   const router = useRouter();
   const [data, setData] = useState<ChurchDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'leaders' | 'groups' | 'branding' | 'cohort' | 'demo' | 'prayer-wall'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'leaders' | 'groups' | 'branding' | 'cohort' | 'demo' | 'prayer-wall' | 'testimonies' | 'creed-push'>('overview');
 
   // Alias editing state
   const [editingAliases, setEditingAliases] = useState(false);
@@ -462,6 +466,8 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
               { id: 'groups', label: 'DNA Groups', icon: Users },
               { id: 'cohort', label: 'Cohort', icon: GraduationCap },
               { id: 'prayer-wall', label: 'Prayer Wall', icon: Heart },
+              { id: 'testimonies', label: 'Testimonies', icon: BookOpen },
+              { id: 'creed-push', label: 'Creed Cards', icon: Shield },
               { id: 'branding', label: 'Branding', icon: Palette },
               { id: 'demo', label: 'Demo', icon: ExternalLink },
             ].map((tab) => (
@@ -539,6 +545,16 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
         {/* Prayer Wall Tab */}
         {activeTab === 'prayer-wall' && (
           <PrayerWallTab churchId={churchId} />
+        )}
+
+        {/* Testimonies Tab */}
+        {activeTab === 'testimonies' && (
+          <TestimonySubmissionsTab churchId={churchId} />
+        )}
+
+        {/* Creed Card Push Tab */}
+        {activeTab === 'creed-push' && (
+          <CreedCardPushTab churchId={churchId} />
         )}
 
         {/* Demo Tab */}
