@@ -20,9 +20,11 @@ import {
   GraduationCap,
   Globe,
   ExternalLink,
+  Heart,
 } from 'lucide-react';
 import { GroupsTab } from '@/components/dashboard';
 import { AdminChurchOverviewTab, AdminChurchJourneyTab, ChurchLeadersTab, BrandingTab, AdminCohortTab, DemoTab } from '@/components/admin';
+import PrayerWallTab from '@/components/admin/PrayerWallTab';
 
 interface ChurchDetail {
   church: {
@@ -128,7 +130,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
   const router = useRouter();
   const [data, setData] = useState<ChurchDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'leaders' | 'groups' | 'branding' | 'cohort' | 'demo'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'leaders' | 'groups' | 'branding' | 'cohort' | 'demo' | 'prayer-wall'>('overview');
 
   // Alias editing state
   const [editingAliases, setEditingAliases] = useState(false);
@@ -459,6 +461,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
               { id: 'leaders', label: 'Leaders', icon: UserCog },
               { id: 'groups', label: 'DNA Groups', icon: Users },
               { id: 'cohort', label: 'Cohort', icon: GraduationCap },
+              { id: 'prayer-wall', label: 'Prayer Wall', icon: Heart },
               { id: 'branding', label: 'Branding', icon: Palette },
               { id: 'demo', label: 'Demo', icon: ExternalLink },
             ].map((tab) => (
@@ -531,6 +534,11 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
         {/* Branding Tab */}
         {activeTab === 'branding' && (
           <BrandingTab churchId={churchId} />
+        )}
+
+        {/* Prayer Wall Tab */}
+        {activeTab === 'prayer-wall' && (
+          <PrayerWallTab churchId={churchId} />
         )}
 
         {/* Demo Tab */}
