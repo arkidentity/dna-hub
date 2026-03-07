@@ -43,7 +43,7 @@ const BLOCK_TYPES: BlockTypeInfo[] = [
     category: 'content',
     categoryLabel: 'Content',
     description: 'Pastor outline or key points',
-    defaultConfig: { text: '' },
+    defaultConfig: { title: '', text: '' },
   },
   {
     type: 'creed_card',
@@ -88,7 +88,7 @@ const BLOCK_TYPES: BlockTypeInfo[] = [
     category: 'engagement',
     categoryLabel: 'Engagement',
     description: 'Free text answers (moderated)',
-    defaultConfig: { question: '', moderated: true },
+    defaultConfig: { title: '', question: '', moderated: true },
   },
   {
     type: 'breakout_prompt',
@@ -97,7 +97,7 @@ const BLOCK_TYPES: BlockTypeInfo[] = [
     category: 'engagement',
     categoryLabel: 'Engagement',
     description: 'Discussion question with timer',
-    defaultConfig: { question: '', timer_seconds: 180, timer_warning_at: 30 },
+    defaultConfig: { title: '', question: '', timer_seconds: 180, timer_warning_at: 30 },
   },
   // Action blocks
   {
@@ -152,7 +152,7 @@ export function getBlockConfigSummary(type: BlockType, config: Record<string, un
     case 'scripture':
       return (config.passage_ref as string) || 'No passage set';
     case 'teaching_note':
-      return (config.text as string)?.slice(0, 60) || 'No content';
+      return (config.title as string)?.slice(0, 60) || (config.text as string)?.slice(0, 60) || 'No content';
     case 'creed_card':
       return `Card #${config.card_id || '?'}`;
     case 'worship_set': {
@@ -164,10 +164,11 @@ export function getBlockConfigSummary(type: BlockType, config: Record<string, un
       return (config.question as string)?.slice(0, 40) || `${opts?.length || 0} options`;
     }
     case 'open_response':
-      return (config.question as string)?.slice(0, 50) || 'No question set';
+      return (config.title as string)?.slice(0, 50) || (config.question as string)?.slice(0, 50) || 'No question set';
     case 'breakout_prompt': {
       const secs = config.timer_seconds as number | undefined;
-      return secs ? `${Math.floor(secs / 60)}min timer` : 'No timer';
+      const bTitle = config.title as string | undefined;
+      return bTitle || (secs ? `${Math.floor(secs / 60)}min timer` : 'No timer');
     }
     case 'giving':
       return (config.giving_url as string) ? 'Link configured' : 'No link set';

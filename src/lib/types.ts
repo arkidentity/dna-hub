@@ -971,6 +971,7 @@ export interface NextStepsConfig {
 }
 
 export interface BreakoutConfig {
+  title: string;
   question: string;
   timer_seconds: number;
   timer_warning_at: number;
@@ -986,6 +987,7 @@ export interface GivingConfig {
 }
 
 export interface TeachingNoteConfig {
+  title: string;
   text: string;
 }
 
@@ -994,6 +996,7 @@ export interface CreedCardBlockConfig {
 }
 
 export interface OpenResponseConfig {
+  title: string;
   question: string;
   moderated: boolean;
 }

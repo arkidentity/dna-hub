@@ -150,16 +150,28 @@ function ScriptureForm({ config, onChange }: FormProps) {
 
 function TeachingNoteForm({ config, onChange }: FormProps) {
   return (
-    <div>
-      <label className="block text-sm text-foreground-muted mb-1">Teaching Notes</label>
-      <textarea
-        value={(config.text as string) || ''}
-        onChange={(e) => onChange('text', e.target.value)}
-        placeholder="Key points for today's teaching..."
-        rows={8}
-        className="w-full border border-card-border rounded px-3 py-2 text-sm"
-      />
-    </div>
+    <>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">Title</label>
+        <input
+          type="text"
+          value={(config.title as string) || ''}
+          onChange={(e) => onChange('title', e.target.value)}
+          placeholder="Section heading displayed in bold"
+          className="w-full border border-card-border rounded px-3 py-2 text-sm"
+        />
+      </div>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">Teaching Notes</label>
+        <textarea
+          value={(config.text as string) || ''}
+          onChange={(e) => onChange('text', e.target.value)}
+          placeholder="Key points for today's teaching..."
+          rows={8}
+          className="w-full border border-card-border rounded px-3 py-2 text-sm"
+        />
+      </div>
+    </>
   );
 }
 
@@ -317,6 +329,16 @@ function OpenResponseForm({ config, onChange }: FormProps) {
   return (
     <>
       <div>
+        <label className="block text-sm text-foreground-muted mb-1">Title</label>
+        <input
+          type="text"
+          value={(config.title as string) || ''}
+          onChange={(e) => onChange('title', e.target.value)}
+          placeholder="Heading displayed in bold"
+          className="w-full border border-card-border rounded px-3 py-2 text-sm"
+        />
+      </div>
+      <div>
         <label className="block text-sm text-foreground-muted mb-1">Question</label>
         <textarea
           value={(config.question as string) || ''}
@@ -338,6 +360,16 @@ function OpenResponseForm({ config, onChange }: FormProps) {
 function BreakoutForm({ config, onChange }: FormProps) {
   return (
     <>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">Title</label>
+        <input
+          type="text"
+          value={(config.title as string) || ''}
+          onChange={(e) => onChange('title', e.target.value)}
+          placeholder="Heading displayed in bold"
+          className="w-full border border-card-border rounded px-3 py-2 text-sm"
+        />
+      </div>
       <div>
         <label className="block text-sm text-foreground-muted mb-1">Discussion Question</label>
         <textarea
