@@ -904,3 +904,101 @@ export interface PhaseWithChurchMilestones extends Phase {
   completedCount: number;
   totalCount: number;
 }
+
+// ============================================
+// INTERACTIVE SERVICES (Live Service Mode)
+// ============================================
+
+export type ServiceStatus = 'draft' | 'published' | 'live' | 'archived';
+
+export type BlockType =
+  | 'scripture'
+  | 'teaching_note'
+  | 'creed_card'
+  | 'worship_set'
+  | 'poll'
+  | 'open_response'
+  | 'breakout_prompt'
+  | 'giving'
+  | 'next_steps'
+  | 'connect_card';
+
+export interface InteractiveService {
+  id: string;
+  church_id: string;
+  location_id: string | null;
+  schedule_id: string | null;
+  title: string;
+  service_date: string | null;
+  created_by: string | null;
+  status: ServiceStatus;
+  is_template: boolean;
+  template_name: string | null;
+  created_at: string;
+  updated_at: string;
+  block_count?: number;
+}
+
+export interface ServiceBlock {
+  id: string;
+  service_id: string;
+  block_type: BlockType;
+  config: Record<string, unknown>;
+  sort_order: number;
+  is_active: boolean;
+  activated_at: string | null;
+  deactivated_at: string | null;
+  created_at: string;
+}
+
+// Block config shapes
+export interface ScriptureConfig {
+  passage_ref: string;
+  passage_text: string;
+  translation: string;
+}
+
+export interface PollConfig {
+  question: string;
+  options: { id: string; label: string }[];
+  anonymous: boolean;
+  show_results_live: boolean;
+}
+
+export interface NextStepsConfig {
+  prompt: string;
+  steps: { id: string; label: string; icon: string }[];
+}
+
+export interface BreakoutConfig {
+  question: string;
+  timer_seconds: number;
+  timer_warning_at: number;
+}
+
+export interface WorshipSetConfig {
+  songs: { title: string; artist: string }[];
+}
+
+export interface GivingConfig {
+  giving_url: string;
+  message: string;
+}
+
+export interface TeachingNoteConfig {
+  text: string;
+}
+
+export interface CreedCardBlockConfig {
+  card_id: number;
+}
+
+export interface OpenResponseConfig {
+  question: string;
+  moderated: boolean;
+}
+
+export interface ConnectCardConfig {
+  fields: string[];
+  custom_fields: { label: string; type: string }[];
+}
