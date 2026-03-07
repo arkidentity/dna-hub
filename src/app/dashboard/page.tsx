@@ -13,8 +13,7 @@ import {
   RefreshCw,
   UserCog,
   Sparkles,
-  BookOpen,
-  Shield,
+  Smartphone,
 } from 'lucide-react';
 import { PhaseWithMilestones, MilestoneWithProgress, Church, ChurchLeader, FunnelDocument, ScheduledCall, GlobalResource } from '@/lib/types';
 import {
@@ -24,8 +23,7 @@ import {
   TeamTab,
 } from '@/components/dashboard';
 import TeamGiftsTab from '@/components/spiritual-gifts/TeamGiftsTab';
-import TestimonySubmissionsTab from '@/components/admin/TestimonySubmissionsTab';
-import CreedCardPushTab from '@/components/admin/CreedCardPushTab';
+import DailyDNATab from '@/components/dashboard/DailyDNATab';
 
 interface DashboardData {
   church: Church;
@@ -43,7 +41,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'team' | 'groups' | 'gifts' | 'testimonies' | 'creed-push'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'team' | 'groups' | 'gifts' | 'daily-dna'>('overview');
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [compactPhases, setCompactPhases] = useState<Set<string>>(new Set());
   const [updatingMilestone, setUpdatingMilestone] = useState<string | null>(null);
@@ -483,8 +481,7 @@ export default function DashboardPage() {
               { id: 'team', label: 'Team', icon: UserCog },
               { id: 'groups', label: 'DNA Leaders', icon: Users },
               { id: 'gifts', label: 'Ministry Gifts', icon: Sparkles },
-              { id: 'testimonies', label: 'Testimonies', icon: BookOpen },
-              { id: 'creed-push', label: 'Creed Cards', icon: Shield },
+              { id: 'daily-dna', label: 'Daily DNA', icon: Smartphone },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -571,12 +568,8 @@ export default function DashboardPage() {
           <TeamGiftsTab churchId={church.id} subdomain={church.subdomain} />
         )}
 
-        {activeTab === 'testimonies' && (
-          <TestimonySubmissionsTab churchId={church.id} />
-        )}
-
-        {activeTab === 'creed-push' && (
-          <CreedCardPushTab churchId={church.id} />
+        {activeTab === 'daily-dna' && (
+          <DailyDNATab churchId={church.id} />
         )}
 
         {/* Help Section */}
