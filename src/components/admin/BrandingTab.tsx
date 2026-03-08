@@ -118,6 +118,7 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
     custom_link_5_title: '',
     custom_link_5_url: '',
     custom_link_5_mode: 'browser' as 'iframe' | 'browser',
+    live_service_enabled: false,
   });
 
   // ============================================
@@ -194,6 +195,7 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
         custom_link_5_title: b.custom_link_5_title ?? '',
         custom_link_5_url: b.custom_link_5_url ?? '',
         custom_link_5_mode: (b.custom_link_5_mode ?? 'browser') as 'iframe' | 'browser',
+        live_service_enabled: (b as any).live_service_enabled ?? false,
       });
     } catch {
       setError('Failed to load branding settings');
@@ -829,6 +831,36 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
                 </div>
               ))}
               <p className="text-xs text-foreground-muted">Leave both fields blank to hide a link. Both title and URL are required for a link to appear. Combined with the default link above, up to 6 links can appear in the drawer.</p>
+            </div>
+
+            {/* Live Service Feature Flag */}
+            <div className="bg-card rounded-xl border border-card-border p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-navy flex items-center gap-2">
+                    <Radio className="w-4 h-4 text-gold" />
+                    Live Service Mode
+                  </h3>
+                  <p className="text-xs text-foreground-muted mt-0.5">
+                    Enable interactive live services for this church. When enabled, church leaders can run live services
+                    from their phone using the conductor view, and church members see a live feed during service.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setForm(prev => ({ ...prev, live_service_enabled: !prev.live_service_enabled }))}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${form.live_service_enabled ? 'bg-green-500' : 'bg-gray-300'}`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.live_service_enabled ? 'translate-x-6' : 'translate-x-1'}`}
+                  />
+                </button>
+              </div>
+              {form.live_service_enabled && (
+                <p className="text-xs text-green-600 font-medium">
+                  Live Service features are active on this church&apos;s subdomain.
+                </p>
+              )}
             </div>
 
             {/* Error / Save */}
