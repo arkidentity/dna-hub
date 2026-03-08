@@ -197,55 +197,70 @@ export function detectCallType(
 // (admins are on all calls, so their presence doesn't indicate which church)
 const ADMIN_EMAILS = ['thearkidentity@gmail.com', 'travis@arkidentity.com'];
 
-// Match event to a church by church leader attendee email ONLY
-// This is the most reliable matching method - title/alias matching is too error-prone
-// Events that can't be matched go to the unmatched queue for manual assignment
-export async function matchEventToChurch(
-  event: calendar_v3.Schema$Event
-): Promise<{ churchId: string; churchName: string } | null> {
+// Pre-fetched lookup data for batch event matching
+interface ChurchLookup {
+  churches: Map<string, string>; // id → name
+  leadersByEmail: Map<string, string>; // email → church_id
+}
+
+// Pre-fetch all churches and church leaders for batch matching
+async function preloadChurchLookup(): Promise<ChurchLookup | null> {
   const supabase = getSupabaseAdmin();
 
-  // Get all churches for name lookup
-  const { data: churches } = await supabase.from('churches').select('id, name');
+  const [{ data: churches }, { data: leaders }] = await Promise.all([
+    supabase.from('churches').select('id, name'),
+    supabase.from('church_leaders').select('email, church_id'),
+  ]);
 
   if (!churches) {
     console.log('[GOOGLE] No churches found in database');
     return null;
   }
 
-  // ONLY match by church leader attendee email (most reliable)
-  // Skip admin emails - they're on all calls so don't indicate which church
+  const churchMap = new Map(churches.map(c => [c.id, c.name]));
+  const leaderMap = new Map(
+    (leaders || []).map(l => [l.email.toLowerCase().trim(), l.church_id])
+  );
+
+  return { churches: churchMap, leadersByEmail: leaderMap };
+}
+
+// Match event to a church by church leader attendee email ONLY
+// This is the most reliable matching method - title/alias matching is too error-prone
+// Events that can't be matched go to the unmatched queue for manual assignment
+// Uses pre-fetched lookup data to avoid per-attendee DB queries.
+export function matchEventToChurchFromLookup(
+  event: calendar_v3.Schema$Event,
+  lookup: ChurchLookup
+): { churchId: string; churchName: string } | null {
   const attendees = event.attendees || [];
   for (const attendee of attendees) {
     if (!attendee.email) continue;
 
-    // Skip admin emails
     const normalizedEmail = attendee.email.toLowerCase().trim();
-    if (ADMIN_EMAILS.includes(normalizedEmail)) {
-      console.log(`[GOOGLE] Skipping admin email: ${attendee.email}`);
-      continue;
-    }
+    if (ADMIN_EMAILS.includes(normalizedEmail)) continue;
 
-    // Check if this email belongs to a church leader
-    const { data: leader } = await supabase
-      .from('church_leaders')
-      .select('church_id')
-      .eq('email', normalizedEmail)
-      .single();
-
-    if (leader) {
-      const church = churches.find((c) => c.id === leader.church_id);
-      if (church) {
-        console.log(`[GOOGLE] Matched by church leader email: ${attendee.email} → ${church.name}`);
-        return { churchId: church.id, churchName: church.name };
+    const churchId = lookup.leadersByEmail.get(normalizedEmail);
+    if (churchId) {
+      const churchName = lookup.churches.get(churchId);
+      if (churchName) {
+        console.log(`[GOOGLE] Matched by church leader email: ${attendee.email} → ${churchName}`);
+        return { churchId, churchName };
       }
     }
   }
 
-  // No church leader found in attendees - event goes to unmatched queue
-  // This is intentionally conservative to avoid wrong assignments
   console.log(`[GOOGLE] No church leader found in attendees for: "${event.summary}" - sending to unmatched queue`);
   return null;
+}
+
+// Legacy wrapper — kept for any non-batch callers
+export async function matchEventToChurch(
+  event: calendar_v3.Schema$Event
+): Promise<{ churchId: string; churchName: string } | null> {
+  const lookup = await preloadChurchLookup();
+  if (!lookup) return null;
+  return matchEventToChurchFromLookup(event, lookup);
 }
 
 // Check if a call type should be blocked due to existing completed call
@@ -318,6 +333,9 @@ export async function syncCalendarEvents(adminEmail: string) {
   let eventsUnmatched = 0;
   const errors: string[] = [];
 
+  // Pre-fetch church lookup data once (avoids N+1 queries per event/attendee)
+  const lookup = await preloadChurchLookup();
+
   try {
     const response = await calendar.events.list({
       calendarId: 'primary',
@@ -337,8 +355,8 @@ export async function syncCalendarEvents(adminEmail: string) {
       const callType = detectCallType(event.summary || '');
       if (!callType) continue;
 
-      // Try to match to a church
-      const match = await matchEventToChurch(event);
+      // Try to match to a church using pre-fetched lookup
+      const match = lookup ? matchEventToChurchFromLookup(event, lookup) : null;
 
       if (!match) {
         // Store as unmatched event for manual linking
