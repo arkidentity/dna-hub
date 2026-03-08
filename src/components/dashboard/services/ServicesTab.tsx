@@ -118,7 +118,7 @@ export default function ServicesTab({ churchId, subdomain }: ServicesTabProps) {
     <div>
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h2 className="text-lg font-semibold text-navy">Interactive Services</h2>
+        <h2 className="text-lg font-semibold text-navy">Church React</h2>
         <button
           onClick={() => setShowCreate(true)}
           className="flex items-center gap-1.5 px-4 py-2 bg-navy text-white rounded hover:bg-navy/90 transition-colors text-sm"
