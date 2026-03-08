@@ -160,32 +160,81 @@ function ScriptureForm({ config, onChange }: FormProps) {
           <option value="CSB">CSB</option>
         </select>
       </div>
+      <ToggleField
+        label="Enable My Notes for congregation"
+        checked={(config.show_notes as boolean) ?? true}
+        onChange={(v) => onChange('show_notes', v)}
+      />
     </>
   );
 }
 
 function TeachingNoteForm({ config, onChange }: FormProps) {
+  const titleRef = useRef<HTMLInputElement>(null);
+  const textRef = useRef<HTMLTextAreaElement>(null);
+  const BLANK_MARKER = '___';
+
+  const insertBlankInTitle = () => {
+    const el = titleRef.current;
+    if (!el) return;
+    const pos = el.selectionStart ?? ((config.title as string) || '').length;
+    const current = (config.title as string) || '';
+    const newVal = current.slice(0, pos) + BLANK_MARKER + current.slice(pos);
+    onChange('title', newVal);
+    // Auto-enable blanks
+    if (!(config.has_blanks as boolean)) onChange('has_blanks', true);
+    setTimeout(() => {
+      el.focus();
+      const newPos = pos + BLANK_MARKER.length;
+      el.setSelectionRange(newPos, newPos);
+    }, 0);
+  };
+
+  const insertBlankInText = () => {
+    const el = textRef.current;
+    if (!el) return;
+    const pos = el.selectionStart ?? ((config.text as string) || '').length;
+    const current = (config.text as string) || '';
+    const newVal = current.slice(0, pos) + BLANK_MARKER + current.slice(pos);
+    onChange('text', newVal);
+    // Auto-enable blanks
+    if (!(config.has_blanks as boolean)) onChange('has_blanks', true);
+    setTimeout(() => {
+      el.focus();
+      const newPos = pos + BLANK_MARKER.length;
+      el.setSelectionRange(newPos, newPos);
+    }, 0);
+  };
+
   return (
     <>
       <div>
         <label className="block text-sm text-foreground-muted mb-1">Title</label>
         <input
+          ref={titleRef}
           type="text"
           value={(config.title as string) || ''}
           onChange={(e) => onChange('title', e.target.value)}
           placeholder="Section heading displayed in bold"
           className="w-full border border-card-border rounded px-3 py-2 text-sm"
         />
+        <button type="button" onClick={insertBlankInTitle} className="mt-1 flex items-center gap-1.5 text-xs text-navy hover:text-navy/70">
+          <Plus className="w-3 h-3" /> Blank
+        </button>
       </div>
       <div>
-        <label className="block text-sm text-foreground-muted mb-1">Teaching Notes</label>
+        <label className="block text-sm text-foreground-muted mb-1">Content</label>
         <textarea
+          ref={textRef}
           value={(config.text as string) || ''}
           onChange={(e) => onChange('text', e.target.value)}
           placeholder="Key points for today's teaching... Use ___ for blanks"
           rows={8}
           className="w-full border border-card-border rounded px-3 py-2 text-sm"
         />
+        <button type="button" onClick={insertBlankInText} className="mt-1 flex items-center gap-1.5 text-xs text-navy hover:text-navy/70">
+          <Plus className="w-3 h-3" /> Blank
+        </button>
       </div>
       <ToggleField
         label="Include fill-in-the-blanks"
@@ -194,9 +243,14 @@ function TeachingNoteForm({ config, onChange }: FormProps) {
       />
       {(config.has_blanks as boolean) && (
         <p className="text-xs text-foreground-muted ml-11">
-          Use ___ (three underscores) in your text to create blanks. The congregation fills them in on their phones as you teach.
+          Use ___ (three underscores) in the title or content to create blanks. The congregation fills them in on their phones as you teach.
         </p>
       )}
+      <ToggleField
+        label="Enable My Notes for congregation"
+        checked={(config.show_notes as boolean) ?? true}
+        onChange={(v) => onChange('show_notes', v)}
+      />
     </>
   );
 }
