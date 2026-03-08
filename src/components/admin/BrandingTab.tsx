@@ -13,6 +13,7 @@ import {
   Globe,
   Smartphone,
   LayoutTemplate,
+  Radio,
 } from 'lucide-react';
 import { ChurchBranding } from '@/lib/types';
 import ChurchAppQRCard from '@/components/shared/ChurchAppQRCard';
