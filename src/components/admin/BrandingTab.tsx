@@ -428,7 +428,7 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
     );
   }
 
-  const subdomainPreview = form.subdomain ? `https://${form.subdomain}.dailydna.app` : null;
+  const subdomainPreview = form.subdomain ? `https://${form.subdomain}.dailydna.app/join` : null;
 
   return (
     <div className="space-y-6">

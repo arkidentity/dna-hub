@@ -824,7 +824,7 @@ export default function AdminCohortTab({ churchId }: { churchId: string }) {
       {data.cohort.church_subdomain && (
         <div className="mb-6">
           <ChurchAppQRCard
-            url={`https://${data.cohort.church_subdomain}.dailydna.app`}
+            url={`https://${data.cohort.church_subdomain}.dailydna.app/join`}
             downloadName={data.cohort.church_subdomain}
           />
         </div>

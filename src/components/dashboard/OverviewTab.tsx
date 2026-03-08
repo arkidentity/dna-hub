@@ -58,7 +58,7 @@ export default function OverviewTab({
       {/* Church App Link & QR Code — shown when subdomain is configured */}
       {church.subdomain && (
         <ChurchAppQRCard
-          url={`https://${church.subdomain}.dailydna.app`}
+          url={`https://${church.subdomain}.dailydna.app/join`}
           logoUrl={church.icon_url || church.splash_logo_url}
           downloadName={church.subdomain}
         />
