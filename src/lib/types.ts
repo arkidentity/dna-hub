@@ -921,7 +921,8 @@ export type BlockType =
   | 'breakout_prompt'
   | 'giving'
   | 'next_steps'
-  | 'connect_card';
+  | 'connect_card'
+  | 'fill_in_blank';
 
 export interface InteractiveService {
   id: string;
@@ -948,6 +949,7 @@ export interface ServiceBlock {
   is_active: boolean;
   activated_at: string | null;
   deactivated_at: string | null;
+  results_shown_at: string | null;
   created_at: string;
 }
 
@@ -1004,4 +1006,11 @@ export interface OpenResponseConfig {
 export interface ConnectCardConfig {
   fields: string[];
   custom_fields: { label: string; type: string }[];
+}
+
+export interface FillInBlankConfig {
+  prompt: string;
+  segments: string[];
+  blank_count: number;
+  blank_labels?: string[];
 }

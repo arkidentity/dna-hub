@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import { X, Plus, Trash2, Loader2 } from 'lucide-react';
 import type { ServiceBlock } from '@/lib/types';
 import { getBlockTypeInfo } from './blockTypeConfig';
@@ -73,6 +73,9 @@ export default function BlockConfigModal({ block, onSave, onClose }: BlockConfig
           )}
           {block.block_type === 'connect_card' && (
             <ConnectCardForm config={config} onChange={updateField} />
+          )}
+          {block.block_type === 'fill_in_blank' && (
+            <FillInBlankForm config={config} onChange={updateField} />
           )}
         </div>
 
@@ -545,6 +548,119 @@ function ConnectCardForm({ config, onChange }: FormProps) {
         ))}
       </div>
     </div>
+  );
+}
+
+function FillInBlankForm({ config, onChange }: FormProps) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const BLANK_MARKER = '___';
+
+  const segments = (config.segments as string[]) || ['', ''];
+  const blankCount = (config.blank_count as number) || 0;
+  const blankLabels = (config.blank_labels as string[]) || [];
+
+  // Reconstruct raw text from segments
+  const rawText = segments.join(BLANK_MARKER);
+
+  // Parse raw text back to segments on change
+  const handleTextChange = (text: string) => {
+    const parts = text.split(BLANK_MARKER);
+    const count = Math.max(parts.length - 1, 0);
+    onChange('segments', parts);
+    onChange('blank_count', count);
+    // Build a human-readable prompt
+    onChange('prompt', text);
+  };
+
+  const insertBlank = () => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const pos = ta.selectionStart;
+    const text = rawText;
+    const newText = text.slice(0, pos) + BLANK_MARKER + text.slice(pos);
+    handleTextChange(newText);
+    // Restore cursor after the inserted marker
+    setTimeout(() => {
+      ta.focus();
+      const newPos = pos + BLANK_MARKER.length;
+      ta.setSelectionRange(newPos, newPos);
+    }, 0);
+  };
+
+  return (
+    <>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">
+          Sentence Template
+        </label>
+        <textarea
+          ref={textareaRef}
+          value={rawText}
+          onChange={(e) => handleTextChange(e.target.value)}
+          placeholder='I ___ so that ___ could ___'
+          rows={3}
+          className="w-full border border-card-border rounded px-3 py-2 text-sm font-mono"
+        />
+        <button
+          type="button"
+          onClick={insertBlank}
+          className="mt-1.5 flex items-center gap-1.5 text-sm text-navy hover:text-navy/70"
+        >
+          <Plus className="w-3.5 h-3.5" /> Blank
+        </button>
+        {blankCount > 0 && (
+          <p className="text-xs text-foreground-muted mt-1">
+            {blankCount} blank{blankCount > 1 ? 's' : ''} detected
+          </p>
+        )}
+      </div>
+      {/* Preview */}
+      {blankCount > 0 && (
+        <div>
+          <label className="block text-sm text-foreground-muted mb-1">Preview</label>
+          <div className="bg-gray-50 rounded p-3 text-sm leading-relaxed">
+            {segments.map((seg, i) => (
+              <span key={i}>
+                {seg}
+                {i < blankCount && (
+                  <span className="inline-block mx-1 px-2 py-0.5 bg-gold/20 text-navy font-medium rounded text-xs border border-gold/40">
+                    {blankLabels[i] || `blank ${i + 1}`}
+                  </span>
+                )}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      {/* Optional hint labels */}
+      {blankCount > 0 && (
+        <div>
+          <label className="block text-sm text-foreground-muted mb-2">
+            Blank Hints (optional placeholders shown to congregation)
+          </label>
+          <div className="space-y-2">
+            {Array.from({ length: blankCount }).map((_, i) => (
+              <div key={i} className="flex gap-2 items-center">
+                <span className="text-xs font-medium text-foreground-muted w-14">
+                  Blank {i + 1}
+                </span>
+                <input
+                  type="text"
+                  value={blankLabels[i] || ''}
+                  onChange={(e) => {
+                    const updated = [...blankLabels];
+                    updated[i] = e.target.value;
+                    onChange('blank_labels', updated);
+                  }}
+                  placeholder={`e.g. verb, name, place...`}
+                  className="flex-1 border border-card-border rounded px-3 py-2 text-sm"
+                />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+    </>
   );
 }
 

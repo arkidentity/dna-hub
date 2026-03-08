@@ -9,6 +9,7 @@ import {
   Heart,
   Footprints,
   ClipboardList,
+  TextCursorInput,
   type LucideIcon,
 } from 'lucide-react';
 import type { BlockType } from '@/lib/types';
@@ -99,6 +100,15 @@ const BLOCK_TYPES: BlockTypeInfo[] = [
     description: 'Discussion question with timer',
     defaultConfig: { title: '', question: '', timer_seconds: 180, timer_warning_at: 30 },
   },
+  {
+    type: 'fill_in_blank',
+    label: 'Fill in the Blank',
+    icon: TextCursorInput,
+    category: 'engagement',
+    categoryLabel: 'Engagement',
+    description: 'Sentence with blanks for congregation to fill',
+    defaultConfig: { prompt: '', segments: ['', ''], blank_count: 1, blank_labels: [] },
+  },
   // Action blocks
   {
     type: 'giving',
@@ -179,6 +189,10 @@ export function getBlockConfigSummary(type: BlockType, config: Record<string, un
     case 'connect_card': {
       const fields = config.fields as string[] | undefined;
       return fields?.length ? `${fields.length} field${fields.length > 1 ? 's' : ''}` : 'Default fields';
+    }
+    case 'fill_in_blank': {
+      const bc = config.blank_count as number | undefined;
+      return bc ? `${bc} blank${bc > 1 ? 's' : ''}` : 'No blanks set';
     }
     default:
       return '';
