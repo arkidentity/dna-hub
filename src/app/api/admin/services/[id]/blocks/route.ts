@@ -63,6 +63,10 @@ export async function POST(
 
     const nextOrder = (lastBlock?.sort_order ?? -1) + 1;
 
+    // Determine default show_on_display based on block category
+    const actionBlocks = ['next_steps', 'connect_card', 'giving'];
+    const showOnDisplay = body.show_on_display ?? !actionBlocks.includes(blockType);
+
     const { data: block, error } = await supabase
       .from('service_blocks')
       .insert({
@@ -70,6 +74,7 @@ export async function POST(
         block_type: blockType,
         config: config || {},
         sort_order: body.sortOrder ?? nextOrder,
+        show_on_display: showOnDisplay,
       })
       .select()
       .single();
@@ -108,16 +113,21 @@ export async function PUT(
     }
 
     const body = await request.json();
-    const { blockId, config } = body;
+    const { blockId, config, show_on_display } = body;
 
     if (!blockId || !config) {
       return NextResponse.json({ error: 'blockId and config are required' }, { status: 400 });
     }
 
     const supabase = getSupabaseAdmin();
+    const updateData: Record<string, unknown> = { config };
+    if (typeof show_on_display === 'boolean') {
+      updateData.show_on_display = show_on_display;
+    }
+
     const { data, error } = await supabase
       .from('service_blocks')
-      .update({ config })
+      .update(updateData)
       .eq('id', blockId)
       .eq('service_id', serviceId)
       .select()

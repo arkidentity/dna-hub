@@ -24,6 +24,7 @@ export interface BlockTypeInfo {
   categoryLabel: string;
   description: string;
   defaultConfig: Record<string, unknown>;
+  defaultShowOnDisplay: boolean;
 }
 
 const BLOCK_TYPES: BlockTypeInfo[] = [
@@ -36,6 +37,7 @@ const BLOCK_TYPES: BlockTypeInfo[] = [
     categoryLabel: 'Content',
     description: 'Push a Bible passage to phones',
     defaultConfig: { passage_ref: '', passage_text: '', translation: 'NIV' },
+    defaultShowOnDisplay: true,
   },
   {
     type: 'teaching_note',
@@ -45,6 +47,7 @@ const BLOCK_TYPES: BlockTypeInfo[] = [
     categoryLabel: 'Content',
     description: 'Pastor outline or key points',
     defaultConfig: { title: '', text: '' },
+    defaultShowOnDisplay: true,
   },
   {
     type: 'creed_card',
@@ -54,6 +57,7 @@ const BLOCK_TYPES: BlockTypeInfo[] = [
     categoryLabel: 'Content',
     description: 'Push an existing Creed Card',
     defaultConfig: { card_id: 1 },
+    defaultShowOnDisplay: true,
   },
   {
     type: 'worship_set',
@@ -63,6 +67,7 @@ const BLOCK_TYPES: BlockTypeInfo[] = [
     categoryLabel: 'Content',
     description: 'Song list for this service',
     defaultConfig: { songs: [] },
+    defaultShowOnDisplay: true,
   },
   // Engagement blocks
   {
@@ -81,6 +86,7 @@ const BLOCK_TYPES: BlockTypeInfo[] = [
       anonymous: true,
       show_results_live: true,
     },
+    defaultShowOnDisplay: true,
   },
   {
     type: 'open_response',
@@ -90,6 +96,7 @@ const BLOCK_TYPES: BlockTypeInfo[] = [
     categoryLabel: 'Engagement',
     description: 'Free text answers (moderated)',
     defaultConfig: { title: '', question: '', moderated: true },
+    defaultShowOnDisplay: true,
   },
   {
     type: 'breakout_prompt',
@@ -97,8 +104,9 @@ const BLOCK_TYPES: BlockTypeInfo[] = [
     icon: Users,
     category: 'engagement',
     categoryLabel: 'Engagement',
-    description: 'Discussion question with timer',
-    defaultConfig: { title: '', question: '', timer_seconds: 180, timer_warning_at: 30 },
+    description: 'Discussion or introspective question with timer',
+    defaultConfig: { title: '', question: '', timer_seconds: 180, timer_warning_at: 30, mode: 'discussion' },
+    defaultShowOnDisplay: true,
   },
   {
     type: 'fill_in_blank',
@@ -107,7 +115,8 @@ const BLOCK_TYPES: BlockTypeInfo[] = [
     category: 'engagement',
     categoryLabel: 'Engagement',
     description: 'Sentence with blanks for congregation to fill',
-    defaultConfig: { prompt: '', segments: ['', ''], blank_count: 1, blank_labels: [] },
+    defaultConfig: { prompt: '', title: '', segments: ['', ''], blank_count: 1, blank_labels: [], send_to_conductor: true },
+    defaultShowOnDisplay: true,
   },
   // Action blocks
   {
@@ -118,6 +127,7 @@ const BLOCK_TYPES: BlockTypeInfo[] = [
     categoryLabel: 'Action',
     description: 'Push church giving link',
     defaultConfig: { giving_url: '', message: '' },
+    defaultShowOnDisplay: false,
   },
   {
     type: 'next_steps',
@@ -125,11 +135,12 @@ const BLOCK_TYPES: BlockTypeInfo[] = [
     icon: Footprints,
     category: 'action',
     categoryLabel: 'Action',
-    description: 'One-tap response options',
+    description: 'Multi-select response options',
     defaultConfig: {
       prompt: '',
-      steps: [{ id: 'step_1', label: '', icon: 'heart' }],
+      steps: [{ id: 'step_1', label: '' }],
     },
+    defaultShowOnDisplay: false,
   },
   {
     type: 'connect_card',
@@ -142,6 +153,7 @@ const BLOCK_TYPES: BlockTypeInfo[] = [
       fields: ['first_time', 'address', 'how_heard', 'prayer_request'],
       custom_fields: [],
     },
+    defaultShowOnDisplay: false,
   },
 ];
 

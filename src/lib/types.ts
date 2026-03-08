@@ -950,6 +950,7 @@ export interface ServiceBlock {
   activated_at: string | null;
   deactivated_at: string | null;
   results_shown_at: string | null;
+  show_on_display: boolean;
   created_at: string;
 }
 
@@ -969,7 +970,7 @@ export interface PollConfig {
 
 export interface NextStepsConfig {
   prompt: string;
-  steps: { id: string; label: string; icon: string }[];
+  steps: { id: string; label: string }[];
 }
 
 export interface BreakoutConfig {
@@ -977,6 +978,7 @@ export interface BreakoutConfig {
   question: string;
   timer_seconds: number;
   timer_warning_at: number;
+  mode?: 'discussion' | 'introspective';
 }
 
 export interface WorshipSetConfig {
@@ -991,6 +993,7 @@ export interface GivingConfig {
 export interface TeachingNoteConfig {
   title: string;
   text: string;
+  has_blanks?: boolean;
 }
 
 export interface CreedCardBlockConfig {
@@ -1010,7 +1013,9 @@ export interface ConnectCardConfig {
 
 export interface FillInBlankConfig {
   prompt: string;
+  title?: string;
   segments: string[];
   blank_count: number;
   blank_labels?: string[];
+  send_to_conductor?: boolean;
 }

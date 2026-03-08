@@ -7,12 +7,13 @@ import { getBlockTypeInfo } from './blockTypeConfig';
 
 interface BlockConfigModalProps {
   block: ServiceBlock;
-  onSave: (config: Record<string, unknown>) => void;
+  onSave: (config: Record<string, unknown>, showOnDisplay?: boolean) => void;
   onClose: () => void;
 }
 
 export default function BlockConfigModal({ block, onSave, onClose }: BlockConfigModalProps) {
   const [config, setConfig] = useState<Record<string, unknown>>({ ...block.config });
+  const [showOnDisplay, setShowOnDisplay] = useState(block.show_on_display ?? true);
   const [saving, setSaving] = useState(false);
 
   const info = getBlockTypeInfo(block.block_type);
@@ -20,7 +21,7 @@ export default function BlockConfigModal({ block, onSave, onClose }: BlockConfig
 
   const handleSave = async () => {
     setSaving(true);
-    await onSave(config);
+    await onSave(config, showOnDisplay);
     setSaving(false);
   };
 
@@ -77,6 +78,18 @@ export default function BlockConfigModal({ block, onSave, onClose }: BlockConfig
           {block.block_type === 'fill_in_blank' && (
             <FillInBlankForm config={config} onChange={updateField} />
           )}
+
+          {/* Display visibility toggle (all blocks) */}
+          <div className="pt-3 border-t border-card-border">
+            <ToggleField
+              label="Show on projection display"
+              checked={showOnDisplay}
+              onChange={setShowOnDisplay}
+            />
+            <p className="text-xs text-foreground-muted mt-1 ml-11">
+              When off, this block will only appear on phones, not the projection screen.
+            </p>
+          </div>
         </div>
 
         {/* Footer */}
@@ -169,11 +182,21 @@ function TeachingNoteForm({ config, onChange }: FormProps) {
         <textarea
           value={(config.text as string) || ''}
           onChange={(e) => onChange('text', e.target.value)}
-          placeholder="Key points for today's teaching..."
+          placeholder="Key points for today's teaching... Use ___ for blanks"
           rows={8}
           className="w-full border border-card-border rounded px-3 py-2 text-sm"
         />
       </div>
+      <ToggleField
+        label="Include fill-in-the-blanks"
+        checked={(config.has_blanks as boolean) ?? false}
+        onChange={(v) => onChange('has_blanks', v)}
+      />
+      {(config.has_blanks as boolean) && (
+        <p className="text-xs text-foreground-muted ml-11">
+          Use ___ (three underscores) in your text to create blanks. The congregation fills them in on their phones as you teach.
+        </p>
+      )}
     </>
   );
 }
@@ -252,7 +275,7 @@ function PollForm({ config, onChange }: FormProps) {
 
   const addOption = () => {
     if (options.length >= 4) return;
-    const nextId = String.fromCharCode(97 + options.length); // a, b, c, d
+    const nextId = String.fromCharCode(97 + options.length);
     onChange('options', [...options, { id: nextId, label: '' }]);
   };
 
@@ -279,15 +302,11 @@ function PollForm({ config, onChange }: FormProps) {
         />
       </div>
       <div>
-        <label className="block text-sm text-foreground-muted mb-2">
-          Options ({options.length}/4)
-        </label>
+        <label className="block text-sm text-foreground-muted mb-2">Options ({options.length}/4)</label>
         <div className="space-y-2">
           {options.map((opt, idx) => (
             <div key={opt.id} className="flex gap-2 items-center">
-              <span className="text-xs font-medium text-foreground-muted w-5 text-center uppercase">
-                {opt.id}
-              </span>
+              <span className="text-xs font-medium text-foreground-muted w-5 text-center uppercase">{opt.id}</span>
               <input
                 type="text"
                 value={opt.label}
@@ -304,25 +323,14 @@ function PollForm({ config, onChange }: FormProps) {
           ))}
         </div>
         {options.length < 4 && (
-          <button
-            onClick={addOption}
-            className="mt-2 flex items-center gap-1.5 text-sm text-navy hover:text-navy/70"
-          >
+          <button onClick={addOption} className="mt-2 flex items-center gap-1.5 text-sm text-navy hover:text-navy/70">
             <Plus className="w-3.5 h-3.5" /> Add Option
           </button>
         )}
       </div>
       <div className="flex items-center gap-4">
-        <ToggleField
-          label="Anonymous"
-          checked={(config.anonymous as boolean) ?? true}
-          onChange={(v) => onChange('anonymous', v)}
-        />
-        <ToggleField
-          label="Show results live"
-          checked={(config.show_results_live as boolean) ?? true}
-          onChange={(v) => onChange('show_results_live', v)}
-        />
+        <ToggleField label="Anonymous" checked={(config.anonymous as boolean) ?? true} onChange={(v) => onChange('anonymous', v)} />
+        <ToggleField label="Show results live" checked={(config.show_results_live as boolean) ?? true} onChange={(v) => onChange('show_results_live', v)} />
       </div>
     </>
   );
@@ -333,78 +341,47 @@ function OpenResponseForm({ config, onChange }: FormProps) {
     <>
       <div>
         <label className="block text-sm text-foreground-muted mb-1">Title</label>
-        <input
-          type="text"
-          value={(config.title as string) || ''}
-          onChange={(e) => onChange('title', e.target.value)}
-          placeholder="Heading displayed in bold"
-          className="w-full border border-card-border rounded px-3 py-2 text-sm"
-        />
+        <input type="text" value={(config.title as string) || ''} onChange={(e) => onChange('title', e.target.value)} placeholder="Heading displayed in bold" className="w-full border border-card-border rounded px-3 py-2 text-sm" />
       </div>
       <div>
         <label className="block text-sm text-foreground-muted mb-1">Question</label>
-        <textarea
-          value={(config.question as string) || ''}
-          onChange={(e) => onChange('question', e.target.value)}
-          placeholder="What is God speaking to you today?"
-          rows={3}
-          className="w-full border border-card-border rounded px-3 py-2 text-sm"
-        />
+        <textarea value={(config.question as string) || ''} onChange={(e) => onChange('question', e.target.value)} placeholder="What is God speaking to you today?" rows={3} className="w-full border border-card-border rounded px-3 py-2 text-sm" />
       </div>
-      <ToggleField
-        label="Require approval before display"
-        checked={(config.moderated as boolean) ?? true}
-        onChange={(v) => onChange('moderated', v)}
-      />
+      <ToggleField label="Require approval before display" checked={(config.moderated as boolean) ?? true} onChange={(v) => onChange('moderated', v)} />
     </>
   );
 }
 
 function BreakoutForm({ config, onChange }: FormProps) {
+  const mode = (config.mode as string) || 'discussion';
   return (
     <>
       <div>
-        <label className="block text-sm text-foreground-muted mb-1">Title</label>
-        <input
-          type="text"
-          value={(config.title as string) || ''}
-          onChange={(e) => onChange('title', e.target.value)}
-          placeholder="Heading displayed in bold"
-          className="w-full border border-card-border rounded px-3 py-2 text-sm"
-        />
+        <label className="block text-sm text-foreground-muted mb-1">Mode</label>
+        <div className="flex gap-2">
+          <button type="button" onClick={() => onChange('mode', 'discussion')} className={`flex-1 px-3 py-2 rounded text-sm border ${mode === 'discussion' ? 'bg-navy text-white border-navy' : 'border-card-border text-navy hover:bg-gray-50'}`}>Discussion</button>
+          <button type="button" onClick={() => onChange('mode', 'introspective')} className={`flex-1 px-3 py-2 rounded text-sm border ${mode === 'introspective' ? 'bg-navy text-white border-navy' : 'border-card-border text-navy hover:bg-gray-50'}`}>Introspective</button>
+        </div>
+        <p className="text-xs text-foreground-muted mt-1">
+          {mode === 'discussion' ? 'Group discussion — congregation discusses the question with those around them.' : 'Personal reflection — congregation writes their thoughts privately in the app.'}
+        </p>
       </div>
       <div>
-        <label className="block text-sm text-foreground-muted mb-1">Discussion Question</label>
-        <textarea
-          value={(config.question as string) || ''}
-          onChange={(e) => onChange('question', e.target.value)}
-          placeholder="Turn to someone near you and share..."
-          rows={3}
-          className="w-full border border-card-border rounded px-3 py-2 text-sm"
-        />
+        <label className="block text-sm text-foreground-muted mb-1">Title</label>
+        <input type="text" value={(config.title as string) || ''} onChange={(e) => onChange('title', e.target.value)} placeholder="Heading displayed in bold" className="w-full border border-card-border rounded px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">{mode === 'discussion' ? 'Discussion Question' : 'Reflection Prompt'}</label>
+        <textarea value={(config.question as string) || ''} onChange={(e) => onChange('question', e.target.value)} placeholder={mode === 'discussion' ? 'Turn to someone near you and share...' : 'Take a moment to write down what God is speaking to you...'} rows={3} className="w-full border border-card-border rounded px-3 py-2 text-sm" />
       </div>
       <div className="grid grid-cols-2 gap-4">
         <div>
           <label className="block text-sm text-foreground-muted mb-1">Timer (seconds)</label>
-          <input
-            type="number"
-            min={30}
-            max={600}
-            value={(config.timer_seconds as number) || 180}
-            onChange={(e) => onChange('timer_seconds', parseInt(e.target.value) || 180)}
-            className="w-full border border-card-border rounded px-3 py-2 text-sm"
-          />
+          <input type="number" min={30} max={600} value={(config.timer_seconds as number) || 180} onChange={(e) => onChange('timer_seconds', parseInt(e.target.value) || 180)} className="w-full border border-card-border rounded px-3 py-2 text-sm" />
         </div>
         <div>
           <label className="block text-sm text-foreground-muted mb-1">Warning at (seconds)</label>
-          <input
-            type="number"
-            min={10}
-            max={120}
-            value={(config.timer_warning_at as number) || 30}
-            onChange={(e) => onChange('timer_warning_at', parseInt(e.target.value) || 30)}
-            className="w-full border border-card-border rounded px-3 py-2 text-sm"
-          />
+          <input type="number" min={10} max={120} value={(config.timer_warning_at as number) || 30} onChange={(e) => onChange('timer_warning_at', parseInt(e.target.value) || 30)} className="w-full border border-card-border rounded px-3 py-2 text-sm" />
         </div>
       </div>
     </>
@@ -416,38 +393,26 @@ function GivingForm({ config, onChange }: FormProps) {
     <>
       <div>
         <label className="block text-sm text-foreground-muted mb-1">Giving URL</label>
-        <input
-          type="url"
-          value={(config.giving_url as string) || ''}
-          onChange={(e) => onChange('giving_url', e.target.value)}
-          placeholder="https://tithe.ly/give?c=12345"
-          className="w-full border border-card-border rounded px-3 py-2 text-sm"
-        />
+        <input type="url" value={(config.giving_url as string) || ''} onChange={(e) => onChange('giving_url', e.target.value)} placeholder="https://tithe.ly/give?c=12345" className="w-full border border-card-border rounded px-3 py-2 text-sm" />
       </div>
       <div>
         <label className="block text-sm text-foreground-muted mb-1">Message</label>
-        <textarea
-          value={(config.message as string) || ''}
-          onChange={(e) => onChange('message', e.target.value)}
-          placeholder="Thank you for your generosity."
-          rows={2}
-          className="w-full border border-card-border rounded px-3 py-2 text-sm"
-        />
+        <textarea value={(config.message as string) || ''} onChange={(e) => onChange('message', e.target.value)} placeholder="Thank you for your generosity." rows={2} className="w-full border border-card-border rounded px-3 py-2 text-sm" />
       </div>
     </>
   );
 }
 
 function NextStepsForm({ config, onChange }: FormProps) {
-  const steps = (config.steps as { id: string; label: string; icon: string }[]) || [];
+  const steps = (config.steps as { id: string; label: string }[]) || [];
 
   const addStep = () => {
-    if (steps.length >= 5) return;
-    onChange('steps', [...steps, { id: `step_${steps.length + 1}`, label: '', icon: 'heart' }]);
+    if (steps.length >= 8) return;
+    onChange('steps', [...steps, { id: `step_${steps.length + 1}`, label: '' }]);
   };
 
-  const updateStep = (idx: number, field: string, value: string) => {
-    const updated = steps.map((s, i) => (i === idx ? { ...s, [field]: value } : s));
+  const updateStep = (idx: number, value: string) => {
+    const updated = steps.map((s, i) => (i === idx ? { ...s, label: value } : s));
     onChange('steps', updated);
   };
 
@@ -456,43 +421,18 @@ function NextStepsForm({ config, onChange }: FormProps) {
     onChange('steps', steps.filter((_, i) => i !== idx));
   };
 
-  const iconOptions = ['heart', 'users', 'water', 'hand', 'message', 'calendar', 'star', 'book'];
-
   return (
     <>
       <div>
         <label className="block text-sm text-foreground-muted mb-1">Prompt</label>
-        <input
-          type="text"
-          value={(config.prompt as string) || ''}
-          onChange={(e) => onChange('prompt', e.target.value)}
-          placeholder="What's your next step today?"
-          className="w-full border border-card-border rounded px-3 py-2 text-sm"
-        />
+        <input type="text" value={(config.prompt as string) || ''} onChange={(e) => onChange('prompt', e.target.value)} placeholder="What's your next step today?" className="w-full border border-card-border rounded px-3 py-2 text-sm" />
       </div>
       <div>
-        <label className="block text-sm text-foreground-muted mb-2">
-          Steps ({steps.length}/5)
-        </label>
+        <label className="block text-sm text-foreground-muted mb-2">Steps ({steps.length}/8)</label>
         <div className="space-y-2">
           {steps.map((step, idx) => (
             <div key={step.id} className="flex gap-2">
-              <select
-                value={step.icon}
-                onChange={(e) => updateStep(idx, 'icon', e.target.value)}
-                className="w-24 border border-card-border rounded px-2 py-2 text-sm"
-              >
-                {iconOptions.map((ic) => (
-                  <option key={ic} value={ic}>{ic}</option>
-                ))}
-              </select>
-              <input
-                type="text"
-                value={step.label}
-                onChange={(e) => updateStep(idx, 'label', e.target.value)}
-                placeholder="I want to join a DNA Group"
-                className="flex-1 border border-card-border rounded px-3 py-2 text-sm"
-              />
+              <input type="text" value={step.label} onChange={(e) => updateStep(idx, e.target.value)} placeholder="e.g. Water Baptism, Join a Life Group..." className="flex-1 border border-card-border rounded px-3 py-2 text-sm" />
               {steps.length > 1 && (
                 <button onClick={() => removeStep(idx)} className="p-2 text-error hover:bg-red-50 rounded">
                   <Trash2 className="w-3.5 h-3.5" />
@@ -501,15 +441,13 @@ function NextStepsForm({ config, onChange }: FormProps) {
             </div>
           ))}
         </div>
-        {steps.length < 5 && (
-          <button
-            onClick={addStep}
-            className="mt-2 flex items-center gap-1.5 text-sm text-navy hover:text-navy/70"
-          >
+        {steps.length < 8 && (
+          <button onClick={addStep} className="mt-2 flex items-center gap-1.5 text-sm text-navy hover:text-navy/70">
             <Plus className="w-3.5 h-3.5" /> Add Step
           </button>
         )}
       </div>
+      <p className="text-xs text-foreground-muted">Congregation can select multiple steps. Their contact info is captured for follow-up.</p>
     </>
   );
 }
@@ -537,12 +475,7 @@ function ConnectCardForm({ config, onChange }: FormProps) {
       <div className="space-y-2">
         {availableFields.map((f) => (
           <label key={f.id} className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="checkbox"
-              checked={fields.includes(f.id)}
-              onChange={() => toggleField(f.id)}
-              className="rounded border-card-border"
-            />
+            <input type="checkbox" checked={fields.includes(f.id)} onChange={() => toggleField(f.id)} className="rounded border-card-border" />
             <span className="text-sm text-navy">{f.label}</span>
           </label>
         ))}
@@ -558,17 +491,13 @@ function FillInBlankForm({ config, onChange }: FormProps) {
   const segments = (config.segments as string[]) || ['', ''];
   const blankCount = (config.blank_count as number) || 0;
   const blankLabels = (config.blank_labels as string[]) || [];
-
-  // Reconstruct raw text from segments
   const rawText = segments.join(BLANK_MARKER);
 
-  // Parse raw text back to segments on change
   const handleTextChange = (text: string) => {
     const parts = text.split(BLANK_MARKER);
     const count = Math.max(parts.length - 1, 0);
     onChange('segments', parts);
     onChange('blank_count', count);
-    // Build a human-readable prompt
     onChange('prompt', text);
   };
 
@@ -579,7 +508,6 @@ function FillInBlankForm({ config, onChange }: FormProps) {
     const text = rawText;
     const newText = text.slice(0, pos) + BLANK_MARKER + text.slice(pos);
     handleTextChange(newText);
-    // Restore cursor after the inserted marker
     setTimeout(() => {
       ta.focus();
       const newPos = pos + BLANK_MARKER.length;
@@ -590,31 +518,17 @@ function FillInBlankForm({ config, onChange }: FormProps) {
   return (
     <>
       <div>
-        <label className="block text-sm text-foreground-muted mb-1">
-          Sentence Template
-        </label>
-        <textarea
-          ref={textareaRef}
-          value={rawText}
-          onChange={(e) => handleTextChange(e.target.value)}
-          placeholder='I ___ so that ___ could ___'
-          rows={3}
-          className="w-full border border-card-border rounded px-3 py-2 text-sm font-mono"
-        />
-        <button
-          type="button"
-          onClick={insertBlank}
-          className="mt-1.5 flex items-center gap-1.5 text-sm text-navy hover:text-navy/70"
-        >
+        <label className="block text-sm text-foreground-muted mb-1">Title / Instructions</label>
+        <input type="text" value={(config.title as string) || ''} onChange={(e) => onChange('title', e.target.value)} placeholder="Fill in the blanks as you follow along..." className="w-full border border-card-border rounded px-3 py-2 text-sm" />
+      </div>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">Sentence Template</label>
+        <textarea ref={textareaRef} value={rawText} onChange={(e) => handleTextChange(e.target.value)} placeholder='I ___ so that ___ could ___' rows={3} className="w-full border border-card-border rounded px-3 py-2 text-sm font-mono" />
+        <button type="button" onClick={insertBlank} className="mt-1.5 flex items-center gap-1.5 text-sm text-navy hover:text-navy/70">
           <Plus className="w-3.5 h-3.5" /> Blank
         </button>
-        {blankCount > 0 && (
-          <p className="text-xs text-foreground-muted mt-1">
-            {blankCount} blank{blankCount > 1 ? 's' : ''} detected
-          </p>
-        )}
+        {blankCount > 0 && <p className="text-xs text-foreground-muted mt-1">{blankCount} blank{blankCount > 1 ? 's' : ''} detected</p>}
       </div>
-      {/* Preview */}
       {blankCount > 0 && (
         <div>
           <label className="block text-sm text-foreground-muted mb-1">Preview</label>
@@ -632,34 +546,25 @@ function FillInBlankForm({ config, onChange }: FormProps) {
           </div>
         </div>
       )}
-      {/* Optional hint labels */}
       {blankCount > 0 && (
         <div>
-          <label className="block text-sm text-foreground-muted mb-2">
-            Blank Hints (optional placeholders shown to congregation)
-          </label>
+          <label className="block text-sm text-foreground-muted mb-2">Blank Hints (optional)</label>
           <div className="space-y-2">
             {Array.from({ length: blankCount }).map((_, i) => (
               <div key={i} className="flex gap-2 items-center">
-                <span className="text-xs font-medium text-foreground-muted w-14">
-                  Blank {i + 1}
-                </span>
-                <input
-                  type="text"
-                  value={blankLabels[i] || ''}
-                  onChange={(e) => {
-                    const updated = [...blankLabels];
-                    updated[i] = e.target.value;
-                    onChange('blank_labels', updated);
-                  }}
-                  placeholder={`e.g. verb, name, place...`}
-                  className="flex-1 border border-card-border rounded px-3 py-2 text-sm"
-                />
+                <span className="text-xs font-medium text-foreground-muted w-14">Blank {i + 1}</span>
+                <input type="text" value={blankLabels[i] || ''} onChange={(e) => { const updated = [...blankLabels]; updated[i] = e.target.value; onChange('blank_labels', updated); }} placeholder="e.g. verb, name, place..." className="flex-1 border border-card-border rounded px-3 py-2 text-sm" />
               </div>
             ))}
           </div>
         </div>
       )}
+      <ToggleField label="Send responses to conductor" checked={(config.send_to_conductor as boolean) ?? true} onChange={(v) => onChange('send_to_conductor', v)} />
+      <p className="text-xs text-foreground-muted ml-11">
+        {(config.send_to_conductor as boolean) ?? true
+          ? 'Responses are sent for review and can be shown on the projection display.'
+          : "Responses are private — saved only on the user's device (church bulletin style)."}
+      </p>
     </>
   );
 }
@@ -674,15 +579,9 @@ function ToggleField({ label, checked, onChange }: { label: string; checked: boo
       <button
         type="button"
         onClick={() => onChange(!checked)}
-        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${
-          checked ? 'bg-gold' : 'bg-gray-300'
-        }`}
+        className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${checked ? 'bg-gold' : 'bg-gray-300'}`}
       >
-        <span
-          className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${
-            checked ? 'translate-x-4.5' : 'translate-x-0.5'
-          }`}
-        />
+        <span className={`inline-block h-3.5 w-3.5 rounded-full bg-white transition-transform ${checked ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
       </button>
       <span className="text-sm text-navy">{label}</span>
     </label>

@@ -209,12 +209,12 @@ export default function ServiceEditor({ serviceId, churchId, onBack }: ServiceEd
     }
   };
 
-  const handleSaveBlockConfig = async (blockId: string, config: Record<string, unknown>) => {
+  const handleSaveBlockConfig = async (blockId: string, config: Record<string, unknown>, showOnDisplay?: boolean) => {
     try {
       const res = await fetch(`/api/admin/services/${serviceId}/blocks`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ blockId, config }),
+        body: JSON.stringify({ blockId, config, show_on_display: showOnDisplay }),
       });
 
       if (res.ok) {
@@ -458,7 +458,7 @@ export default function ServiceEditor({ serviceId, churchId, onBack }: ServiceEd
       {editingBlock && (
         <BlockConfigModal
           block={editingBlock}
-          onSave={(config) => handleSaveBlockConfig(editingBlock.id, config)}
+          onSave={(config, showOnDisplay) => handleSaveBlockConfig(editingBlock.id, config, showOnDisplay)}
           onClose={() => setEditingBlock(null)}
         />
       )}
