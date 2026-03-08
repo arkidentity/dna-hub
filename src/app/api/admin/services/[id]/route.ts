@@ -129,11 +129,12 @@ export async function PATCH(
     const supabase = getSupabaseAdmin();
 
     // Status change actions
-    if (action === 'publish' || action === 'unpublish' || action === 'archive') {
+    if (action === 'publish' || action === 'unpublish' || action === 'archive' || action === 'unarchive') {
       const statusMap: Record<string, string> = {
         publish: 'published',
         unpublish: 'draft',
         archive: 'archived',
+        unarchive: 'draft',
       };
 
       const { data, error } = await supabase

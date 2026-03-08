@@ -328,6 +328,17 @@ export default function ServiceEditor({ serviceId, churchId, onBack }: ServiceEd
             </button>
           )}
 
+          {service.status === 'archived' && (
+            <button
+              onClick={() => handleAction('unarchive')}
+              disabled={!!actioning}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-navy text-white rounded text-sm hover:bg-navy/90 transition-colors disabled:opacity-50"
+            >
+              {actioning === 'unarchive' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Undo2 className="w-3.5 h-3.5" />}
+              Unarchive
+            </button>
+          )}
+
           <button
             onClick={() => handleAction('duplicate')}
             disabled={!!actioning}
