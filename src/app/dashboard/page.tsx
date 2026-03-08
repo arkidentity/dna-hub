@@ -484,7 +484,7 @@ export default function DashboardPage() {
               { id: 'groups', label: 'DNA Leaders', icon: Users },
               { id: 'gifts', label: 'Ministry Gifts', icon: Sparkles },
               { id: 'daily-dna', label: 'Daily DNA', icon: Smartphone },
-              { id: 'services', label: 'Services', icon: Radio },
+              { id: 'services', label: 'Church React', icon: Radio },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -576,7 +576,7 @@ export default function DashboardPage() {
         )}
 
         {activeTab === 'services' && (
-          <ServicesTab churchId={church.id} />
+          <ServicesTab churchId={church.id} subdomain={church.subdomain || undefined} />
         )}
 
         {/* Help Section */}

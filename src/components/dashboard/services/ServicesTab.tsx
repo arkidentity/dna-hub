@@ -1,12 +1,13 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Plus, Loader2, Calendar, Blocks, Copy } from 'lucide-react';
+import { Plus, Loader2, Calendar, Blocks, Copy, Monitor, Check } from 'lucide-react';
 import type { InteractiveService, ServiceStatus } from '@/lib/types';
 import ServiceEditor from './ServiceEditor';
 
 interface ServicesTabProps {
   churchId: string;
+  subdomain?: string;
 }
 
 const STATUS_BADGES: Record<ServiceStatus, { label: string; className: string }> = {
@@ -23,7 +24,7 @@ const FILTERS: { id: string; label: string }[] = [
   { id: 'archived', label: 'Archived' },
 ];
 
-export default function ServicesTab({ churchId }: ServicesTabProps) {
+export default function ServicesTab({ churchId, subdomain }: ServicesTabProps) {
   const [services, setServices] = useState<InteractiveService[]>([]);
   const [templates, setTemplates] = useState<InteractiveService[]>([]);
   const [loading, setLoading] = useState(true);
@@ -34,6 +35,10 @@ export default function ServicesTab({ churchId }: ServicesTabProps) {
   const [createTitle, setCreateTitle] = useState('');
   const [createDate, setCreateDate] = useState('');
   const [cloneFromId, setCloneFromId] = useState('');
+  const [displayCopied, setDisplayCopied] = useState(false);
+  const [transparentCopied, setTransparentCopied] = useState(false);
+
+  const displayUrl = subdomain ? `https://${subdomain}.dailydna.app/live/display/${churchId}` : null;
 
   const fetchServices = useCallback(async () => {
     setLoading(true);
@@ -122,6 +127,43 @@ export default function ServicesTab({ churchId }: ServicesTabProps) {
           Create Service
         </button>
       </div>
+
+      {/* Display URL */}
+      {displayUrl && (
+        <div className="bg-navy/5 rounded-lg border border-navy/10 p-4 mb-6">
+          <div className="flex items-center gap-2 mb-2">
+            <Monitor className="w-4 h-4 text-navy" />
+            <h3 className="text-sm font-semibold text-navy">Projection Display</h3>
+          </div>
+          <p className="text-xs text-foreground-muted mb-3">
+            Open this URL on your projection screen to display live service content. Use the transparent version for ProPresenter or EasyWorship.
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(displayUrl);
+                setDisplayCopied(true);
+                setTimeout(() => setDisplayCopied(false), 2000);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-card-border rounded text-xs font-medium text-navy hover:bg-gray-50 transition-colors"
+            >
+              {displayCopied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+              {displayCopied ? 'Copied!' : 'Copy Display URL'}
+            </button>
+            <button
+              onClick={() => {
+                navigator.clipboard.writeText(`${displayUrl}?transparent=true`);
+                setTransparentCopied(true);
+                setTimeout(() => setTransparentCopied(false), 2000);
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-white border border-card-border rounded text-xs font-medium text-navy hover:bg-gray-50 transition-colors"
+            >
+              {transparentCopied ? <Check className="w-3.5 h-3.5 text-green-600" /> : <Copy className="w-3.5 h-3.5" />}
+              {transparentCopied ? 'Copied!' : 'Copy Transparent URL'}
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Create form */}
       {showCreate && (
