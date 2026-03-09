@@ -49,23 +49,21 @@ export async function sendEmail({ to, subject, html, churchId, notificationType,
   console.log('[EMAIL] Sending email via Resend:', { from: FROM_EMAIL, to, subject, attachments: attachments?.length || 0 });
 
   try {
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const sendPayload: Record<string, any> = {
+    const { data, error } = await resend.emails.send({
       from: FROM_EMAIL,
       to,
       subject,
       html,
       replyTo: REPLY_TO,
-    };
-
-    if (attachments && attachments.length > 0) {
-      sendPayload.attachments = attachments.map((a) => ({
-        filename: a.filename,
-        content: Buffer.from(a.content, 'base64'),
-      }));
-    }
-
-    const { data, error } = await resend.emails.send(sendPayload);
+      ...(attachments && attachments.length > 0
+        ? {
+            attachments: attachments.map((a) => ({
+              filename: a.filename,
+              content: Buffer.from(a.content, 'base64'),
+            })),
+          }
+        : {}),
+    });
 
     if (error) {
       console.error('[EMAIL] Resend API error:', JSON.stringify(error));
