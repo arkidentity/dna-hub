@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Plus, Loader2, Calendar, Blocks, Copy, Monitor, Check, ClipboardList } from 'lucide-react';
+import { Plus, Loader2, Calendar, Blocks, Copy, Monitor, Check, ClipboardList, Globe } from 'lucide-react';
 import type { InteractiveService, ServiceStatus } from '@/lib/types';
 import ServiceEditor from './ServiceEditor';
 import NextStepsResponsesTab from './NextStepsResponsesTab';
@@ -11,6 +11,7 @@ type SubTab = 'builder' | 'responses';
 interface ServicesTabProps {
   churchId: string;
   subdomain?: string;
+  isAdmin?: boolean;
 }
 
 const STATUS_BADGES: Record<ServiceStatus, { label: string; className: string }> = {
@@ -27,10 +28,11 @@ const FILTERS: { id: string; label: string }[] = [
   { id: 'archived', label: 'Archived' },
 ];
 
-export default function ServicesTab({ churchId, subdomain }: ServicesTabProps) {
+export default function ServicesTab({ churchId, subdomain, isAdmin }: ServicesTabProps) {
   const [subTab, setSubTab] = useState<SubTab>('builder');
   const [services, setServices] = useState<InteractiveService[]>([]);
   const [templates, setTemplates] = useState<InteractiveService[]>([]);
+  const [globalTemplates, setGlobalTemplates] = useState<InteractiveService[]>([]);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState('all');
   const [editingServiceId, setEditingServiceId] = useState<string | null>(null);
@@ -49,7 +51,7 @@ export default function ServicesTab({ churchId, subdomain }: ServicesTabProps) {
     try {
       const [servicesRes, templatesRes] = await Promise.all([
         fetch(`/api/admin/services?church_id=${churchId}`),
-        fetch(`/api/admin/services?church_id=${churchId}&include_templates=true`),
+        fetch(`/api/admin/services?church_id=${churchId}&include_templates=true&include_global=true`),
       ]);
 
       const servicesData = await servicesRes.json();
@@ -57,6 +59,7 @@ export default function ServicesTab({ churchId, subdomain }: ServicesTabProps) {
 
       setServices((servicesData.services || []).filter((s: InteractiveService) => !s.is_template));
       setTemplates((templatesData.services || []).filter((s: InteractiveService) => s.is_template));
+      setGlobalTemplates(templatesData.globalTemplates || []);
     } catch (err) {
       console.error('Error fetching services:', err);
     }
@@ -106,6 +109,7 @@ export default function ServicesTab({ churchId, subdomain }: ServicesTabProps) {
       <ServiceEditor
         serviceId={editingServiceId}
         churchId={churchId}
+        isAdmin={isAdmin}
         onBack={() => {
           setEditingServiceId(null);
           fetchServices();
@@ -235,11 +239,24 @@ export default function ServicesTab({ churchId, subdomain }: ServicesTabProps) {
                   className="w-full border border-card-border rounded px-3 py-2 text-sm"
                 >
                   <option value="">Start from scratch</option>
-                  {templates.map((t) => (
-                    <option key={t.id} value={t.id}>
-                      {t.template_name || t.title}
-                    </option>
-                  ))}
+                  {globalTemplates.length > 0 && (
+                    <optgroup label="Global Templates">
+                      {globalTemplates.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.template_name || t.title}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                  {templates.length > 0 && (
+                    <optgroup label="My Templates">
+                      {templates.map((t) => (
+                        <option key={t.id} value={t.id}>
+                          {t.template_name || t.title}
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
                 </select>
               </div>
             </div>
@@ -326,7 +343,32 @@ export default function ServicesTab({ churchId, subdomain }: ServicesTabProps) {
         </div>
       )}
 
-      {/* Templates section */}
+      {/* Global Templates section */}
+      {globalTemplates.length > 0 && (
+        <div className="mt-8">
+          <h3 className="text-sm font-semibold text-foreground-muted mb-3 flex items-center gap-1.5">
+            <Globe className="w-3.5 h-3.5" />
+            Global Templates
+          </h3>
+          <div className="space-y-2">
+            {globalTemplates.map((t) => (
+              <button
+                key={t.id}
+                onClick={() => setEditingServiceId(t.id)}
+                className="w-full bg-navy/5 rounded-lg border border-navy/10 p-3 hover:border-navy/30 transition-colors text-left flex items-center gap-3"
+              >
+                <Globe className="w-4 h-4 text-navy flex-shrink-0" />
+                <span className="text-sm text-navy truncate">{t.template_name || t.title}</span>
+                <span className="text-xs text-foreground-muted ml-auto">
+                  {t.block_count || 0} blocks
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Saved Templates section */}
       {templates.length > 0 && (
         <div className="mt-8">
           <h3 className="text-sm font-semibold text-foreground-muted mb-3 flex items-center gap-1.5">
@@ -342,6 +384,9 @@ export default function ServicesTab({ churchId, subdomain }: ServicesTabProps) {
               >
                 <Copy className="w-4 h-4 text-foreground-muted flex-shrink-0" />
                 <span className="text-sm text-navy truncate">{t.template_name || t.title}</span>
+                {t.is_global && (
+                  <span className="px-1.5 py-0.5 rounded text-xs bg-navy/10 text-navy flex-shrink-0">Global</span>
+                )}
                 <span className="text-xs text-foreground-muted ml-auto">
                   {t.block_count || 0} blocks
                 </span>

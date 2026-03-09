@@ -12,6 +12,7 @@ import {
   Plus,
   BookmarkPlus,
   Undo2,
+  Globe,
 } from 'lucide-react';
 import type { InteractiveService, ServiceBlock, BlockType, ServiceStatus } from '@/lib/types';
 import BlockList from './BlockList';
@@ -28,10 +29,11 @@ const STATUS_BADGES: Record<ServiceStatus, { label: string; className: string }>
 interface ServiceEditorProps {
   serviceId: string;
   churchId: string;
+  isAdmin?: boolean;
   onBack: () => void;
 }
 
-export default function ServiceEditor({ serviceId, churchId, onBack }: ServiceEditorProps) {
+export default function ServiceEditor({ serviceId, churchId, isAdmin, onBack }: ServiceEditorProps) {
   const [service, setService] = useState<InteractiveService | null>(null);
   const [blocks, setBlocks] = useState<ServiceBlock[]>([]);
   const [loading, setLoading] = useState(true);
@@ -365,6 +367,21 @@ export default function ServiceEditor({ serviceId, churchId, onBack }: ServiceEd
             >
               {actioning === 'save_as_template' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookmarkPlus className="w-3.5 h-3.5" />}
               Save as Template
+            </button>
+          )}
+
+          {service.is_template && isAdmin && (
+            <button
+              onClick={() => handleAction('toggle_global')}
+              disabled={!!actioning}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded text-sm transition-colors disabled:opacity-50 ${
+                service.is_global
+                  ? 'bg-navy text-white hover:bg-navy/90'
+                  : 'border border-card-border hover:bg-gray-50'
+              }`}
+            >
+              {actioning === 'toggle_global' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Globe className="w-3.5 h-3.5" />}
+              {service.is_global ? 'Global' : 'Make Global'}
             </button>
           )}
 

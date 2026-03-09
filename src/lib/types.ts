@@ -936,6 +936,7 @@ export interface InteractiveService {
   created_by: string | null;
   status: ServiceStatus;
   is_template: boolean;
+  is_global: boolean;
   template_name: string | null;
   created_at: string;
   updated_at: string;

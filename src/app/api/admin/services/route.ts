@@ -13,7 +13,7 @@ async function authorize(churchId: string) {
 
 // ============================================
 // GET — List services for a church
-// Query: ?church_id=UUID&status=draft&include_templates=true
+// Query: ?church_id=UUID&status=draft&include_templates=true&include_global=true
 // ============================================
 export async function GET(request: NextRequest) {
   try {
@@ -21,6 +21,7 @@ export async function GET(request: NextRequest) {
     const churchId = searchParams.get('church_id');
     const status = searchParams.get('status');
     const includeTemplates = searchParams.get('include_templates') === 'true';
+    const includeGlobal = searchParams.get('include_global') === 'true';
 
     if (!churchId) {
       return NextResponse.json({ error: 'church_id is required' }, { status: 400 });
@@ -61,7 +62,25 @@ export async function GET(request: NextRequest) {
       service_blocks: undefined,
     }));
 
-    return NextResponse.json({ services });
+    // Fetch global templates from other churches if requested
+    let globalTemplates: typeof services = [];
+    if (includeGlobal) {
+      const { data: globalData } = await supabase
+        .from('interactive_services')
+        .select('*, service_blocks(id)')
+        .eq('is_template', true)
+        .eq('is_global', true)
+        .neq('church_id', churchId)
+        .order('updated_at', { ascending: false });
+
+      globalTemplates = (globalData || []).map((s) => ({
+        ...s,
+        block_count: s.service_blocks?.length || 0,
+        service_blocks: undefined,
+      }));
+    }
+
+    return NextResponse.json({ services, globalTemplates });
   } catch (err) {
     console.error('[ADMIN] Services GET error:', err);
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });

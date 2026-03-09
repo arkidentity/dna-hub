@@ -576,7 +576,7 @@ export default function DashboardPage() {
         )}
 
         {activeTab === 'services' && (
-          <ServicesTab churchId={church.id} subdomain={church.subdomain || undefined} />
+          <ServicesTab churchId={church.id} subdomain={church.subdomain || undefined} isAdmin={isAdmin} />
         )}
 
         {/* Help Section */}

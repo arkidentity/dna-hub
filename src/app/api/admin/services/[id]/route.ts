@@ -202,6 +202,29 @@ export async function PATCH(
       return NextResponse.json({ success: true, service: newService });
     }
 
+    // Toggle global visibility (admin/coach only)
+    if (action === 'toggle_global') {
+      if (!isAdminOrCoach(session)) {
+        return NextResponse.json({ error: 'Only admins can manage global templates' }, { status: 403 });
+      }
+      if (!service.is_template) {
+        return NextResponse.json({ error: 'Only templates can be made global' }, { status: 400 });
+      }
+
+      const { data, error: toggleError } = await supabase
+        .from('interactive_services')
+        .update({ is_global: !service.is_global, updated_at: new Date().toISOString() })
+        .eq('id', serviceId)
+        .select()
+        .single();
+
+      if (toggleError) {
+        return NextResponse.json({ error: 'Failed to toggle global status' }, { status: 500 });
+      }
+
+      return NextResponse.json({ success: true, service: data });
+    }
+
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (err) {
     console.error('[ADMIN] Service PATCH error:', err);
