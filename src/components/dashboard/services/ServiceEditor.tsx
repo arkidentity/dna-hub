@@ -110,7 +110,6 @@ export default function ServiceEditor({ serviceId, churchId, onBack }: ServiceEd
       if (res.ok) {
         const data = await res.json();
         if (action === 'duplicate' || action === 'save_as_template') {
-          // Go back to list to see the new item
           onBack();
         } else {
           setService(data.service);
@@ -158,7 +157,6 @@ export default function ServiceEditor({ serviceId, churchId, onBack }: ServiceEd
       if (res.ok) {
         const data = await res.json();
         setBlocks((prev) => [...prev, data.block]);
-        // Open config modal for the new block
         setEditingBlock(data.block);
       }
     } catch (err) {
@@ -166,17 +164,29 @@ export default function ServiceEditor({ serviceId, churchId, onBack }: ServiceEd
     }
   };
 
-  const handleReorder = async (blockId: string, direction: 'up' | 'down') => {
+  const handleMoveToTop = async (blockId: string) => {
     const idx = blocks.findIndex((b) => b.id === blockId);
-    if (idx === -1) return;
-    if (direction === 'up' && idx === 0) return;
-    if (direction === 'down' && idx === blocks.length - 1) return;
+    if (idx <= 0) return;
 
-    const swapIdx = direction === 'up' ? idx - 1 : idx + 1;
-    const newBlocks = [...blocks];
-    [newBlocks[idx], newBlocks[swapIdx]] = [newBlocks[swapIdx], newBlocks[idx]];
+    const block = blocks[idx];
+    const newBlocks = [block, ...blocks.filter((b) => b.id !== blockId)];
+    setBlocks(newBlocks);
 
-    // Optimistic update
+    try {
+      await fetch(`/api/admin/services/${serviceId}/blocks`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          blocks: newBlocks.map((b, i) => ({ id: b.id, sortOrder: i })),
+        }),
+      });
+    } catch (err) {
+      console.error('Error moving block to top:', err);
+      fetchService();
+    }
+  };
+
+  const handleReorder = async (newBlocks: ServiceBlock[]) => {
     setBlocks(newBlocks);
 
     try {
@@ -189,12 +199,11 @@ export default function ServiceEditor({ serviceId, churchId, onBack }: ServiceEd
       });
     } catch (err) {
       console.error('Error reordering blocks:', err);
-      fetchService(); // Revert on failure
+      fetchService();
     }
   };
 
   const handleDeleteBlock = async (blockId: string) => {
-    // Optimistic removal
     setBlocks((prev) => prev.filter((b) => b.id !== blockId));
 
     try {
@@ -448,6 +457,7 @@ export default function ServiceEditor({ serviceId, churchId, onBack }: ServiceEd
           <BlockList
             blocks={blocks}
             onReorder={handleReorder}
+            onMoveToTop={handleMoveToTop}
             onEdit={setEditingBlock}
             onDelete={handleDeleteBlock}
           />
