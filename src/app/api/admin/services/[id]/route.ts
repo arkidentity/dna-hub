@@ -184,7 +184,7 @@ export async function PATCH(
       // Clone blocks
       const { data: sourceBlocks } = await supabase
         .from('service_blocks')
-        .select('block_type, config, sort_order')
+        .select('block_type, config, sort_order, show_on_display')
         .eq('service_id', serviceId)
         .order('sort_order', { ascending: true });
 
@@ -195,6 +195,7 @@ export async function PATCH(
             block_type: b.block_type,
             config: b.config,
             sort_order: b.sort_order,
+            show_on_display: b.show_on_display,
           }))
         );
       }

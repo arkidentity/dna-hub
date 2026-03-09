@@ -138,7 +138,7 @@ export async function POST(request: NextRequest) {
     if (cloneFromId) {
       const { data: sourceBlocks } = await supabase
         .from('service_blocks')
-        .select('block_type, config, sort_order')
+        .select('block_type, config, sort_order, show_on_display')
         .eq('service_id', cloneFromId)
         .order('sort_order', { ascending: true });
 
@@ -148,6 +148,7 @@ export async function POST(request: NextRequest) {
           block_type: b.block_type,
           config: b.config,
           sort_order: b.sort_order,
+          show_on_display: b.show_on_display,
         }));
 
         await supabase.from('service_blocks').insert(clonedBlocks);

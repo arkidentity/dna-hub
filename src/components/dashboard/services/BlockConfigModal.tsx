@@ -261,19 +261,74 @@ function TeachingNoteForm({ config, onChange }: FormProps) {
   );
 }
 
+const CREED_CARD_TITLES: Record<number, string> = {
+  1: 'The Triune God',
+  2: 'One God in Three Persons',
+  3: 'God the Father',
+  4: 'God the Son',
+  5: 'God the Holy Spirit',
+  6: 'The Divine Dance',
+  7: 'The Creator God',
+  8: 'God\'s Sovereignty',
+  9: 'The Incarnation',
+  10: 'The Virgin Birth',
+  11: 'Fully God and Fully Human',
+  12: 'Christ\'s Sacrifice',
+  13: 'The Resurrection',
+  14: 'The Ascension',
+  15: 'Christ Our High Priest',
+  16: 'Christ the Head',
+  17: 'The Comforter',
+  18: 'Regeneration',
+  19: 'Sanctification',
+  20: 'The Fruit of the Spirit',
+  21: 'Gifts of the Spirit',
+  22: 'The Spirit\'s Indwelling',
+  23: 'The Gospel',
+  24: 'Grace',
+  25: 'Faith',
+  26: 'Justification',
+  27: 'Repentance',
+  28: 'Adoption',
+  29: 'Inspiration of Scripture',
+  30: 'Authority of Scripture',
+  31: 'Christ in Scripture',
+  32: 'The Living Word',
+  33: 'The Church',
+  34: 'The Body of Christ',
+  35: 'Baptism',
+  36: 'The Lord\'s Supper',
+  37: 'Communion of Saints',
+  38: 'One, Holy, Catholic, Apostolic',
+  39: 'Discipleship',
+  40: 'Love',
+  41: 'Prayer',
+  42: 'Spiritual Warfare',
+  43: 'Perseverance',
+  44: 'Good Works',
+  45: 'Suffering',
+  46: 'Witness',
+  47: 'The Second Coming',
+  48: 'Resurrection of the Dead',
+  49: 'Final Judgment',
+  50: 'New Heaven and New Earth',
+};
+
 function CreedCardForm({ config, onChange }: FormProps) {
   return (
     <div>
-      <label className="block text-sm text-foreground-muted mb-1">Creed Card Number</label>
-      <input
-        type="number"
-        min={1}
-        max={50}
+      <label className="block text-sm text-foreground-muted mb-1">Creed Card</label>
+      <select
         value={(config.card_id as number) || 1}
-        onChange={(e) => onChange('card_id', parseInt(e.target.value) || 1)}
+        onChange={(e) => onChange('card_id', parseInt(e.target.value))}
         className="w-full border border-card-border rounded px-3 py-2 text-sm"
-      />
-      <p className="text-xs text-foreground-muted mt-1">Enter a card number between 1 and 50.</p>
+      >
+        {Object.entries(CREED_CARD_TITLES).map(([num, title]) => (
+          <option key={num} value={num}>
+            #{num} — {title}
+          </option>
+        ))}
+      </select>
     </div>
   );
 }
