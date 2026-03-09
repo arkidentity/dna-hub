@@ -28,9 +28,10 @@ interface Stats {
 
 interface PrayerWallTabProps {
   churchId: string;
+  subdomain?: string;
 }
 
-export default function PrayerWallTab({ churchId }: PrayerWallTabProps) {
+export default function PrayerWallTab({ churchId, subdomain }: PrayerWallTabProps) {
   const [posts, setPosts] = useState<PrayerWallPost[]>([]);
   const [stats, setStats] = useState<Stats>({ total: 0, active: 0, answered: 0, pending: 0, hidden: 0 });
   const [requiresApproval, setRequiresApproval] = useState(false);
@@ -40,8 +41,8 @@ export default function PrayerWallTab({ churchId }: PrayerWallTabProps) {
   const [actioningId, setActioningId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
 
-  const displayUrl = typeof window !== 'undefined'
-    ? `${window.location.origin.replace('dna.arkidentity.com', 'dailydna.app')}/prayer-wall/display/${churchId}`
+  const displayUrl = subdomain
+    ? `https://${subdomain}.dailydna.app/prayer-wall/display/${churchId}`
     : `/prayer-wall/display/${churchId}`;
 
   const fetchData = useCallback(async () => {

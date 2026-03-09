@@ -922,7 +922,9 @@ export type BlockType =
   | 'giving'
   | 'next_steps'
   | 'connect_card'
-  | 'fill_in_blank';
+  | 'fill_in_blank'
+  | 'prayer_wall'
+  | 'announcement';
 
 export interface InteractiveService {
   id: string;

@@ -18,9 +18,10 @@ const SUB_TABS: { id: SubTab; label: string; icon: typeof Heart }[] = [
 
 interface DailyDNATabProps {
   churchId: string;
+  subdomain?: string;
 }
 
-export default function DailyDNATab({ churchId }: DailyDNATabProps) {
+export default function DailyDNATab({ churchId, subdomain }: DailyDNATabProps) {
   const [activeSubTab, setActiveSubTab] = useState<SubTab>('prayer-wall');
 
   return (
@@ -49,7 +50,7 @@ export default function DailyDNATab({ churchId }: DailyDNATabProps) {
 
       {/* Sub-tab content */}
       {activeSubTab === 'prayer-wall' && (
-        <PrayerWallTab churchId={churchId} />
+        <PrayerWallTab churchId={churchId} subdomain={subdomain} />
       )}
       {activeSubTab === 'testimonies' && (
         <TestimonySubmissionsTab churchId={churchId} />

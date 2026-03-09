@@ -10,6 +10,8 @@ import {
   Footprints,
   ClipboardList,
   TextCursorInput,
+  HandHeart,
+  Megaphone,
   type LucideIcon,
 } from 'lucide-react';
 import type { BlockType } from '@/lib/types';
@@ -155,6 +157,27 @@ const BLOCK_TYPES: BlockTypeInfo[] = [
     },
     defaultShowOnDisplay: false,
   },
+  // Community blocks
+  {
+    type: 'prayer_wall',
+    label: 'Prayer Wall',
+    icon: HandHeart,
+    category: 'engagement',
+    categoryLabel: 'Engagement',
+    description: 'Show church prayer wall during service',
+    defaultConfig: { display_count: 10, title: 'Church Prayer Wall' },
+    defaultShowOnDisplay: true,
+  },
+  {
+    type: 'announcement',
+    label: 'Announcement',
+    icon: Megaphone,
+    category: 'action',
+    categoryLabel: 'Action',
+    description: 'Image announcement with sign-up action',
+    defaultConfig: { title: '', description: '', image_url: '', cta_text: 'Sign Up', cta_type: 'sign_up' },
+    defaultShowOnDisplay: true,
+  },
 ];
 
 export function getBlockTypeInfo(type: BlockType): BlockTypeInfo {
@@ -206,6 +229,12 @@ export function getBlockConfigSummary(type: BlockType, config: Record<string, un
       const bc = config.blank_count as number | undefined;
       return bc ? `${bc} blank${bc > 1 ? 's' : ''}` : 'No blanks set';
     }
+    case 'prayer_wall': {
+      const dc = config.display_count as number | undefined;
+      return dc ? `Showing ${dc} prayers` : 'Prayer Wall';
+    }
+    case 'announcement':
+      return (config.title as string)?.slice(0, 50) || 'Untitled announcement';
     default:
       return '';
   }

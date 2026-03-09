@@ -538,7 +538,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
 
         {/* Prayer Wall Tab */}
         {activeTab === 'prayer-wall' && (
-          <PrayerWallTab churchId={churchId} />
+          <PrayerWallTab churchId={churchId} subdomain={church.subdomain || undefined} />
         )}
 
         {/* Demo Tab */}

@@ -572,7 +572,7 @@ export default function DashboardPage() {
         )}
 
         {activeTab === 'daily-dna' && (
-          <DailyDNATab churchId={church.id} />
+          <DailyDNATab churchId={church.id} subdomain={church.subdomain || undefined} />
         )}
 
         {activeTab === 'services' && (

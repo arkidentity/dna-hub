@@ -78,6 +78,12 @@ export default function BlockConfigModal({ block, onSave, onClose }: BlockConfig
           {block.block_type === 'fill_in_blank' && (
             <FillInBlankForm config={config} onChange={updateField} />
           )}
+          {block.block_type === 'prayer_wall' && (
+            <PrayerWallForm config={config} onChange={updateField} />
+          )}
+          {block.block_type === 'announcement' && (
+            <AnnouncementForm config={config} onChange={updateField} />
+          )}
 
           {/* Display visibility toggle (all blocks) */}
           <div className="pt-3 border-t border-card-border">
@@ -619,6 +625,158 @@ function FillInBlankForm({ config, onChange }: FormProps) {
           ? 'Responses are sent for review and can be shown on the projection display.'
           : "Responses are private — saved only on the user's device (church bulletin style)."}
       </p>
+    </>
+  );
+}
+
+function PrayerWallForm({ config, onChange }: FormProps) {
+  return (
+    <>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">Title</label>
+        <input
+          type="text"
+          value={(config.title as string) || ''}
+          onChange={(e) => onChange('title', e.target.value)}
+          placeholder="Church Prayer Wall"
+          className="w-full border border-card-border rounded px-3 py-2 text-sm"
+        />
+      </div>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">Number of prayers to show</label>
+        <input
+          type="number"
+          min={3}
+          max={30}
+          value={(config.display_count as number) || 10}
+          onChange={(e) => onChange('display_count', parseInt(e.target.value) || 10)}
+          className="w-full border border-card-border rounded px-3 py-2 text-sm"
+        />
+        <p className="text-xs text-foreground-muted mt-1">Shows the most recent active prayer requests from your church prayer wall.</p>
+      </div>
+    </>
+  );
+}
+
+function AnnouncementForm({ config, onChange }: FormProps) {
+  const [uploading, setUploading] = useState(false);
+  const fileRef = useRef<HTMLInputElement>(null);
+  const ctaType = (config.cta_type as string) || 'sign_up';
+
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setUploading(true);
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('service_id', 'announcement');
+    formData.append('block_id', `${Date.now()}`);
+
+    try {
+      const res = await fetch('/api/admin/services/upload-image', {
+        method: 'POST',
+        body: formData,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        onChange('image_url', data.image_url);
+      }
+    } catch (err) {
+      console.error('Upload failed:', err);
+    }
+    setUploading(false);
+  };
+
+  return (
+    <>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">Title</label>
+        <input
+          type="text"
+          value={(config.title as string) || ''}
+          onChange={(e) => onChange('title', e.target.value)}
+          placeholder="Mission Trip to Guatemala"
+          className="w-full border border-card-border rounded px-3 py-2 text-sm"
+        />
+      </div>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">Description</label>
+        <textarea
+          value={(config.description as string) || ''}
+          onChange={(e) => onChange('description', e.target.value)}
+          placeholder="Join us this summer for an incredible opportunity to serve..."
+          rows={3}
+          className="w-full border border-card-border rounded px-3 py-2 text-sm"
+        />
+      </div>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">Image</label>
+        {(config.image_url as string) ? (
+          <div className="relative">
+            <img
+              src={config.image_url as string}
+              alt="Announcement"
+              className="w-full h-40 object-cover rounded border border-card-border"
+            />
+            <button
+              type="button"
+              onClick={() => { onChange('image_url', ''); if (fileRef.current) fileRef.current.value = ''; }}
+              className="absolute top-2 right-2 bg-white rounded-full p-1 shadow"
+            >
+              <Trash2 className="w-3.5 h-3.5 text-error" />
+            </button>
+          </div>
+        ) : (
+          <div
+            onClick={() => fileRef.current?.click()}
+            className="border-2 border-dashed border-card-border rounded-lg p-6 text-center cursor-pointer hover:border-navy/40 transition-colors"
+          >
+            {uploading ? (
+              <div className="flex items-center justify-center gap-2 text-sm text-foreground-muted">
+                <Loader2 className="w-4 h-4 animate-spin" /> Uploading...
+              </div>
+            ) : (
+              <p className="text-sm text-foreground-muted">Click to upload image (PNG, JPG, WebP — max 5MB)</p>
+            )}
+          </div>
+        )}
+        <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleUpload} className="hidden" />
+      </div>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">Button Text</label>
+        <input
+          type="text"
+          value={(config.cta_text as string) || ''}
+          onChange={(e) => onChange('cta_text', e.target.value)}
+          placeholder="Sign Up"
+          className="w-full border border-card-border rounded px-3 py-2 text-sm"
+        />
+      </div>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">Button Action</label>
+        <select
+          value={ctaType}
+          onChange={(e) => onChange('cta_type', e.target.value)}
+          className="w-full border border-card-border rounded px-3 py-2 text-sm"
+        >
+          <option value="sign_up">Sign Up (captures contact info)</option>
+          <option value="learn_more">Learn More (captures interest)</option>
+          <option value="external_link">External Link (opens URL)</option>
+        </select>
+      </div>
+      {ctaType === 'external_link' && (
+        <div>
+          <label className="block text-sm text-foreground-muted mb-1">Link URL</label>
+          <input
+            type="url"
+            value={(config.cta_url as string) || ''}
+            onChange={(e) => onChange('cta_url', e.target.value)}
+            placeholder="https://..."
+            className="w-full border border-card-border rounded px-3 py-2 text-sm"
+          />
+        </div>
+      )}
     </>
   );
 }
