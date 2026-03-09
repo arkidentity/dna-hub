@@ -1,9 +1,12 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Plus, Loader2, Calendar, Blocks, Copy, Monitor, Check } from 'lucide-react';
+import { Plus, Loader2, Calendar, Blocks, Copy, Monitor, Check, ClipboardList } from 'lucide-react';
 import type { InteractiveService, ServiceStatus } from '@/lib/types';
 import ServiceEditor from './ServiceEditor';
+import NextStepsResponsesTab from './NextStepsResponsesTab';
+
+type SubTab = 'builder' | 'responses';
 
 interface ServicesTabProps {
   churchId: string;
@@ -25,6 +28,7 @@ const FILTERS: { id: string; label: string }[] = [
 ];
 
 export default function ServicesTab({ churchId, subdomain }: ServicesTabProps) {
+  const [subTab, setSubTab] = useState<SubTab>('builder');
   const [services, setServices] = useState<InteractiveService[]>([]);
   const [templates, setTemplates] = useState<InteractiveService[]>([]);
   const [loading, setLoading] = useState(true);
@@ -116,6 +120,38 @@ export default function ServicesTab({ churchId, subdomain }: ServicesTabProps) {
 
   return (
     <div>
+      {/* Sub-navigation */}
+      <div className="flex gap-2 mb-6">
+        <button
+          onClick={() => setSubTab('builder')}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+            subTab === 'builder'
+              ? 'bg-navy text-white'
+              : 'bg-gray-100 text-foreground-muted hover:bg-gray-200'
+          }`}
+        >
+          <Blocks className="w-3.5 h-3.5" />
+          Service Builder
+        </button>
+        <button
+          onClick={() => setSubTab('responses')}
+          className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
+            subTab === 'responses'
+              ? 'bg-navy text-white'
+              : 'bg-gray-100 text-foreground-muted hover:bg-gray-200'
+          }`}
+        >
+          <ClipboardList className="w-3.5 h-3.5" />
+          Follow-Up Responses
+        </button>
+      </div>
+
+      {/* Responses sub-tab */}
+      {subTab === 'responses' ? (
+        <NextStepsResponsesTab churchId={churchId} />
+      ) : (
+      <div>
+
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
         <h2 className="text-lg font-semibold text-navy">Church React</h2>
@@ -313,6 +349,8 @@ export default function ServicesTab({ churchId, subdomain }: ServicesTabProps) {
             ))}
           </div>
         </div>
+      )}
+    </div>
       )}
     </div>
   );

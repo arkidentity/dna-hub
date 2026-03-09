@@ -7,6 +7,8 @@ import {
   sendProposalExpiringEmail,
   sendInactiveReminderEmail,
 } from '@/lib/email';
+import { sendServiceSummaryEmails } from '@/lib/service-summary';
+import type { ResponseRow } from '@/lib/service-summary';
 
 // Vercel Cron jobs send a specific header to authenticate
 const CRON_SECRET = process.env.CRON_SECRET;
@@ -405,6 +407,100 @@ export async function GET(request: NextRequest) {
     }
 
     // =====================================================
+    // 6. SERVICE FOLLOW-UP SUMMARY EMAILS (Auto-send)
+    // Ended live sessions that haven't had summary emails sent
+    // Sends coordinator emails + master summary to service creator
+    // =====================================================
+    const { data: unsentSessions } = await supabaseAdmin
+      .from('live_sessions')
+      .select('id, church_id, service_id, ended_at')
+      .not('ended_at', 'is', null)
+      .is('summary_emailed_at', null)
+      .order('ended_at', { ascending: false })
+      .limit(50);
+
+    if (unsentSessions && unsentSessions.length > 0) {
+      console.log(`[CRON] Found ${unsentSessions.length} sessions needing summary emails`);
+
+      for (const ls of unsentSessions) {
+        try {
+          // Get responses for this session
+          const { data: responses, error: rpcError } = await supabaseAdmin.rpc(
+            'get_service_responses_for_session',
+            { p_session_id: ls.id }
+          );
+
+          if (rpcError) {
+            console.error(`[CRON] RPC error for session ${ls.id}:`, rpcError);
+            results.push({
+              type: 'service_summary',
+              churchId: ls.church_id,
+              churchName: `session:${ls.id}`,
+              success: false,
+              error: rpcError.message,
+            });
+            continue;
+          }
+
+          const rows = (responses || []) as ResponseRow[];
+
+          if (rows.length === 0) {
+            // No actionable responses — mark as emailed so we don't keep checking
+            await supabaseAdmin
+              .from('live_sessions')
+              .update({ summary_emailed_at: new Date().toISOString() })
+              .eq('id', ls.id);
+            continue;
+          }
+
+          // Look up the service creator's email for the master summary
+          let creatorEmail: string | null = null;
+          const { data: service } = await supabaseAdmin
+            .from('interactive_services')
+            .select('created_by')
+            .eq('id', ls.service_id)
+            .single();
+
+          if (service?.created_by) {
+            const { data: userData } = await supabaseAdmin.auth.admin.getUserById(service.created_by);
+            creatorEmail = userData?.user?.email || null;
+          }
+
+          const serviceTitle = rows[0]?.service_title || 'Service';
+          const result = await sendServiceSummaryEmails(rows, ls.church_id, creatorEmail);
+
+          // Mark session as emailed
+          await supabaseAdmin
+            .from('live_sessions')
+            .update({ summary_emailed_at: new Date().toISOString() })
+            .eq('id', ls.id);
+
+          results.push({
+            type: 'service_summary',
+            churchId: ls.church_id,
+            churchName: serviceTitle,
+            success: true,
+          });
+
+          if (result.coordinators.length > 0) {
+            console.log(
+              `[CRON] Sent ${result.sent} emails for "${serviceTitle}" → ${result.coordinators.join(', ')}`
+            );
+          }
+        } catch (err) {
+          console.error(`[CRON] Error processing session ${ls.id}:`, err);
+          results.push({
+            type: 'service_summary',
+            churchId: ls.church_id,
+            churchName: `session:${ls.id}`,
+            success: false,
+            error: String(err),
+          });
+        }
+      }
+    }
+
+    // =====================================================
     // SUMMARY
     // =====================================================
     const summary = {
@@ -418,6 +514,7 @@ export async function GET(request: NextRequest) {
         call_missed: results.filter((r) => r.type === 'call_missed').length,
         proposal_expiring: results.filter((r) => r.type === 'proposal_expiring').length,
         inactive_reminder: results.filter((r) => r.type === 'inactive_reminder').length,
+        service_summary: results.filter((r) => r.type === 'service_summary').length,
       },
       results,
     };

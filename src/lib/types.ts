@@ -972,7 +972,26 @@ export interface PollConfig {
 
 export interface NextStepsConfig {
   prompt: string;
-  steps: { id: string; label: string }[];
+  steps: { id: string; label: string; coordinator_email?: string }[];
+}
+
+export interface ServiceFollowUpResponse {
+  response_id: string;
+  session_id?: string;
+  person_key: string;
+  display_name: string;
+  email: string | null;
+  phone: string | null;
+  is_guest: boolean;
+  block_type: string;
+  response_type: string;
+  response_label: string;
+  coordinator_email: string | null;
+  response_data: Record<string, unknown>;
+  responded_at: string;
+  service_title: string;
+  service_date: string | null;
+  session_ended_at: string | null;
 }
 
 export interface BreakoutConfig {
@@ -1011,6 +1030,7 @@ export interface OpenResponseConfig {
 export interface ConnectCardConfig {
   fields: string[];
   custom_fields: { label: string; type: string }[];
+  coordinator_email?: string;
 }
 
 export interface FillInBlankConfig {

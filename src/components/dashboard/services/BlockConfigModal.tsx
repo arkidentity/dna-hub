@@ -464,7 +464,7 @@ function GivingForm({ config, onChange }: FormProps) {
 }
 
 function NextStepsForm({ config, onChange }: FormProps) {
-  const steps = (config.steps as { id: string; label: string }[]) || [];
+  const steps = (config.steps as { id: string; label: string; coordinator_email?: string }[]) || [];
 
   const addStep = () => {
     if (steps.length >= 8) return;
@@ -473,6 +473,11 @@ function NextStepsForm({ config, onChange }: FormProps) {
 
   const updateStep = (idx: number, value: string) => {
     const updated = steps.map((s, i) => (i === idx ? { ...s, label: value } : s));
+    onChange('steps', updated);
+  };
+
+  const updateStepCoordinator = (idx: number, value: string) => {
+    const updated = steps.map((s, i) => (i === idx ? { ...s, coordinator_email: value || undefined } : s));
     onChange('steps', updated);
   };
 
@@ -489,15 +494,28 @@ function NextStepsForm({ config, onChange }: FormProps) {
       </div>
       <div>
         <label className="block text-sm text-foreground-muted mb-2">Steps ({steps.length}/8)</label>
-        <div className="space-y-2">
+        <div className="space-y-3">
           {steps.map((step, idx) => (
-            <div key={step.id} className="flex gap-2">
-              <input type="text" value={step.label} onChange={(e) => updateStep(idx, e.target.value)} placeholder="e.g. Water Baptism, Join a Life Group..." className="flex-1 border border-card-border rounded px-3 py-2 text-sm" />
-              {steps.length > 1 && (
-                <button onClick={() => removeStep(idx)} className="p-2 text-error hover:bg-red-50 rounded">
-                  <Trash2 className="w-3.5 h-3.5" />
-                </button>
-              )}
+            <div key={step.id} className="space-y-1">
+              <div className="flex gap-2">
+                <input type="text" value={step.label} onChange={(e) => updateStep(idx, e.target.value)} placeholder="e.g. Water Baptism, Join a Life Group..." className="flex-1 border border-card-border rounded px-3 py-2 text-sm" />
+                {steps.length > 1 && (
+                  <button onClick={() => removeStep(idx)} className="p-2 text-error hover:bg-red-50 rounded">
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
+                )}
+              </div>
+              <input
+                type="email"
+                value={step.coordinator_email || ''}
+                onChange={(e) => updateStepCoordinator(idx, e.target.value)}
+                placeholder="Coordinator email (required)"
+                className={`w-full border rounded px-3 py-1.5 text-xs ${
+                  step.label && !step.coordinator_email
+                    ? 'border-amber-300 bg-amber-50/50 text-foreground-muted placeholder:text-amber-400'
+                    : 'border-card-border text-foreground-muted'
+                }`}
+              />
             </div>
           ))}
         </div>
@@ -507,7 +525,7 @@ function NextStepsForm({ config, onChange }: FormProps) {
           </button>
         )}
       </div>
-      <p className="text-xs text-foreground-muted">Congregation can select multiple steps. Their contact info is captured for follow-up.</p>
+      <p className="text-xs text-foreground-muted">Each step needs a coordinator email. They&apos;ll receive the follow-up list with all responder info after the service.</p>
     </>
   );
 }
@@ -530,17 +548,34 @@ function ConnectCardForm({ config, onChange }: FormProps) {
   };
 
   return (
-    <div>
-      <label className="block text-sm text-foreground-muted mb-2">Fields to include</label>
-      <div className="space-y-2">
-        {availableFields.map((f) => (
-          <label key={f.id} className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={fields.includes(f.id)} onChange={() => toggleField(f.id)} className="rounded border-card-border" />
-            <span className="text-sm text-navy">{f.label}</span>
-          </label>
-        ))}
+    <>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-2">Fields to include</label>
+        <div className="space-y-2">
+          {availableFields.map((f) => (
+            <label key={f.id} className="flex items-center gap-2 cursor-pointer">
+              <input type="checkbox" checked={fields.includes(f.id)} onChange={() => toggleField(f.id)} className="rounded border-card-border" />
+              <span className="text-sm text-navy">{f.label}</span>
+            </label>
+          ))}
+        </div>
       </div>
-    </div>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">Coordinator Email</label>
+        <input
+          type="email"
+          value={(config.coordinator_email as string) || ''}
+          onChange={(e) => onChange('coordinator_email', e.target.value)}
+          placeholder="welcome@church.com"
+          className={`w-full border rounded px-3 py-2 text-sm ${
+            !config.coordinator_email
+              ? 'border-amber-300 bg-amber-50/50 placeholder:text-amber-400'
+              : 'border-card-border'
+          }`}
+        />
+        <p className="text-xs text-foreground-muted mt-1">Receives connect card submissions with visitor contact info after the service.</p>
+      </div>
+    </>
   );
 }
 
@@ -777,6 +812,21 @@ function AnnouncementForm({ config, onChange }: FormProps) {
           />
         </div>
       )}
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">Coordinator Email</label>
+        <input
+          type="email"
+          value={(config.coordinator_email as string) || ''}
+          onChange={(e) => onChange('coordinator_email', e.target.value)}
+          placeholder="coordinator@church.com"
+          className={`w-full border rounded px-3 py-2 text-sm ${
+            !config.coordinator_email
+              ? 'border-amber-300 bg-amber-50/50 placeholder:text-amber-400'
+              : 'border-card-border'
+          }`}
+        />
+        <p className="text-xs text-foreground-muted mt-1">Receives sign-up list with responder contact info after the service.</p>
+      </div>
     </>
   );
 }

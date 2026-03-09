@@ -22,6 +22,11 @@ function getResend(): Resend | null {
   return _resend;
 }
 
+interface EmailAttachment {
+  filename: string;
+  content: string; // base64 encoded
+}
+
 interface EmailOptions {
   to: string;
   subject: string;
@@ -29,27 +34,38 @@ interface EmailOptions {
   // Optional: for logging to notification_log
   churchId?: string;
   notificationType?: string;
+  attachments?: EmailAttachment[];
 }
 
-export async function sendEmail({ to, subject, html, churchId, notificationType }: EmailOptions) {
+export async function sendEmail({ to, subject, html, churchId, notificationType, attachments }: EmailOptions) {
   const resend = getResend();
 
   if (!resend) {
     console.log('[EMAIL] No RESEND_API_KEY found - running in DEV MODE');
-    console.log('[EMAIL - DEV MODE]', { to, subject });
+    console.log('[EMAIL - DEV MODE]', { to, subject, attachments: attachments?.length || 0 });
     return { success: true, dev: true };
   }
 
-  console.log('[EMAIL] Sending email via Resend:', { from: FROM_EMAIL, to, subject });
+  console.log('[EMAIL] Sending email via Resend:', { from: FROM_EMAIL, to, subject, attachments: attachments?.length || 0 });
 
   try {
-    const { data, error } = await resend.emails.send({
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sendPayload: Record<string, any> = {
       from: FROM_EMAIL,
       to,
       subject,
       html,
       replyTo: REPLY_TO,
-    });
+    };
+
+    if (attachments && attachments.length > 0) {
+      sendPayload.attachments = attachments.map((a) => ({
+        filename: a.filename,
+        content: Buffer.from(a.content, 'base64'),
+      }));
+    }
+
+    const { data, error } = await resend.emails.send(sendPayload);
 
     if (error) {
       console.error('[EMAIL] Resend API error:', JSON.stringify(error));
