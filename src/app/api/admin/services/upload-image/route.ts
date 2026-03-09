@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, isAdmin, isChurchLeader } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin, isAdminOrCoach, isChurchLeader } from '@/lib/unified-auth';
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
@@ -9,7 +9,10 @@ const BUCKET = 'service-images';
 export async function POST(request: NextRequest) {
   const session = await getUnifiedSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isChurchLeader(session) && !isAdmin(session)) {
+
+  // Allow admins, coaches, or church leaders (any church)
+  const leaderRole = session.roles.find(r => r.role === 'church_leader');
+  if (!isAdmin(session) && !isAdminOrCoach(session) && !leaderRole) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
