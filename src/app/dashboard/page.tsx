@@ -15,6 +15,7 @@ import {
   Sparkles,
   Smartphone,
   Radio,
+  Route,
 } from 'lucide-react';
 import { PhaseWithMilestones, MilestoneWithProgress, Church, ChurchLeader, FunnelDocument, ScheduledCall, GlobalResource } from '@/lib/types';
 import {
@@ -26,6 +27,7 @@ import {
 import TeamGiftsTab from '@/components/spiritual-gifts/TeamGiftsTab';
 import DailyDNATab from '@/components/dashboard/DailyDNATab';
 import ServicesTab from '@/components/dashboard/services/ServicesTab';
+import PathwayTab from '@/components/admin/PathwayTab';
 
 interface DashboardData {
   church: Church;
@@ -43,7 +45,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'team' | 'groups' | 'gifts' | 'daily-dna' | 'services'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'team' | 'groups' | 'gifts' | 'daily-dna' | 'services' | 'pathway'>('overview');
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [compactPhases, setCompactPhases] = useState<Set<string>>(new Set());
   const [updatingMilestone, setUpdatingMilestone] = useState<string | null>(null);
@@ -484,6 +486,7 @@ export default function DashboardPage() {
               { id: 'groups', label: 'DNA Leaders', icon: Users },
               { id: 'gifts', label: 'Ministry Gifts', icon: Sparkles },
               { id: 'daily-dna', label: 'Daily DNA', icon: Smartphone },
+              { id: 'pathway', label: 'Pathway', icon: Route },
               { id: 'services', label: 'Church React', icon: Radio },
             ].map((tab) => (
               <button
@@ -573,6 +576,10 @@ export default function DashboardPage() {
 
         {activeTab === 'daily-dna' && (
           <DailyDNATab churchId={church.id} subdomain={church.subdomain || undefined} />
+        )}
+
+        {activeTab === 'pathway' && (
+          <PathwayTab churchId={church.id} />
         )}
 
         {activeTab === 'services' && (

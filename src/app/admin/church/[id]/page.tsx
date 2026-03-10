@@ -22,11 +22,13 @@ import {
   ExternalLink,
   Heart,
   Radio,
+  Route,
 } from 'lucide-react';
 import { GroupsTab } from '@/components/dashboard';
 import { AdminChurchOverviewTab, AdminChurchJourneyTab, ChurchLeadersTab, BrandingTab, AdminCohortTab, DemoTab } from '@/components/admin';
 import PrayerWallTab from '@/components/admin/PrayerWallTab';
 import ServicesTab from '@/components/dashboard/services/ServicesTab';
+import PathwayTab from '@/components/admin/PathwayTab';
 
 interface ChurchDetail {
   church: {
@@ -132,7 +134,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
   const router = useRouter();
   const [data, setData] = useState<ChurchDetail | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'leaders' | 'groups' | 'branding' | 'cohort' | 'demo' | 'prayer-wall' | 'services'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'leaders' | 'groups' | 'branding' | 'cohort' | 'demo' | 'prayer-wall' | 'services' | 'pathway'>('overview');
 
   // Alias editing state
   const [editingAliases, setEditingAliases] = useState(false);
@@ -464,6 +466,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
               { id: 'groups', label: 'DNA Groups', icon: Users },
               { id: 'cohort', label: 'Cohort', icon: GraduationCap },
               { id: 'prayer-wall', label: 'Prayer Wall', icon: Heart },
+              { id: 'pathway', label: 'Pathway', icon: Route },
               { id: 'services', label: 'Services', icon: Radio },
               { id: 'branding', label: 'Branding', icon: Palette },
               { id: 'demo', label: 'Demo', icon: ExternalLink },
@@ -542,6 +545,11 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
         {/* Prayer Wall Tab */}
         {activeTab === 'prayer-wall' && (
           <PrayerWallTab churchId={churchId} subdomain={church.subdomain || undefined} />
+        )}
+
+        {/* Pathway Tab */}
+        {activeTab === 'pathway' && (
+          <PathwayTab churchId={churchId} />
         )}
 
         {/* Services Tab */}

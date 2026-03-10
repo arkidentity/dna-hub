@@ -89,6 +89,12 @@ function GroupDetailContent() {
   const [showEventModal, setShowEventModal] = useState(false);
   const [meetingsKey, setMeetingsKey] = useState(0);
 
+  // Pathway phase state
+  const [pathwayPhase, setPathwayPhase] = useState<number>(1);
+  const [pathwayPhaseLoading, setPathwayPhaseLoading] = useState(true);
+  const [showPathwayAdvance, setShowPathwayAdvance] = useState(false);
+  const [advancingPathway, setAdvancingPathway] = useState(false);
+
   // Phase display helpers
   const phaseLabels: Record<string, string> = {
     'pre-launch': 'Pre-Launch',
@@ -295,6 +301,44 @@ function GroupDetailContent() {
       fetchGroup();
     }
   }, [groupId, router]);
+
+  // Fetch pathway phase state
+  useEffect(() => {
+    async function fetchPhaseState() {
+      try {
+        const res = await fetch(`/api/groups/${groupId}/phase`);
+        const data = await res.json();
+        if (data.phase_state) {
+          setPathwayPhase(data.phase_state.current_phase);
+        }
+      } catch {
+        // Default to phase 1
+      } finally {
+        setPathwayPhaseLoading(false);
+      }
+    }
+    if (groupId) fetchPhaseState();
+  }, [groupId]);
+
+  const handleAdvancePathwayPhase = async () => {
+    setAdvancingPathway(true);
+    try {
+      const res = await fetch(`/api/groups/${groupId}/phase`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phase: 2 }),
+      });
+      const data = await res.json();
+      if (data.phase_state) {
+        setPathwayPhase(data.phase_state.current_phase);
+      }
+    } catch (err) {
+      console.error('Phase advance error:', err);
+    } finally {
+      setAdvancingPathway(false);
+      setShowPathwayAdvance(false);
+    }
+  };
 
   const handleAddDisciple = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -512,6 +556,55 @@ function GroupDetailContent() {
             })}
           </div>
         </div>
+
+        {/* Pathway Phase Card */}
+        {!pathwayPhaseLoading && (
+          <div className="bg-white rounded-lg shadow p-6">
+            <div className="flex items-center justify-between">
+              <div>
+                <h2 className="text-sm font-semibold text-navy uppercase tracking-wide">Discipleship Pathway</h2>
+                <p className="text-sm text-foreground-muted mt-1">
+                  Currently on <span className="font-medium text-navy">Phase {pathwayPhase}</span>
+                  {pathwayPhase === 1 ? ' — Foundation' : ' — Growth'}
+                </p>
+              </div>
+              {pathwayPhase === 1 && (
+                <>
+                  {showPathwayAdvance ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-foreground-muted">Unlock Phase 2 for all disciples?</span>
+                      <button
+                        onClick={handleAdvancePathwayPhase}
+                        disabled={advancingPathway}
+                        className="px-3 py-1.5 bg-gold text-white rounded-lg text-sm font-medium hover:bg-gold/90 transition-colors disabled:opacity-50"
+                      >
+                        {advancingPathway ? 'Unlocking...' : 'Confirm'}
+                      </button>
+                      <button
+                        onClick={() => setShowPathwayAdvance(false)}
+                        className="px-3 py-1.5 border border-card-border rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowPathwayAdvance(true)}
+                      className="text-sm bg-gold hover:bg-gold/90 text-white font-medium py-1.5 px-4 rounded-lg transition-colors"
+                    >
+                      Advance to Phase 2
+                    </button>
+                  )}
+                </>
+              )}
+              {pathwayPhase === 2 && (
+                <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                  Phase 2 Active
+                </span>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Disciples section */}
         <div className="bg-white rounded-lg shadow">
