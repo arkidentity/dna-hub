@@ -221,57 +221,57 @@ export default function PathwayEditor({ churchId, phase, allTools }: PathwayEdit
             onReorder={handleReorder}
             onRemove={handleRemoveTool}
           />
-        </div>
-      </div>
 
-      {/* Action bar */}
-      <div className="flex items-center justify-between pt-4 border-t border-card-border">
-        <div className="flex items-center gap-2">
-          {!isDefault && (
-            <>
-              {showResetConfirm ? (
-                <div className="flex items-center gap-2">
-                  <span className="text-sm text-foreground-muted">Reset to ARK Default?</span>
-                  <button
-                    onClick={handleReset}
-                    disabled={saving}
-                    className="px-3 py-1.5 bg-error text-white rounded-lg text-sm hover:bg-error/90 transition-colors"
-                  >
-                    Confirm Reset
-                  </button>
-                  <button
-                    onClick={() => setShowResetConfirm(false)}
-                    className="px-3 py-1.5 border border-card-border rounded-lg text-sm hover:bg-gray-50 transition-colors"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowResetConfirm(true)}
-                  disabled={saving}
-                  className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-foreground-muted border border-card-border rounded-lg hover:bg-gray-50 transition-colors"
-                >
-                  <RotateCcw className="w-3.5 h-3.5" />
-                  Reset to Default
-                </button>
+          {/* Action bar — directly under timeline */}
+          <div className="flex items-center justify-between pt-4 mt-4 border-t border-card-border">
+            <div className="flex items-center gap-2">
+              {!isDefault && (
+                <>
+                  {showResetConfirm ? (
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-foreground-muted">Reset to ARK Default?</span>
+                      <button
+                        onClick={handleReset}
+                        disabled={saving}
+                        className="px-3 py-1.5 bg-error text-white rounded-lg text-sm hover:bg-error/90 transition-colors"
+                      >
+                        Confirm Reset
+                      </button>
+                      <button
+                        onClick={() => setShowResetConfirm(false)}
+                        className="px-3 py-1.5 border border-card-border rounded-lg text-sm hover:bg-gray-50 transition-colors"
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={() => setShowResetConfirm(true)}
+                      disabled={saving}
+                      className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-foreground-muted border border-card-border rounded-lg hover:bg-gray-50 transition-colors"
+                    >
+                      <RotateCcw className="w-3.5 h-3.5" />
+                      Reset to Default
+                    </button>
+                  )}
+                </>
               )}
-            </>
-          )}
-        </div>
+            </div>
 
-        <button
-          onClick={handleSave}
-          disabled={saving || !dirty || items.length === 0}
-          className="flex items-center gap-1.5 px-4 py-2 bg-gold text-white rounded-lg text-sm font-medium hover:bg-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-        >
-          {saving ? (
-            <Loader2 className="w-4 h-4 animate-spin" />
-          ) : (
-            <Save className="w-4 h-4" />
-          )}
-          Save Changes
-        </button>
+            <button
+              onClick={handleSave}
+              disabled={saving || !dirty || items.length === 0}
+              className="flex items-center gap-1.5 px-4 py-2 bg-gold text-white rounded-lg text-sm font-medium hover:bg-gold/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {saving ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : (
+                <Save className="w-4 h-4" />
+              )}
+              Save Changes
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
