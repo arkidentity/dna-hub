@@ -32,7 +32,7 @@ export default function ChurchAppQRCard({
     QRCode.toDataURL(url, {
       width: 360,
       margin: 2,
-      color: { dark: '#143348', light: '#ffffff' },
+      color: { dark: '#000000', light: '#ffffff' },
       errorCorrectionLevel: 'H', // H = up to 30% can be obscured by logo
     })
       .then(setQrDataUrl)
@@ -47,7 +47,7 @@ export default function ChurchAppQRCard({
       const qrHD = await QRCode.toDataURL(url, {
         width: size,
         margin: 2,
-        color: { dark: '#143348', light: '#ffffff' },
+        color: { dark: '#000000', light: '#ffffff' },
         errorCorrectionLevel: 'H',
       });
 
@@ -80,7 +80,7 @@ export default function ChurchAppQRCard({
           const y = (size - logoSize) / 2;
           const pad = 12;
           // Dark navy backing square (matches logo dark-background design)
-          ctx.fillStyle = '#143348';
+          ctx.fillStyle = '#000000';
           ctx.fillRect(x - pad, y - pad, logoSize + pad * 2, logoSize + pad * 2);
           ctx.drawImage(logoImg, x, y, logoSize, logoSize);
         } catch {
@@ -132,7 +132,7 @@ export default function ChurchAppQRCard({
           <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
             <div
               className="rounded-lg flex items-center justify-center"
-              style={{ width: logoOverlaySize + 8, height: logoOverlaySize + 8, padding: 4, backgroundColor: '#143348' }}
+              style={{ width: logoOverlaySize + 8, height: logoOverlaySize + 8, padding: 4, backgroundColor: '#000000' }}
             >
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img

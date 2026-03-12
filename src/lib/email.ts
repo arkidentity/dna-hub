@@ -929,7 +929,7 @@ export async function sendDNALeaderInvitationEmail(
       </p>
 
       <p style="color: #5A6577; font-size: 14px;">
-        Questions? Reply to this email or visit <a href="https://dnadiscipleship.com/help" style="color: #2D6A6A;">dnadiscipleship.com/help</a>
+        Questions? Reply to this email or contact <a href="mailto:info@dnadiscipleship.com" style="color: #2D6A6A;">info@dnadiscipleship.com</a>
       </p>
     </div>
   `;
@@ -1006,7 +1006,7 @@ export async function sendDNALeaderDirectInviteEmail(
       </p>
 
       <p style="color: #5A6577; font-size: 14px;">
-        Questions? Reply to this email or visit <a href="https://dnadiscipleship.com/help" style="color: #2D6A6A;">dnadiscipleship.com/help</a>
+        Questions? Reply to this email or contact <a href="mailto:info@dnadiscipleship.com" style="color: #2D6A6A;">info@dnadiscipleship.com</a>
       </p>
     </div>
   `;
@@ -1089,7 +1089,7 @@ export async function sendChurchLeaderInviteEmail(
       </p>
 
       <p style="color: #5A6577; font-size: 14px;">
-        Questions? Reply to this email or visit <a href="https://dnadiscipleship.com/help" style="color: #2D6A6A;">dnadiscipleship.com/help</a>
+        Questions? Reply to this email or contact <a href="mailto:info@dnadiscipleship.com" style="color: #2D6A6A;">info@dnadiscipleship.com</a>
       </p>
     </div>
   `;
