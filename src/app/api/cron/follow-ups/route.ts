@@ -56,48 +56,49 @@ export async function GET(request: NextRequest) {
       .eq('status', 'pending_assessment')
       .lt('created_at', threeDaysAgo.toISOString());
 
-    if (needsDiscoveryReminder) {
+    if (needsDiscoveryReminder && needsDiscoveryReminder.length > 0) {
+      // Batch: fetch all existing reminders for these churches in one query
+      const churchIds = needsDiscoveryReminder.map(c => c.id);
+      const { data: existingReminders } = await supabaseAdmin
+        .from('follow_up_emails')
+        .select('church_id')
+        .in('church_id', churchIds)
+        .eq('email_type', 'book_discovery_reminder');
+
+      const alreadySent = new Set((existingReminders || []).map(r => r.church_id));
+
       for (const church of needsDiscoveryReminder) {
-        // Check if we already sent this reminder
-        const { data: existingReminder } = await supabaseAdmin
-          .from('follow_up_emails')
-          .select('id')
-          .eq('church_id', church.id)
-          .eq('email_type', 'book_discovery_reminder')
-          .single();
+        if (alreadySent.has(church.id)) continue;
 
-        if (!existingReminder) {
-          const leader = church.church_leaders[0];
-          if (leader) {
-            try {
-              await sendBookDiscoveryReminder(
-                leader.email,
-                leader.name.split(' ')[0],
-                church.name,
-                church.id
-              );
+        const leader = church.church_leaders[0];
+        if (leader) {
+          try {
+            await sendBookDiscoveryReminder(
+              leader.email,
+              leader.name.split(' ')[0],
+              church.name,
+              church.id
+            );
 
-              // Record that we sent this reminder
-              await supabaseAdmin.from('follow_up_emails').insert({
-                church_id: church.id,
-                email_type: 'book_discovery_reminder',
-              });
+            await supabaseAdmin.from('follow_up_emails').insert({
+              church_id: church.id,
+              email_type: 'book_discovery_reminder',
+            });
 
-              results.push({
-                type: 'book_discovery_reminder',
-                churchId: church.id,
-                churchName: church.name,
-                success: true,
-              });
-            } catch (error) {
-              results.push({
-                type: 'book_discovery_reminder',
-                churchId: church.id,
-                churchName: church.name,
-                success: false,
-                error: String(error),
-              });
-            }
+            results.push({
+              type: 'book_discovery_reminder',
+              churchId: church.id,
+              churchName: church.name,
+              success: true,
+            });
+          } catch (error) {
+            results.push({
+              type: 'book_discovery_reminder',
+              churchId: church.id,
+              churchName: church.name,
+              success: false,
+              error: String(error),
+            });
           }
         }
       }
@@ -119,24 +120,25 @@ export async function GET(request: NextRequest) {
       .gte('scheduled_at', in23Hours.toISOString())
       .lte('scheduled_at', in25Hours.toISOString());
 
-    if (upcomingCalls) {
+    if (upcomingCalls && upcomingCalls.length > 0) {
+      // Batch: fetch all churches and leaders for these calls in two queries
+      const callChurchIds = [...new Set(upcomingCalls.map(c => c.church_id))];
+      const { data: callChurches } = await supabaseAdmin
+        .from('churches')
+        .select('id, name')
+        .in('id', callChurchIds);
+      const { data: callLeaders } = await supabaseAdmin
+        .from('church_leaders')
+        .select('church_id, email, name')
+        .in('church_id', callChurchIds)
+        .eq('is_primary_contact', true);
+
+      const churchMap = new Map((callChurches || []).map(c => [c.id, c]));
+      const leaderMap = new Map((callLeaders || []).map(l => [l.church_id, l]));
+
       for (const call of upcomingCalls) {
-        // Get the church info
-        const { data: church } = await supabaseAdmin
-          .from('churches')
-          .select('id, name')
-          .eq('id', call.church_id)
-          .single();
-
-        // Get the primary leader for this church
-        const { data: leaders } = await supabaseAdmin
-          .from('church_leaders')
-          .select('email, name')
-          .eq('church_id', call.church_id)
-          .eq('is_primary_contact', true)
-          .limit(1);
-
-        const leader = leaders?.[0];
+        const church = churchMap.get(call.church_id);
+        const leader = leaderMap.get(call.church_id);
 
         if (leader && church) {
           try {
@@ -149,7 +151,6 @@ export async function GET(request: NextRequest) {
               church.id
             );
 
-            // Mark reminder as sent
             await supabaseAdmin
               .from('scheduled_calls')
               .update({ reminder_sent: true })
@@ -188,66 +189,67 @@ export async function GET(request: NextRequest) {
       .lt('scheduled_at', oneDayAgo.toISOString())
       .gt('scheduled_at', twoDaysAgo.toISOString());
 
-    if (missedCalls) {
+    if (missedCalls && missedCalls.length > 0) {
+      // Batch: fetch all existing missed-call reminders + church/leader data
+      const missedCallIds = missedCalls.map(c => c.id);
+      const missedChurchIds = [...new Set(missedCalls.map(c => c.church_id))];
+
+      const { data: existingMissedReminders } = await supabaseAdmin
+        .from('follow_up_emails')
+        .select('scheduled_call_id')
+        .in('scheduled_call_id', missedCallIds)
+        .eq('email_type', 'call_missed');
+      const alreadySentMissed = new Set((existingMissedReminders || []).map(r => r.scheduled_call_id));
+
+      const { data: missedChurches } = await supabaseAdmin
+        .from('churches')
+        .select('id, name')
+        .in('id', missedChurchIds);
+      const { data: missedLeaders } = await supabaseAdmin
+        .from('church_leaders')
+        .select('church_id, email, name')
+        .in('church_id', missedChurchIds)
+        .eq('is_primary_contact', true);
+
+      const missedChurchMap = new Map((missedChurches || []).map(c => [c.id, c]));
+      const missedLeaderMap = new Map((missedLeaders || []).map(l => [l.church_id, l]));
+
       for (const call of missedCalls) {
-        // Check if we already sent a missed call notification
-        const { data: existingReminder } = await supabaseAdmin
-          .from('follow_up_emails')
-          .select('id')
-          .eq('church_id', call.church_id)
-          .eq('email_type', 'call_missed')
-          .eq('scheduled_call_id', call.id)
-          .single();
+        if (alreadySentMissed.has(call.id)) continue;
 
-        if (!existingReminder) {
-          // Get church info
-          const { data: church } = await supabaseAdmin
-            .from('churches')
-            .select('id, name')
-            .eq('id', call.church_id)
-            .single();
+        const church = missedChurchMap.get(call.church_id);
+        const leader = missedLeaderMap.get(call.church_id);
 
-          const { data: leaders } = await supabaseAdmin
-            .from('church_leaders')
-            .select('email, name')
-            .eq('church_id', call.church_id)
-            .eq('is_primary_contact', true)
-            .limit(1);
+        if (leader && church) {
+          try {
+            await sendCallMissedEmail(
+              leader.email,
+              leader.name.split(' ')[0],
+              church.name,
+              call.call_type as 'discovery' | 'proposal' | 'strategy',
+              church.id
+            );
 
-          const leader = leaders?.[0];
+            await supabaseAdmin.from('follow_up_emails').insert({
+              church_id: church.id,
+              email_type: 'call_missed',
+              scheduled_call_id: call.id,
+            });
 
-          if (leader && church) {
-            try {
-              await sendCallMissedEmail(
-                leader.email,
-                leader.name.split(' ')[0],
-                church.name,
-                call.call_type as 'discovery' | 'proposal' | 'strategy',
-                church.id
-              );
-
-              // Record that we sent this notification
-              await supabaseAdmin.from('follow_up_emails').insert({
-                church_id: church.id,
-                email_type: 'call_missed',
-                scheduled_call_id: call.id,
-              });
-
-              results.push({
-                type: 'call_missed',
-                churchId: church.id,
-                churchName: church.name,
-                success: true,
-              });
-            } catch (error) {
-              results.push({
-                type: 'call_missed',
-                churchId: church.id,
-                churchName: church.name,
-                success: false,
-                error: String(error),
-              });
-            }
+            results.push({
+              type: 'call_missed',
+              churchId: church.id,
+              churchName: church.name,
+              success: true,
+            });
+          } catch (error) {
+            results.push({
+              type: 'call_missed',
+              churchId: church.id,
+              churchName: church.name,
+              success: false,
+              error: String(error),
+            });
           }
         }
       }
@@ -270,59 +272,59 @@ export async function GET(request: NextRequest) {
       .eq('status', 'proposal_sent')
       .lt('updated_at', sevenDaysAgo.toISOString());
 
-    if (proposalExpiring) {
+    if (proposalExpiring && proposalExpiring.length > 0) {
+      // Batch: fetch all existing reminders + leaders
+      const proposalChurchIds = proposalExpiring.map(c => c.id);
+
+      const { data: existingProposalReminders } = await supabaseAdmin
+        .from('follow_up_emails')
+        .select('church_id')
+        .in('church_id', proposalChurchIds)
+        .eq('email_type', 'proposal_expiring');
+      const alreadySentProposal = new Set((existingProposalReminders || []).map(r => r.church_id));
+
+      const { data: proposalLeaders } = await supabaseAdmin
+        .from('church_leaders')
+        .select('church_id, email, name')
+        .in('church_id', proposalChurchIds)
+        .eq('is_primary_contact', true);
+      const proposalLeaderMap = new Map((proposalLeaders || []).map(l => [l.church_id, l]));
+
       for (const church of proposalExpiring) {
-        // Check if we already sent this reminder
-        const { data: existingReminder } = await supabaseAdmin
-          .from('follow_up_emails')
-          .select('id')
-          .eq('church_id', church.id)
-          .eq('email_type', 'proposal_expiring')
-          .single();
+        if (alreadySentProposal.has(church.id)) continue;
 
-        if (!existingReminder) {
-          const { data: leaders } = await supabaseAdmin
-            .from('church_leaders')
-            .select('email, name')
-            .eq('church_id', church.id)
-            .eq('is_primary_contact', true)
-            .limit(1);
+        const leader = proposalLeaderMap.get(church.id);
+        if (leader) {
+          const portalUrl = `${appUrl}/portal?church=${church.id}`;
 
-          const leader = leaders?.[0];
+          try {
+            await sendProposalExpiringEmail(
+              leader.email,
+              leader.name.split(' ')[0],
+              church.name,
+              portalUrl,
+              church.id
+            );
 
-          if (leader) {
-            const portalUrl = `${appUrl}/portal?church=${church.id}`;
+            await supabaseAdmin.from('follow_up_emails').insert({
+              church_id: church.id,
+              email_type: 'proposal_expiring',
+            });
 
-            try {
-              await sendProposalExpiringEmail(
-                leader.email,
-                leader.name.split(' ')[0],
-                church.name,
-                portalUrl,
-                church.id
-              );
-
-              // Record that we sent this reminder
-              await supabaseAdmin.from('follow_up_emails').insert({
-                church_id: church.id,
-                email_type: 'proposal_expiring',
-              });
-
-              results.push({
-                type: 'proposal_expiring',
-                churchId: church.id,
-                churchName: church.name,
-                success: true,
-              });
-            } catch (error) {
-              results.push({
-                type: 'proposal_expiring',
-                churchId: church.id,
-                churchName: church.name,
-                success: false,
-                error: String(error),
-              });
-            }
+            results.push({
+              type: 'proposal_expiring',
+              churchId: church.id,
+              churchName: church.name,
+              success: true,
+            });
+          } catch (error) {
+            results.push({
+              type: 'proposal_expiring',
+              churchId: church.id,
+              churchName: church.name,
+              success: false,
+              error: String(error),
+            });
           }
         }
       }
@@ -346,61 +348,61 @@ export async function GET(request: NextRequest) {
       .eq('status', 'active')
       .lt('updated_at', fourteenDaysAgo.toISOString());
 
-    if (inactiveChurches) {
+    if (inactiveChurches && inactiveChurches.length > 0) {
+      // Batch: fetch recent inactive reminders + leaders
+      const inactiveChurchIds = inactiveChurches.map(c => c.id);
+
+      const { data: recentInactiveReminders } = await supabaseAdmin
+        .from('follow_up_emails')
+        .select('church_id')
+        .in('church_id', inactiveChurchIds)
+        .eq('email_type', 'inactive_reminder')
+        .gte('sent_at', fourteenDaysAgo.toISOString());
+      const recentlySentInactive = new Set((recentInactiveReminders || []).map(r => r.church_id));
+
+      const { data: inactiveLeaders } = await supabaseAdmin
+        .from('church_leaders')
+        .select('church_id, email, name')
+        .in('church_id', inactiveChurchIds)
+        .eq('is_primary_contact', true);
+      const inactiveLeaderMap = new Map((inactiveLeaders || []).map(l => [l.church_id, l]));
+
       for (const church of inactiveChurches) {
-        // Check if we already sent this reminder (within the last 14 days)
-        const { data: existingReminder } = await supabaseAdmin
-          .from('follow_up_emails')
-          .select('id, sent_at')
-          .eq('church_id', church.id)
-          .eq('email_type', 'inactive_reminder')
-          .gte('sent_at', fourteenDaysAgo.toISOString())
-          .single();
+        if (recentlySentInactive.has(church.id)) continue;
 
-        if (!existingReminder) {
-          const { data: leaders } = await supabaseAdmin
-            .from('church_leaders')
-            .select('email, name')
-            .eq('church_id', church.id)
-            .eq('is_primary_contact', true)
-            .limit(1);
+        const leader = inactiveLeaderMap.get(church.id);
+        if (leader) {
+          const dashboardUrl = `${appUrl}/dashboard`;
 
-          const leader = leaders?.[0];
+          try {
+            await sendInactiveReminderEmail(
+              leader.email,
+              leader.name.split(' ')[0],
+              church.name,
+              church.current_phase,
+              dashboardUrl,
+              church.id
+            );
 
-          if (leader) {
-            const dashboardUrl = `${appUrl}/dashboard`;
+            await supabaseAdmin.from('follow_up_emails').insert({
+              church_id: church.id,
+              email_type: 'inactive_reminder',
+            });
 
-            try {
-              await sendInactiveReminderEmail(
-                leader.email,
-                leader.name.split(' ')[0],
-                church.name,
-                church.current_phase,
-                dashboardUrl,
-                church.id
-              );
-
-              // Record that we sent this reminder
-              await supabaseAdmin.from('follow_up_emails').insert({
-                church_id: church.id,
-                email_type: 'inactive_reminder',
-              });
-
-              results.push({
-                type: 'inactive_reminder',
-                churchId: church.id,
-                churchName: church.name,
-                success: true,
-              });
-            } catch (error) {
-              results.push({
-                type: 'inactive_reminder',
-                churchId: church.id,
-                churchName: church.name,
-                success: false,
-                error: String(error),
-              });
-            }
+            results.push({
+              type: 'inactive_reminder',
+              churchId: church.id,
+              churchName: church.name,
+              success: true,
+            });
+          } catch (error) {
+            results.push({
+              type: 'inactive_reminder',
+              churchId: church.id,
+              churchName: church.name,
+              success: false,
+              error: String(error),
+            });
           }
         }
       }
