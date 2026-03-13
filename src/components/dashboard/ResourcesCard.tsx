@@ -27,7 +27,7 @@ export default function ResourcesCard({ resources }: ResourcesCardProps) {
             href={resource.file_url!}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-3 p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors"
+            className="flex items-center gap-3 p-3 bg-purple-50 hover:bg-purple-100 rounded-lg transition-colors overflow-hidden min-w-0"
           >
             {resource.resource_type === 'worksheet' && <FileText className="w-5 h-5 text-blue-500" />}
             {resource.resource_type === 'pdf' && <FileText className="w-5 h-5 text-red-500" />}
