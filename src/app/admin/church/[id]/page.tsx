@@ -310,7 +310,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="bg-navy text-white py-4 px-6">
+      <header className="bg-navy text-white py-4 px-4 sm:px-6">
         <div className="max-w-6xl mx-auto">
           <Link
             href="/admin"
@@ -319,8 +319,8 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
             <ArrowLeft className="w-4 h-4" />
             Back to All Churches
           </Link>
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <div className="min-w-0">
               <h1 className="text-xl font-semibold text-white">{church.name}</h1>
               <div className="flex items-center gap-3 mt-1 text-sm text-gray-300">
                 <span>{leader.name}</span>
@@ -423,19 +423,19 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
                 </div>
               )}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
               <button
                 onClick={handleSendLoginLink}
-                className="flex items-center gap-1.5 px-2 py-1 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors text-xs"
+                className="flex items-center gap-1.5 px-2 py-1.5 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors text-xs"
                 title="Send login link to church leader"
               >
                 <Send className="w-3 h-3" />
-                Send Link
+                <span className="hidden sm:inline">Send Link</span>
               </button>
               <select
                 value={church.status}
                 onChange={(e) => handleStatusChange(e.target.value)}
-                className="bg-navy border border-gray-600 text-white rounded-lg px-3 py-2 text-sm"
+                className="bg-navy border border-gray-600 text-white rounded-lg px-2 sm:px-3 py-1.5 sm:py-2 text-xs sm:text-sm max-w-[160px] sm:max-w-none"
               >
                 <option value="prospect">Prospect</option>
                 <option value="demo">Demo</option>
@@ -457,15 +457,15 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
 
       {/* Tab Navigation */}
       <div className="bg-white border-b border-card-border">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex gap-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-1 sm:gap-6 min-w-max">
             {[
               { id: 'overview', label: 'Overview', icon: LayoutDashboard },
-              { id: 'journey', label: 'DNA Journey', icon: Map },
+              { id: 'journey', label: 'Journey', icon: Map },
               { id: 'leaders', label: 'Leaders', icon: UserCog },
-              { id: 'groups', label: 'DNA Groups', icon: Users },
+              { id: 'groups', label: 'Groups', icon: Users },
               { id: 'cohort', label: 'Cohort', icon: GraduationCap },
-              { id: 'prayer-wall', label: 'Prayer Wall', icon: Heart },
+              { id: 'prayer-wall', label: 'Prayer', icon: Heart },
               { id: 'pathway', label: 'Pathway', icon: Route },
               { id: 'services', label: 'Services', icon: Radio },
               { id: 'branding', label: 'Branding', icon: Palette },
@@ -474,13 +474,13 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`flex items-center gap-2 py-4 border-b-2 transition-colors ${
+                className={`flex items-center gap-1.5 sm:gap-2 py-3 sm:py-4 px-2 sm:px-0 border-b-2 transition-colors whitespace-nowrap text-sm sm:text-base ${
                   activeTab === tab.id
                     ? 'border-gold text-navy font-medium'
                     : 'border-transparent text-foreground-muted hover:text-navy'
                 }`}
               >
-                <tab.icon className="w-4 h-4" />
+                <tab.icon className="w-4 h-4 flex-shrink-0" />
                 {tab.label}
               </button>
             ))}
@@ -488,7 +488,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
         </div>
       </div>
 
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* Overview Tab */}
         {activeTab === 'overview' && (
           <AdminChurchOverviewTab

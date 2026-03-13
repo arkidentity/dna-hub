@@ -130,8 +130,8 @@ export default function AdminPage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Page Title */}
-      <div className="bg-navy text-white py-4 px-6">
-        <div className="max-w-6xl mx-auto flex items-center justify-between">
+      <div className="bg-navy text-white py-4 px-4 sm:px-6">
+        <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
           <div>
             <p className="text-gold font-medium text-sm tracking-wide">
               {userRole === 'dna_coach' ? 'DNA COACH' : 'DNA ADMIN'}
@@ -171,8 +171,8 @@ export default function AdminPage() {
 
       {/* Tab Navigation */}
       <div className="bg-white border-b border-card-border">
-        <div className="max-w-6xl mx-auto px-6">
-          <div className="flex gap-6">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 overflow-x-auto scrollbar-hide">
+          <div className="flex gap-1 sm:gap-6 min-w-max">
             {[
               { id: 'churches', label: 'Churches', icon: Building2, showFor: 'both' },
               { id: 'dna-leaders', label: 'DNA Leaders', icon: UserCheck, showFor: 'both' },
@@ -183,13 +183,13 @@ export default function AdminPage() {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id as typeof activeTab)}
-                className={`flex items-center gap-2 py-4 border-b-2 transition-colors ${
+                className={`flex items-center gap-1.5 sm:gap-2 py-3 sm:py-4 px-2 sm:px-0 border-b-2 transition-colors whitespace-nowrap text-sm sm:text-base ${
                   activeTab === tab.id
                     ? 'border-gold text-navy font-medium'
                     : 'border-transparent text-foreground-muted hover:text-navy'
                 }`}
               >
-                <tab.icon className="w-5 h-5" />
+                <tab.icon className="w-4 h-4 sm:w-5 sm:h-5 flex-shrink-0" />
                 {tab.label}
               </button>
             ))}
@@ -197,7 +197,7 @@ export default function AdminPage() {
         </div>
       </div>
 
-      <main className="max-w-6xl mx-auto px-6 py-8">
+      <main className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* DNA Leaders Tab */}
         {activeTab === 'dna-leaders' && <DNALeadersTab />}
 

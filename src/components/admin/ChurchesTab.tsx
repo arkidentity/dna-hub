@@ -540,17 +540,17 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
                     {analytics.atRiskChurches.slice(0, 5).map(church => (
                       <div
                         key={church.id}
-                        className="flex items-center justify-between p-3 bg-error/5 rounded-lg"
+                        className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 bg-error/5 rounded-lg"
                       >
-                        <div>
-                          <p className="font-medium text-navy">{church.name}</p>
+                        <div className="min-w-0">
+                          <p className="font-medium text-navy truncate">{church.name}</p>
                           <p className="text-xs text-foreground-muted">
                             {church.leader_name} • {STATUS_LABELS[church.status]?.label || church.status}
                           </p>
                         </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-sm text-error font-medium">
-                            {church.days_inactive} days inactive
+                        <div className="flex items-center gap-3 flex-shrink-0">
+                          <span className="text-sm text-error font-medium whitespace-nowrap">
+                            {church.days_inactive}d inactive
                           </span>
                           <Link
                             href={`/admin/church/${church.id}`}
@@ -607,12 +607,12 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
               className="pl-10 w-full"
             />
           </div>
-          <div className="flex items-center gap-2">
-            <Filter className="w-4 h-4 text-foreground-muted" />
+          <div className="flex flex-wrap items-center gap-2">
+            <Filter className="w-4 h-4 text-foreground-muted hidden sm:block" />
             <select
               value={statusFilter}
               onChange={(e) => setStatusFilter(e.target.value)}
-              className="min-w-[140px]"
+              className="min-w-0 flex-1 sm:flex-none sm:min-w-[140px] text-sm"
             >
               <option value="all">All Statuses</option>
               <option value="pending_assessment">Pending Review</option>
@@ -628,7 +628,7 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
             <select
               value={phaseFilter}
               onChange={(e) => setPhaseFilter(e.target.value)}
-              className="min-w-[120px]"
+              className="min-w-0 flex-1 sm:flex-none sm:min-w-[120px] text-sm"
             >
               <option value="all">All Phases</option>
               <option value="0">Onboarding</option>
@@ -645,7 +645,7 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
                 setSortBy(field);
                 setSortOrder(order);
               }}
-              className="min-w-[140px]"
+              className="min-w-0 flex-1 sm:flex-none sm:min-w-[140px] text-sm"
             >
               <option value="created-desc">Newest First</option>
               <option value="created-asc">Oldest First</option>
@@ -747,7 +747,7 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
 
             return (
               <div key={church.id} className={`card hover:shadow-md transition-shadow ${selectedIds.has(church.id) ? 'ring-2 ring-gold' : ''}`}>
-                <div className="flex items-start gap-4">
+                <div className="flex items-start gap-3">
                   {/* Selection Checkbox */}
                   <button
                     onClick={() => toggleSelect(church.id)}
@@ -760,10 +760,11 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
                     )}
                   </button>
 
-                  {/* Church Info */}
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
-                      <h3 className="font-semibold text-navy text-lg truncate">{church.name}</h3>
+                  {/* Church Info + Actions wrapper — stacks on mobile, side-by-side on desktop */}
+                  <div className="flex-1 min-w-0 flex flex-col sm:flex-row sm:gap-4">
+                    <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-2">
+                      <h3 className="font-semibold text-navy text-base sm:text-lg truncate">{church.name}</h3>
                       <span className={`text-xs px-2 py-1 rounded-full font-medium ${statusInfo.color}`}>
                         {statusInfo.label}
                       </span>
@@ -775,17 +776,17 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
                       )}
                     </div>
 
-                    <div className="flex items-center gap-4 text-sm text-foreground-muted mb-3">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-foreground-muted mb-3">
                       <span className="flex items-center gap-1">
                         <Users className="w-4 h-4" />
                         {church.leader_name}
                       </span>
                       <a
                         href={`mailto:${church.leader_email}`}
-                        className="flex items-center gap-1 text-teal hover:text-teal-light"
+                        className="flex items-center gap-1 text-teal hover:text-teal-light truncate"
                       >
-                        <Mail className="w-4 h-4" />
-                        {church.leader_email}
+                        <Mail className="w-4 h-4 flex-shrink-0" />
+                        <span className="truncate">{church.leader_email}</span>
                       </a>
                       {church.coach_name && (
                         <span className="flex items-center gap-1 text-xs text-gold/80 bg-gold/10 px-2 py-0.5 rounded-full">
@@ -823,26 +824,27 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
                       Added {formatDate(church.created_at)}
                       {church.last_activity && ` • Last activity ${formatDate(church.last_activity)}`}
                     </p>
-                  </div>
+                    </div>
 
                   {/* Actions */}
-                  <div className="flex flex-col items-end gap-2">
+                  <div className="flex flex-col items-start sm:items-end gap-2 mt-3 sm:mt-0 pt-3 sm:pt-0 border-t sm:border-t-0 border-card-border sm:flex-shrink-0">
                     {/* View Dashboard Button */}
                     <div className="flex items-center gap-2">
                       <Link
                         href={`/admin/church/${church.id}`}
-                        className="flex items-center gap-2 px-4 py-2 bg-navy text-white rounded-lg hover:bg-navy/90 transition-colors text-sm"
+                        className="flex items-center gap-2 px-3 sm:px-4 py-1.5 sm:py-2 bg-navy text-white rounded-lg hover:bg-navy/90 transition-colors text-sm"
                       >
                         <Eye className="w-4 h-4" />
                         View
                       </Link>
                       <button
                         onClick={() => sendLoginLink(church.leader_email, church.leader_name)}
-                        className="flex items-center gap-2 px-3 py-2 border border-teal text-teal rounded-lg hover:bg-teal/10 transition-colors text-sm"
+                        className="flex items-center gap-2 px-3 py-1.5 sm:py-2 border border-teal text-teal rounded-lg hover:bg-teal/10 transition-colors text-sm"
                         title="Send login link to leader"
                       >
                         <Mail className="w-4 h-4" />
-                        Send Login
+                        <span className="hidden sm:inline">Send Login</span>
+                        <span className="sm:hidden">Login</span>
                       </button>
                     </div>
 
@@ -959,6 +961,7 @@ export default function ChurchesTab({ churches, stats, onRefresh }: ChurchesTabP
                           ))}
                       </select>
                     </div>
+                  </div>
                   </div>
                 </div>
               </div>
