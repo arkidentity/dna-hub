@@ -32,11 +32,13 @@ function LoginContent() {
     });
   }, [supabase, router]);
 
-  // Handle URL error params (from old magic link redirects)
+  // Handle URL error params (from expired invite / magic link redirects)
   useEffect(() => {
     const errorParam = searchParams.get('error');
     if (errorParam === 'invalid' || errorParam === 'expired' || errorParam === 'used') {
-      setError('Your login link has expired. Please sign in with your password or Google account.');
+      // Switch to setup mode so they can get a fresh link in one click
+      setMode('setup');
+      setError('Your setup link has expired. Enter your email below to get a new one, or sign in with Google.');
     }
   }, [searchParams]);
 

@@ -77,6 +77,7 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  // Auth code exchange failed — redirect to login with error
-  return NextResponse.redirect(new URL('/login?error=invalid', request.url))
+  // Auth code exchange failed — redirect to login with expired error
+  // so the login page auto-switches to "resend setup link" mode
+  return NextResponse.redirect(new URL('/login?error=expired', request.url))
 }

@@ -977,7 +977,7 @@ export async function sendDNALeaderDirectInviteEmail(
 
       <p>As a DNA leader, you'll guide small groups through a 90-day discipleship journey that transforms lives and multiplies disciples.</p>
 
-      <p><strong>Your account is ready!</strong> Click the button below to create your password and get started. This link is for your account only — it expires in 24 hours.</p>
+      <p><strong>Your account is ready!</strong> Click the button below to create your password and get started.</p>
 
       <div style="text-align: center; margin: 32px 0;">
         <a href="${loginUrl}"
@@ -988,14 +988,19 @@ export async function sendDNALeaderDirectInviteEmail(
         </a>
       </div>
 
-      <p style="color: #5A6577; font-size: 14px;">
-        Prefer Google? You can also sign in at <a href="https://dnadiscipleship.com/login" style="color: #2D6A6A;">dnadiscipleship.com/login</a>
-        using <strong>Continue with Google</strong> — just make sure to use this email address: <strong>${to}</strong>
-      </p>
+      <div style="background: #F0F7F7; padding: 16px; border-radius: 8px; margin: 24px 0;">
+        <p style="margin: 0 0 8px 0; color: #1A2332; font-weight: 600; font-size: 14px;">Easiest option: Sign in with Google</p>
+        <p style="margin: 0; color: #5A6577; font-size: 14px;">
+          Go to <a href="https://dnadiscipleship.com/login" style="color: #2D6A6A; font-weight: 500;">dnadiscipleship.com/login</a>
+          and click <strong>Continue with Google</strong> using this email: <strong>${to}</strong><br>
+          No password needed — works instantly.
+        </p>
+      </div>
 
-      <p style="color: #5A6577; font-size: 14px;">
-        <em>If the button above doesn't work, copy and paste this link into your browser:</em><br>
-        <span style="word-break: break-all; color: #2D6A6A;">${loginUrl}</span>
+      <p style="color: #5A6577; font-size: 13px;">
+        <em>If the setup button above doesn't work or has expired, go to
+        <a href="https://dnadiscipleship.com/login" style="color: #2D6A6A;">dnadiscipleship.com/login</a>
+        and click "First time? Set up your password" to get a fresh link.</em>
       </p>
 
       <hr style="border: none; border-top: 1px solid #E8DDD0; margin: 32px 0;" />
@@ -1060,7 +1065,7 @@ export async function sendChurchLeaderInviteEmail(
         <li><strong>DNA Groups</strong> — Manage and track discipleship groups</li>
       </ul>
 
-      <p><strong>Your account is ready!</strong> Click the button below to create your password and get started. This link is for your account only — it expires in 24 hours.</p>
+      <p><strong>Your account is ready!</strong> Click the button below to create your password and get started.</p>
 
       <div style="text-align: center; margin: 32px 0;">
         <a href="${loginUrl}"
@@ -1071,14 +1076,19 @@ export async function sendChurchLeaderInviteEmail(
         </a>
       </div>
 
-      <p style="color: #5A6577; font-size: 14px;">
-        Prefer Google? You can also sign in at <a href="https://dnadiscipleship.com/login" style="color: #2D6A6A;">dnadiscipleship.com/login</a>
-        using <strong>Continue with Google</strong> — just make sure to use this email address: <strong>${to}</strong>
-      </p>
+      <div style="background: #F0F7F7; padding: 16px; border-radius: 8px; margin: 24px 0;">
+        <p style="margin: 0 0 8px 0; color: #1A2332; font-weight: 600; font-size: 14px;">Easiest option: Sign in with Google</p>
+        <p style="margin: 0; color: #5A6577; font-size: 14px;">
+          Go to <a href="https://dnadiscipleship.com/login" style="color: #2D6A6A; font-weight: 500;">dnadiscipleship.com/login</a>
+          and click <strong>Continue with Google</strong> using this email: <strong>${to}</strong><br>
+          No password needed — works instantly.
+        </p>
+      </div>
 
-      <p style="color: #5A6577; font-size: 14px;">
-        <em>If the button above doesn't work, copy and paste this link into your browser:</em><br>
-        <span style="word-break: break-all; color: #2D6A6A;">${loginUrl}</span>
+      <p style="color: #5A6577; font-size: 13px;">
+        <em>If the setup button above doesn't work or has expired, go to
+        <a href="https://dnadiscipleship.com/login" style="color: #2D6A6A;">dnadiscipleship.com/login</a>
+        and click "First time? Set up your password" to get a fresh link.</em>
       </p>
 
       <hr style="border: none; border-top: 1px solid #E8DDD0; margin: 32px 0;" />

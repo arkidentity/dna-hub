@@ -28,7 +28,6 @@ function ResetPasswordContent() {
       }
 
       setSuccess(true);
-      setTimeout(() => router.replace('/dashboard'), 2000);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Something went wrong');
     } finally {
@@ -44,9 +43,15 @@ function ResetPasswordContent() {
             <CheckCircle className="w-8 h-8 text-success" />
           </div>
           <h1 className="text-2xl font-bold text-navy mb-4">Password Updated</h1>
-          <p className="text-foreground-muted">
-            Your password has been updated. Redirecting to your dashboard...
+          <p className="text-foreground-muted mb-6">
+            Your password has been set. You're ready to go!
           </p>
+          <button
+            onClick={() => router.replace('/dashboard')}
+            className="btn-primary w-full"
+          >
+            Go to Dashboard
+          </button>
         </div>
       </div>
     );
