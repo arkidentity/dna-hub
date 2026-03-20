@@ -9,6 +9,8 @@
 -- with optional group/leader info and engagement stats.
 -- Includes disciples, DNA leaders, and church leaders.
 -- ============================================
+DROP FUNCTION IF EXISTS get_church_disciples(UUID);
+
 CREATE OR REPLACE FUNCTION get_church_disciples(p_church_id UUID)
 RETURNS TABLE (
   app_account_id UUID,
