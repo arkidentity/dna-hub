@@ -16,6 +16,7 @@ import {
   Smartphone,
   Radio,
   Route,
+  Heart,
 } from 'lucide-react';
 import { PhaseWithMilestones, MilestoneWithProgress, Church, ChurchLeader, FunnelDocument, ScheduledCall, GlobalResource } from '@/lib/types';
 import {
@@ -27,6 +28,7 @@ import {
 import TeamGiftsTab from '@/components/spiritual-gifts/TeamGiftsTab';
 import DailyDNATab from '@/components/dashboard/DailyDNATab';
 import ServicesTab from '@/components/dashboard/services/ServicesTab';
+import DisciplesTab from '@/components/dashboard/disciples/DisciplesTab';
 import PathwayTab from '@/components/admin/PathwayTab';
 
 interface DashboardData {
@@ -45,7 +47,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'team' | 'groups' | 'gifts' | 'daily-dna' | 'services' | 'pathway'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'team' | 'groups' | 'disciples' | 'gifts' | 'daily-dna' | 'services' | 'pathway'>('overview');
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [compactPhases, setCompactPhases] = useState<Set<string>>(new Set());
   const [updatingMilestone, setUpdatingMilestone] = useState<string | null>(null);
@@ -484,6 +486,7 @@ export default function DashboardPage() {
               { id: 'journey', label: 'DNA Journey', icon: Map },
               { id: 'team', label: 'Team', icon: UserCog },
               { id: 'groups', label: 'DNA Leaders', icon: Users },
+              { id: 'disciples', label: 'Disciples', icon: Heart },
               { id: 'gifts', label: 'Ministry Gifts', icon: Sparkles },
               { id: 'daily-dna', label: 'Daily DNA', icon: Smartphone },
               { id: 'pathway', label: 'Pathway', icon: Route },
@@ -568,6 +571,10 @@ export default function DashboardPage() {
             churchName={church.name}
             isAdmin={isAdmin}
           />
+        )}
+
+        {activeTab === 'disciples' && (
+          <DisciplesTab churchId={church.id} />
         )}
 
         {activeTab === 'gifts' && (

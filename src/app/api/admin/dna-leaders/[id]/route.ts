@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin, hasRole, getPrimaryChurch } from '@/lib/unified-auth';
 
 export async function PATCH(
   request: NextRequest,
@@ -8,7 +8,12 @@ export async function PATCH(
 ) {
   const session = await getUnifiedSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isAdmin(session)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+
+  const isAdminUser = isAdmin(session);
+  const isChurchLeader = hasRole(session, 'church_leader');
+  if (!isAdminUser && !isChurchLeader) {
+    return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
 
   const { id } = await params;
   const body = await request.json();
@@ -23,12 +28,24 @@ export async function PATCH(
     // Get current leader data
     const { data: leader, error: fetchError } = await supabase
       .from('dna_leaders')
-      .select('id, email, name')
+      .select('id, email, name, church_id')
       .eq('id', id)
       .single();
 
     if (fetchError || !leader) {
       return NextResponse.json({ error: 'Leader not found' }, { status: 404 });
+    }
+
+    // Church leaders can only edit leaders in their own church
+    if (!isAdminUser && isChurchLeader) {
+      const myChurchId = getPrimaryChurch(session);
+      if (!myChurchId || leader.church_id !== myChurchId) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      // Church leaders cannot reassign leaders to a different church
+      if ('church_id' in body && church_id !== myChurchId) {
+        return NextResponse.json({ error: 'Cannot reassign leader to a different church' }, { status: 403 });
+      }
     }
 
     const updates: Record<string, unknown> = { updated_at: new Date().toISOString() };
