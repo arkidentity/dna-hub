@@ -14,6 +14,7 @@ import {
   Smartphone,
   LayoutTemplate,
   Radio,
+  BookOpen,
 } from 'lucide-react';
 import { ChurchBranding } from '@/lib/types';
 import ChurchAppQRCard from '@/components/shared/ChurchAppQRCard';
@@ -120,6 +121,7 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
     custom_link_5_url: '',
     custom_link_5_mode: 'browser' as 'iframe' | 'browser',
     live_service_enabled: false,
+    ark_courses_enabled: false,
   });
 
   // ============================================
@@ -197,6 +199,7 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
         custom_link_5_url: b.custom_link_5_url ?? '',
         custom_link_5_mode: (b.custom_link_5_mode ?? 'browser') as 'iframe' | 'browser',
         live_service_enabled: (b as any).live_service_enabled ?? false,
+        ark_courses_enabled: (b as any).ark_courses_enabled ?? false,
       });
     } catch {
       setError('Failed to load branding settings');
@@ -860,6 +863,36 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
               {form.live_service_enabled && (
                 <p className="text-xs text-green-600 font-medium">
                   Live Service features are active on this church&apos;s subdomain.
+                </p>
+              )}
+            </div>
+
+            {/* ARK Courses Feature Flag */}
+            <div className="bg-card rounded-xl border border-card-border p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-navy flex items-center gap-2">
+                    <BookOpen className="w-4 h-4 text-gold" />
+                    ARK Courses
+                  </h3>
+                  <p className="text-xs text-foreground-muted mt-0.5">
+                    Enable ARK Identity discipleship courses for this church. When enabled, church members
+                    can access courses directly from the Daily DNA app.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setForm(prev => ({ ...prev, ark_courses_enabled: !prev.ark_courses_enabled }))}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${form.ark_courses_enabled ? 'bg-green-500' : 'bg-gray-300'}`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.ark_courses_enabled ? 'translate-x-6' : 'translate-x-1'}`}
+                  />
+                </button>
+              </div>
+              {form.ark_courses_enabled && (
+                <p className="text-xs text-green-600 font-medium">
+                  ARK Courses are available on this church&apos;s subdomain.
                 </p>
               )}
             </div>

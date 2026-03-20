@@ -94,6 +94,12 @@ export async function PATCH(
         .update({ email: newEmail, updated_at: new Date().toISOString() })
         .eq('email', leader.email);
 
+      // Update disciple_app_accounts if they also have an app account
+      await supabase
+        .from('disciple_app_accounts')
+        .update({ email: newEmail, updated_at: new Date().toISOString() })
+        .eq('email', leader.email);
+
       updates.email = newEmail;
     }
 

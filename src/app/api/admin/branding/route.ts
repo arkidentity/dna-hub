@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
 
     const { data: settings } = await supabase
       .from('church_branding_settings')
-      .select('app_title, app_description, theme_color, header_style, reading_plan_id, custom_tab_label, custom_tab_url, custom_tab_mode, custom_link_1_title, custom_link_1_url, custom_link_1_mode, custom_link_2_title, custom_link_2_url, custom_link_2_mode, custom_link_3_title, custom_link_3_url, custom_link_3_mode, custom_link_4_title, custom_link_4_url, custom_link_4_mode, custom_link_5_title, custom_link_5_url, custom_link_5_mode, live_service_enabled')
+      .select('app_title, app_description, theme_color, header_style, reading_plan_id, custom_tab_label, custom_tab_url, custom_tab_mode, custom_link_1_title, custom_link_1_url, custom_link_1_mode, custom_link_2_title, custom_link_2_url, custom_link_2_mode, custom_link_3_title, custom_link_3_url, custom_link_3_mode, custom_link_4_title, custom_link_4_url, custom_link_4_mode, custom_link_5_title, custom_link_5_url, custom_link_5_mode, live_service_enabled, ark_courses_enabled')
       .eq('church_id', churchId)
       .single();
 
@@ -66,6 +66,7 @@ export async function GET(request: NextRequest) {
         custom_link_5_url: settings?.custom_link_5_url ?? null,
         custom_link_5_mode: settings?.custom_link_5_mode ?? 'browser',
         live_service_enabled: settings?.live_service_enabled ?? false,
+        ark_courses_enabled: settings?.ark_courses_enabled ?? false,
       },
     });
   } catch (error) {
@@ -120,6 +121,7 @@ export async function POST(request: NextRequest) {
       custom_link_5_mode,
       contact_email,
       live_service_enabled,
+      ark_courses_enabled,
     } = body;
 
     if (!church_id) {
@@ -211,6 +213,7 @@ export async function POST(request: NextRequest) {
             custom_link_5_url: custom_link_5_url || null,
             custom_link_5_mode: custom_link_5_mode || 'browser',
             live_service_enabled: live_service_enabled ?? false,
+            ark_courses_enabled: ark_courses_enabled ?? false,
             updated_at: new Date().toISOString(),
           },
           { onConflict: 'church_id' }

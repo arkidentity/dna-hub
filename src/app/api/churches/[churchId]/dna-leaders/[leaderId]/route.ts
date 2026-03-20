@@ -69,10 +69,44 @@ export async function PATCH(
     }
   }
 
+  // Handle email change — must update Supabase Auth first
+  const newEmail = email?.trim().toLowerCase();
+  if (newEmail && newEmail !== existing.email.toLowerCase()) {
+    // Update Supabase Auth (the actual login email)
+    const { data: usersData } = await supabase.auth.admin.listUsers();
+    const authUser = usersData?.users?.find(
+      (u) => u.email?.toLowerCase() === existing.email.toLowerCase()
+    );
+
+    if (authUser) {
+      const { error: authUpdateError } = await supabase.auth.admin.updateUserById(authUser.id, {
+        email: newEmail,
+      });
+      if (authUpdateError) {
+        return NextResponse.json(
+          { error: 'Failed to update login email: ' + authUpdateError.message },
+          { status: 500 }
+        );
+      }
+    }
+
+    // Update users table
+    await supabase
+      .from('users')
+      .update({ email: newEmail, updated_at: new Date().toISOString() })
+      .eq('email', existing.email);
+
+    // Update disciple_app_accounts if they also have an app account
+    await supabase
+      .from('disciple_app_accounts')
+      .update({ email: newEmail, updated_at: new Date().toISOString() })
+      .eq('email', existing.email);
+  }
+
   // Build update payload for dna_leaders
   const leaderUpdate: Record<string, string | null> = {};
   if (name !== undefined) leaderUpdate.name = name.trim();
-  if (email !== undefined) leaderUpdate.email = email.trim().toLowerCase();
+  if (newEmail) leaderUpdate.email = newEmail;
   if (phone !== undefined) leaderUpdate.phone = phone.trim() || null;
 
   // Update dna_leaders
@@ -88,21 +122,12 @@ export async function PATCH(
     return NextResponse.json({ error: 'Failed to update leader' }, { status: 500 });
   }
 
-  // Keep users table in sync (email + name are both stored there)
-  const usersUpdate: Record<string, string> = {};
-  if (name !== undefined) usersUpdate.name = name.trim();
-  if (email !== undefined) usersUpdate.email = email.trim().toLowerCase();
-
-  if (Object.keys(usersUpdate).length > 0) {
-    const { error: usersError } = await supabase
+  // Keep users table name in sync (email already handled above)
+  if (name !== undefined) {
+    await supabase
       .from('users')
-      .update({ ...usersUpdate, updated_at: new Date().toISOString() })
-      .eq('email', existing.email); // match on old email before update
-
-    if (usersError) {
-      // Non-fatal — log but don't fail the request
-      console.error('Warning: failed to sync users table:', usersError);
-    }
+      .update({ name: name.trim(), updated_at: new Date().toISOString() })
+      .eq('email', updated.email);
   }
 
   return NextResponse.json({ leader: updated });
