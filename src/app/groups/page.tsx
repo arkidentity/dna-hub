@@ -35,6 +35,39 @@ interface DashboardData {
   };
 }
 
+const RESOURCES = [
+  {
+    label: 'DNA Toolkit — Leader Guides',
+    description: 'Guides for each DNA tool',
+    href: '/training/toolkit',
+    icon: (
+      <svg className="w-4 h-4 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+      </svg>
+    ),
+  },
+  {
+    label: 'Launch Guide',
+    description: 'Step-by-step group launch plan',
+    href: '/training/launch-guide/1',
+    icon: (
+      <svg className="w-4 h-4 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M15.59 14.37a6 6 0 01-5.84 7.38v-4.8m5.84-2.58a14.98 14.98 0 006.16-12.12A14.98 14.98 0 009.631 8.41m5.96 5.96a14.926 14.926 0 01-5.841 2.58m-.119-8.54a6 6 0 00-7.381 5.84h4.8m2.58-5.84a14.927 14.927 0 00-2.58 5.84m2.699 2.7c-.103.021-.207.041-.311.06a15.09 15.09 0 01-2.448-2.448 14.9 14.9 0 01.06-.312m-2.24 2.39a4.493 4.493 0 00-1.757 4.306 4.493 4.493 0 004.306-1.758M16.5 9a1.5 1.5 0 11-3 0 1.5 1.5 0 013 0z" />
+      </svg>
+    ),
+  },
+  {
+    label: 'DNA Manual',
+    description: 'Complete discipleship manual',
+    href: '/training',
+    icon: (
+      <svg className="w-4 h-4 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+        <path strokeLinecap="round" strokeLinejoin="round" d="M12 6.042A8.967 8.967 0 006 3.75c-1.052 0-2.062.18-3 .512v14.25A8.987 8.987 0 016 18c2.305 0 4.408.867 6 2.292m0-14.25a8.966 8.966 0 016-2.292c1.052 0 2.062.18 3 .512v14.25A8.987 8.987 0 0018 18a8.967 8.967 0 00-6 2.292m0-14.25v14.25" />
+      </svg>
+    ),
+  },
+];
+
 function DNALeaderDashboardContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -137,13 +170,13 @@ function DNALeaderDashboardContent() {
 
   return (
     <div className="min-h-screen bg-cream">
-      {/* Page Title */}
+      {/* Header with inline stats */}
       <div className="bg-navy text-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-5">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-2xl font-bold text-white">DNA Groups</h1>
-              <p className="text-white/70 text-sm mt-1">
+              <p className="text-white/70 text-sm mt-0.5">
                 Welcome back, {data.leader.name}
                 {data.leader.church && (
                   <span> &bull; {data.leader.church.name}</span>
@@ -154,7 +187,7 @@ function DNALeaderDashboardContent() {
                   href={`https://${data.leader.church.subdomain}.dailydna.app`}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="inline-flex items-center gap-1 text-xs text-gold hover:text-gold/80 mt-1"
+                  className="inline-flex items-center gap-1 text-xs text-gold hover:text-gold/80 mt-0.5"
                 >
                   <svg className="w-3 h-3" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                     <circle cx="12" cy="12" r="10"/><line x1="2" y1="12" x2="22" y2="12"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
@@ -172,6 +205,24 @@ function DNALeaderDashboardContent() {
             >
               + New Group
             </Link>
+          </div>
+
+          {/* Inline stats bar */}
+          <div className="flex items-center gap-6 mt-4 pt-4 border-t border-white/10">
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-bold text-white">{data.stats.active_groups}</span>
+              <span className="text-xs text-white/50 uppercase tracking-wide">Active Groups</span>
+            </div>
+            <div className="w-px h-6 bg-white/15" />
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-bold text-white">{data.stats.total_disciples}</span>
+              <span className="text-xs text-white/50 uppercase tracking-wide">Disciples</span>
+            </div>
+            <div className="w-px h-6 bg-white/15" />
+            <div className="flex items-center gap-2">
+              <span className="text-2xl font-bold text-white">{data.stats.total_groups}</span>
+              <span className="text-xs text-white/50 uppercase tracking-wide">All-Time</span>
+            </div>
           </div>
         </div>
       </div>
@@ -223,7 +274,7 @@ function DNALeaderDashboardContent() {
                     href={`/groups/invitations/${inv.token}`}
                     className="text-sm font-medium text-gold hover:text-gold/80 ml-4 whitespace-nowrap"
                   >
-                    Respond →
+                    Respond &rarr;
                   </Link>
                 </div>
               ))}
@@ -232,108 +283,104 @@ function DNALeaderDashboardContent() {
         </div>
       )}
 
-      {/* Main content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Quick link to Leader Guides */}
-        <Link
-          href="/training/toolkit"
-          className="flex items-center justify-between bg-white rounded-lg shadow px-5 py-4 mb-6 border border-transparent hover:border-gold transition-colors group"
-        >
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gold/10 rounded-lg flex items-center justify-center flex-shrink-0">
-              <svg className="w-5 h-5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-              </svg>
-            </div>
-            <div>
-              <p className="font-semibold text-navy text-sm group-hover:text-gold transition-colors">DNA Toolkit &mdash; Leader Guides</p>
-              <p className="text-xs text-gray-500">View and download leader guides for each DNA tool</p>
-            </div>
-          </div>
-          <svg className="w-5 h-5 text-gray-400 group-hover:text-gold transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
-            <path d="M9 5l7 7-7 7" />
-          </svg>
-        </Link>
-
-        {/* Stats cards */}
-        <div className="grid grid-cols-3 gap-3 sm:gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-            <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide">Active Groups</p>
-            <p className="text-2xl sm:text-3xl font-bold text-navy mt-1">{data.stats.active_groups}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-            <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide">Disciples</p>
-            <p className="text-2xl sm:text-3xl font-bold text-navy mt-1">{data.stats.total_disciples}</p>
-          </div>
-          <div className="bg-white rounded-lg shadow p-4 sm:p-6">
-            <p className="text-xs sm:text-sm text-gray-500 uppercase tracking-wide">All-Time</p>
-            <p className="text-2xl sm:text-3xl font-bold text-navy mt-1">{data.stats.total_groups}</p>
-          </div>
-        </div>
-
-        {/* Groups section */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h2 className="text-lg font-semibold text-navy">My Groups</h2>
-          </div>
-
-          {data.groups.length === 0 ? (
-            /* Empty state */
-            <div className="px-6 py-12 text-center">
-              <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                </svg>
+      {/* Main content — two-column layout */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div className="flex flex-col lg:flex-row gap-6">
+          {/* Left: Groups */}
+          <div className="flex-1 min-w-0">
+            <div className="bg-white rounded-lg shadow">
+              <div className="px-6 py-4 border-b border-gray-200">
+                <h2 className="text-lg font-semibold text-navy">My Groups</h2>
               </div>
-              <h3 className="text-lg font-semibold text-navy mb-2">No groups yet</h3>
-              <p className="text-gray-600 mb-6 max-w-sm mx-auto">
-                Create your first DNA group to start leading disciples through the 90-day journey.
-              </p>
-              <Link
-                href="/groups/new"
-                className="inline-flex items-center gap-2 bg-gold hover:bg-gold/90 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
-              >
-                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
-                </svg>
-                Create Your First Group
-              </Link>
-            </div>
-          ) : (
-            /* Groups grid — 1 col mobile, 2 col tablet, 3 col desktop */
-            <div className="p-6 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {data.groups.map((group) => (
-                <Link
-                  key={group.id}
-                  href={`/groups/${group.id}`}
-                  className="block rounded-xl border border-gray-200 hover:border-gold hover:shadow-md transition-all bg-white overflow-hidden group"
-                >
-                  {/* Card header accent */}
-                  <div className="h-1.5 bg-gradient-to-r from-navy to-navy/60" />
-                  <div className="p-4">
-                    <div className="flex items-start justify-between gap-2 mb-3">
-                      <h3 className="font-semibold text-navy text-base leading-tight group-hover:text-gold transition-colors">
-                        {group.group_name}
-                      </h3>
-                      <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${phaseColors[group.current_phase] || 'bg-gray-100 text-gray-700'}`}>
-                        {phaseLabels[group.current_phase] || group.current_phase}
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3 text-sm text-gray-500">
-                      <span className="flex items-center gap-1">
-                        <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
-                        </svg>
-                        {group.disciple_count} {group.disciple_count === 1 ? 'disciple' : 'disciples'}
-                      </span>
-                      <span className="text-gray-300">•</span>
-                      <span>Started {new Date(group.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
-                    </div>
+
+              {data.groups.length === 0 ? (
+                /* Empty state */
+                <div className="px-6 py-12 text-center">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                    </svg>
                   </div>
-                </Link>
-              ))}
+                  <h3 className="text-lg font-semibold text-navy mb-2">No groups yet</h3>
+                  <p className="text-gray-600 mb-6 max-w-sm mx-auto">
+                    Create your first DNA group to start leading disciples through the 90-day journey.
+                  </p>
+                  <Link
+                    href="/groups/new"
+                    className="inline-flex items-center gap-2 bg-gold hover:bg-gold/90 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+                  >
+                    <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
+                    </svg>
+                    Create Your First Group
+                  </Link>
+                </div>
+              ) : (
+                /* Groups grid — 1 col mobile, 2 col when space allows */
+                <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {data.groups.map((group) => (
+                    <Link
+                      key={group.id}
+                      href={`/groups/${group.id}`}
+                      className="block rounded-xl border border-gray-200 hover:border-gold hover:shadow-md transition-all bg-white overflow-hidden group"
+                    >
+                      {/* Card header accent */}
+                      <div className="h-1.5 bg-gradient-to-r from-navy to-navy/60" />
+                      <div className="p-4">
+                        <div className="flex items-start justify-between gap-2 mb-3">
+                          <h3 className="font-semibold text-navy text-base leading-tight group-hover:text-gold transition-colors">
+                            {group.group_name}
+                          </h3>
+                          <span className={`flex-shrink-0 px-2 py-0.5 rounded-full text-xs font-medium ${phaseColors[group.current_phase] || 'bg-gray-100 text-gray-700'}`}>
+                            {phaseLabels[group.current_phase] || group.current_phase}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-3 text-sm text-gray-500">
+                          <span className="flex items-center gap-1">
+                            <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                            {group.disciple_count} {group.disciple_count === 1 ? 'disciple' : 'disciples'}
+                          </span>
+                          <span className="text-gray-300">&bull;</span>
+                          <span>Started {new Date(group.start_date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}</span>
+                        </div>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
+          </div>
+
+          {/* Right: Resources sidebar */}
+          <div className="lg:w-72 flex-shrink-0">
+            <div className="bg-white rounded-lg shadow">
+              <div className="px-4 py-3 border-b border-gray-200">
+                <h3 className="text-sm font-semibold text-navy">Leader Resources</h3>
+              </div>
+              <div className="p-2">
+                {RESOURCES.map((res) => (
+                  <Link
+                    key={res.href}
+                    href={res.href}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-gold/5 transition-colors group/link"
+                  >
+                    <div className="w-8 h-8 bg-gold/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                      {res.icon}
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-sm font-medium text-navy group-hover/link:text-gold transition-colors leading-tight">{res.label}</p>
+                      <p className="text-xs text-gray-400 leading-tight">{res.description}</p>
+                    </div>
+                    <svg className="w-4 h-4 text-gray-300 group-hover/link:text-gold transition-colors flex-shrink-0 ml-auto" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                      <path d="M9 5l7 7-7 7" />
+                    </svg>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          </div>
         </div>
       </main>
     </div>
