@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Users, MessageSquare, Rss, Calendar, Loader2, Plus, X, Pin, Globe, ExternalLink } from 'lucide-react';
+import { Users, MessageSquare, Rss, Calendar, Loader2, Plus, X, Pin, Globe, ExternalLink, Edit2, Trash2, MoreVertical } from 'lucide-react';
 import ChurchAppQRCard from '@/components/shared/ChurchAppQRCard';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -395,10 +395,57 @@ interface FeedViewProps {
   posts: FeedPost[];
   cohortId: string;
   onPostCreated: (post: FeedPost) => void;
+  onPostDeleted: (id: string) => void;
+  onPostUpdated: (post: FeedPost) => void;
 }
 
-function FeedView({ posts, cohortId, onPostCreated }: FeedViewProps) {
+function FeedView({ posts, cohortId, onPostCreated, onPostDeleted, onPostUpdated }: FeedViewProps) {
   const [showModal, setShowModal] = useState(false);
+  const [editingPost, setEditingPost] = useState<FeedPost | null>(null);
+  const [deletingPost, setDeletingPost] = useState<FeedPost | null>(null);
+  const [deleting, setDeleting] = useState(false);
+  const [editForm, setEditForm] = useState({ post_type: '', title: '', post_body: '', pinned: false });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+
+  const openEdit = (post: FeedPost) => {
+    setEditingPost(post);
+    setEditForm({ post_type: post.post_type, title: post.title, post_body: post.body, pinned: post.pinned });
+    setEditError('');
+  };
+
+  const submitEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingPost) return;
+    setEditSaving(true);
+    setEditError('');
+    try {
+      const res = await fetch(`/api/cohort/posts/${editingPost.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(editForm),
+      });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to update'); }
+      const d = await res.json();
+      onPostUpdated(d.post);
+      setEditingPost(null);
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : 'Failed to update');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingPost) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/cohort/posts/${deletingPost.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed');
+      onPostDeleted(deletingPost.id);
+      setDeletingPost(null);
+    } catch { /* keep open */ } finally { setDeleting(false); }
+  };
 
   const pinned = posts.filter(p => p.pinned);
   const rest = posts.filter(p => !p.pinned);
@@ -423,51 +470,122 @@ function FeedView({ posts, cohortId, onPostCreated }: FeedViewProps) {
           {pinned.length > 0 && (
             <div className="mb-6">
               <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Pinned</p>
-              <div className="space-y-4">{pinned.map(p => <PostCard key={p.id} post={p} />)}</div>
+              <div className="space-y-4">{pinned.map(p => <PostCard key={p.id} post={p} onEdit={openEdit} onDelete={setDeletingPost} />)}</div>
             </div>
           )}
           {rest.length > 0 && (
             <div>
               {pinned.length > 0 && <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">Recent</p>}
-              <div className="space-y-4">{rest.map(p => <PostCard key={p.id} post={p} />)}</div>
+              <div className="space-y-4">{rest.map(p => <PostCard key={p.id} post={p} onEdit={openEdit} onDelete={setDeletingPost} />)}</div>
             </div>
           )}
         </div>
       )}
 
-      {showModal && (
-        <NewPostModal
-          cohortId={cohortId}
-          onClose={() => setShowModal(false)}
-          onCreated={onPostCreated}
-        />
+      {showModal && <NewPostModal cohortId={cohortId} onClose={() => setShowModal(false)} onCreated={onPostCreated} />}
+
+      {/* Edit Post Modal */}
+      {editingPost && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h2 className="font-semibold text-navy">Edit Post</h2>
+              <button onClick={() => setEditingPost(null)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={submitEdit} className="p-6 space-y-4">
+              {editError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{editError}</p>}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Type</label>
+                <div className="flex gap-2">
+                  {(['announcement', 'update', 'resource'] as const).map(t => (
+                    <button key={t} type="button" onClick={() => setEditForm(p => ({ ...p, post_type: t }))}
+                      className={`px-3 py-1.5 rounded-full text-xs font-medium border capitalize ${editForm.post_type === t ? 'bg-navy text-white border-navy' : 'bg-white text-gray-600 border-gray-300'}`}>{t}</button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <input type="text" value={editForm.title} onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/40" required />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Body</label>
+                <textarea value={editForm.post_body} onChange={e => setEditForm(p => ({ ...p, post_body: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/40 resize-none" rows={5} required />
+              </div>
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input type="checkbox" checked={editForm.pinned} onChange={e => setEditForm(p => ({ ...p, pinned: e.target.checked }))} className="rounded border-gray-300" />
+                <Pin className="w-4 h-4 text-gray-400" /><span className="text-sm text-gray-700">Pin this post</span>
+              </label>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setEditingPost(null)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button type="submit" disabled={editSaving} className="flex-1 px-4 py-2 bg-gold text-white rounded-lg text-sm font-medium hover:bg-gold/90 disabled:opacity-50 flex items-center justify-center gap-2">
+                  {editSaving && <Loader2 className="w-4 h-4 animate-spin" />}{editSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Post Modal */}
+      {deletingPost && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-navy mb-1">Delete Post</h3>
+            <p className="text-sm text-gray-600 mb-4"><span className="font-medium">{deletingPost.title}</span> will be permanently removed.</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setDeletingPost(null)} disabled={deleting} className="px-4 py-2 text-gray-600 text-sm">Cancel</button>
+              <button onClick={confirmDelete} disabled={deleting} className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-5 rounded-lg text-sm disabled:opacity-50 flex items-center gap-2">
+                {deleting && <Loader2 className="w-4 h-4 animate-spin" />}Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
 }
 
-function PostCard({ post }: { post: FeedPost }) {
+function PostCard({ post, onEdit, onDelete }: { post: FeedPost; onEdit: (post: FeedPost) => void; onDelete: (post: FeedPost) => void }) {
   const config = postTypeConfig[post.post_type] || { label: post.post_type, color: 'text-gray-600', bg: 'bg-white border-gray-200' };
   const [expanded, setExpanded] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
   const isLong = post.body.length > 300;
   return (
-    <div className={`rounded-lg border p-5 ${config.bg}`}>
-      <div className="flex items-center gap-2 mb-2">
-        {post.pinned && (
-          <svg className="w-3.5 h-3.5 text-gold flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
-            <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
-          </svg>
-        )}
-        <span className={`text-xs font-semibold uppercase tracking-wide ${config.color}`}>{config.label}</span>
+    <div className={`rounded-lg border p-5 ${config.bg} relative`}>
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-2 mb-2">
+            {post.pinned && (
+              <svg className="w-3.5 h-3.5 text-gold flex-shrink-0" fill="currentColor" viewBox="0 0 24 24">
+                <path d="M16 12V4h1V2H7v2h1v8l-2 2v2h5.2v6h1.6v-6H18v-2l-2-2z"/>
+              </svg>
+            )}
+            <span className={`text-xs font-semibold uppercase tracking-wide ${config.color}`}>{config.label}</span>
+          </div>
+          <h3 className="font-semibold text-navy">{post.title}</h3>
+          <p className={`text-gray-700 text-sm mt-2 leading-relaxed ${!expanded && isLong ? 'line-clamp-4' : ''}`}>{post.body}</p>
+          {isLong && (
+            <button onClick={() => setExpanded(!expanded)} className="text-sm text-gold hover:underline mt-1">
+              {expanded ? 'Show less' : 'Read more'}
+            </button>
+          )}
+          <p className="text-xs text-gray-400 mt-3">{post.author_name} &bull; {timeAgo(post.created_at)}</p>
+        </div>
+        <div className="relative flex-shrink-0">
+          <button onClick={() => setShowMenu(!showMenu)} className="p-1.5 text-gray-400 hover:text-navy rounded transition-colors">
+            <MoreVertical className="w-4 h-4" />
+          </button>
+          {showMenu && (
+            <>
+              <div className="fixed inset-0 z-10" onClick={() => setShowMenu(false)} />
+              <div className="absolute right-0 top-8 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-20 min-w-[120px]">
+                <button onClick={() => { setShowMenu(false); onEdit(post); }} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-gray-700 hover:bg-gray-50"><Edit2 className="w-3.5 h-3.5" /> Edit</button>
+                <button onClick={() => { setShowMenu(false); onDelete(post); }} className="flex items-center gap-2 w-full px-3 py-2 text-sm text-red-600 hover:bg-red-50"><Trash2 className="w-3.5 h-3.5" /> Delete</button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
-      <h3 className="font-semibold text-navy">{post.title}</h3>
-      <p className={`text-gray-700 text-sm mt-2 leading-relaxed ${!expanded && isLong ? 'line-clamp-4' : ''}`}>{post.body}</p>
-      {isLong && (
-        <button onClick={() => setExpanded(!expanded)} className="text-sm text-gold hover:underline mt-1">
-          {expanded ? 'Show less' : 'Read more'}
-        </button>
-      )}
-      <p className="text-xs text-gray-400 mt-3">{post.author_name} &bull; {timeAgo(post.created_at)}</p>
     </div>
   );
 }
@@ -476,12 +594,20 @@ interface DiscussionViewProps {
   posts: DiscussionPost[];
   cohortId: string;
   onPostCreated: (post: DiscussionPost) => void;
+  onPostDeleted: (id: string) => void;
+  onPostUpdated: (id: string, body: string) => void;
 }
 
-function DiscussionView({ posts, cohortId, onPostCreated }: DiscussionViewProps) {
+function DiscussionView({ posts, cohortId, onPostCreated, onPostDeleted, onPostUpdated }: DiscussionViewProps) {
   const [compose, setCompose] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState('');
+  const [editingPost, setEditingPost] = useState<DiscussionPost | null>(null);
+  const [editBody, setEditBody] = useState('');
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+  const [deletingPost, setDeletingPost] = useState<DiscussionPost | null>(null);
+  const [deleting, setDeleting] = useState(false);
 
   async function handlePost() {
     if (!compose.trim()) return;
@@ -494,37 +620,49 @@ function DiscussionView({ posts, cohortId, onPostCreated }: DiscussionViewProps)
         body: JSON.stringify({ post_body: compose, cohort_id: cohortId }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || 'Failed to post.');
-        return;
-      }
+      if (!res.ok) { setError(data.error || 'Failed to post.'); return; }
       onPostCreated(data.post);
       setCompose('');
-    } catch {
-      setError('Network error. Please try again.');
-    } finally {
-      setSubmitting(false);
-    }
+    } catch { setError('Network error. Please try again.'); } finally { setSubmitting(false); }
   }
+
+  const openEdit = (post: DiscussionPost) => { setEditingPost(post); setEditBody(post.body); setEditError(''); };
+
+  const submitEdit = async () => {
+    if (!editingPost || !editBody.trim()) return;
+    setEditSaving(true);
+    setEditError('');
+    try {
+      const res = await fetch(`/api/cohort/discussion/${editingPost.id}`, {
+        method: 'PATCH', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ post_body: editBody.trim() }),
+      });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed'); }
+      const d = await res.json();
+      onPostUpdated(editingPost.id, d.post.body);
+      setEditingPost(null);
+    } catch (err) { setEditError(err instanceof Error ? err.message : 'Failed'); } finally { setEditSaving(false); }
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingPost) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/cohort/discussion/${deletingPost.id}`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed');
+      onPostDeleted(deletingPost.id);
+      setDeletingPost(null);
+    } catch { /* keep open */ } finally { setDeleting(false); }
+  };
 
   return (
     <div>
       {/* Compose box */}
       <div className="bg-white rounded-lg shadow p-4 mb-6">
-        <textarea
-          value={compose}
-          onChange={e => setCompose(e.target.value)}
-          placeholder="Post a message or question to the cohort..."
-          rows={3}
-          className="w-full text-sm text-gray-700 resize-none focus:outline-none"
-        />
+        <textarea value={compose} onChange={e => setCompose(e.target.value)} placeholder="Post a message or question to the cohort..." rows={3} className="w-full text-sm text-gray-700 resize-none focus:outline-none" />
         {error && <p className="text-xs text-red-600 mt-1">{error}</p>}
         <div className="flex justify-end mt-3">
-          <button
-            onClick={handlePost}
-            disabled={submitting || !compose.trim()}
-            className="px-4 py-1.5 bg-gold text-white text-sm font-medium rounded-lg hover:bg-gold/90 disabled:opacity-50 transition-colors"
-          >
+          <button onClick={handlePost} disabled={submitting || !compose.trim()} className="px-4 py-1.5 bg-gold text-white text-sm font-medium rounded-lg hover:bg-gold/90 disabled:opacity-50 transition-colors">
             {submitting ? 'Posting...' : 'Post'}
           </button>
         </div>
@@ -534,30 +672,72 @@ function DiscussionView({ posts, cohortId, onPostCreated }: DiscussionViewProps)
         <EmptyState icon={<MessageSquare className="w-7 h-7 text-gray-400" />} title="No discussion yet" subtitle="Start a conversation with the cohort." />
       ) : (
         <div className="space-y-4">
-          {posts.map(post => (
-            <div key={post.id} className="bg-white rounded-lg shadow p-5">
-              <div className="flex items-start gap-3">
-                <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${avatarColor(post.author_name)}`}>
-                  {initials(post.author_name)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <span className="font-medium text-navy text-sm">{post.author_name}</span>
-                    {post.author_role === 'trainer' && (
-                      <span className="text-xs bg-gold/20 text-gold px-2 py-0.5 rounded-full font-medium">Trainer</span>
-                    )}
-                    <span className="text-xs text-gray-400 ml-auto">{timeAgo(post.created_at)}</span>
+          {posts.map(post => {
+            return (
+              <div key={post.id} className="bg-white rounded-lg shadow p-5">
+                <div className="flex items-start gap-3">
+                  <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0 ${avatarColor(post.author_name)}`}>
+                    {initials(post.author_name)}
                   </div>
-                  <p className="text-gray-700 text-sm mt-2 leading-relaxed">{post.body}</p>
-                  {post.reply_count > 0 && (
-                    <p className="text-xs text-gray-400 mt-2">
-                      {post.reply_count} {post.reply_count === 1 ? 'reply' : 'replies'}
-                    </p>
-                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium text-navy text-sm">{post.author_name}</span>
+                      {post.author_role === 'trainer' && (
+                        <span className="text-xs bg-gold/20 text-gold px-2 py-0.5 rounded-full font-medium">Trainer</span>
+                      )}
+                      <span className="text-xs text-gray-400 ml-auto">{timeAgo(post.created_at)}</span>
+                      <button onClick={() => openEdit(post)} className="p-1 text-gray-400 hover:text-navy rounded" title="Edit"><Edit2 className="w-3.5 h-3.5" /></button>
+                      <button onClick={() => setDeletingPost(post)} className="p-1 text-gray-400 hover:text-red-500 rounded" title="Delete"><Trash2 className="w-3.5 h-3.5" /></button>
+                    </div>
+                    <p className="text-gray-700 text-sm mt-2 leading-relaxed">{post.body}</p>
+                    {post.reply_count > 0 && (
+                      <p className="text-xs text-gray-400 mt-2">{post.reply_count} {post.reply_count === 1 ? 'reply' : 'replies'}</p>
+                    )}
+                  </div>
                 </div>
               </div>
+            );
+          })}
+        </div>
+      )}
+
+      {/* Edit Discussion Modal */}
+      {editingPost && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-md">
+            <div className="px-5 py-4 border-b border-gray-200 flex items-center justify-between">
+              <h3 className="font-semibold text-navy">Edit Post</h3>
+              <button onClick={() => setEditingPost(null)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
             </div>
-          ))}
+            <div className="p-5 space-y-4">
+              {editError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{editError}</p>}
+              <textarea value={editBody} onChange={e => setEditBody(e.target.value)} className="w-full border border-gray-300 rounded-lg px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-gold/40 resize-none" rows={5} />
+              <div className="flex gap-3">
+                <button onClick={() => setEditingPost(null)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button onClick={submitEdit} disabled={editSaving || !editBody.trim()} className="flex-1 px-4 py-2 bg-gold text-white rounded-lg text-sm font-medium hover:bg-gold/90 disabled:opacity-50 flex items-center justify-center gap-2">
+                  {editSaving && <Loader2 className="w-4 h-4 animate-spin" />}{editSaving ? 'Saving...' : 'Save'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Discussion Modal */}
+      {deletingPost && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-navy mb-1">Delete Post</h3>
+            <p className="text-sm text-gray-600 mb-1">Post by <span className="font-medium">{deletingPost.author_name}</span> will be permanently removed.</p>
+            {deletingPost.reply_count > 0 && <p className="text-sm text-amber-600 mb-4">This will also delete {deletingPost.reply_count} {deletingPost.reply_count === 1 ? 'reply' : 'replies'}.</p>}
+            {deletingPost.reply_count === 0 && <div className="mb-4" />}
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setDeletingPost(null)} disabled={deleting} className="px-4 py-2 text-gray-600 text-sm">Cancel</button>
+              <button onClick={confirmDelete} disabled={deleting} className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-5 rounded-lg text-sm disabled:opacity-50 flex items-center gap-2">
+                {deleting && <Loader2 className="w-4 h-4 animate-spin" />}Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -620,10 +800,73 @@ interface EventsViewProps {
   events: CohortEvent[];
   cohortId: string;
   onEventCreated: (event: CohortEvent) => void;
+  onRefresh: () => void;
 }
 
-function EventsView({ events, cohortId, onEventCreated }: EventsViewProps) {
+function toLocalInputs(isoStart: string, isoEnd?: string): { date: string; time: string; duration: string } {
+  const start = new Date(isoStart);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const date = `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`;
+  const time = `${pad(start.getHours())}:${pad(start.getMinutes())}`;
+  let duration = '1';
+  if (isoEnd) {
+    const end = new Date(isoEnd);
+    duration = String(Math.round((end.getTime() - start.getTime()) / (1000 * 60 * 60) * 10) / 10);
+  }
+  return { date, time, duration };
+}
+
+function EventsView({ events, cohortId, onEventCreated, onRefresh }: EventsViewProps) {
   const [showModal, setShowModal] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CohortEvent | null>(null);
+  const [deletingEvent, setDeletingEvent] = useState<CohortEvent | null>(null);
+  const [deleting, setDeleting] = useState(false);
+
+  // Edit form state
+  const [editForm, setEditForm] = useState({ title: '', date: '', time: '', duration: '1', location: '', description: '' });
+  const [editSaving, setEditSaving] = useState(false);
+  const [editError, setEditError] = useState('');
+
+  const openEdit = (event: CohortEvent) => {
+    const { date, time, duration } = toLocalInputs(event.start_time, event.end_time);
+    setEditingEvent(event);
+    setEditForm({ title: event.title, date, time, duration, location: event.location || '', description: event.description || '' });
+    setEditError('');
+  };
+
+  const submitEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingEvent) return;
+    setEditSaving(true);
+    setEditError('');
+    try {
+      const startTime = new Date(`${editForm.date}T${editForm.time}`).toISOString();
+      const endTime = new Date(new Date(`${editForm.date}T${editForm.time}`).getTime() + parseFloat(editForm.duration) * 60 * 60 * 1000).toISOString();
+      const res = await fetch(`/api/calendar/events/${editingEvent.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ scope: 'this', title: editForm.title, description: editForm.description || null, location: editForm.location || null, start_time: startTime, end_time: endTime }),
+      });
+      if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to update'); }
+      setEditingEvent(null);
+      onRefresh();
+    } catch (err) {
+      setEditError(err instanceof Error ? err.message : 'Failed to update event');
+    } finally {
+      setEditSaving(false);
+    }
+  };
+
+  const confirmDelete = async () => {
+    if (!deletingEvent) return;
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/calendar/events/${deletingEvent.id}?scope=this`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete');
+      setDeletingEvent(null);
+      onRefresh();
+    } catch { /* keep modal open */ } finally { setDeleting(false); }
+  };
 
   return (
     <div>
@@ -666,6 +909,14 @@ function EventsView({ events, cohortId, onEventCreated }: EventsViewProps) {
                     <p className="text-sm text-gray-600 mt-2 line-clamp-2">{event.description}</p>
                   )}
                 </div>
+                <div className="flex items-start gap-1 flex-shrink-0">
+                  <button onClick={() => openEdit(event)} className="p-1.5 text-gray-400 hover:text-navy rounded transition-colors" title="Edit">
+                    <Edit2 className="w-4 h-4" />
+                  </button>
+                  <button onClick={() => setDeletingEvent(event)} className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors" title="Delete">
+                    <Trash2 className="w-4 h-4" />
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -673,11 +924,72 @@ function EventsView({ events, cohortId, onEventCreated }: EventsViewProps) {
       )}
 
       {showModal && (
-        <AddEventModal
-          cohortId={cohortId}
-          onClose={() => setShowModal(false)}
-          onCreated={onEventCreated}
-        />
+        <AddEventModal cohortId={cohortId} onClose={() => setShowModal(false)} onCreated={onEventCreated} />
+      )}
+
+      {/* Edit Event Modal */}
+      {editingEvent && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+              <h2 className="font-semibold text-navy">Edit Event</h2>
+              <button onClick={() => setEditingEvent(null)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+            </div>
+            <form onSubmit={submitEdit} className="p-6 space-y-4">
+              {editError && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{editError}</p>}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Title</label>
+                <input type="text" value={editForm.title} onChange={e => setEditForm(p => ({ ...p, title: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/40" required />
+              </div>
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                  <input type="date" value={editForm.date} onChange={e => setEditForm(p => ({ ...p, date: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/40" required />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">Time</label>
+                  <input type="time" value={editForm.time} onChange={e => setEditForm(p => ({ ...p, time: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/40" required />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Duration</label>
+                <select value={editForm.duration} onChange={e => setEditForm(p => ({ ...p, duration: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/40">
+                  <option value="0.5">30 minutes</option><option value="1">1 hour</option><option value="1.5">1.5 hours</option><option value="2">2 hours</option><option value="3">3 hours</option><option value="4">4 hours</option><option value="8">Full day (8 hrs)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Location</label>
+                <input type="text" value={editForm.location} onChange={e => setEditForm(p => ({ ...p, location: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/40" placeholder="Room, address, or online link..." />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                <textarea value={editForm.description} onChange={e => setEditForm(p => ({ ...p, description: e.target.value }))} className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/40 resize-none" rows={3} />
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button type="button" onClick={() => setEditingEvent(null)} className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50">Cancel</button>
+                <button type="submit" disabled={editSaving} className="flex-1 px-4 py-2 bg-gold text-white rounded-lg text-sm font-medium hover:bg-gold/90 disabled:opacity-50 flex items-center justify-center gap-2">
+                  {editSaving && <Loader2 className="w-4 h-4 animate-spin" />}{editSaving ? 'Saving...' : 'Save Changes'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Event Modal */}
+      {deletingEvent && (
+        <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <h3 className="text-lg font-semibold text-navy mb-1">Delete Event</h3>
+            <p className="text-sm text-gray-600 mb-4"><span className="font-medium">{deletingEvent.title}</span> will be permanently removed.</p>
+            <div className="flex justify-end gap-3">
+              <button onClick={() => setDeletingEvent(null)} disabled={deleting} className="px-4 py-2 text-gray-600 text-sm">Cancel</button>
+              <button onClick={confirmDelete} disabled={deleting} className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-5 rounded-lg text-sm disabled:opacity-50 flex items-center gap-2">
+                {deleting && <Loader2 className="w-4 h-4 animate-spin" />}Delete
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
@@ -765,6 +1077,42 @@ export default function AdminCohortTab({ churchId }: { churchId: string }) {
         events: newEvents,
         stats: { ...prev.stats, upcoming_events: prev.stats.upcoming_events + 1 },
       };
+    });
+  }
+
+  function refreshData() {
+    fetch(`/api/cohort?churchId=${churchId}`)
+      .then(r => r.json())
+      .then(d => { if (d) setData(d); })
+      .catch(() => {});
+  }
+
+  function handlePostDeleted(postId: string) {
+    setData(prev => {
+      if (!prev) return prev;
+      return { ...prev, feed: prev.feed.filter(p => p.id !== postId) };
+    });
+  }
+
+  function handlePostUpdated(updated: FeedPost) {
+    setData(prev => {
+      if (!prev) return prev;
+      const newFeed = prev.feed.map(p => p.id === updated.id ? updated : p);
+      return { ...prev, feed: [...newFeed.filter(p => p.pinned), ...newFeed.filter(p => !p.pinned)] };
+    });
+  }
+
+  function handleDiscussionDeleted(postId: string) {
+    setData(prev => {
+      if (!prev) return prev;
+      return { ...prev, discussion: prev.discussion.filter(p => p.id !== postId) };
+    });
+  }
+
+  function handleDiscussionUpdated(postId: string, newBody: string) {
+    setData(prev => {
+      if (!prev) return prev;
+      return { ...prev, discussion: prev.discussion.map(p => p.id === postId ? { ...p, body: newBody } : p) };
     });
   }
 
@@ -856,14 +1204,14 @@ export default function AdminCohortTab({ churchId }: { churchId: string }) {
       {/* Sub-tab content */}
       <div>
         {subTab === 'feed' && (
-          <FeedView posts={data.feed} cohortId={cohortId} onPostCreated={handlePostCreated} />
+          <FeedView posts={data.feed} cohortId={cohortId} onPostCreated={handlePostCreated} onPostDeleted={handlePostDeleted} onPostUpdated={handlePostUpdated} />
         )}
         {subTab === 'discussion' && (
-          <DiscussionView posts={data.discussion} cohortId={cohortId} onPostCreated={handleDiscussionCreated} />
+          <DiscussionView posts={data.discussion} cohortId={cohortId} onPostCreated={handleDiscussionCreated} onPostDeleted={handleDiscussionDeleted} onPostUpdated={handleDiscussionUpdated} />
         )}
         {subTab === 'members' && <MembersView members={data.members} />}
         {subTab === 'events' && (
-          <EventsView events={data.events} cohortId={cohortId} onEventCreated={handleEventCreated} />
+          <EventsView events={data.events} cohortId={cohortId} onEventCreated={handleEventCreated} onRefresh={refreshData} />
         )}
       </div>
     </div>

@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Calendar, Clock, MapPin, Loader2 } from 'lucide-react';
+import { X, Calendar, Clock, MapPin, Loader2, Edit2, Trash2 } from 'lucide-react';
 
 interface CohortEvent {
   id: string;
@@ -35,6 +35,19 @@ function daysUntil(dateStr: string) {
   if (days === 0) return 'Today';
   if (days === 1) return 'Tomorrow';
   return `In ${days} days`;
+}
+
+function toLocalInputs(isoStart: string, isoEnd?: string): { date: string; time: string; duration: string } {
+  const start = new Date(isoStart);
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const date = `${start.getFullYear()}-${pad(start.getMonth() + 1)}-${pad(start.getDate())}`;
+  const time = `${pad(start.getHours())}:${pad(start.getMinutes())}`;
+  let duration = '120';
+  if (isoEnd) {
+    const end = new Date(isoEnd);
+    duration = String(Math.round((end.getTime() - start.getTime()) / 60000));
+  }
+  return { date, time, duration };
 }
 
 // ============================================
@@ -221,6 +234,222 @@ function AddEventModal({ cohortId, onClose, onSuccess }: {
 }
 
 // ============================================
+// EDIT EVENT MODAL
+// ============================================
+
+function EditEventModal({ event, onClose, onSuccess }: {
+  event: CohortEvent;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const { date, time, duration } = toLocalInputs(event.start_time, event.end_time);
+  const [form, setForm] = useState({
+    title: event.title,
+    description: event.description || '',
+    location: event.location || '',
+    date,
+    time,
+    duration,
+  });
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const savingRef = useRef(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (savingRef.current) return;
+    savingRef.current = true;
+    setSaving(true);
+    setError(null);
+
+    try {
+      const startTime = new Date(`${form.date}T${form.time}`);
+      const endTime = new Date(startTime.getTime() + parseInt(form.duration) * 60000);
+
+      const res = await fetch(`/api/calendar/events/${event.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          scope: 'this',
+          title: form.title,
+          description: form.description || null,
+          location: form.location || null,
+          start_time: startTime.toISOString(),
+          end_time: endTime.toISOString(),
+        }),
+      });
+
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || 'Failed to update event');
+      }
+
+      onSuccess();
+      onClose();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update event');
+    } finally {
+      setSaving(false);
+      savingRef.current = false;
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-white border-b border-gray-200 px-5 py-4 flex items-center justify-between">
+          <h3 className="font-semibold text-navy">Edit Event</h3>
+          <button onClick={onClose} className="text-gray-400 hover:text-navy">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-5 space-y-4">
+          {error && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700">{error}</div>
+          )}
+
+          <div>
+            <label className="block text-sm font-medium text-navy mb-1">Title</label>
+            <input
+              type="text"
+              value={form.title}
+              onChange={(e) => setForm(p => ({ ...p, title: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold/40"
+              required
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="block text-sm font-medium text-navy mb-1">Date</label>
+              <input
+                type="date"
+                value={form.date}
+                onChange={(e) => setForm(p => ({ ...p, date: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold/40"
+                required
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-navy mb-1">Time</label>
+              <input
+                type="time"
+                value={form.time}
+                onChange={(e) => setForm(p => ({ ...p, time: e.target.value }))}
+                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold/40"
+                required
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-navy mb-1">Duration</label>
+            <select
+              value={form.duration}
+              onChange={(e) => setForm(p => ({ ...p, duration: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold/40"
+            >
+              <option value="60">1 hour</option>
+              <option value="90">1.5 hours</option>
+              <option value="120">2 hours</option>
+              <option value="180">3 hours</option>
+              <option value="480">Half day (8 hrs)</option>
+              <option value="600">Full day (10 hrs)</option>
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-navy mb-1">Location</label>
+            <input
+              type="text"
+              value={form.location}
+              onChange={(e) => setForm(p => ({ ...p, location: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold/40"
+              placeholder="Room 212, online, etc."
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-navy mb-1">Description</label>
+            <textarea
+              value={form.description}
+              onChange={(e) => setForm(p => ({ ...p, description: e.target.value }))}
+              className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm text-navy focus:outline-none focus:ring-2 focus:ring-gold/40 resize-none"
+              rows={3}
+            />
+          </div>
+
+          <div className="flex items-center justify-end gap-3 pt-2 border-t border-gray-100">
+            <button type="button" onClick={onClose} className="px-4 py-2 text-sm text-gray-600 hover:text-navy border border-gray-200 rounded-lg transition-colors">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={saving}
+              className="flex items-center gap-2 bg-gold hover:bg-gold/90 disabled:opacity-50 text-white text-sm font-medium px-5 py-2 rounded-lg transition-colors"
+            >
+              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
+              {saving ? 'Saving...' : 'Save Changes'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
+// DELETE EVENT MODAL
+// ============================================
+
+function DeleteEventModal({ event, onClose, onSuccess }: {
+  event: CohortEvent;
+  onClose: () => void;
+  onSuccess: () => void;
+}) {
+  const [deleting, setDeleting] = useState(false);
+
+  const handleDelete = async () => {
+    setDeleting(true);
+    try {
+      const res = await fetch(`/api/calendar/events/${event.id}?scope=this`, { method: 'DELETE' });
+      if (!res.ok) throw new Error('Failed to delete');
+      onSuccess();
+      onClose();
+    } catch {
+      // Keep modal open so user can retry
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+        <h3 className="text-lg font-semibold text-navy mb-1">Delete Event</h3>
+        <p className="text-sm text-gray-600 mb-4">
+          <span className="font-medium">{event.title}</span> — this event will be permanently removed.
+        </p>
+        <div className="flex justify-end gap-3">
+          <button onClick={onClose} disabled={deleting} className="px-4 py-2 text-gray-600 hover:text-gray-800 text-sm">
+            Cancel
+          </button>
+          <button
+            onClick={handleDelete}
+            disabled={deleting}
+            className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-5 rounded-lg text-sm transition-colors disabled:opacity-50 flex items-center gap-2"
+          >
+            {deleting && <Loader2 className="w-4 h-4 animate-spin" />}
+            Delete
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ============================================
 // MAIN PAGE
 // ============================================
 
@@ -230,8 +459,10 @@ export default function CohortCalendarPage() {
   const [meta, setMeta] = useState<CohortMeta | null>(null);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<CohortEvent | null>(null);
+  const [deletingEvent, setDeletingEvent] = useState<CohortEvent | null>(null);
 
-  useEffect(() => {
+  const fetchData = () => {
     fetch('/api/cohort')
       .then((r) => {
         if (r.status === 401) { router.push('/login'); return null; }
@@ -249,6 +480,10 @@ export default function CohortCalendarPage() {
         setLoading(false);
       })
       .catch(() => setLoading(false));
+  };
+
+  useEffect(() => {
+    fetchData();
   }, [router]);
 
   if (loading) {
@@ -302,15 +537,35 @@ export default function CohortCalendarPage() {
                 <div className="flex-1 px-5 py-4">
                   <div className="flex items-start justify-between gap-2">
                     <h3 className="font-semibold text-navy">{event.title}</h3>
-                    {countdown && (
-                      <span className={`text-xs font-medium px-2.5 py-1 rounded-full flex-shrink-0 ${
-                        countdown === 'Today' ? 'bg-red-100 text-red-700' :
-                        countdown === 'Tomorrow' ? 'bg-orange-100 text-orange-700' :
-                        'bg-blue-50 text-blue-600'
-                      }`}>
-                        {countdown}
-                      </span>
-                    )}
+                    <div className="flex items-center gap-1 flex-shrink-0">
+                      {countdown && (
+                        <span className={`text-xs font-medium px-2.5 py-1 rounded-full ${
+                          countdown === 'Today' ? 'bg-red-100 text-red-700' :
+                          countdown === 'Tomorrow' ? 'bg-orange-100 text-orange-700' :
+                          'bg-blue-50 text-blue-600'
+                        }`}>
+                          {countdown}
+                        </span>
+                      )}
+                      {isTrainer && !isMock && (
+                        <>
+                          <button
+                            onClick={() => setEditingEvent(event)}
+                            className="p-1.5 text-gray-400 hover:text-navy rounded transition-colors ml-1"
+                            title="Edit"
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => setDeletingEvent(event)}
+                            className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors"
+                            title="Delete"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </>
+                      )}
+                    </div>
                   </div>
                   <div className="flex items-center gap-1.5 mt-1.5 text-sm text-gray-500">
                     <Clock className="w-3.5 h-3.5 flex-shrink-0" />
@@ -355,6 +610,22 @@ export default function CohortCalendarPage() {
               )
             );
           }}
+        />
+      )}
+
+      {editingEvent && (
+        <EditEventModal
+          event={editingEvent}
+          onClose={() => setEditingEvent(null)}
+          onSuccess={() => fetchData()}
+        />
+      )}
+
+      {deletingEvent && (
+        <DeleteEventModal
+          event={deletingEvent}
+          onClose={() => setDeletingEvent(null)}
+          onSuccess={() => fetchData()}
         />
       )}
     </div>

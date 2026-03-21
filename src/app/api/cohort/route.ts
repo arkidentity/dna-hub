@@ -292,6 +292,7 @@ export async function GET(req: Request) {
           author_name: (p as any).author_role === 'coach'
             ? 'DNA Coach'
             : (p.author as unknown as { name: string } | null)?.name || 'Trainer',
+          author_id: (p.author as unknown as { id: string } | null)?.id || null,
           author_role: (p as any).author_role || 'trainer',
           created_at: p.created_at,
         })),
@@ -303,6 +304,7 @@ export async function GET(req: Request) {
             author_name: (d as any).is_coach_post
               ? 'DNA Coach'
               : (d.author as unknown as { name: string } | null)?.name || 'Leader',
+            author_id: authorId || null,
             author_role: (d as any).is_coach_post
               ? 'trainer'
               : authorId && trainerIds.has(authorId) ? 'trainer' : 'leader',
@@ -436,6 +438,7 @@ export async function GET(req: Request) {
         church_subdomain: churchSubdomain,
       },
       currentUserRole: membership.role,
+      currentLeaderId: leader.id,
       stats: {
         total_members: members.length,
         trainers: members.filter((m) => m.role === 'trainer').length,
@@ -450,6 +453,7 @@ export async function GET(req: Request) {
         author_name: (p as any).author_role === 'coach'
           ? 'DNA Coach'
           : (p.author as unknown as { name: string } | null)?.name || 'Trainer',
+        author_id: (p.author as unknown as { id: string } | null)?.id || null,
         author_role: (p as any).author_role || 'trainer',
         created_at: p.created_at,
       })),
@@ -461,6 +465,7 @@ export async function GET(req: Request) {
           author_name: (d as any).is_coach_post
             ? 'DNA Coach'
             : (d.author as unknown as { name: string } | null)?.name || 'Leader',
+          author_id: authorId || null,
           author_role: (d as any).is_coach_post
             ? 'trainer'
             : authorId && trainerIds.has(authorId) ? 'trainer' : 'leader',

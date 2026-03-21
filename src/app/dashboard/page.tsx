@@ -12,7 +12,6 @@ import {
   AlertCircle,
   RefreshCw,
   UserCog,
-  Sparkles,
   Smartphone,
   Radio,
   Route,
@@ -25,7 +24,6 @@ import {
   GroupsTab,
   TeamTab,
 } from '@/components/dashboard';
-import TeamGiftsTab from '@/components/spiritual-gifts/TeamGiftsTab';
 import DailyDNATab from '@/components/dashboard/DailyDNATab';
 import ServicesTab from '@/components/dashboard/services/ServicesTab';
 import DisciplesTab from '@/components/dashboard/disciples/DisciplesTab';
@@ -47,7 +45,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'team' | 'groups' | 'disciples' | 'gifts' | 'daily-dna' | 'services' | 'pathway'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'team' | 'groups' | 'disciples' | 'daily-dna' | 'services' | 'pathway'>('overview');
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [compactPhases, setCompactPhases] = useState<Set<string>>(new Set());
   const [updatingMilestone, setUpdatingMilestone] = useState<string | null>(null);
@@ -487,7 +485,6 @@ export default function DashboardPage() {
               { id: 'team', label: 'Team', icon: UserCog },
               { id: 'groups', label: 'DNA Leaders', icon: Users },
               { id: 'disciples', label: 'Disciples', icon: Heart },
-              { id: 'gifts', label: 'Ministry Gifts', icon: Sparkles },
               { id: 'daily-dna', label: 'Daily DNA', icon: Smartphone },
               { id: 'pathway', label: 'Pathway', icon: Route },
               { id: 'services', label: 'Church React', icon: Radio },
@@ -575,10 +572,6 @@ export default function DashboardPage() {
 
         {activeTab === 'disciples' && (
           <DisciplesTab churchId={church.id} />
-        )}
-
-        {activeTab === 'gifts' && (
-          <TeamGiftsTab churchId={church.id} subdomain={church.subdomain} />
         )}
 
         {activeTab === 'daily-dna' && (
