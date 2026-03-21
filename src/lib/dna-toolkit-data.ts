@@ -78,7 +78,7 @@ export const DNA_TOOLKIT_GUIDES: DNAToolGuide[] = [
     id: 'ministry-gift-test',
     name: 'Ministry Gift Test',
     description: 'Discovering how God has uniquely wired each disciple',
-    pdfFilename: 'Ministry Gift Test Leader Guide.pdf',
+    pdfFilename: 'Ministry Gifts Leader Guide.pdf',
   },
   {
     id: 'confession',
@@ -109,6 +109,18 @@ export const DNA_TOOLKIT_GUIDES: DNAToolGuide[] = [
     name: 'Q&A Time',
     description: 'Opening the floor for honest questions about faith and life',
     pdfFilename: 'Q&A Leader Guide.pdf',
+  },
+  {
+    id: 'identity-shift',
+    name: 'Identity Shift',
+    description: 'Cementing who God says you are — not performance, not opinions',
+    pdfFilename: 'Identity Shift Leader Guide.pdf',
+  },
+  {
+    id: 'life-assessment-revisited',
+    name: 'Life Assessment Revisited',
+    description: 'Retaking the assessment to measure growth at the end of Phase 1',
+    pdfFilename: 'Life Assessment Revisited Leader Guide.pdf',
   },
 ];
 
