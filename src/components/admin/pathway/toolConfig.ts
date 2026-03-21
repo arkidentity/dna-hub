@@ -15,6 +15,7 @@ import {
   Music,
   MessageCircle,
   Wine,
+  Eye,
   type LucideIcon,
 } from 'lucide-react';
 
@@ -49,6 +50,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
   Music,
   MessageCircle,
   Wine,
+  Eye,
 };
 
 export function getToolIcon(iconName: string | null): LucideIcon {
