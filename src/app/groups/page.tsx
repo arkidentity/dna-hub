@@ -234,6 +234,27 @@ function DNALeaderDashboardContent() {
 
       {/* Main content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Quick link to Leader Guides */}
+        <Link
+          href="/training/toolkit"
+          className="flex items-center justify-between bg-white rounded-lg shadow px-5 py-4 mb-6 border border-transparent hover:border-gold transition-colors group"
+        >
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-gold/10 rounded-lg flex items-center justify-center flex-shrink-0">
+              <svg className="w-5 h-5 text-gold" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <div>
+              <p className="font-semibold text-navy text-sm group-hover:text-gold transition-colors">DNA Toolkit &mdash; Leader Guides</p>
+              <p className="text-xs text-gray-500">View and download leader guides for each DNA tool</p>
+            </div>
+          </div>
+          <svg className="w-5 h-5 text-gray-400 group-hover:text-gold transition-colors" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth="2">
+            <path d="M9 5l7 7-7 7" />
+          </svg>
+        </Link>
+
         {/* Stats cards */}
         <div className="grid grid-cols-3 gap-3 sm:gap-6 mb-8">
           <div className="bg-white rounded-lg shadow p-4 sm:p-6">
