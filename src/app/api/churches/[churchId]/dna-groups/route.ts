@@ -133,7 +133,7 @@ export async function GET(
           .from('group_disciples')
           .select('group_id')
           .in('group_id', groupIds)
-          .eq('is_active', true);
+          .eq('current_status', 'active');
 
         if (!countError && discipleCounts) {
           const countMap: Record<string, number> = {};
