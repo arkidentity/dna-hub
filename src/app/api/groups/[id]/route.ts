@@ -214,7 +214,7 @@ export async function GET(
         current_streak: appStats?.current_streak ?? null,
         last_activity_date: appStats?.last_activity_date ?? null,
         total_journal_entries: appStats?.total_journal_entries ?? 0,
-        total_prayer_sessions: appStats?.total_prayer_sessions ?? 0,
+        total_prayer_cards: appStats?.total_prayer_cards ?? 0,
         creed_cards_mastered: creedCount,
       };
     });

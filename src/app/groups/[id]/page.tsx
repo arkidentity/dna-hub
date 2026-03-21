@@ -19,7 +19,7 @@ interface Disciple {
   current_streak?: number | null;
   last_activity_date?: string | null;
   total_journal_entries?: number;
-  total_prayer_sessions?: number;
+  total_prayer_cards?: number;
   creed_cards_mastered?: number;
 }
 
@@ -648,7 +648,7 @@ function GroupDetailContent() {
                       <th className="text-center px-3 py-2.5 font-medium text-gray-500" title="Life Assessments">W1 / W12</th>
                       <th className="text-center px-3 py-2.5 font-medium text-gray-500" title="Current streak">🔥 Streak</th>
                       <th className="text-center px-3 py-2.5 font-medium text-gray-500" title="Journal entries">📓 Journals</th>
-                      <th className="text-center px-3 py-2.5 font-medium text-gray-500" title="Prayer sessions">🙏 Prayer</th>
+                      <th className="text-center px-3 py-2.5 font-medium text-gray-500" title="Prayer cards">🙏 Prayer</th>
                       <th className="text-center px-3 py-2.5 font-medium text-gray-500" title="Creed cards mastered">🛡️ Creed</th>
                       <th className="w-8"></th>
                     </tr>
@@ -720,8 +720,8 @@ function GroupDetailContent() {
                           )}
                         </td>
                         <td className="px-3 py-3 text-center">
-                          {disciple.total_prayer_sessions ? (
-                            <span>{disciple.total_prayer_sessions}</span>
+                          {disciple.total_prayer_cards ? (
+                            <span>{disciple.total_prayer_cards}</span>
                           ) : (
                             <span className="text-gray-300">—</span>
                           )}
@@ -797,13 +797,13 @@ function GroupDetailContent() {
                           {disciple.total_journal_entries ? (
                             <span>📓 {disciple.total_journal_entries}</span>
                           ) : null}
-                          {disciple.total_prayer_sessions ? (
-                            <span>🙏 {disciple.total_prayer_sessions}</span>
+                          {disciple.total_prayer_cards ? (
+                            <span>🙏 {disciple.total_prayer_cards}</span>
                           ) : null}
                           {disciple.creed_cards_mastered ? (
                             <span className="text-gold font-medium">🛡️ {disciple.creed_cards_mastered}</span>
                           ) : null}
-                          {!disciple.current_streak && !disciple.total_journal_entries && !disciple.total_prayer_sessions && !disciple.creed_cards_mastered && (
+                          {!disciple.current_streak && !disciple.total_journal_entries && !disciple.total_prayer_cards && !disciple.creed_cards_mastered && (
                             <span className="text-gray-400 italic">No activity yet</span>
                           )}
                         </>

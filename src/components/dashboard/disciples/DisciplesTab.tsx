@@ -191,7 +191,7 @@ export default function DisciplesTab({ churchId }: DisciplesTabProps) {
     const headers = [
       'Name', 'Email', 'Role', 'Group', 'Phase', 'Leader',
       'Group Status', 'Joined', 'Streak', 'Longest Streak', 'Journals',
-      'Prayer Sessions', 'Prayer Cards', 'Creed Cards Mastered',
+      'Prayer Cards', 'Creed Cards Mastered',
       'Last Active', 'Last Login',
     ];
     const rows = filtered.map((m) => [
@@ -206,7 +206,6 @@ export default function DisciplesTab({ churchId }: DisciplesTabProps) {
       String(m.current_streak),
       String(m.longest_streak),
       String(m.total_journal_entries),
-      String(m.total_prayer_sessions),
       String(m.total_prayer_cards),
       String(m.cards_mastered.length),
       m.last_activity_date || '',
@@ -426,7 +425,7 @@ export default function DisciplesTab({ churchId }: DisciplesTabProps) {
                     {m.total_journal_entries > 0 ? m.total_journal_entries : '—'}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    {m.total_prayer_sessions > 0 ? m.total_prayer_sessions : '—'}
+                    {m.total_prayer_cards > 0 ? m.total_prayer_cards : '—'}
                   </td>
                   <td className="px-4 py-3 text-center">
                     {m.cards_mastered.length > 0 ? (
