@@ -209,3 +209,114 @@ export async function GET(
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
+
+/**
+ * PATCH /api/admin/church/[id]
+ * Update church name, primary leader name, and/or primary leader email.
+ */
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id: churchId } = await params;
+    const session = await getUnifiedSession();
+
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!isAdmin(session)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const supabase = getSupabaseAdmin();
+    const body = await request.json();
+    const { churchName, leaderName, leaderEmail } = body;
+
+    // Validate at least one field is being updated
+    if (!churchName && !leaderName && !leaderEmail) {
+      return NextResponse.json({ error: 'No fields to update' }, { status: 400 });
+    }
+
+    // Update church name
+    if (churchName?.trim()) {
+      const { error: churchError } = await supabase
+        .from('churches')
+        .update({ name: churchName.trim(), updated_at: new Date().toISOString() })
+        .eq('id', churchId);
+
+      if (churchError) {
+        console.error('[ADMIN CHURCH PATCH] church update error:', churchError);
+        return NextResponse.json({ error: 'Failed to update church name' }, { status: 500 });
+      }
+    }
+
+    // Update primary leader name and/or email
+    if (leaderName?.trim() || leaderEmail?.trim()) {
+      // Get current primary leader
+      const { data: currentLeader } = await supabase
+        .from('church_leaders')
+        .select('id, email, user_id')
+        .eq('church_id', churchId)
+        .eq('is_primary_contact', true)
+        .single();
+
+      if (!currentLeader) {
+        return NextResponse.json({ error: 'Primary leader not found' }, { status: 404 });
+      }
+
+      const leaderUpdates: Record<string, string> = {};
+      if (leaderName?.trim()) leaderUpdates.name = leaderName.trim();
+      if (leaderEmail?.trim()) leaderUpdates.email = leaderEmail.trim().toLowerCase();
+
+      // Update church_leaders record
+      const { error: leaderError } = await supabase
+        .from('church_leaders')
+        .update(leaderUpdates)
+        .eq('id', currentLeader.id);
+
+      if (leaderError) {
+        console.error('[ADMIN CHURCH PATCH] leader update error:', leaderError);
+        return NextResponse.json({ error: 'Failed to update leader' }, { status: 500 });
+      }
+
+      // Also update the users table to keep name/email in sync
+      if (currentLeader.user_id) {
+        const userUpdates: Record<string, string> = {};
+        if (leaderName?.trim()) userUpdates.name = leaderName.trim();
+        if (leaderEmail?.trim()) userUpdates.email = leaderEmail.trim().toLowerCase();
+
+        await supabase
+          .from('users')
+          .update(userUpdates)
+          .eq('id', currentLeader.user_id);
+      }
+
+      // Update dna_leaders record if email changed
+      if (leaderEmail?.trim() && currentLeader.email) {
+        const dnaLeaderUpdates: Record<string, string> = {};
+        if (leaderName?.trim()) dnaLeaderUpdates.name = leaderName.trim();
+        dnaLeaderUpdates.email = leaderEmail.trim().toLowerCase();
+
+        await supabase
+          .from('dna_leaders')
+          .update(dnaLeaderUpdates)
+          .eq('email', currentLeader.email.toLowerCase())
+          .eq('church_id', churchId);
+      } else if (leaderName?.trim() && currentLeader.email) {
+        // Name-only update on dna_leaders
+        await supabase
+          .from('dna_leaders')
+          .update({ name: leaderName.trim() })
+          .eq('email', currentLeader.email.toLowerCase())
+          .eq('church_id', churchId);
+      }
+    }
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    console.error('[ADMIN CHURCH PATCH] Error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+  }
+}

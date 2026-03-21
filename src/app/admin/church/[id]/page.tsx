@@ -136,6 +136,13 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'leaders' | 'groups' | 'branding' | 'cohort' | 'demo' | 'prayer-wall' | 'services' | 'pathway'>('overview');
 
+  // Church info editing state
+  const [editingChurchInfo, setEditingChurchInfo] = useState(false);
+  const [editChurchName, setEditChurchName] = useState('');
+  const [editLeaderName, setEditLeaderName] = useState('');
+  const [editLeaderEmail, setEditLeaderEmail] = useState('');
+  const [savingChurchInfo, setSavingChurchInfo] = useState(false);
+
   // Alias editing state
   const [editingAliases, setEditingAliases] = useState(false);
   const [aliasInput, setAliasInput] = useState('');
@@ -289,6 +296,40 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
     }
   };
 
+  const handleSaveChurchInfo = async () => {
+    setSavingChurchInfo(true);
+    try {
+      const body: Record<string, string> = {};
+      if (editChurchName.trim() !== data?.church.name) body.churchName = editChurchName.trim();
+      if (editLeaderName.trim() !== data?.leader.name) body.leaderName = editLeaderName.trim();
+      if (editLeaderEmail.trim().toLowerCase() !== data?.leader.email.toLowerCase()) body.leaderEmail = editLeaderEmail.trim();
+
+      if (Object.keys(body).length === 0) {
+        setEditingChurchInfo(false);
+        return;
+      }
+
+      const res = await fetch(`/api/admin/church/${churchId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+
+      if (!res.ok) {
+        const err = await res.json();
+        throw new Error(err.error || 'Failed to update');
+      }
+
+      await fetchChurchData();
+      setEditingChurchInfo(false);
+    } catch (error) {
+      console.error('Save church info error:', error);
+      alert('Failed to save changes');
+    } finally {
+      setSavingChurchInfo(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
@@ -321,14 +362,82 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
           </Link>
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div className="min-w-0">
-              <h1 className="text-xl font-semibold text-white">{church.name}</h1>
-              <div className="flex items-center gap-3 mt-1 text-sm text-gray-300">
-                <span>{leader.name}</span>
-                <span>•</span>
-                <a href={`mailto:${leader.email}`} className="text-gold hover:text-gold-light">
-                  {leader.email}
-                </a>
-              </div>
+              {editingChurchInfo ? (
+                <div className="space-y-2">
+                  <div>
+                    <label className="text-[10px] uppercase tracking-wider text-gray-400">Church Name</label>
+                    <input
+                      type="text"
+                      value={editChurchName}
+                      onChange={(e) => setEditChurchName(e.target.value)}
+                      className="block w-full text-lg font-semibold px-2 py-1 bg-white/10 border border-gray-500 rounded text-white placeholder-gray-400"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="flex gap-3">
+                    <div className="flex-1">
+                      <label className="text-[10px] uppercase tracking-wider text-gray-400">Primary Leader</label>
+                      <input
+                        type="text"
+                        value={editLeaderName}
+                        onChange={(e) => setEditLeaderName(e.target.value)}
+                        className="block w-full text-sm px-2 py-1 bg-white/10 border border-gray-500 rounded text-white placeholder-gray-400"
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <label className="text-[10px] uppercase tracking-wider text-gray-400">Email</label>
+                      <input
+                        type="email"
+                        value={editLeaderEmail}
+                        onChange={(e) => setEditLeaderEmail(e.target.value)}
+                        className="block w-full text-sm px-2 py-1 bg-white/10 border border-gray-500 rounded text-white placeholder-gray-400"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={handleSaveChurchInfo}
+                      disabled={savingChurchInfo}
+                      className="flex items-center gap-1 px-3 py-1 bg-gold text-navy rounded text-xs font-medium hover:bg-gold-light disabled:opacity-50"
+                    >
+                      {savingChurchInfo ? <Loader2 className="w-3 h-3 animate-spin" /> : <Check className="w-3 h-3" />}
+                      Save
+                    </button>
+                    <button
+                      onClick={() => setEditingChurchInfo(false)}
+                      className="flex items-center gap-1 px-3 py-1 text-gray-300 hover:text-white hover:bg-white/10 rounded text-xs"
+                    >
+                      <X className="w-3 h-3" />
+                      Cancel
+                    </button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <div className="flex items-center gap-2">
+                    <h1 className="text-xl font-semibold text-white">{church.name}</h1>
+                    <button
+                      onClick={() => {
+                        setEditChurchName(church.name);
+                        setEditLeaderName(leader.name);
+                        setEditLeaderEmail(leader.email);
+                        setEditingChurchInfo(true);
+                      }}
+                      className="p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded transition-colors"
+                      title="Edit church name, leader, and email"
+                    >
+                      <Pencil className="w-3.5 h-3.5" />
+                    </button>
+                  </div>
+                  <div className="flex items-center gap-3 mt-1 text-sm text-gray-300">
+                    <span>{leader.name}</span>
+                    <span>•</span>
+                    <a href={`mailto:${leader.email}`} className="text-gold hover:text-gold-light">
+                      {leader.email}
+                    </a>
+                  </div>
+                </>
+              )}
               {/* Subdomain link */}
               {church.subdomain && (
                 <div className="flex items-center gap-2 mt-1.5">

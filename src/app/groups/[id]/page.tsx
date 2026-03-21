@@ -18,6 +18,9 @@ interface Disciple {
   app_connected?: boolean;
   current_streak?: number | null;
   last_activity_date?: string | null;
+  total_journal_entries?: number;
+  total_prayer_sessions?: number;
+  creed_cards_mastered?: number;
 }
 
 interface GroupData {
@@ -85,15 +88,21 @@ function GroupDetailContent() {
     phone: '',
   });
 
+  // Edit group modal state
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editGroupName, setEditGroupName] = useState('');
+  const [editStartDate, setEditStartDate] = useState('');
+  const [editTargetDate, setEditTargetDate] = useState('');
+  const [savingEdit, setSavingEdit] = useState(false);
+
+  // Delete group state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+
   // Event modal state
   const [showEventModal, setShowEventModal] = useState(false);
   const [meetingsKey, setMeetingsKey] = useState(0);
 
-  // Pathway phase state
-  const [pathwayPhase, setPathwayPhase] = useState<number>(1);
-  const [pathwayPhaseLoading, setPathwayPhaseLoading] = useState(true);
-  const [showPathwayAdvance, setShowPathwayAdvance] = useState(false);
-  const [advancingPathway, setAdvancingPathway] = useState(false);
 
   // Phase display helpers
   const phaseLabels: Record<string, string> = {
@@ -302,44 +311,6 @@ function GroupDetailContent() {
     }
   }, [groupId, router]);
 
-  // Fetch pathway phase state
-  useEffect(() => {
-    async function fetchPhaseState() {
-      try {
-        const res = await fetch(`/api/groups/${groupId}/phase`);
-        const data = await res.json();
-        if (data.phase_state) {
-          setPathwayPhase(data.phase_state.current_phase);
-        }
-      } catch {
-        // Default to phase 1
-      } finally {
-        setPathwayPhaseLoading(false);
-      }
-    }
-    if (groupId) fetchPhaseState();
-  }, [groupId]);
-
-  const handleAdvancePathwayPhase = async () => {
-    setAdvancingPathway(true);
-    try {
-      const res = await fetch(`/api/groups/${groupId}/phase`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phase: 2 }),
-      });
-      const data = await res.json();
-      if (data.phase_state) {
-        setPathwayPhase(data.phase_state.current_phase);
-      }
-    } catch (err) {
-      console.error('Phase advance error:', err);
-    } finally {
-      setAdvancingPathway(false);
-      setShowPathwayAdvance(false);
-    }
-  };
-
   const handleAddDisciple = async (e: React.FormEvent) => {
     e.preventDefault();
     setAddingDisciple(true);
@@ -382,6 +353,76 @@ function GroupDetailContent() {
     }
   };
 
+  const handleEditGroup = async () => {
+    if (!group) return;
+    setSavingEdit(true);
+    try {
+      const updates: Record<string, string> = {};
+      if (editGroupName.trim() && editGroupName.trim() !== group.group_name) {
+        updates.group_name = editGroupName.trim();
+      }
+      if (editStartDate && editStartDate !== group.start_date) {
+        updates.start_date = editStartDate;
+      }
+      if (editTargetDate !== (group.multiplication_target_date || '')) {
+        updates.multiplication_target_date = editTargetDate || '';
+      }
+
+      if (Object.keys(updates).length === 0) {
+        setShowEditModal(false);
+        setSavingEdit(false);
+        return;
+      }
+
+      const response = await fetch(`/api/groups/${groupId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(updates),
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.error || 'Failed to update group');
+        setSavingEdit(false);
+        return;
+      }
+
+      // Refresh group data
+      const refreshRes = await fetch(`/api/groups/${groupId}`);
+      const refreshData = await refreshRes.json();
+      if (refreshRes.ok && refreshData.group) {
+        setGroup(refreshData.group);
+      }
+      setShowEditModal(false);
+    } catch (err) {
+      console.error('Edit group error:', err);
+      alert('Failed to update group');
+    }
+    setSavingEdit(false);
+  };
+
+  const handleDeleteGroup = async () => {
+    setDeleting(true);
+    try {
+      const response = await fetch(`/api/groups/${groupId}`, {
+        method: 'DELETE',
+      });
+
+      if (!response.ok) {
+        const data = await response.json();
+        alert(data.error || 'Failed to delete group');
+        setDeleting(false);
+        return;
+      }
+
+      router.push('/groups');
+    } catch (err) {
+      console.error('Delete group error:', err);
+      alert('Failed to delete group');
+      setDeleting(false);
+    }
+  };
+
   // Loading state
   if (loading) {
     return (
@@ -421,68 +462,112 @@ function GroupDetailContent() {
     <div className="min-h-screen bg-cream">
       {/* Header */}
       <header className="bg-navy text-white">
-        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center gap-4">
+        <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-5">
+          {/* Top row: back + name + actions */}
+          <div className="flex items-start gap-3">
             <Link
               href="/groups"
-              className="text-white/70 hover:text-white transition-colors"
+              className="text-white/70 hover:text-white transition-colors mt-1"
             >
-              <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </Link>
-            <div className="flex-1">
-              <div className="flex items-center gap-3">
-                <h1 className="text-2xl font-bold text-white">{group.group_name}</h1>
-                <span className={`px-3 py-1 rounded-full text-xs font-medium ${phaseColors[group.current_phase] || 'bg-gray-100 text-gray-700'}`}>
-                  {phaseLabels[group.current_phase] || group.current_phase}
-                </span>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <h1 className="text-xl sm:text-2xl font-bold text-white truncate">{group.group_name}</h1>
+                <button
+                  onClick={() => {
+                    setEditGroupName(group.group_name);
+                    setEditStartDate(group.start_date);
+                    setEditTargetDate(group.multiplication_target_date || '');
+                    setShowEditModal(true);
+                  }}
+                  className="p-1 text-white/40 hover:text-white hover:bg-white/10 rounded transition-colors flex-shrink-0"
+                  title="Edit group"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                  </svg>
+                </button>
+                <button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  className="p-1 text-white/40 hover:text-red-300 hover:bg-white/10 rounded transition-colors flex-shrink-0"
+                  title="Delete group"
+                >
+                  <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                  </svg>
+                </button>
               </div>
-              <p className="text-white/70 text-sm mt-1">
-                Started {new Date(group.start_date).toLocaleDateString()}
+              {/* Meta row */}
+              <div className="flex items-center gap-2 sm:gap-3 mt-1 text-xs sm:text-sm text-white/60 flex-wrap">
+                <span>Started {new Date(group.start_date).toLocaleDateString()}</span>
                 {group.multiplication_target_date && (
-                  <span> &bull; Target: {new Date(group.multiplication_target_date).toLocaleDateString()}</span>
+                  <>
+                    <span className="hidden sm:inline">&bull;</span>
+                    <span>Target: {new Date(group.multiplication_target_date).toLocaleDateString()}</span>
+                  </>
                 )}
-              </p>
-              {/* Co-leader info */}
-              <div className="flex items-center gap-2 mt-2">
+                <span className="hidden sm:inline">&bull;</span>
                 {group.co_leader ? (
-                  <>
-                    <span className="text-white/70 text-sm">
-                      Co-Leader: <span className="text-white font-medium">{group.co_leader.name}</span>
-                    </span>
+                  <span className="flex items-center gap-1">
+                    Co-Leader: <span className="text-white/80 font-medium">{group.co_leader.name}</span>
                     <button
                       onClick={handleRemoveCoLeader}
                       disabled={removingCoLeader}
-                      className="text-xs text-white/50 hover:text-red-300 transition-colors"
+                      className="text-white/40 hover:text-red-300 text-xs"
                     >
-                      {removingCoLeader ? 'Removing...' : '(Remove)'}
+                      {removingCoLeader ? '...' : '✕'}
                     </button>
-                  </>
+                  </span>
                 ) : group.pending_co_leader ? (
-                  <>
-                    <span className="text-white/70 text-sm">
-                      Co-Leader: <span className="text-yellow-300 font-medium">{group.pending_co_leader.name || group.pending_co_leader.email}</span>
-                      <span className="ml-1 text-yellow-400 text-xs">(Invitation Pending)</span>
-                    </span>
+                  <span className="flex items-center gap-1">
+                    Co-Leader: <span className="text-yellow-300">{group.pending_co_leader.name || group.pending_co_leader.email}</span>
+                    <span className="text-yellow-400/70">(pending)</span>
                     <button
                       onClick={handleRemoveCoLeader}
                       disabled={removingCoLeader}
-                      className="text-xs text-white/50 hover:text-red-300 transition-colors"
+                      className="text-white/40 hover:text-red-300 text-xs"
                     >
-                      {removingCoLeader ? 'Cancelling...' : '(Cancel)'}
+                      {removingCoLeader ? '...' : '✕'}
                     </button>
-                  </>
+                  </span>
                 ) : (
-                  <button
-                    onClick={openCoLeaderModal}
-                    className="text-sm text-gold hover:text-gold-light transition-colors"
-                  >
-                    + Invite Co-Leader
+                  <button onClick={openCoLeaderModal} className="text-gold hover:text-gold-light">
+                    + Co-Leader
                   </button>
                 )}
               </div>
             </div>
+          </div>
+
+          {/* Phase stepper — integrated into header */}
+          <div className="mt-4 flex items-center gap-1.5">
+            {phaseOrder.map((phase, index) => {
+              const isCurrent = phase === group.current_phase;
+              const isCompleted = index < currentPhaseIndex;
+              return (
+                <div key={phase} className="flex-1">
+                  <div className={`h-1.5 rounded-full ${
+                    isCompleted ? 'bg-green-400' : isCurrent ? 'bg-gold' : 'bg-white/15'
+                  }`} />
+                  <p className={`text-[10px] sm:text-xs mt-1 text-center ${
+                    isCurrent ? 'text-white font-semibold' : isCompleted ? 'text-green-300' : 'text-white/30'
+                  }`}>
+                    {phaseLabels[phase]}
+                  </p>
+                </div>
+              );
+            })}
+            {nextPhase && (
+              <button
+                onClick={() => setShowAdvanceModal(true)}
+                className="ml-2 text-xs bg-gold/20 hover:bg-gold/30 text-gold border border-gold/40 font-medium py-1 px-3 rounded-full transition-colors flex-shrink-0"
+              >
+                Advance
+              </button>
+            )}
           </div>
         </div>
       </header>
@@ -490,23 +575,20 @@ function GroupDetailContent() {
       {/* New group banner */}
       {showNewBanner && (
         <div className="bg-green-50 border-b border-green-200">
-          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
-                <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
-                  <svg className="w-6 h-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                  <svg className="w-5 h-5 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
                   </svg>
                 </div>
                 <div>
-                  <p className="font-semibold text-green-800">Group Created!</p>
-                  <p className="text-sm text-green-700">Now add disciples to start your journey.</p>
+                  <p className="font-semibold text-green-800 text-sm">Group Created!</p>
+                  <p className="text-xs text-green-700">Add disciples to start your journey.</p>
                 </div>
               </div>
-              <button
-                onClick={() => setShowNewBanner(false)}
-                className="text-green-600 hover:text-green-800"
-              >
+              <button onClick={() => setShowNewBanner(false)} className="text-green-600 hover:text-green-800">
                 <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                 </svg>
@@ -517,113 +599,23 @@ function GroupDetailContent() {
       )}
 
       {/* Main content */}
-      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-6">
-        {/* Phase Progress Stepper */}
-        <div className="bg-white rounded-lg shadow p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="text-sm font-semibold text-navy uppercase tracking-wide">Group Journey</h2>
-            {nextPhase && (
-              <button
-                onClick={() => setShowAdvanceModal(true)}
-                className="text-sm bg-gold hover:bg-gold/90 text-white font-medium py-1.5 px-4 rounded-lg transition-colors"
-              >
-                Advance Phase
-              </button>
-            )}
-          </div>
-          <div className="flex items-center gap-1">
-            {phaseOrder.map((phase, index) => {
-              const isCurrent = phase === group.current_phase;
-              const isCompleted = index < currentPhaseIndex;
-              return (
-                <div key={phase} className="flex-1 flex items-center">
-                  <div className="flex-1">
-                    <div className={`h-2 rounded-full ${
-                      isCompleted
-                        ? 'bg-green-500'
-                        : isCurrent
-                        ? 'bg-gold'
-                        : 'bg-gray-200'
-                    }`} />
-                    <p className={`text-xs mt-1.5 text-center ${
-                      isCurrent ? 'text-navy font-semibold' : isCompleted ? 'text-green-600' : 'text-gray-400'
-                    }`}>
-                      {phaseLabels[phase]}
-                    </p>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Pathway Phase Card */}
-        {!pathwayPhaseLoading && (
-          <div className="bg-white rounded-lg shadow p-6">
-            <div className="flex items-center justify-between">
-              <div>
-                <h2 className="text-sm font-semibold text-navy uppercase tracking-wide">Discipleship Pathway</h2>
-                <p className="text-sm text-foreground-muted mt-1">
-                  Currently on <span className="font-medium text-navy">Phase {pathwayPhase}</span>
-                  {pathwayPhase === 1 ? ' — Foundation' : ' — Growth'}
-                </p>
-              </div>
-              {pathwayPhase === 1 && (
-                <>
-                  {showPathwayAdvance ? (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-foreground-muted">Unlock Phase 2 for all disciples?</span>
-                      <button
-                        onClick={handleAdvancePathwayPhase}
-                        disabled={advancingPathway}
-                        className="px-3 py-1.5 bg-gold text-white rounded-lg text-sm font-medium hover:bg-gold/90 transition-colors disabled:opacity-50"
-                      >
-                        {advancingPathway ? 'Unlocking...' : 'Confirm'}
-                      </button>
-                      <button
-                        onClick={() => setShowPathwayAdvance(false)}
-                        className="px-3 py-1.5 border border-card-border rounded-lg text-sm hover:bg-gray-50 transition-colors"
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  ) : (
-                    <button
-                      onClick={() => setShowPathwayAdvance(true)}
-                      className="text-sm bg-gold hover:bg-gold/90 text-white font-medium py-1.5 px-4 rounded-lg transition-colors"
-                    >
-                      Advance to Phase 2
-                    </button>
-                  )}
-                </>
-              )}
-              {pathwayPhase === 2 && (
-                <span className="px-3 py-1 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                  Phase 2 Active
-                </span>
-              )}
-            </div>
-          </div>
-        )}
+      <main className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
         {/* Disciples section */}
         <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-navy">
-              Disciples ({group.disciples.length})
+          <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex items-center justify-between">
+            <h2 className="text-base sm:text-lg font-semibold text-navy">
+              Disciples ({group.disciples.filter(d => d.current_status === 'active').length})
             </h2>
-            <div className="flex items-center gap-3">
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="bg-gold hover:bg-gold/90 text-white font-medium py-2 px-4 rounded-lg text-sm transition-colors"
-              >
-                + Add Disciple
-              </button>
-            </div>
+            <button
+              onClick={() => setShowAddModal(true)}
+              className="bg-gold hover:bg-gold/90 text-white font-medium py-1.5 sm:py-2 px-3 sm:px-4 rounded-lg text-sm transition-colors"
+            >
+              + Add Disciple
+            </button>
           </div>
 
           {group.disciples.length === 0 ? (
-            /* Empty state */
             <div className="px-6 py-12 text-center">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                 <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -645,76 +637,184 @@ function GroupDetailContent() {
               </button>
             </div>
           ) : (
-            /* Disciples list */
-            <div className="divide-y divide-gray-200">
-              {group.disciples.map((disciple) => (
-                <Link
-                  key={disciple.id}
-                  href={`/groups/${groupId}/disciples/${disciple.id}`}
-                  className="block px-6 py-4 hover:bg-gray-50 transition-colors"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <h3 className="font-semibold text-navy">{disciple.name}</h3>
+            <>
+              {/* Desktop table view */}
+              <div className="hidden sm:block overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="bg-gray-50 border-b border-gray-200">
+                      <th className="text-left px-4 py-2.5 font-medium text-gray-500">Name</th>
+                      <th className="text-center px-3 py-2.5 font-medium text-gray-500">Status</th>
+                      <th className="text-center px-3 py-2.5 font-medium text-gray-500" title="Life Assessments">W1 / W12</th>
+                      <th className="text-center px-3 py-2.5 font-medium text-gray-500" title="Current streak">🔥 Streak</th>
+                      <th className="text-center px-3 py-2.5 font-medium text-gray-500" title="Journal entries">📓 Journals</th>
+                      <th className="text-center px-3 py-2.5 font-medium text-gray-500" title="Prayer sessions">🙏 Prayer</th>
+                      <th className="text-center px-3 py-2.5 font-medium text-gray-500" title="Creed cards mastered">🛡️ Creed</th>
+                      <th className="w-8"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {group.disciples.map((disciple) => (
+                      <tr
+                        key={disciple.id}
+                        onClick={() => router.push(`/groups/${groupId}/disciples/${disciple.id}`)}
+                        className="border-b border-gray-100 last:border-b-0 hover:bg-gray-50 cursor-pointer transition-colors"
+                      >
+                        <td className="px-4 py-3">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-navy">{disciple.name}</span>
+                            {disciple.app_connected ? (
+                              <span className="w-1.5 h-1.5 rounded-full bg-teal-500 flex-shrink-0" title="App connected"></span>
+                            ) : (
+                              <span className="w-1.5 h-1.5 rounded-full bg-gray-300 flex-shrink-0" title="No app"></span>
+                            )}
+                          </div>
+                          <div className="text-xs text-gray-400">{disciple.email}</div>
+                        </td>
+                        <td className="px-3 py-3 text-center">
+                          <span className={`inline-block px-2 py-0.5 rounded text-xs font-medium ${
+                            disciple.current_status === 'active'
+                              ? 'bg-green-100 text-green-700'
+                              : disciple.current_status === 'completed'
+                              ? 'bg-blue-100 text-blue-700'
+                              : 'bg-gray-100 text-gray-500'
+                          }`}>
+                            {disciple.current_status}
+                          </span>
+                        </td>
+                        <td className="px-3 py-3 text-center">
+                          <div className="flex items-center justify-center gap-1.5 text-xs">
+                            <span className={`px-1.5 py-0.5 rounded ${
+                              disciple.week1_assessment_status === 'completed'
+                                ? 'bg-green-100 text-green-700'
+                                : disciple.week1_assessment_status === 'sent'
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-gray-100 text-gray-400'
+                            }`}>
+                              {disciple.week1_assessment_status === 'completed' ? '✓' : disciple.week1_assessment_status === 'sent' ? '…' : '—'}
+                            </span>
+                            <span className="text-gray-300">/</span>
+                            <span className={`px-1.5 py-0.5 rounded ${
+                              disciple.week12_assessment_status === 'completed'
+                                ? 'bg-green-100 text-green-700'
+                                : disciple.week12_assessment_status === 'sent'
+                                ? 'bg-yellow-100 text-yellow-700'
+                                : 'bg-gray-100 text-gray-400'
+                            }`}>
+                              {disciple.week12_assessment_status === 'completed' ? '✓' : disciple.week12_assessment_status === 'sent' ? '…' : '—'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-3 py-3 text-center">
+                          {disciple.app_connected && disciple.current_streak != null && disciple.current_streak > 0 ? (
+                            <span className="text-amber-600 font-medium">{disciple.current_streak}d</span>
+                          ) : (
+                            <span className="text-gray-300">—</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-3 text-center">
+                          {disciple.total_journal_entries ? (
+                            <span className="text-teal-700 font-medium">{disciple.total_journal_entries}</span>
+                          ) : (
+                            <span className="text-gray-300">—</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-3 text-center">
+                          {disciple.total_prayer_sessions ? (
+                            <span>{disciple.total_prayer_sessions}</span>
+                          ) : (
+                            <span className="text-gray-300">—</span>
+                          )}
+                        </td>
+                        <td className="px-3 py-3 text-center">
+                          {disciple.creed_cards_mastered ? (
+                            <span className="text-gold font-medium">{disciple.creed_cards_mastered}</span>
+                          ) : (
+                            <span className="text-gray-300">—</span>
+                          )}
+                        </td>
+                        <td className="px-2 py-3">
+                          <svg className="w-4 h-4 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                          </svg>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {/* Mobile card view */}
+              <div className="sm:hidden divide-y divide-gray-100">
+                {group.disciples.map((disciple) => (
+                  <Link
+                    key={disciple.id}
+                    href={`/groups/${groupId}/disciples/${disciple.id}`}
+                    className="block px-4 py-3 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+                  >
+                    {/* Name row */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span className="font-medium text-navy truncate">{disciple.name}</span>
                         {disciple.app_connected ? (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-teal-50 text-teal-700" title="Connected to Daily DNA app">
-                            <span className="w-1.5 h-1.5 rounded-full bg-teal-500"></span>
-                            App
-                          </span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-teal-500 flex-shrink-0"></span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-xs bg-gray-50 text-gray-400" title="Not on Daily DNA app">
-                            <span className="w-1.5 h-1.5 rounded-full bg-gray-300"></span>
-                            No app
-                          </span>
+                          <span className="w-1.5 h-1.5 rounded-full bg-gray-300 flex-shrink-0"></span>
                         )}
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <p className="text-sm text-gray-500">{disciple.email}</p>
-                        {disciple.app_connected && disciple.current_streak != null && disciple.current_streak > 0 && (
-                          <span className="text-xs text-orange-600 font-medium">{disciple.current_streak}d streak</span>
-                        )}
-                      </div>
-                    </div>
-                    <div className="flex items-center gap-4">
-                      {/* Assessment status indicators */}
-                      <div className="flex items-center gap-2 text-xs">
-                        <span className={`px-2 py-1 rounded ${
-                          disciple.week1_assessment_status === 'completed'
+                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-medium flex-shrink-0 ${
+                          disciple.current_status === 'active'
                             ? 'bg-green-100 text-green-700'
-                            : disciple.week1_assessment_status === 'sent'
-                            ? 'bg-yellow-100 text-yellow-700'
+                            : disciple.current_status === 'completed'
+                            ? 'bg-blue-100 text-blue-700'
                             : 'bg-gray-100 text-gray-500'
                         }`}>
-                          W1 {disciple.week1_assessment_status === 'completed' ? '✓' : disciple.week1_assessment_status === 'sent' ? 'Sent' : '—'}
-                        </span>
-                        <span className={`px-2 py-1 rounded ${
-                          disciple.week12_assessment_status === 'completed'
-                            ? 'bg-green-100 text-green-700'
-                            : disciple.week12_assessment_status === 'sent'
-                            ? 'bg-yellow-100 text-yellow-700'
-                            : 'bg-gray-100 text-gray-500'
-                        }`}>
-                          W12 {disciple.week12_assessment_status === 'completed' ? '✓' : disciple.week12_assessment_status === 'sent' ? 'Sent' : '—'}
+                          {disciple.current_status}
                         </span>
                       </div>
-                      <span className={`px-2 py-1 rounded text-xs ${
-                        disciple.current_status === 'active'
-                          ? 'bg-green-100 text-green-700'
-                          : disciple.current_status === 'completed'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-gray-100 text-gray-500'
-                      }`}>
-                        {disciple.current_status}
-                      </span>
-                      <svg className="w-5 h-5 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <svg className="w-4 h-4 text-gray-300 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                       </svg>
                     </div>
-                  </div>
-                </Link>
-              ))}
-            </div>
+                    {/* Stats row */}
+                    <div className="flex items-center gap-3 mt-1.5 text-xs text-gray-500">
+                      {/* Assessments */}
+                      <span className="flex items-center gap-1">
+                        <span className={disciple.week1_assessment_status === 'completed' ? 'text-green-600' : ''}>
+                          W1{disciple.week1_assessment_status === 'completed' ? '✓' : ''}
+                        </span>
+                        <span className="text-gray-300">/</span>
+                        <span className={disciple.week12_assessment_status === 'completed' ? 'text-green-600' : ''}>
+                          W12{disciple.week12_assessment_status === 'completed' ? '✓' : ''}
+                        </span>
+                      </span>
+                      <span className="text-gray-200">|</span>
+                      {/* Engagement stats */}
+                      {disciple.app_connected ? (
+                        <>
+                          {disciple.current_streak != null && disciple.current_streak > 0 && (
+                            <span className="text-amber-600 font-medium">🔥 {disciple.current_streak}d</span>
+                          )}
+                          {disciple.total_journal_entries ? (
+                            <span>📓 {disciple.total_journal_entries}</span>
+                          ) : null}
+                          {disciple.total_prayer_sessions ? (
+                            <span>🙏 {disciple.total_prayer_sessions}</span>
+                          ) : null}
+                          {disciple.creed_cards_mastered ? (
+                            <span className="text-gold font-medium">🛡️ {disciple.creed_cards_mastered}</span>
+                          ) : null}
+                          {!disciple.current_streak && !disciple.total_journal_entries && !disciple.total_prayer_sessions && !disciple.creed_cards_mastered && (
+                            <span className="text-gray-400 italic">No activity yet</span>
+                          )}
+                        </>
+                      ) : (
+                        <span className="text-gray-400 italic">No app</span>
+                      )}
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </>
           )}
         </div>
 
@@ -1059,6 +1159,123 @@ function GroupDetailContent() {
             setMeetingsKey(k => k + 1);
           }}
         />
+      )}
+
+      {/* Edit Group Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-6">
+              <h2 className="text-xl font-bold text-navy">Edit Group</h2>
+              <button
+                onClick={() => setShowEditModal(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-navy mb-1">Group Name *</label>
+                <input
+                  type="text"
+                  value={editGroupName}
+                  onChange={(e) => setEditGroupName(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold focus:border-gold"
+                  autoFocus
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-navy mb-1">Start Date</label>
+                <input
+                  type="date"
+                  value={editStartDate}
+                  onChange={(e) => setEditStartDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold focus:border-gold"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-navy mb-1">
+                  Multiplication Target Date <span className="text-gray-400">(optional)</span>
+                </label>
+                <input
+                  type="date"
+                  value={editTargetDate}
+                  onChange={(e) => setEditTargetDate(e.target.value)}
+                  className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-gold focus:border-gold"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-3 mt-6">
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleEditGroup}
+                disabled={savingEdit || !editGroupName.trim()}
+                className="bg-gold hover:bg-gold/90 text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {savingEdit ? 'Saving...' : 'Save Changes'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Group Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+          <div className="bg-white rounded-lg shadow-xl max-w-md w-full p-6">
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-bold text-red-600">Delete Group</h2>
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="text-gray-400 hover:text-gray-600"
+              >
+                <svg className="w-6 h-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+
+            <div className="mb-6">
+              <p className="text-gray-600">
+                Are you sure you want to delete <strong className="text-navy">{group.group_name}</strong>?
+              </p>
+              {group.disciples.length > 0 && (
+                <p className="text-sm text-gray-500 mt-2">
+                  {group.disciples.length} disciple{group.disciples.length !== 1 ? 's' : ''} will be removed from this group.
+                </p>
+              )}
+              <p className="text-sm text-red-500 mt-2">This action cannot be undone.</p>
+            </div>
+
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setShowDeleteConfirm(false)}
+                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteGroup}
+                disabled={deleting}
+                className="bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {deleting ? 'Deleting...' : 'Delete Group'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );

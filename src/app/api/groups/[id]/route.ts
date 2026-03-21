@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, hasRole } from '@/lib/unified-auth';
+import { getUnifiedSession, hasRole, isAdmin } from '@/lib/unified-auth';
 
 // GET /api/groups/[id]
 // Get a single group with its disciples
@@ -137,11 +137,12 @@ export async function GET(
       .filter((id): id is string => id !== null);
 
     let assessmentsMap: Record<string, { week1?: string; week12?: string }> = {};
-    let appStatsMap: Record<string, { current_streak: number; last_activity_date: string | null }> = {};
+    let appStatsMap: Record<string, { current_streak: number; last_activity_date: string | null; total_journal_entries: number; total_prayer_sessions: number; total_prayer_cards: number }> = {};
+    let creedMasteredMap: Record<string, number> = {};
 
     if (discipleIds.length > 0) {
-      // Fetch assessments and app stats in parallel
-      const [assessmentsResult, appStatsResult] = await Promise.all([
+      // Fetch assessments, app stats, and creed mastery in parallel
+      const [assessmentsResult, appStatsResult, creedResult] = await Promise.all([
         supabase
           .from('life_assessments')
           .select('disciple_id, assessment_week, sent_at, completed_at')
@@ -150,8 +151,15 @@ export async function GET(
         appAccountIds.length > 0
           ? supabase
               .from('disciple_progress')
-              .select('account_id, current_streak, last_activity_date')
+              .select('account_id, current_streak, last_activity_date, total_journal_entries, total_prayer_sessions, total_prayer_cards')
               .in('account_id', appAccountIds)
+          : Promise.resolve({ data: null }),
+        appAccountIds.length > 0
+          ? supabase
+              .from('disciple_creed_progress')
+              .select('account_id, mastered')
+              .in('account_id', appAccountIds)
+              .eq('mastered', true)
           : Promise.resolve({ data: null }),
       ]);
 
@@ -174,7 +182,16 @@ export async function GET(
           appStatsMap[s.account_id] = {
             current_streak: s.current_streak,
             last_activity_date: s.last_activity_date,
+            total_journal_entries: s.total_journal_entries ?? 0,
+            total_prayer_sessions: s.total_prayer_sessions ?? 0,
+            total_prayer_cards: s.total_prayer_cards ?? 0,
           };
+        });
+      }
+
+      if (creedResult.data) {
+        creedResult.data.forEach((c: { account_id: string }) => {
+          creedMasteredMap[c.account_id] = (creedMasteredMap[c.account_id] || 0) + 1;
         });
       }
     }
@@ -183,6 +200,7 @@ export async function GET(
     const disciples = filteredDisciples.map(gd => {
       const disciple = gd.disciple as unknown as { id: string; name: string; email: string; phone?: string; app_account_id: string | null };
       const appStats = disciple.app_account_id ? appStatsMap[disciple.app_account_id] : null;
+      const creedCount = disciple.app_account_id ? (creedMasteredMap[disciple.app_account_id] || 0) : 0;
       return {
         id: disciple.id,
         name: disciple.name,
@@ -195,6 +213,9 @@ export async function GET(
         app_connected: !!disciple.app_account_id,
         current_streak: appStats?.current_streak ?? null,
         last_activity_date: appStats?.last_activity_date ?? null,
+        total_journal_entries: appStats?.total_journal_entries ?? 0,
+        total_prayer_sessions: appStats?.total_prayer_sessions ?? 0,
+        creed_cards_mastered: creedCount,
       };
     });
 
@@ -275,7 +296,7 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const allowedFields = ['group_name', 'current_phase', 'multiplication_target_date', 'is_active'];
+    const allowedFields = ['group_name', 'current_phase', 'start_date', 'multiplication_target_date', 'is_active'];
     const updates: Record<string, unknown> = {};
 
     for (const field of allowedFields) {
@@ -329,5 +350,77 @@ export async function PATCH(
       { error: 'Internal server error' },
       { status: 500 }
     );
+  }
+}
+
+// DELETE /api/groups/[id]
+// Soft-delete a group (set is_active = false). Primary leader only.
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getUnifiedSession();
+
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    if (!(hasRole(session, 'dna_leader') || hasRole(session, 'church_leader') || isAdmin(session))) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
+    const { id: groupId } = await params;
+    const supabase = getSupabaseAdmin();
+
+    // Get DNA leader record
+    const { data: dnaLeader } = await supabase
+      .from('dna_leaders')
+      .select('id')
+      .eq('email', session.email)
+      .single();
+
+    if (!dnaLeader) {
+      return NextResponse.json({ error: 'DNA leader not found' }, { status: 404 });
+    }
+
+    // Verify primary leader ownership (only primary leader can delete)
+    const { data: group } = await supabase
+      .from('dna_groups')
+      .select('leader_id')
+      .eq('id', groupId)
+      .single();
+
+    if (!group) {
+      return NextResponse.json({ error: 'Group not found' }, { status: 404 });
+    }
+
+    if (group.leader_id !== dnaLeader.id && !isAdmin(session)) {
+      return NextResponse.json({ error: 'Only the primary leader can delete this group' }, { status: 403 });
+    }
+
+    // Soft delete: mark inactive and drop all active disciples
+    const { error: updateError } = await supabase
+      .from('dna_groups')
+      .update({ is_active: false })
+      .eq('id', groupId);
+
+    if (updateError) {
+      console.error('[Groups] Delete error:', updateError);
+      return NextResponse.json({ error: 'Failed to delete group' }, { status: 500 });
+    }
+
+    // Mark all active disciples in this group as dropped
+    await supabase
+      .from('group_disciples')
+      .update({ current_status: 'dropped' })
+      .eq('group_id', groupId)
+      .eq('current_status', 'active');
+
+    return NextResponse.json({ success: true });
+
+  } catch (error) {
+    console.error('[Groups] Delete error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
