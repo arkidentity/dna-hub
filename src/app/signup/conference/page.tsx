@@ -4,18 +4,27 @@ import { useState, useRef, useEffect } from 'react';
 
 // ── Color Palette Presets ──────────────────────────────────────
 const COLOR_PRESETS = [
-  { name: 'Navy & Gold', primary: '#1A2332', accent: '#D4A853' },
-  { name: 'Forest & Cream', primary: '#1B4332', accent: '#D4C5A9' },
-  { name: 'Burgundy & Rose', primary: '#5B1A2A', accent: '#E8B4B8' },
-  { name: 'Midnight & Silver', primary: '#1C1C2E', accent: '#B8C4D0' },
-  { name: 'Deep Teal & Sand', primary: '#134E4A', accent: '#D4C9A8' },
-  { name: 'Royal Blue & Light Blue', primary: '#1E3A5F', accent: '#7FB3D8' },
-  { name: 'Charcoal & Amber', primary: '#2D2D2D', accent: '#F0A830' },
-  { name: 'Espresso & Tan', primary: '#3C2415', accent: '#C9A96E' },
-  { name: 'Slate & Sage', primary: '#2F3E46', accent: '#84A98C' },
-  { name: 'Plum & Lavender', primary: '#44234A', accent: '#C3A6D8' },
-  { name: 'Dark Red & Peach', primary: '#6B1D1D', accent: '#F2C4A0' },
+  // Black primary
+  { name: 'Black & Gold', primary: '#1A1A1A', accent: '#D4A853' },
+  { name: 'Black & Red', primary: '#1A1A1A', accent: '#E05555' },
+  { name: 'Black & Teal', primary: '#1A1A1A', accent: '#4ECDC4' },
+  { name: 'Black & Orange', primary: '#1A1A1A', accent: '#F0A830' },
   { name: 'Black & White', primary: '#1A1A1A', accent: '#E8E8E8' },
+  { name: 'Black & Blue', primary: '#1A1A1A', accent: '#5BA4D9' },
+  // Dark gray primary
+  { name: 'Gray & Gold', primary: '#2D2D2D', accent: '#D4A853' },
+  { name: 'Gray & Green', primary: '#2D2D2D', accent: '#6BBF7A' },
+  { name: 'Gray & Coral', primary: '#2D2D2D', accent: '#E88B7A' },
+  { name: 'Gray & Purple', primary: '#2D2D2D', accent: '#B08ED8' },
+  { name: 'Gray & Sky', primary: '#2D2D2D', accent: '#7FB3D8' },
+  { name: 'Gray & Peach', primary: '#2D2D2D', accent: '#F2C4A0' },
+  // Navy primary
+  { name: 'Navy & Gold', primary: '#1A2332', accent: '#D4A853' },
+  { name: 'Navy & Silver', primary: '#1A2332', accent: '#B8C4D0' },
+  { name: 'Navy & Red', primary: '#1A2332', accent: '#E05555' },
+  { name: 'Navy & Light Blue', primary: '#1A2332', accent: '#7FB3D8' },
+  { name: 'Navy & Sage', primary: '#1A2332', accent: '#84A98C' },
+  { name: 'Navy & Cream', primary: '#1A2332', accent: '#D4C5A9' },
 ];
 
 // ── Helpers ────────────────────────────────────────────────────
@@ -49,7 +58,7 @@ export default function ConferenceSignupPage() {
   const [churchLocation, setChurchLocation] = useState('');
   const [subdomain, setSubdomain] = useState('');
   const [subdomainTouched, setSubdomainTouched] = useState(false);
-  const [primaryColor, setPrimaryColor] = useState('#1A2332');
+  const [primaryColor, setPrimaryColor] = useState('#1A1A1A');
   const [accentColor, setAccentColor] = useState('#D4A853');
   const [selectedPreset, setSelectedPreset] = useState(0);
   const [logoFile, setLogoFile] = useState<File | null>(null);
