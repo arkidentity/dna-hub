@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
 import { sendEmail } from '@/lib/email';
-import crypto from 'crypto';
 
 export async function POST(request: NextRequest) {
   try {
@@ -159,32 +158,18 @@ export async function POST(request: NextRequest) {
       is_primary_contact: true,
     });
 
-    // 6. Create magic link token for login
-    const token = crypto.randomBytes(32).toString('hex');
-    const expiresAt = new Date();
-    expiresAt.setDate(expiresAt.getDate() + 7);
-
-    await supabase.from('magic_link_tokens').insert({
-      email: trimmedEmail,
-      token,
-      expires_at: expiresAt.toISOString(),
-      used: false,
-    });
-
-    const baseUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://dnadiscipleship.com';
-    const loginLink = `${baseUrl}/api/auth/verify?token=${token}&destination=dashboard`;
     const appUrl = `https://${trimmedSubdomain}.dailydna.app`;
 
-    // 7. Send welcome email to pastor
+    // 6. Send welcome email to pastor
     await sendEmail({
       to: trimmedEmail,
-      subject: `${trimmedChurchName} is now on DNA Daily!`,
-      html: buildWelcomeEmail(trimmedName, trimmedChurchName, appUrl, loginLink),
+      subject: `${trimmedChurchName} is now on Daily DNA!`,
+      html: buildWelcomeEmail(trimmedName, trimmedChurchName, appUrl),
       churchId: newChurch.id,
       notificationType: 'conference_signup',
     });
 
-    // 8. Notify Travis
+    // 7. Notify Travis
     await sendEmail({
       to: 'info@dnadiscipleship.com',
       subject: `New Conference Signup: ${trimmedChurchName}`,
@@ -192,14 +177,11 @@ export async function POST(request: NextRequest) {
       notificationType: 'conference_signup_notification',
     });
 
-    const isDev = process.env.NODE_ENV === 'development';
-
     return NextResponse.json({
       success: true,
       church_id: newChurch.id,
       subdomain: trimmedSubdomain,
       app_url: appUrl,
-      ...(isDev && { devLink: loginLink }),
     });
   } catch (error) {
     console.error('[Conference Signup] Error:', error);
@@ -212,12 +194,12 @@ export async function POST(request: NextRequest) {
 
 // ── Email Templates ──────────────────────────────────────────────
 
-function buildWelcomeEmail(name: string, churchName: string, appUrl: string, loginLink: string) {
+function buildWelcomeEmail(name: string, churchName: string, appUrl: string) {
   return `
     <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; background: #1A2332; color: #FFFFFF;">
       <div style="padding: 40px 32px; text-align: center;">
         <h1 style="color: #D4A853; margin: 0 0 8px 0; font-size: 28px;">Your App Is Live!</h1>
-        <p style="color: #A0AEC0; margin: 0; font-size: 16px;">${churchName} is now on DNA Daily</p>
+        <p style="color: #A0AEC0; margin: 0; font-size: 16px;">${churchName} is now on Daily DNA</p>
       </div>
 
       <div style="background: #FFFBF5; padding: 32px; color: #1A2332;">
@@ -233,21 +215,18 @@ function buildWelcomeEmail(name: string, churchName: string, appUrl: string, log
         <p style="color: #5A6577; line-height: 1.6;">Share this link with your people — they can install it as an app on their phone right from the browser.</p>
 
         <div style="text-align: center; margin: 32px 0;">
-          <a href="${loginLink}"
+          <a href="${appUrl}"
              style="background: #D4A853; color: #1A2332; padding: 16px 32px;
                     border-radius: 8px; text-decoration: none; font-weight: 600;
                     display: inline-block; font-size: 16px;">
-            Access Your Dashboard
+            Open Your App
           </a>
         </div>
 
-        <h3 style="color: #1A2332; margin: 24px 0 12px 0;">What You Can Do Next:</h3>
-        <ol style="color: #5A6577; margin: 0; padding-left: 20px; line-height: 1.8;">
-          <li><strong>Upload your logo</strong> — Customize your app's look</li>
-          <li><strong>Add custom links</strong> — Connect your church website, giving page, etc.</li>
-          <li><strong>Invite your people</strong> — Share your app URL</li>
-          <li><strong>Start a DNA Group</strong> — Begin making disciples</li>
-        </ol>
+        <div style="background: #F4E7D7; padding: 16px 20px; border-radius: 8px; margin: 24px 0;">
+          <h3 style="color: #1A2332; margin: 0 0 8px 0; font-size: 15px;">Try It Out</h3>
+          <p style="color: #5A6577; margin: 0; font-size: 14px; line-height: 1.6;">Open your app and log in with <strong>${name.split(' ')[0]}'s</strong> email to see the Pathway and explore the tools your disciples will use. Use Google sign-in or create a password with the same email you signed up with.</p>
+        </div>
 
         <hr style="border: none; border-top: 1px solid #E8DDD0; margin: 32px 0;" />
 

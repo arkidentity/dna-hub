@@ -228,27 +228,11 @@ export default function ConferenceSignupPage() {
               <a href={resultData.app_url} target="_blank" rel="noopener noreferrer" className="btn-primary">
                 Open Your App
               </a>
-              <p className="success-note">
-                Check your email for a link to your dashboard where you can upload your logo, add custom links, and more.
-              </p>
             </div>
 
-            <div className="preview-bar" style={{ background: primaryColor }}>
-              <span style={{ color: getContrastColor(primaryColor), fontSize: '14px', fontWeight: 600 }}>
-                {churchName}
-              </span>
-              <span
-                style={{
-                  background: accentColor,
-                  color: getContrastColor(accentColor),
-                  padding: '4px 12px',
-                  borderRadius: '4px',
-                  fontSize: '12px',
-                  fontWeight: 600,
-                }}
-              >
-                Preview
-              </span>
+            <div className="login-instructions">
+              <h3>Try It Out</h3>
+              <p>Open the link above and log in with <strong>{email}</strong> to see your Pathway and start exploring your app as a disciple would.</p>
             </div>
           </div>
         </div>
@@ -321,6 +305,9 @@ export default function ConferenceSignupPage() {
           }
           .qr-section {
             margin-bottom: 24px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
           }
           .qr-label {
             color: #A0AEC0;
@@ -349,19 +336,25 @@ export default function ConferenceSignupPage() {
           .btn-primary:hover {
             background: #E5B964;
           }
-          .success-note {
-            color: #718096;
-            font-size: 13px;
-            margin: 16px 0 0 0;
-            line-height: 1.5;
-          }
-          .preview-bar {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 12px 16px;
+          .login-instructions {
+            background: #1A2332;
+            padding: 20px;
             border-radius: 8px;
-            margin-top: 8px;
+          }
+          .login-instructions h3 {
+            color: #FFFFFF;
+            font-size: 16px;
+            font-weight: 600;
+            margin: 0 0 8px 0;
+          }
+          .login-instructions p {
+            color: #A0AEC0;
+            font-size: 14px;
+            line-height: 1.6;
+            margin: 0;
+          }
+          .login-instructions strong {
+            color: #D4A853;
           }
         `}</style>
       </div>
@@ -374,7 +367,7 @@ export default function ConferenceSignupPage() {
     <div className="conf-page">
       <div className="conf-container">
         <div className="conf-header">
-          <h1>DNA Daily</h1>
+          <h1>DAILY DNA</h1>
           <p>See your branded discipleship app in 60 seconds</p>
         </div>
 
