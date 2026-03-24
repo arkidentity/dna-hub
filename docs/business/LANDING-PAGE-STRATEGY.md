@@ -5,7 +5,7 @@ Landing page designed to capture emails and deliver the DNA Manual. Thank you pa
 
 ---
 
-# PAGE 1: Landing Page (dna.arkidentity.com)
+# PAGE 1: Landing Page (dnadiscipleship.com)
 
 ## Hero Section
 
@@ -102,7 +102,7 @@ We'll email you the DNA Manual immediately. No spam—just helpful content from 
 # PAGE 2: Thank You Page
 
 ## URL
-dna.arkidentity.com/thank-you
+dnadiscipleship.com/thank-you
 
 ---
 

@@ -180,7 +180,7 @@ Required in Vercel:
 ```bash
 GOOGLE_CLIENT_ID=your-client-id
 GOOGLE_CLIENT_SECRET=your-client-secret
-GOOGLE_REDIRECT_URI=https://dna.arkidentity.com/api/auth/google/callback
+GOOGLE_REDIRECT_URI=https://dnadiscipleship.com/api/auth/google/callback
 ```
 
 ---
@@ -228,7 +228,7 @@ In `vercel.json`:
 2. Calendar API enabled
 3. OAuth consent screen configured
 4. OAuth 2.0 credentials created
-5. Redirect URI added: `https://dna.arkidentity.com/api/auth/google/callback`
+5. Redirect URI added: `https://dnadiscipleship.com/api/auth/google/callback`
 6. Environment variables set in Vercel
 
 ### First-Time Connection

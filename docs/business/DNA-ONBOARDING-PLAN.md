@@ -22,7 +22,7 @@ Build a simple, uncluttered onboarding hub for churches that have committed to i
 
 **Frontend:** Next.js (or current DNA website framework)  
 **Database:** Supabase (NEW separate project for churches)  
-**Hosting:** Same server as dna.arkidentity.com  
+**Hosting:** Same server as dnadiscipleship.com  
 **File Storage:** Same server (PDFs, videos already hosted)  
 **Email:** None yet (manual follow-up for now)  
 **Scheduling:** Embedded Google Calendar
@@ -107,9 +107,9 @@ CREATE TABLE church_assessments (
 
 ### Pages to Build
 
-1. **Main Hub:** `dna.arkidentity.com/onboarding`
-2. **Assessment Form:** `dna.arkidentity.com/onboarding/church-assessment`
-3. **Thank You Page:** `dna.arkidentity.com/onboarding/thank-you`
+1. **Main Hub:** `dnadiscipleship.com/onboarding`
+2. **Assessment Form:** `dnadiscipleship.com/onboarding/church-assessment`
+3. **Thank You Page:** `dnadiscipleship.com/onboarding/thank-you`
 
 ### Access Control
 - No authentication required (link-only access)
@@ -823,7 +823,7 @@ The Holy Spirit often confirms names or surprises us with someone we didn't cons
 3. **Leader Orientation Video:** Will this be YouTube/Vimeo? Send link when ready
 4. **Resource Files:** Confirm which PDFs are ready to upload now vs. later
 5. **Monthly DNA Call:** What's the standing Google Meet link?
-6. **Branding:** Any specific hex codes for DNA colors, or should Claude Code match existing dna.arkidentity.com?
+6. **Branding:** Any specific hex codes for DNA colors, or should Claude Code match existing dnadiscipleship.com?
 
 ---
 

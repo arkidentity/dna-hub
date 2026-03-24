@@ -45,4 +45,4 @@ Open [http://localhost:3000](http://localhost:3000).
 
 ## Live Site
 
-[https://dna.arkidentity.com](https://dna.arkidentity.com)
+[https://dnadiscipleship.com](https://dnadiscipleship.com)

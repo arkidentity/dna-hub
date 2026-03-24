@@ -29,7 +29,7 @@ What to work on next (pick based on time):
 
 Key context:
 - Daily DNA app is MVP-complete and live at dailydna.app
-- DNA Hub is live at dna.arkidentity.com
+- DNA Hub is live at dnadiscipleship.com
 - Both share same Supabase database
 - Groups & Chat Phase 1 is live
 - Training (Flow Assessment + Manual + Launch Guide) is complete

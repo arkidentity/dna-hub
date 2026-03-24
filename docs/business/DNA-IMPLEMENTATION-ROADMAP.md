@@ -80,7 +80,7 @@ MONTHS 10-22: LEADING DNA GROUP
 - Evaluate church's readiness level (using 5 Levels framework)
 
 **Resources Needed:**
-- DNA Church Assessment form (on dna.arkidentity.com/assessment)
+- DNA Church Assessment form (on dnadiscipleship.com/assessment)
 
 **Outcome:** Assessment submitted, CTA to book Discovery Call
 
@@ -992,7 +992,7 @@ They just:
 ## Next Steps for Your Church
 
 **Step 1: Assess Your Church**  
-Complete the DNA Church Assessment at dna.arkidentity.com/onboarding
+Complete the DNA Church Assessment at dnadiscipleship.com/onboarding
 
 **Step 2: Schedule Strategy Call**  
 Book a 60-minute call with Travis or ARK Coach to customize your plan
@@ -1010,7 +1010,7 @@ Follow this roadmap step-by-step. Don't skip. Trust the process.
 
 ## Contact & Support
 
-**DNA Church Onboarding:** dna.arkidentity.com/onboarding  
+**DNA Church Onboarding:** dnadiscipleship.com/onboarding  
 **ARK Identity Resources:** app.arkidentity.com  
 **Questions:** travis@arkidentity.com  
 
