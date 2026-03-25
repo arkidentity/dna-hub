@@ -64,6 +64,8 @@ export async function GET(request: NextRequest) {
           let dest = '/dashboard'
           if (roles.includes('admin') || roles.includes('church_leader')) {
             dest = '/dashboard'
+          } else if (roles.includes('dna_coach')) {
+            dest = '/admin'
           } else if (roles.includes('dna_leader')) {
             dest = '/cohort'
           } else if (roles.includes('training_participant')) {

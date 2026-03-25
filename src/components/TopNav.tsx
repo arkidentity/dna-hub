@@ -56,7 +56,7 @@ export default async function TopNav() {
                 href="/admin"
                 className="px-3 py-1 bg-[var(--gold)] text-white text-xs font-semibold rounded-full hover:opacity-90 transition-opacity"
               >
-                {admin ? 'Admin' : 'My Churches'}
+                {admin ? 'Admin' : 'Coach'}
               </Link>
             )}
             <UserMenu session={session} />
