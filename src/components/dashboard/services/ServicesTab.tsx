@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { Plus, Loader2, Calendar, Blocks, Copy, Monitor, Check, ClipboardList, Globe } from 'lucide-react';
+import { Plus, Loader2, Calendar, Blocks, Copy, Monitor, Check, ClipboardList, Globe, UserCog, Trash2 } from 'lucide-react';
 import type { InteractiveService, ServiceStatus } from '@/lib/types';
 import ServiceEditor from './ServiceEditor';
 import NextStepsResponsesTab from './NextStepsResponsesTab';
@@ -44,6 +44,12 @@ export default function ServicesTab({ churchId, subdomain, isAdmin }: ServicesTa
   const [displayCopied, setDisplayCopied] = useState(false);
   const [transparentCopied, setTransparentCopied] = useState(false);
 
+  // Conductor access management
+  const [conductors, setConductors] = useState<{ id: string; email: string; created_at: string }[]>([]);
+  const [conductorEmail, setConductorEmail] = useState('');
+  const [conductorSaving, setConductorSaving] = useState(false);
+  const [conductorError, setConductorError] = useState('');
+
   const displayUrl = subdomain ? `https://${subdomain}.dailydna.app/live/display/${churchId}` : null;
 
   const fetchServices = useCallback(async () => {
@@ -69,6 +75,48 @@ export default function ServicesTab({ churchId, subdomain, isAdmin }: ServicesTa
   useEffect(() => {
     fetchServices();
   }, [fetchServices]);
+
+  const fetchConductors = useCallback(async () => {
+    try {
+      const res = await fetch(`/api/admin/conductors?church_id=${churchId}`);
+      const data = await res.json();
+      setConductors(data.conductors ?? []);
+    } catch { /* silent */ }
+  }, [churchId]);
+
+  useEffect(() => { fetchConductors(); }, [fetchConductors]);
+
+  const handleAddConductor = async () => {
+    setConductorError('');
+    const email = conductorEmail.trim().toLowerCase();
+    if (!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      setConductorError('Enter a valid email address.');
+      return;
+    }
+    setConductorSaving(true);
+    try {
+      const res = await fetch('/api/admin/conductors', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ church_id: churchId, email }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setConductorError(data.error || 'Failed to add conductor.'); }
+      else { setConductorEmail(''); fetchConductors(); }
+    } catch { setConductorError('Network error.'); }
+    setConductorSaving(false);
+  };
+
+  const handleRemoveConductor = async (conductorId: string) => {
+    try {
+      await fetch('/api/admin/conductors', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ church_id: churchId, conductor_id: conductorId }),
+      });
+      fetchConductors();
+    } catch { /* silent */ }
+  };
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -204,6 +252,61 @@ export default function ServicesTab({ churchId, subdomain, isAdmin }: ServicesTa
           </div>
         </div>
       )}
+
+      {/* Conductor Access */}
+      <div className="bg-navy/5 rounded-lg border border-navy/10 p-4 mb-6">
+        <div className="flex items-center gap-2 mb-2">
+          <UserCog className="w-4 h-4 text-navy" />
+          <h3 className="text-sm font-semibold text-navy">Conductor Access</h3>
+        </div>
+        <p className="text-xs text-foreground-muted mb-3">
+          Grant up to 2 team members (non-leaders) the ability to run live services from the Daily DNA app. They must have a Daily DNA account on this church&apos;s subdomain.
+        </p>
+
+        {/* Existing conductors */}
+        {conductors.length > 0 && (
+          <div className="space-y-2 mb-3">
+            {conductors.map((c) => (
+              <div key={c.id} className="flex items-center justify-between bg-white rounded border border-card-border px-3 py-2">
+                <span className="text-sm text-navy">{c.email}</span>
+                <button
+                  onClick={() => handleRemoveConductor(c.id)}
+                  className="text-red-400 hover:text-red-600 transition-colors"
+                  title="Remove conductor access"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Add new conductor */}
+        {conductors.length < 2 && (
+          <div className="flex gap-2">
+            <input
+              type="email"
+              value={conductorEmail}
+              onChange={(e) => { setConductorEmail(e.target.value); setConductorError(''); }}
+              placeholder="team@church.org"
+              className="flex-1 border border-card-border rounded px-3 py-1.5 text-sm"
+              onKeyDown={(e) => e.key === 'Enter' && handleAddConductor()}
+            />
+            <button
+              onClick={handleAddConductor}
+              disabled={conductorSaving}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-navy text-white rounded text-xs font-medium hover:bg-navy/90 disabled:opacity-50 transition-colors"
+            >
+              {conductorSaving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
+              Add
+            </button>
+          </div>
+        )}
+        {conductorError && <p className="text-xs text-red-500 mt-1">{conductorError}</p>}
+        {conductors.length >= 2 && (
+          <p className="text-xs text-foreground-muted mt-1">Maximum of 2 conductors reached.</p>
+        )}
+      </div>
 
       {/* Create form */}
       {showCreate && (
