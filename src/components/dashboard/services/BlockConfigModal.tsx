@@ -504,12 +504,49 @@ function BreakoutForm({ config, onChange }: FormProps) {
 }
 
 function GivingForm({ config, onChange }: FormProps) {
+  const embedUrl = (config.embed_url as string) || '';
+  const useEmbed = !!embedUrl;
+
   return (
     <>
+      {/* Mode toggle */}
       <div>
-        <label className="block text-sm text-foreground-muted mb-1">Giving URL</label>
-        <input type="url" value={(config.giving_url as string) || ''} onChange={(e) => onChange('giving_url', e.target.value)} placeholder="https://tithe.ly/give?c=12345" className="w-full border border-card-border rounded px-3 py-2 text-sm" />
+        <label className="block text-sm text-foreground-muted mb-2">Giving Mode</label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onChange('embed_url', '')}
+            className={`flex-1 py-2 px-3 rounded text-sm font-medium border transition-colors ${
+              !useEmbed ? 'bg-navy text-white border-navy' : 'border-card-border text-foreground-muted hover:border-navy/40'
+            }`}
+          >
+            Link (opens new tab)
+          </button>
+          <button
+            type="button"
+            onClick={() => !useEmbed && onChange('embed_url', 'https://')}
+            className={`flex-1 py-2 px-3 rounded text-sm font-medium border transition-colors ${
+              useEmbed ? 'bg-navy text-white border-navy' : 'border-card-border text-foreground-muted hover:border-navy/40'
+            }`}
+          >
+            Embed (inline iframe)
+          </button>
+        </div>
       </div>
+
+      {useEmbed ? (
+        <div>
+          <label className="block text-sm text-foreground-muted mb-1">Embed URL</label>
+          <input type="url" value={embedUrl} onChange={(e) => onChange('embed_url', e.target.value)} placeholder="https://app.breezechms.com/give/online/..." className="w-full border border-card-border rounded px-3 py-2 text-sm" />
+          <p className="text-xs text-foreground-muted mt-1">Paste your Breeze, Tithe.ly, Planning Center Giving, or other giving form embed URL. It will appear inline — no new tab.</p>
+        </div>
+      ) : (
+        <div>
+          <label className="block text-sm text-foreground-muted mb-1">Giving URL</label>
+          <input type="url" value={(config.giving_url as string) || ''} onChange={(e) => onChange('giving_url', e.target.value)} placeholder="https://tithe.ly/give?c=12345" className="w-full border border-card-border rounded px-3 py-2 text-sm" />
+        </div>
+      )}
+
       <div>
         <label className="block text-sm text-foreground-muted mb-1">Message</label>
         <textarea value={(config.message as string) || ''} onChange={(e) => onChange('message', e.target.value)} placeholder="Thank you for your generosity." rows={2} className="w-full border border-card-border rounded px-3 py-2 text-sm" />
@@ -587,6 +624,8 @@ function NextStepsForm({ config, onChange }: FormProps) {
 
 function ConnectCardForm({ config, onChange }: FormProps) {
   const fields = (config.fields as string[]) || [];
+  const embedUrl = (config.embed_url as string) || '';
+  const useEmbed = !!embedUrl;
   const availableFields = [
     { id: 'first_time', label: 'First time visitor?' },
     { id: 'address', label: 'Address' },
@@ -604,32 +643,73 @@ function ConnectCardForm({ config, onChange }: FormProps) {
 
   return (
     <>
+      {/* Mode toggle */}
       <div>
-        <label className="block text-sm text-foreground-muted mb-2">Fields to include</label>
-        <div className="space-y-2">
-          {availableFields.map((f) => (
-            <label key={f.id} className="flex items-center gap-2 cursor-pointer">
-              <input type="checkbox" checked={fields.includes(f.id)} onChange={() => toggleField(f.id)} className="rounded border-card-border" />
-              <span className="text-sm text-navy">{f.label}</span>
-            </label>
-          ))}
+        <label className="block text-sm text-foreground-muted mb-2">Connect Card Mode</label>
+        <div className="flex gap-2">
+          <button
+            type="button"
+            onClick={() => onChange('embed_url', '')}
+            className={`flex-1 py-2 px-3 rounded text-sm font-medium border transition-colors ${
+              !useEmbed ? 'bg-navy text-white border-navy' : 'border-card-border text-foreground-muted hover:border-navy/40'
+            }`}
+          >
+            Built-in Form
+          </button>
+          <button
+            type="button"
+            onClick={() => !useEmbed && onChange('embed_url', 'https://')}
+            className={`flex-1 py-2 px-3 rounded text-sm font-medium border transition-colors ${
+              useEmbed ? 'bg-navy text-white border-navy' : 'border-card-border text-foreground-muted hover:border-navy/40'
+            }`}
+          >
+            External Embed (Breeze, etc.)
+          </button>
         </div>
       </div>
-      <div>
-        <label className="block text-sm text-foreground-muted mb-1">Coordinator Email</label>
-        <input
-          type="email"
-          value={(config.coordinator_email as string) || ''}
-          onChange={(e) => onChange('coordinator_email', e.target.value)}
-          placeholder="welcome@church.com"
-          className={`w-full border rounded px-3 py-2 text-sm ${
-            !config.coordinator_email
-              ? 'border-amber-300 bg-amber-50/50 placeholder:text-amber-400'
-              : 'border-card-border'
-          }`}
-        />
-        <p className="text-xs text-foreground-muted mt-1">Receives connect card submissions with visitor contact info after the service.</p>
-      </div>
+
+      {useEmbed ? (
+        <div>
+          <label className="block text-sm text-foreground-muted mb-1">Embed URL</label>
+          <input
+            type="url"
+            value={embedUrl}
+            onChange={(e) => onChange('embed_url', e.target.value)}
+            placeholder="https://app.breezechms.com/form/..."
+            className="w-full border border-card-border rounded px-3 py-2 text-sm"
+          />
+          <p className="text-xs text-foreground-muted mt-1">Paste the URL of your Breeze, Planning Center, Church Community Builder, or other connect card form. It will be embedded inline in the service.</p>
+        </div>
+      ) : (
+        <>
+          <div>
+            <label className="block text-sm text-foreground-muted mb-2">Fields to include</label>
+            <div className="space-y-2">
+              {availableFields.map((f) => (
+                <label key={f.id} className="flex items-center gap-2 cursor-pointer">
+                  <input type="checkbox" checked={fields.includes(f.id)} onChange={() => toggleField(f.id)} className="rounded border-card-border" />
+                  <span className="text-sm text-navy">{f.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+          <div>
+            <label className="block text-sm text-foreground-muted mb-1">Coordinator Email</label>
+            <input
+              type="email"
+              value={(config.coordinator_email as string) || ''}
+              onChange={(e) => onChange('coordinator_email', e.target.value)}
+              placeholder="welcome@church.com"
+              className={`w-full border rounded px-3 py-2 text-sm ${
+                !config.coordinator_email
+                  ? 'border-amber-300 bg-amber-50/50 placeholder:text-amber-400'
+                  : 'border-card-border'
+              }`}
+            />
+            <p className="text-xs text-foreground-muted mt-1">Receives connect card submissions with visitor contact info after the service.</p>
+          </div>
+        </>
+      )}
     </>
   );
 }
