@@ -194,7 +194,7 @@ export default function ServicesTab({ churchId, subdomain, isAdmin }: ServicesTa
           }`}
         >
           <ClipboardList className="w-3.5 h-3.5" />
-          Follow-Up Responses
+          Responses & Visitors
         </button>
       </div>
 

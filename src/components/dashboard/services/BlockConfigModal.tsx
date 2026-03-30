@@ -931,6 +931,9 @@ function AnnouncementForm({ config, onChange }: FormProps) {
           className="w-full border border-card-border rounded px-3 py-2 text-sm"
         >
           <option value="sign_up">Sign Up (captures contact info)</option>
+          <option value="ill_be_there">I&apos;ll Be There (attendance RSVP)</option>
+          <option value="save_my_seat">Save My Seat (seat reservation)</option>
+          <option value="count_me_in">Count Me In (general commitment)</option>
           <option value="learn_more">Learn More (captures interest)</option>
           <option value="external_link">External Link (opens URL)</option>
         </select>
@@ -947,6 +950,17 @@ function AnnouncementForm({ config, onChange }: FormProps) {
           />
         </div>
       )}
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">Confirmation Message <span className="text-foreground-muted font-normal">(optional)</span></label>
+        <input
+          type="text"
+          value={(config.confirmation_message as string) || ''}
+          onChange={(e) => onChange('confirmation_message', e.target.value)}
+          placeholder={ctaType === 'sign_up' ? "You&apos;re signed up!" : ctaType === 'ill_be_there' ? "See you there!" : ctaType === 'save_my_seat' ? "Your seat is saved!" : ctaType === 'count_me_in' ? "You're counted in!" : "Thanks for your interest!"}
+          className="w-full border border-card-border rounded px-3 py-2 text-sm"
+        />
+        <p className="text-xs text-foreground-muted mt-1">Shown to the person after they respond. Leave blank to use the default.</p>
+      </div>
       <div>
         <label className="block text-sm text-foreground-muted mb-1">Coordinator Email</label>
         <input
