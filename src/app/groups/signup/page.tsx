@@ -89,14 +89,20 @@ function DNALeaderSignupContent() {
       // Auto-accept co-leader invitation if one was included in the signup link
       if (coLeaderToken) {
         try {
-          await fetch(`/api/groups/invitations/${coLeaderToken}`, {
+          const acceptRes = await fetch(`/api/groups/invitations/${coLeaderToken}`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ action: 'accept' }),
           });
+          if (!acceptRes.ok) {
+            // Auto-accept failed — redirect to invitation page so they can accept manually (now logged in)
+            router.push(`/groups/invitations/${coLeaderToken}`);
+            return;
+          }
         } catch (err) {
           console.error('Co-leader auto-accept error:', err);
-          // Non-fatal — they're still a leader, they can accept manually
+          router.push(`/groups/invitations/${coLeaderToken}`);
+          return;
         }
       }
 

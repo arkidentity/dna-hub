@@ -136,6 +136,45 @@ export async function GET(
       .map(gd => (gd.disciple as unknown as { app_account_id: string | null }).app_account_id)
       .filter((id): id is string => id !== null);
 
+    // Fallback: for disciples with no app_account_id, look up by email in disciple_app_accounts.
+    // This mirrors the healing logic in the disciple profile route and covers cases where
+    // the auto_link trigger didn't fire (e.g. existing disciples added to a new group).
+    const unlinkedDisciples = filteredDisciples.filter(
+      gd => (gd.disciple as unknown as { app_account_id: string | null }).app_account_id === null
+    );
+    const unlinkedEmails = unlinkedDisciples
+      .map(gd => (gd.disciple as unknown as { email: string }).email?.toLowerCase())
+      .filter(Boolean) as string[];
+
+    let emailToAccountId: Record<string, string> = {};
+    if (unlinkedEmails.length > 0) {
+      const { data: emailAccounts } = await supabase
+        .from('disciple_app_accounts')
+        .select('id, email')
+        .in('email', unlinkedEmails);
+
+      if (emailAccounts && emailAccounts.length > 0) {
+        emailAccounts.forEach((acc: { id: string; email: string }) => {
+          emailToAccountId[acc.email.toLowerCase()] = acc.id;
+          if (!appAccountIds.includes(acc.id)) appAccountIds.push(acc.id);
+        });
+
+        // Heal the links so subsequent loads don't need this fallback (fire-and-forget)
+        void (async () => {
+          for (const acc of emailAccounts as { id: string; email: string }[]) {
+            const gd = unlinkedDisciples.find(
+              x => (x.disciple as unknown as { email: string }).email?.toLowerCase() === acc.email?.toLowerCase()
+            );
+            if (gd) {
+              const d = gd.disciple as unknown as { id: string };
+              await supabase.from('disciples').update({ app_account_id: acc.id }).eq('id', d.id).is('app_account_id', null);
+              await supabase.from('disciple_app_accounts').update({ disciple_id: d.id }).eq('id', acc.id).is('disciple_id', null);
+            }
+          }
+        })();
+      }
+    }
+
     let assessmentsMap: Record<string, { week1?: string; week12?: string }> = {};
     let appStatsMap: Record<string, { current_streak: number; last_activity_date: string | null; total_journal_entries: number; total_prayer_sessions: number; total_prayer_cards: number }> = {};
     let creedMasteredMap: Record<string, number> = {};
@@ -199,8 +238,10 @@ export async function GET(
     // Format disciples with assessment status and app stats
     const disciples = filteredDisciples.map(gd => {
       const disciple = gd.disciple as unknown as { id: string; name: string; email: string; phone?: string; app_account_id: string | null };
-      const appStats = disciple.app_account_id ? appStatsMap[disciple.app_account_id] : null;
-      const creedCount = disciple.app_account_id ? (creedMasteredMap[disciple.app_account_id] || 0) : 0;
+      // Use direct link or email-fallback account ID
+      const effectiveAccountId = disciple.app_account_id ?? emailToAccountId[disciple.email?.toLowerCase() ?? ''] ?? null;
+      const appStats = effectiveAccountId ? appStatsMap[effectiveAccountId] : null;
+      const creedCount = effectiveAccountId ? (creedMasteredMap[effectiveAccountId] || 0) : 0;
       return {
         id: disciple.id,
         name: disciple.name,
@@ -210,7 +251,7 @@ export async function GET(
         current_status: gd.current_status,
         week1_assessment_status: assessmentsMap[disciple.id]?.week1 || 'not_sent',
         week12_assessment_status: assessmentsMap[disciple.id]?.week12 || 'not_sent',
-        app_connected: !!disciple.app_account_id,
+        app_connected: !!effectiveAccountId,
         current_streak: appStats?.current_streak ?? null,
         last_activity_date: appStats?.last_activity_date ?? null,
         total_journal_entries: appStats?.total_journal_entries ?? 0,
