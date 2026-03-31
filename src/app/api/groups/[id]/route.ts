@@ -150,8 +150,9 @@ export async function GET(
     if (unlinkedEmails.length > 0) {
       // Use ilike per-email OR clauses so the lookup is case-insensitive,
       // matching what the disciple profile route does with .ilike().
-      // Plain .in() is case-sensitive in PostgreSQL and silently misses mixed-case emails.
-      const ilikeClauses = unlinkedEmails.map(e => `email.ilike.${e}`).join(',');
+      // Values must be quoted in PostgREST or-filter syntax so that special
+      // characters in email addresses (@ and .) are not misinterpreted.
+      const ilikeClauses = unlinkedEmails.map(e => `email.ilike."${e}"`).join(',');
       const { data: emailAccounts } = await supabase
         .from('disciple_app_accounts')
         .select('id, email')
