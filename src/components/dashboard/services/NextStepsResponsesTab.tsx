@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Download, Send, Loader2, Check, ClipboardList, Users } from 'lucide-react';
+import { Download, Send, Loader2, Check, ClipboardList, Users, ChevronDown, ChevronUp } from 'lucide-react';
 import type { ServiceFollowUpResponse } from '@/lib/types';
 import GuestsTab from '@/components/dashboard/guests/GuestsTab';
 
@@ -31,7 +31,6 @@ function formatDateLabel(dateStr: string): string {
 }
 
 function formatSessionTime(session: ServiceOption): string {
-  // Prefer session_ended_at for time, fall back to title
   if (session.session_ended_at) {
     return new Date(session.session_ended_at).toLocaleTimeString('en-US', {
       hour: 'numeric',
@@ -41,18 +40,24 @@ function formatSessionTime(session: ServiceOption): string {
   return session.service_title;
 }
 
+/** Truncate label to first phrase (before first dash or 50 chars) */
+function truncateLabel(label: string): string {
+  const dashIdx = label.indexOf(' - ');
+  if (dashIdx > 0 && dashIdx <= 50) return label.substring(0, dashIdx);
+  if (label.length > 50) return label.substring(0, 47) + '...';
+  return label;
+}
+
 export default function NextStepsResponsesTab({ churchId }: Props) {
   const [viewTab, setViewTab] = useState<ViewTab>('responses');
   const [allResponses, setAllResponses] = useState<ServiceFollowUpResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [serviceOptions, setServiceOptions] = useState<ServiceOption[]>([]);
 
-  // Two-level selection: date → then optionally a specific session
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [selectedSession, setSelectedSession] = useState<string>('all-date');
-
-  // Category filter
   const [categoryFilter, setCategoryFilter] = useState('all');
+  const [summaryOpen, setSummaryOpen] = useState(true);
 
   // Email
   const [sending, setSending] = useState(false);
@@ -67,7 +72,6 @@ export default function NextStepsResponsesTab({ churchId }: Props) {
       const fetched: ServiceFollowUpResponse[] = data.responses || [];
       setAllResponses(fetched);
 
-      // Build service option list from response data
       const map = new Map<string, ServiceOption>();
       for (const r of fetched) {
         if (r.session_id && !map.has(r.session_id)) {
@@ -97,7 +101,6 @@ export default function NextStepsResponsesTab({ churchId }: Props) {
     fetchResponses();
   }, [fetchResponses]);
 
-  // Group service options by date
   const dateGroups = useMemo((): DateGroup[] => {
     const sessionCounts = new Map<string, number>();
     for (const r of allResponses) {
@@ -120,7 +123,6 @@ export default function NextStepsResponsesTab({ churchId }: Props) {
       .map(([date, { sessions, count }]) => ({
         date,
         label: date !== 'unknown' ? formatDateLabel(date) : 'Unknown Date',
-        // Sort sessions within a day by end time ascending (earliest first)
         sessions: sessions.sort((a, b) =>
           (a.session_ended_at || '').localeCompare(b.session_ended_at || '')
         ),
@@ -128,7 +130,6 @@ export default function NextStepsResponsesTab({ churchId }: Props) {
       }));
   }, [serviceOptions, allResponses]);
 
-  // Auto-select the most recent date on first load
   useEffect(() => {
     if (dateGroups.length > 0 && selectedDate === null) {
       setSelectedDate(dateGroups[0].date);
@@ -141,7 +142,6 @@ export default function NextStepsResponsesTab({ churchId }: Props) {
     [dateGroups, selectedDate]
   );
 
-  // Responses for the current date + session selection (no category filter yet)
   const responses = useMemo(() => {
     if (selectedDate === null) return allResponses;
     const byDate = allResponses.filter(r => {
@@ -152,7 +152,6 @@ export default function NextStepsResponsesTab({ churchId }: Props) {
     return byDate.filter(r => r.session_id === selectedSession);
   }, [allResponses, selectedDate, selectedSession]);
 
-  // Category groups (Next Steps / Announcements / Connect Cards)
   const categoryGroups = useMemo(() => {
     const nextStepCounts = new Map<string, number>();
     const announcementCounts = new Map<string, number>();
@@ -175,13 +174,22 @@ export default function NextStepsResponsesTab({ churchId }: Props) {
     };
   }, [responses]);
 
-  // Total unique people count (unfiltered by category)
   const totalPeople = useMemo(() => {
     const keys = new Set(responses.map(r => r.person_key));
     return keys.size;
   }, [responses]);
 
-  // Label → response_type map for badge coloring
+  const totalResponses = responses.length;
+
+  // Max count for bar chart scaling
+  const maxCount = useMemo(() => {
+    let max = 0;
+    for (const [, c] of categoryGroups.nextSteps) max = Math.max(max, c);
+    for (const [, c] of categoryGroups.announcements) max = Math.max(max, c);
+    max = Math.max(max, categoryGroups.connectCards);
+    return max || 1;
+  }, [categoryGroups]);
+
   const labelTypeMap = useMemo(() => {
     const m = new Map<string, string>();
     for (const r of responses) {
@@ -190,7 +198,6 @@ export default function NextStepsResponsesTab({ churchId }: Props) {
     return m;
   }, [responses]);
 
-  // Person-centric table rows (category filter applied here)
   const personView = useMemo(() => {
     const filtered =
       categoryFilter === 'all'
@@ -295,7 +302,40 @@ export default function NextStepsResponsesTab({ churchId }: Props) {
     return 'bg-green-50 text-green-700';
   };
 
+  const getLabelDotColor = (responseType: string) => {
+    if (responseType === 'next_step_tap') return 'bg-blue-500';
+    if (responseType === 'announcement_signup') return 'bg-purple-500';
+    return 'bg-green-500';
+  };
+
+  const getBarColor = (responseType: string) => {
+    if (responseType === 'next_step_tap') return 'bg-blue-500';
+    if (responseType === 'announcement_signup') return 'bg-purple-500';
+    return 'bg-green-500';
+  };
+
+  const getBarBgColor = (responseType: string) => {
+    if (responseType === 'next_step_tap') return 'bg-blue-100';
+    if (responseType === 'announcement_signup') return 'bg-purple-100';
+    return 'bg-green-100';
+  };
+
   const canEmailCoordinators = selectedSession !== 'all-date' && personView.length > 0;
+
+  // Build flat list of all categories for the summary chart
+  const allCategories = useMemo(() => {
+    const items: { label: string; shortLabel: string; count: number; type: string }[] = [];
+    for (const [label, count] of categoryGroups.nextSteps) {
+      items.push({ label, shortLabel: truncateLabel(label), count, type: 'next_step_tap' });
+    }
+    for (const [label, count] of categoryGroups.announcements) {
+      items.push({ label, shortLabel: truncateLabel(label), count, type: 'announcement_signup' });
+    }
+    if (categoryGroups.connectCards > 0) {
+      items.push({ label: 'Connect Card', shortLabel: 'Connect Card', count: categoryGroups.connectCards, type: 'connect_card' });
+    }
+    return items;
+  }, [categoryGroups]);
 
   return (
     <div>
@@ -325,186 +365,160 @@ export default function NextStepsResponsesTab({ churchId }: Props) {
         </button>
       </div>
 
-      {/* ── All Visitors view ── */}
-      {viewTab === 'visitors' && (
-        <GuestsTab churchId={churchId} />
-      )}
+      {viewTab === 'visitors' && <GuestsTab churchId={churchId} />}
 
-      {/* ── Service Responses view ── */}
       {viewTab === 'responses' && <div>
 
-      {/* ── Row 1: Date selector + action buttons ── */}
-      <div className="flex flex-wrap items-center gap-3 mb-4">
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-foreground-muted whitespace-nowrap">Date:</label>
+      {/* ── Filter bar: date + service + actions ── */}
+      <div className="bg-white rounded-lg border border-card-border p-4 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-3">
+          {/* Date selector */}
           <select
             value={selectedDate || ''}
             onChange={e => handleDateChange(e.target.value)}
-            className="border border-card-border rounded px-3 py-1.5 text-sm min-w-[230px]"
+            className="border border-card-border rounded-lg px-3 py-2 text-sm font-medium w-full sm:w-auto sm:min-w-[260px]"
           >
             {dateGroups.length === 0 && <option value="">No services yet</option>}
             {dateGroups.map(g => (
               <option key={g.date} value={g.date}>
-                {g.label}
-                {g.sessions.length > 1 ? ` · ${g.sessions.length} services` : ''}
-                {g.responseCount > 0 ? ` · ${g.responseCount} responses` : ''}
+                {g.label} ({g.responseCount} response{g.responseCount !== 1 ? 's' : ''})
               </option>
             ))}
           </select>
-        </div>
 
-        <div className="flex items-center gap-2 ml-auto">
-          <button
-            onClick={handleSendEmails}
-            disabled={!canEmailCoordinators || sending}
-            title={
-              selectedSession === 'all-date'
-                ? 'Select a specific service below to resend coordinator emails'
-                : undefined
-            }
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm bg-navy text-white hover:bg-navy/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
-          >
-            {sending ? (
-              <Loader2 className="w-3.5 h-3.5 animate-spin" />
-            ) : sendResult?.includes('sent') ? (
-              <Check className="w-3.5 h-3.5" />
-            ) : (
-              <Send className="w-3.5 h-3.5" />
-            )}
-            Resend Emails
-          </button>
-
-          <button
-            onClick={exportCsv}
-            disabled={personView.length === 0}
-            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm bg-gray-100 text-foreground-muted hover:bg-gray-200 disabled:opacity-50 transition-colors"
-          >
-            <Download className="w-3.5 h-3.5" />
-            Export CSV
-          </button>
-        </div>
-      </div>
-
-      {/* ── Row 2: Per-service session pills (only when multiple sessions on the selected date) ── */}
-      {currentDateGroup && currentDateGroup.sessions.length > 1 && (
-        <div className="flex flex-wrap gap-2 mb-4">
-          <button
-            onClick={() => handleSessionChange('all-date')}
-            className={`px-3 py-1 rounded-full text-sm transition-colors ${
-              selectedSession === 'all-date'
-                ? 'bg-navy text-white'
-                : 'bg-gray-100 text-foreground-muted hover:bg-gray-200'
-            }`}
-          >
-            All Services
-          </button>
-          {currentDateGroup.sessions.map(s => (
-            <button
-              key={s.session_id}
-              onClick={() => handleSessionChange(s.session_id)}
-              className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                selectedSession === s.session_id
-                  ? 'bg-navy text-white'
-                  : 'bg-gray-100 text-foreground-muted hover:bg-gray-200'
-              }`}
+          {/* Service selector (only when multiple sessions) */}
+          {currentDateGroup && currentDateGroup.sessions.length > 1 && (
+            <select
+              value={selectedSession}
+              onChange={e => handleSessionChange(e.target.value)}
+              className="border border-card-border rounded-lg px-3 py-2 text-sm w-full sm:w-auto sm:min-w-[200px]"
             >
-              {s.service_title}
-              {s.session_ended_at && ` · ${formatSessionTime(s)}`}
+              <option value="all-date">All Services</option>
+              {currentDateGroup.sessions.map(s => (
+                <option key={s.session_id} value={s.session_id}>
+                  {s.service_title}{s.session_ended_at ? ` · ${formatSessionTime(s)}` : ''}
+                </option>
+              ))}
+            </select>
+          )}
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-2 sm:ml-auto">
+            <button
+              onClick={handleSendEmails}
+              disabled={!canEmailCoordinators || sending}
+              title={
+                selectedSession === 'all-date'
+                  ? 'Select a specific service to resend coordinator emails'
+                  : 'Resend coordinator emails'
+              }
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm bg-navy text-white hover:bg-navy/90 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+            >
+              {sending ? (
+                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+              ) : sendResult?.includes('sent') ? (
+                <Check className="w-3.5 h-3.5" />
+              ) : (
+                <Send className="w-3.5 h-3.5" />
+              )}
+              <span className="hidden sm:inline">Resend Emails</span>
             </button>
-          ))}
-        </div>
-      )}
 
-      {/* ── Send result message ── */}
-      {sendResult && (
-        <div
-          className={`text-sm mb-3 px-3 py-2 rounded ${
-            sendResult.includes('sent') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-          }`}
-        >
-          {sendResult}
-        </div>
-      )}
-
-      {/* ── Category filter pills (grouped by type) ── */}
-      {responses.length > 0 && (
-        <div className="mb-4 space-y-2">
-          <div className="flex flex-wrap gap-2">
             <button
-              onClick={() => setCategoryFilter('all')}
-              className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                categoryFilter === 'all'
-                  ? 'bg-navy text-white'
-                  : 'bg-gray-100 text-foreground-muted hover:bg-gray-200'
-              }`}
+              onClick={exportCsv}
+              disabled={personView.length === 0}
+              title="Export CSV"
+              className="flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm bg-gray-100 text-foreground-muted hover:bg-gray-200 disabled:opacity-50 transition-colors"
             >
-              All ({totalPeople} {totalPeople === 1 ? 'person' : 'people'})
+              <Download className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Export CSV</span>
             </button>
           </div>
+        </div>
 
-          {categoryGroups.nextSteps.length > 0 && (
-            <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-xs text-foreground-muted font-medium uppercase tracking-wide mr-1">
-                Next Steps:
-              </span>
-              {categoryGroups.nextSteps.map(([label, count]) => (
+        {/* Send result message */}
+        {sendResult && (
+          <div
+            className={`text-sm mt-3 px-3 py-2 rounded-lg ${
+              sendResult.includes('sent') ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+            }`}
+          >
+            {sendResult}
+          </div>
+        )}
+      </div>
+
+      {/* ── Summary panel with bar chart ── */}
+      {responses.length > 0 && (
+        <div className="bg-white rounded-lg border border-card-border mb-4">
+          {/* Summary header */}
+          <button
+            onClick={() => setSummaryOpen(!summaryOpen)}
+            className="w-full flex items-center justify-between px-4 py-3 text-left"
+          >
+            <div className="flex items-center gap-4">
+              <div>
+                <span className="text-2xl font-bold text-navy">{totalPeople}</span>
+                <span className="text-sm text-foreground-muted ml-1.5">
+                  {totalPeople === 1 ? 'person' : 'people'}
+                </span>
+              </div>
+              <div className="hidden sm:block text-sm text-foreground-muted">
+                {totalResponses} response{totalResponses !== 1 ? 's' : ''} across {allCategories.length} categor{allCategories.length === 1 ? 'y' : 'ies'}
+              </div>
+            </div>
+            {summaryOpen ? (
+              <ChevronUp className="w-4 h-4 text-foreground-muted" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-foreground-muted" />
+            )}
+          </button>
+
+          {/* Collapsible bar chart */}
+          {summaryOpen && (
+            <div className="px-4 pb-4 space-y-1">
+              {/* "All" reset button */}
+              {categoryFilter !== 'all' && (
+                <button
+                  onClick={() => setCategoryFilter('all')}
+                  className="text-xs text-navy hover:underline mb-2"
+                >
+                  Clear filter
+                </button>
+              )}
+
+              {allCategories.map(({ label, shortLabel, count, type }) => (
                 <button
                   key={label}
-                  onClick={() => setCategoryFilter(label)}
-                  className={`px-3 py-1 rounded-full text-sm transition-colors ${
+                  onClick={() => setCategoryFilter(categoryFilter === label ? 'all' : label)}
+                  className={`w-full group text-left rounded-lg px-3 py-2 transition-colors ${
                     categoryFilter === label
-                      ? 'bg-blue-600 text-white'
-                      : 'bg-blue-50 text-blue-700 hover:bg-blue-100'
+                      ? 'bg-gray-100 ring-1 ring-navy/20'
+                      : 'hover:bg-gray-50'
                   }`}
+                  title={label}
                 >
-                  {label} ({count})
+                  <div className="flex items-center justify-between mb-1">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className={`w-2 h-2 rounded-full flex-shrink-0 ${getLabelDotColor(type)}`} />
+                      <span className="text-sm text-navy truncate">{shortLabel}</span>
+                    </div>
+                    <span className="text-sm font-semibold text-navy ml-2 flex-shrink-0">{count}</span>
+                  </div>
+                  <div className={`h-2 rounded-full overflow-hidden ${getBarBgColor(type)}`}>
+                    <div
+                      className={`h-full rounded-full transition-all duration-500 ${getBarColor(type)}`}
+                      style={{ width: `${(count / maxCount) * 100}%` }}
+                    />
+                  </div>
                 </button>
               ))}
-            </div>
-          )}
-
-          {categoryGroups.announcements.length > 0 && (
-            <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-xs text-foreground-muted font-medium uppercase tracking-wide mr-1">
-                Announcements:
-              </span>
-              {categoryGroups.announcements.map(([label, count]) => (
-                <button
-                  key={label}
-                  onClick={() => setCategoryFilter(label)}
-                  className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                    categoryFilter === label
-                      ? 'bg-purple-600 text-white'
-                      : 'bg-purple-50 text-purple-700 hover:bg-purple-100'
-                  }`}
-                >
-                  {label} ({count})
-                </button>
-              ))}
-            </div>
-          )}
-
-          {categoryGroups.connectCards > 0 && (
-            <div className="flex flex-wrap gap-2 items-center">
-              <span className="text-xs text-foreground-muted font-medium uppercase tracking-wide mr-1">
-                Connect Cards:
-              </span>
-              <button
-                onClick={() => setCategoryFilter('Connect Card')}
-                className={`px-3 py-1 rounded-full text-sm transition-colors ${
-                  categoryFilter === 'Connect Card'
-                    ? 'bg-green-600 text-white'
-                    : 'bg-green-50 text-green-700 hover:bg-green-100'
-                }`}
-              >
-                Connect Card ({categoryGroups.connectCards})
-              </button>
             </div>
           )}
         </div>
       )}
 
-      {/* ── Person-centric table ── */}
+      {/* ── People list ── */}
       {loading ? (
         <div className="text-center py-8 text-foreground-muted">Loading responses...</div>
       ) : personView.length === 0 ? (
@@ -515,62 +529,103 @@ export default function NextStepsResponsesTab({ churchId }: Props) {
           </p>
         </div>
       ) : (
-        <div className="overflow-x-auto rounded-lg border border-border">
-          <table className="w-full text-sm min-w-[540px]">
-            <thead>
-              <tr className="bg-gray-50 border-b border-border">
-                <th className="text-left px-4 py-2 font-medium text-foreground-muted">Name</th>
-                <th className="text-left px-4 py-2 font-medium text-foreground-muted">Email</th>
-                <th className="text-left px-4 py-2 font-medium text-foreground-muted hidden sm:table-cell">
-                  Phone
-                </th>
-                <th className="text-left px-4 py-2 font-medium text-foreground-muted">Responses</th>
-                <th className="text-center px-4 py-2 font-medium text-foreground-muted hidden md:table-cell">
-                  Type
-                </th>
-              </tr>
-            </thead>
-            <tbody>
-              {personView.map(p => (
-                <tr
-                  key={p.person_key}
-                  className="border-b border-border last:border-b-0 hover:bg-gray-50"
-                >
-                  <td className="px-4 py-3 font-medium whitespace-nowrap">{p.display_name}</td>
-                  <td className="px-4 py-3 text-foreground-muted">{p.email || '—'}</td>
-                  <td className="px-4 py-3 text-foreground-muted hidden sm:table-cell whitespace-nowrap">
-                    {p.phone || '—'}
-                  </td>
-                  <td className="px-4 py-3">
-                    <div className="flex flex-wrap gap-1">
-                      {p.labels.map(label => (
-                        <span
-                          key={label}
-                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${getLabelColor(
-                            labelTypeMap.get(label) || 'next_step_tap'
-                          )}`}
-                        >
-                          {label}
-                        </span>
-                      ))}
-                    </div>
-                  </td>
-                  <td className="px-4 py-3 text-center hidden md:table-cell">
-                    {p.is_guest ? (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
-                        Guest
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
-                        Member
-                      </span>
-                    )}
-                  </td>
+        <>
+          {/* Desktop table (hidden on mobile) */}
+          <div className="hidden md:block overflow-x-auto rounded-lg border border-card-border">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="bg-gray-50 border-b border-card-border">
+                  <th className="text-left px-4 py-2.5 font-medium text-foreground-muted">Name</th>
+                  <th className="text-left px-4 py-2.5 font-medium text-foreground-muted">Contact</th>
+                  <th className="text-left px-4 py-2.5 font-medium text-foreground-muted">Responses</th>
+                  <th className="text-center px-4 py-2.5 font-medium text-foreground-muted w-20">Type</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+              </thead>
+              <tbody>
+                {personView.map(p => (
+                  <tr
+                    key={p.person_key}
+                    className="border-b border-card-border last:border-b-0 hover:bg-gray-50"
+                  >
+                    <td className="px-4 py-3 font-medium whitespace-nowrap">{p.display_name}</td>
+                    <td className="px-4 py-3 text-foreground-muted">
+                      <div>{p.email || '—'}</div>
+                      {p.phone && <div className="text-xs mt-0.5">{p.phone}</div>}
+                    </td>
+                    <td className="px-4 py-3">
+                      <div className="flex flex-wrap gap-1.5">
+                        {p.labels.map(label => (
+                          <span
+                            key={label}
+                            title={label}
+                            className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-medium ${getLabelColor(
+                              labelTypeMap.get(label) || 'next_step_tap'
+                            )}`}
+                          >
+                            <span className={`w-1.5 h-1.5 rounded-full ${getLabelDotColor(labelTypeMap.get(label) || 'next_step_tap')}`} />
+                            {truncateLabel(label)}
+                          </span>
+                        ))}
+                      </div>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      {p.is_guest ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                          Guest
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700">
+                          Member
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Mobile card layout (shown only on mobile) */}
+          <div className="md:hidden space-y-3">
+            {personView.map(p => (
+              <div
+                key={p.person_key}
+                className="bg-white rounded-lg border border-card-border p-4"
+              >
+                <div className="flex items-start justify-between mb-2">
+                  <div>
+                    <div className="font-medium text-navy">{p.display_name}</div>
+                    {p.email && <div className="text-xs text-foreground-muted mt-0.5">{p.email}</div>}
+                    {p.phone && <div className="text-xs text-foreground-muted">{p.phone}</div>}
+                  </div>
+                  {p.is_guest ? (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-amber-100 text-amber-700 flex-shrink-0">
+                      Guest
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700 flex-shrink-0">
+                      Member
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-1.5 mt-2 pt-2 border-t border-card-border">
+                  {p.labels.map(label => (
+                    <span
+                      key={label}
+                      title={label}
+                      className={`inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium ${getLabelColor(
+                        labelTypeMap.get(label) || 'next_step_tap'
+                      )}`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full ${getLabelDotColor(labelTypeMap.get(label) || 'next_step_tap')}`} />
+                      {truncateLabel(label)}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </>
       )}
 
       <p className="text-xs text-foreground-muted mt-3">
