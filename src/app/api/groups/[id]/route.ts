@@ -142,31 +142,35 @@ export async function GET(
     const unlinkedDisciples = filteredDisciples.filter(
       gd => (gd.disciple as unknown as { app_account_id: string | null }).app_account_id === null
     );
-    const unlinkedEmails = unlinkedDisciples
-      .map(gd => (gd.disciple as unknown as { email: string }).email?.toLowerCase())
-      .filter(Boolean) as string[];
-
     let emailToAccountId: Record<string, string> = {};
-    if (unlinkedEmails.length > 0) {
-      // Use ilike per-email OR clauses so the lookup is case-insensitive,
-      // matching what the disciple profile route does with .ilike().
-      // Values must be quoted in PostgREST or-filter syntax so that special
-      // characters in email addresses (@ and .) are not misinterpreted.
-      const ilikeClauses = unlinkedEmails.map(e => `email.ilike."${e}"`).join(',');
-      const { data: emailAccounts } = await supabase
-        .from('disciple_app_accounts')
-        .select('id, email')
-        .or(ilikeClauses);
+    if (unlinkedDisciples.length > 0) {
+      // Look up each unlinked disciple individually using .ilike() — the same
+      // proven approach the disciple profile route uses. Running in parallel
+      // keeps it fast. This avoids .or() filter syntax issues with @ in emails.
+      const lookupResults = await Promise.all(
+        unlinkedDisciples.map(async gd => {
+          const email = (gd.disciple as unknown as { email: string }).email;
+          if (!email) return null;
+          const { data } = await supabase
+            .from('disciple_app_accounts')
+            .select('id, email')
+            .ilike('email', email)
+            .maybeSingle();
+          return data as { id: string; email: string } | null;
+        })
+      );
 
-      if (emailAccounts && emailAccounts.length > 0) {
-        emailAccounts.forEach((acc: { id: string; email: string }) => {
-          emailToAccountId[acc.email.toLowerCase()] = acc.id;
-          if (!appAccountIds.includes(acc.id)) appAccountIds.push(acc.id);
-        });
+      const foundAccounts = lookupResults.filter((a): a is { id: string; email: string } => a !== null);
 
-        // Heal the links so subsequent loads don't need this fallback (fire-and-forget)
+      foundAccounts.forEach(acc => {
+        emailToAccountId[acc.email.toLowerCase()] = acc.id;
+        if (!appAccountIds.includes(acc.id)) appAccountIds.push(acc.id);
+      });
+
+      // Heal the links so subsequent loads don't need this fallback (fire-and-forget)
+      if (foundAccounts.length > 0) {
         void (async () => {
-          for (const acc of emailAccounts as { id: string; email: string }[]) {
+          for (const acc of foundAccounts) {
             const gd = unlinkedDisciples.find(
               x => (x.disciple as unknown as { email: string }).email?.toLowerCase() === acc.email?.toLowerCase()
             );
