@@ -828,10 +828,26 @@ function PrayerWallForm({ config, onChange }: FormProps) {
   );
 }
 
+const ANNOUNCEMENT_CTA_DEFAULTS: Record<string, string> = {
+  sign_up: 'Sign Up',
+  learn_more: 'Learn More',
+  external_link: 'Learn More',
+};
+
 function AnnouncementForm({ config, onChange }: FormProps) {
   const [uploading, setUploading] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
   const ctaType = (config.cta_type as string) || 'sign_up';
+
+  const handleCtaTypeChange = (newType: string) => {
+    onChange('cta_type', newType);
+    // Auto-set button text to match the action if user hasn't customized it
+    const currentText = (config.cta_text as string) || '';
+    const isDefaultText = Object.values(ANNOUNCEMENT_CTA_DEFAULTS).includes(currentText) || currentText === '';
+    if (isDefaultText) {
+      onChange('cta_text', ANNOUNCEMENT_CTA_DEFAULTS[newType] || 'Sign Up');
+    }
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -914,28 +930,15 @@ function AnnouncementForm({ config, onChange }: FormProps) {
         <input ref={fileRef} type="file" accept="image/png,image/jpeg,image/webp" onChange={handleUpload} className="hidden" />
       </div>
       <div>
-        <label className="block text-sm text-foreground-muted mb-1">Button Text</label>
-        <input
-          type="text"
-          value={(config.cta_text as string) || ''}
-          onChange={(e) => onChange('cta_text', e.target.value)}
-          placeholder="Sign Up"
-          className="w-full border border-card-border rounded px-3 py-2 text-sm"
-        />
-      </div>
-      <div>
         <label className="block text-sm text-foreground-muted mb-1">Button Action</label>
         <select
           value={ctaType}
-          onChange={(e) => onChange('cta_type', e.target.value)}
+          onChange={(e) => handleCtaTypeChange(e.target.value)}
           className="w-full border border-card-border rounded px-3 py-2 text-sm"
         >
-          <option value="sign_up">Sign Up (captures contact info)</option>
-          <option value="ill_be_there">I&apos;ll Be There (attendance RSVP)</option>
-          <option value="save_my_seat">Save My Seat (seat reservation)</option>
-          <option value="count_me_in">Count Me In (general commitment)</option>
-          <option value="learn_more">Learn More (captures interest)</option>
-          <option value="external_link">External Link (opens URL)</option>
+          <option value="sign_up">Sign Up — captures contact info</option>
+          <option value="learn_more">Learn More — captures interest</option>
+          <option value="external_link">External Link — opens a URL</option>
         </select>
       </div>
       {ctaType === 'external_link' && (
@@ -951,12 +954,23 @@ function AnnouncementForm({ config, onChange }: FormProps) {
         </div>
       )}
       <div>
+        <label className="block text-sm text-foreground-muted mb-1">Button Text</label>
+        <input
+          type="text"
+          value={(config.cta_text as string) || ANNOUNCEMENT_CTA_DEFAULTS[ctaType] || 'Sign Up'}
+          onChange={(e) => onChange('cta_text', e.target.value)}
+          placeholder={ANNOUNCEMENT_CTA_DEFAULTS[ctaType] || 'Sign Up'}
+          className="w-full border border-card-border rounded px-3 py-2 text-sm"
+        />
+        <p className="text-xs text-foreground-muted mt-1">Defaults to match the action above. Customize if needed.</p>
+      </div>
+      <div>
         <label className="block text-sm text-foreground-muted mb-1">Confirmation Message <span className="text-foreground-muted font-normal">(optional)</span></label>
         <input
           type="text"
           value={(config.confirmation_message as string) || ''}
           onChange={(e) => onChange('confirmation_message', e.target.value)}
-          placeholder={ctaType === 'sign_up' ? "You&apos;re signed up!" : ctaType === 'ill_be_there' ? "See you there!" : ctaType === 'save_my_seat' ? "Your seat is saved!" : ctaType === 'count_me_in' ? "You're counted in!" : "Thanks for your interest!"}
+          placeholder="Thank you for responding."
           className="w-full border border-card-border rounded px-3 py-2 text-sm"
         />
         <p className="text-xs text-foreground-muted mt-1">Shown to the person after they respond. Leave blank to use the default.</p>
