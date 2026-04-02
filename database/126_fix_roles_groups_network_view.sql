@@ -10,7 +10,7 @@
 -- ============================================================
 
 -- ============================================================
--- 1. RE-BACKFILL ROLES
+-- 1A. RE-BACKFILL ROLES from user_roles (primary path)
 -- Catches any disciple_app_accounts where role is NULL but user_roles
 -- has a matching leader/admin role via email lookup.
 -- ============================================================
@@ -36,6 +36,57 @@ FROM (
 ) sub
 WHERE daa.id = sub.account_id
   AND sub.best_role IS NOT NULL;
+
+-- ============================================================
+-- 1B. RE-BACKFILL ROLES from dna_leaders table (fallback path)
+-- Some leaders exist in dna_leaders but were never added to users/user_roles
+-- (older invite flow or manual DB inserts). Match by email and set dna_leader.
+-- ============================================================
+UPDATE disciple_app_accounts daa
+SET role = 'dna_leader'
+FROM dna_leaders dl
+WHERE LOWER(daa.email) = LOWER(dl.email)
+  AND dl.is_active = true
+  AND daa.role IS NULL;
+
+-- ============================================================
+-- 1C. RE-BACKFILL ROLES from church_leaders table (fallback path)
+-- Same issue — some church leaders exist but weren't synced to user_roles.
+-- ============================================================
+UPDATE disciple_app_accounts daa
+SET role = 'church_leader'
+FROM church_leaders cl
+JOIN users u ON u.id = cl.user_id
+WHERE LOWER(daa.email) = LOWER(u.email)
+  AND daa.role IS NULL;
+
+-- ============================================================
+-- 1D. BACKFILL missing user_roles entries
+-- If someone is in dna_leaders with a user_id but has no dna_leader
+-- role in user_roles, create it — so future triggers work correctly.
+-- ============================================================
+INSERT INTO user_roles (user_id, role, church_id)
+SELECT dl.user_id, 'dna_leader', dl.church_id
+FROM dna_leaders dl
+WHERE dl.user_id IS NOT NULL
+  AND dl.is_active = true
+  AND NOT EXISTS (
+    SELECT 1 FROM user_roles ur
+    WHERE ur.user_id = dl.user_id
+      AND ur.role = 'dna_leader'
+  );
+
+-- ============================================================
+-- 1E. BACKFILL church_id on disciple_app_accounts
+-- Leaders who signed up before church branding may have NULL church_id.
+-- Fill from dna_leaders.church_id if available.
+-- ============================================================
+UPDATE disciple_app_accounts daa
+SET church_id = dl.church_id
+FROM dna_leaders dl
+WHERE LOWER(daa.email) = LOWER(dl.email)
+  AND daa.church_id IS NULL
+  AND dl.church_id IS NOT NULL;
 
 -- ============================================================
 -- 2. FIX get_church_disciples — show leader/co-leader groups
@@ -259,6 +310,7 @@ END;
 $$;
 
 -- Fix the disciple_app_accounts INSERT trigger
+-- Now also checks dna_leaders table as fallback
 CREATE OR REPLACE FUNCTION sync_role_on_app_account_create()
 RETURNS TRIGGER
 LANGUAGE plpgsql
@@ -267,7 +319,9 @@ SET search_path = public, pg_catalog
 AS $$
 DECLARE
   v_role TEXT;
+  v_church_id UUID;
 BEGIN
+  -- Primary path: check user_roles
   SELECT ur.role INTO v_role
   FROM users u
   JOIN user_roles ur ON ur.user_id = u.id
@@ -281,9 +335,19 @@ BEGIN
     END
   LIMIT 1;
 
+  -- Fallback: check dna_leaders table directly
+  IF v_role IS NULL THEN
+    SELECT 'dna_leader', dl.church_id INTO v_role, v_church_id
+    FROM dna_leaders dl
+    WHERE LOWER(dl.email) = LOWER(NEW.email)
+      AND dl.is_active = true
+    LIMIT 1;
+  END IF;
+
   IF v_role IS NOT NULL THEN
     UPDATE disciple_app_accounts
-    SET role = v_role
+    SET role = v_role,
+        church_id = COALESCE(church_id, v_church_id)
     WHERE id = NEW.id;
   END IF;
 

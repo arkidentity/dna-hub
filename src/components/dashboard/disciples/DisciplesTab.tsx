@@ -3,6 +3,14 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import { Download, Search, Users, BookOpen, Flame, Shield, ChevronDown, ChevronUp } from 'lucide-react';
 
+interface GroupInfo {
+  id: string;
+  name: string;
+  phase: string | null;
+  leader: string | null;
+  status: string;
+}
+
 interface ChurchMember {
   app_account_id: string;
   display_name: string;
@@ -10,13 +18,7 @@ interface ChurchMember {
   account_role: string | null;
   last_login_at: string | null;
   is_active: boolean;
-  group_id: string | null;
-  group_name: string | null;
-  current_phase: string | null;
-  leader_name: string | null;
-  leader_id: string | null;
-  membership_status: string | null;
-  joined_date: string | null;
+  groups_json: GroupInfo[];
   current_streak: number;
   longest_streak: number;
   total_journal_entries: number;
@@ -100,7 +102,9 @@ export default function DisciplesTab({ churchId }: DisciplesTabProps) {
   const groups = useMemo(() => {
     const map = new Map<string, string>();
     members.forEach((m) => {
-      if (m.group_id && m.group_name) map.set(m.group_id, m.group_name);
+      (m.groups_json || []).forEach((g) => {
+        if (g.id && g.name) map.set(g.id, g.name);
+      });
     });
     return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
   }, [members]);
@@ -115,12 +119,12 @@ export default function DisciplesTab({ churchId }: DisciplesTabProps) {
       list = list.filter((m) => m.account_role === roleFilter);
     }
     if (groupFilter === 'none') {
-      list = list.filter((m) => !m.group_id);
+      list = list.filter((m) => !m.groups_json || m.groups_json.length === 0);
     } else if (groupFilter !== 'all') {
-      list = list.filter((m) => m.group_id === groupFilter);
+      list = list.filter((m) => (m.groups_json || []).some(g => g.id === groupFilter));
     }
     if (phaseFilter !== 'all') {
-      list = list.filter((m) => m.current_phase === phaseFilter);
+      list = list.filter((m) => (m.groups_json || []).some(g => g.phase === phaseFilter));
     }
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -128,8 +132,10 @@ export default function DisciplesTab({ churchId }: DisciplesTabProps) {
         (m) =>
           m.display_name.toLowerCase().includes(q) ||
           m.account_email.toLowerCase().includes(q) ||
-          (m.leader_name && m.leader_name.toLowerCase().includes(q)) ||
-          (m.group_name && m.group_name.toLowerCase().includes(q))
+          (m.groups_json || []).some(g =>
+            g.name?.toLowerCase().includes(q) ||
+            g.leader?.toLowerCase().includes(q)
+          )
       );
     }
 
@@ -140,10 +146,10 @@ export default function DisciplesTab({ churchId }: DisciplesTabProps) {
           cmp = a.display_name.localeCompare(b.display_name);
           break;
         case 'group':
-          cmp = (a.group_name || 'zzz').localeCompare(b.group_name || 'zzz');
+          cmp = ((a.groups_json || [])[0]?.name || 'zzz').localeCompare((b.groups_json || [])[0]?.name || 'zzz');
           break;
         case 'phase':
-          cmp = (a.current_phase || 'zzz').localeCompare(b.current_phase || 'zzz');
+          cmp = ((a.groups_json || [])[0]?.phase || 'zzz').localeCompare((b.groups_json || [])[0]?.phase || 'zzz');
           break;
         case 'streak':
           cmp = a.current_streak - b.current_streak;
@@ -167,7 +173,7 @@ export default function DisciplesTab({ churchId }: DisciplesTabProps) {
   // Counts
   const discipleCount = members.filter((m) => !m.account_role).length;
   const leaderCount = members.filter((m) => m.account_role === 'dna_leader').length;
-  const inGroupCount = members.filter((m) => m.group_id).length;
+  const inGroupCount = members.filter((m) => m.groups_json && m.groups_json.length > 0).length;
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -189,28 +195,28 @@ export default function DisciplesTab({ churchId }: DisciplesTabProps) {
 
   const exportCsv = () => {
     const headers = [
-      'Name', 'Email', 'Role', 'Group', 'Phase', 'Leader',
-      'Group Status', 'Joined', 'Streak', 'Longest Streak', 'Journals',
+      'Name', 'Email', 'Role', 'Groups', 'Phases',
+      'Streak', 'Longest Streak', 'Journals',
       'Prayer Cards', 'Creed Cards Mastered',
       'Last Active', 'Last Login',
     ];
-    const rows = filtered.map((m) => [
-      m.display_name,
-      m.account_email,
-      m.account_role ? ROLE_LABELS[m.account_role] || m.account_role : 'Disciple',
-      m.group_name || '',
-      m.current_phase ? (PHASE_LABELS[m.current_phase] || m.current_phase) : '',
-      m.leader_name || '',
-      m.membership_status || '',
-      m.joined_date || '',
-      String(m.current_streak),
-      String(m.longest_streak),
-      String(m.total_journal_entries),
-      String(m.total_prayer_cards),
-      String(m.cards_mastered.length),
-      m.last_activity_date || '',
-      m.last_login_at ? new Date(m.last_login_at).toLocaleDateString() : '',
-    ]);
+    const rows = filtered.map((m) => {
+      const grps = m.groups_json || [];
+      return [
+        m.display_name,
+        m.account_email,
+        m.account_role ? ROLE_LABELS[m.account_role] || m.account_role : 'Disciple',
+        grps.map(g => `${g.name}${g.status === 'leader' ? ' (leading)' : ''}`).join('; ') || '',
+        grps.map(g => PHASE_LABELS[g.phase || ''] || g.phase || '').join('; ') || '',
+        String(m.current_streak),
+        String(m.longest_streak),
+        String(m.total_journal_entries),
+        String(m.total_prayer_cards),
+        String(m.cards_mastered.length),
+        m.last_activity_date || '',
+        m.last_login_at ? new Date(m.last_login_at).toLocaleDateString() : '',
+      ];
+    });
 
     const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -404,17 +410,42 @@ export default function DisciplesTab({ churchId }: DisciplesTabProps) {
                     )}
                   </td>
                   <td className="px-4 py-3 text-foreground-muted">
-                    {m.group_name || <span className="text-xs italic">No group</span>}
+                    {m.groups_json && m.groups_json.length > 0 ? (
+                      <div className="space-y-1">
+                        {m.groups_json.map((g) => (
+                          <div key={g.id} className="flex items-center gap-1.5">
+                            <span className="text-sm">{g.name}</span>
+                            {g.status === 'leader' && (
+                              <span className="text-[10px] px-1.5 py-0 rounded-full bg-teal/10 text-teal font-medium">Lead</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <span className="text-xs italic">No group</span>
+                    )}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    {m.current_phase ? (
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${PHASE_COLORS[m.current_phase] || 'bg-gray-100 text-gray-700'}`}>
-                        {PHASE_LABELS[m.current_phase] || m.current_phase}
-                      </span>
+                    {m.groups_json && m.groups_json.length > 0 ? (
+                      <div className="space-y-1">
+                        {m.groups_json.map((g) => (
+                          <div key={g.id}>
+                            {g.phase ? (
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${PHASE_COLORS[g.phase] || 'bg-gray-100 text-gray-700'}`}>
+                                {PHASE_LABELS[g.phase] || g.phase}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-foreground-muted">—</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     ) : '—'}
                   </td>
                   <td className="px-4 py-3 text-foreground-muted">
-                    {m.leader_name || '—'}
+                    {m.groups_json && m.groups_json.length > 0
+                      ? m.groups_json.map(g => g.leader).filter(Boolean).filter((v, i, a) => a.indexOf(v) === i).join(', ') || '—'
+                      : '—'}
                   </td>
                   <td className="px-4 py-3 text-center">
                     <span className={m.current_streak > 0 ? 'text-amber-600 font-medium' : 'text-foreground-muted'}>

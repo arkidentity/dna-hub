@@ -46,6 +46,7 @@ export async function GET() {
       .select(`
         id,
         name,
+        subdomain,
         status,
         current_phase,
         coach_id,

@@ -1,7 +1,15 @@
 'use client';
 
-import { useState, useEffect, useCallback, useMemo } from 'react';
-import { Download, Search, Users, BookOpen, Flame, Shield, ChevronDown, ChevronUp, Building2 } from 'lucide-react';
+import { useState, useEffect, useCallback, useMemo, useRef } from 'react';
+import { Download, Search, Users, BookOpen, Flame, Shield, ChevronDown, ChevronUp, Building2, MoreVertical, UserCheck, X, Link2 } from 'lucide-react';
+
+interface GroupInfo {
+  id: string;
+  name: string;
+  phase: string | null;
+  leader: string | null;
+  status: string; // 'active' | 'leader' | 'completed' | 'dropped'
+}
 
 interface NetworkDisciple {
   app_account_id: string;
@@ -13,11 +21,7 @@ interface NetworkDisciple {
   church_id: string | null;
   church_subdomain: string | null;
   church_name: string | null;
-  group_id: string | null;
-  group_name: string | null;
-  current_phase: string | null;
-  leader_name: string | null;
-  membership_status: string | null;
+  groups_json: GroupInfo[];
   current_streak: number;
   longest_streak: number;
   total_journal_entries: number;
@@ -26,6 +30,12 @@ interface NetworkDisciple {
   cards_mastered: number[];
   creed_study_sessions: number;
   last_activity_date: string | null;
+}
+
+interface ChurchOption {
+  id: string;
+  name: string;
+  subdomain: string | null;
 }
 
 type SortKey = 'name' | 'church' | 'group' | 'phase' | 'streak' | 'journals' | 'creed' | 'role';
@@ -66,8 +76,209 @@ const STATUS_LABELS: Record<string, string> = {
   'dropped': 'Dropped',
 };
 
+interface LeaderOption {
+  id: string;
+  name: string;
+  email: string;
+}
+
+// ── Action Menu ──
+function ActionMenu({
+  member,
+  allChurches,
+  onAction,
+}: {
+  member: NetworkDisciple;
+  allChurches: ChurchOption[];
+  onAction: (id: string, action: string, payload?: Record<string, string>) => Promise<void>;
+}) {
+  const [open, setOpen] = useState(false);
+  const [submenu, setSubmenu] = useState<'church' | 'link_leader' | null>(null);
+  const [busy, setBusy] = useState(false);
+  const [leaderSearch, setLeaderSearch] = useState('');
+  const [leaderResults, setLeaderResults] = useState<LeaderOption[]>([]);
+  const [leaderLoading, setLeaderLoading] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  const searchTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+        setSubmenu(null);
+        setLeaderSearch('');
+        setLeaderResults([]);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, []);
+
+  // Debounced leader search
+  const searchLeaders = (q: string) => {
+    setLeaderSearch(q);
+    if (searchTimeout.current) clearTimeout(searchTimeout.current);
+    if (q.trim().length < 2) {
+      setLeaderResults([]);
+      return;
+    }
+    searchTimeout.current = setTimeout(async () => {
+      setLeaderLoading(true);
+      try {
+        const res = await fetch(`/api/admin/disciples/network/leaders?q=${encodeURIComponent(q)}`);
+        if (res.ok) {
+          const data = await res.json();
+          setLeaderResults(data.leaders || []);
+        }
+      } catch { /* ignore */ }
+      setLeaderLoading(false);
+    }, 300);
+  };
+
+  // Load all leaders when submenu opens (for browsing without typing)
+  const openLeaderSubmenu = async () => {
+    setSubmenu('link_leader');
+    setLeaderSearch('');
+    setLeaderLoading(true);
+    try {
+      const res = await fetch('/api/admin/disciples/network/leaders');
+      if (res.ok) {
+        const data = await res.json();
+        setLeaderResults(data.leaders || []);
+      }
+    } catch { /* ignore */ }
+    setLeaderLoading(false);
+  };
+
+  const handleAction = async (action: string, payload?: Record<string, string>) => {
+    setBusy(true);
+    try {
+      await onAction(member.app_account_id, action, payload);
+    } finally {
+      setBusy(false);
+      setOpen(false);
+      setSubmenu(null);
+      setLeaderSearch('');
+      setLeaderResults([]);
+    }
+  };
+
+  const isLeaderOrAbove = member.account_role === 'dna_leader' || member.account_role === 'church_leader' || member.account_role === 'admin';
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => { setOpen(!open); setSubmenu(null); setLeaderSearch(''); setLeaderResults([]); }}
+        className="p-1 rounded hover:bg-gray-100 text-foreground-muted hover:text-navy transition-colors"
+        disabled={busy}
+      >
+        <MoreVertical className="w-4 h-4" />
+      </button>
+      {open && (
+        <div className="absolute right-0 top-full mt-1 bg-white border border-border rounded-lg shadow-lg z-50 min-w-[240px] py-1">
+          {/* Assign Church */}
+          <button
+            onClick={() => setSubmenu(submenu === 'church' ? null : 'church')}
+            className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
+          >
+            <Building2 className="w-3.5 h-3.5 text-teal" />
+            {member.church_id ? 'Change Church' : 'Assign Church'}
+          </button>
+          {submenu === 'church' && (
+            <div className="border-t border-border max-h-48 overflow-y-auto">
+              {allChurches.map((c) => (
+                <button
+                  key={c.id}
+                  onClick={() => handleAction('assign_church', { church_id: c.id })}
+                  disabled={busy || c.id === member.church_id}
+                  className={`w-full text-left px-6 py-1.5 text-xs hover:bg-gray-50 disabled:opacity-40 ${
+                    c.id === member.church_id ? 'font-medium text-teal' : ''
+                  }`}
+                >
+                  {c.name}{c.subdomain ? ` (${c.subdomain})` : ''}
+                  {c.id === member.church_id && ' ✓'}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Link to DNA Leader — for disciples who logged in with wrong email */}
+          {!isLeaderOrAbove && (
+            <>
+              <button
+                onClick={() => submenu === 'link_leader' ? setSubmenu(null) : openLeaderSubmenu()}
+                className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
+              >
+                <Link2 className="w-3.5 h-3.5 text-navy" />
+                Link to DNA Leader
+              </button>
+              {submenu === 'link_leader' && (
+                <div className="border-t border-border">
+                  <div className="px-3 py-2">
+                    <input
+                      type="text"
+                      value={leaderSearch}
+                      onChange={(e) => searchLeaders(e.target.value)}
+                      placeholder="Search by name or email..."
+                      className="w-full px-2 py-1 text-xs border border-border rounded bg-white"
+                      autoFocus
+                    />
+                  </div>
+                  <div className="max-h-48 overflow-y-auto">
+                    {leaderLoading ? (
+                      <div className="px-4 py-2 text-xs text-foreground-muted">Searching...</div>
+                    ) : leaderResults.length === 0 ? (
+                      <div className="px-4 py-2 text-xs text-foreground-muted">
+                        {leaderSearch.length < 2 ? 'No leaders found' : 'No matches'}
+                      </div>
+                    ) : (
+                      leaderResults.map((l) => (
+                        <button
+                          key={l.id}
+                          onClick={() => handleAction('link_to_leader', { leader_id: l.id })}
+                          disabled={busy}
+                          className="w-full text-left px-4 py-1.5 text-xs hover:bg-gray-50 disabled:opacity-40"
+                        >
+                          <div className="font-medium">{l.name}</div>
+                          <div className="text-foreground-muted">{l.email}</div>
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+
+          {/* Promote / Demote */}
+          {!isLeaderOrAbove ? (
+            <button
+              onClick={() => handleAction('promote_to_leader')}
+              disabled={busy}
+              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
+            >
+              <UserCheck className="w-3.5 h-3.5 text-gold" />
+              Promote to DNA Leader
+            </button>
+          ) : member.account_role === 'dna_leader' ? (
+            <button
+              onClick={() => handleAction('remove_leader_role')}
+              disabled={busy}
+              className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2 text-red-600"
+            >
+              <X className="w-3.5 h-3.5" />
+              Remove Leader Role
+            </button>
+          ) : null}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function NetworkDisciplesTab() {
   const [members, setMembers] = useState<NetworkDisciple[]>([]);
+  const [allChurches, setAllChurches] = useState<ChurchOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [roleFilter, setRoleFilter] = useState<string>('all');
@@ -76,6 +287,7 @@ export default function NetworkDisciplesTab() {
   const [phaseFilter, setPhaseFilter] = useState<string>('all');
   const [sortKey, setSortKey] = useState<SortKey>('church');
   const [sortDir, setSortDir] = useState<SortDir>('asc');
+  const [toast, setToast] = useState<string | null>(null);
 
   const fetchMembers = useCallback(async () => {
     setLoading(true);
@@ -91,12 +303,56 @@ export default function NetworkDisciplesTab() {
     }
   }, []);
 
+  const fetchChurches = useCallback(async () => {
+    try {
+      const res = await fetch('/api/admin/churches');
+      if (!res.ok) return;
+      const data = await res.json();
+      const list: ChurchOption[] = (data.churches || []).map((c: { id: string; name: string; subdomain?: string }) => ({
+        id: c.id,
+        name: c.name,
+        subdomain: c.subdomain || null,
+      }));
+      setAllChurches(list.sort((a, b) => a.name.localeCompare(b.name)));
+    } catch (err) {
+      console.error('Failed to fetch churches:', err);
+    }
+  }, []);
+
   useEffect(() => {
     fetchMembers();
-  }, [fetchMembers]);
+    fetchChurches();
+  }, [fetchMembers, fetchChurches]);
 
-  // Derived: unique churches for filter
-  const churches = useMemo(() => {
+  // Show toast then auto-dismiss
+  const showToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  // Handle admin actions
+  const handleAction = async (accountId: string, action: string, payload?: Record<string, string>) => {
+    try {
+      const res = await fetch(`/api/admin/disciples/network/${accountId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action, ...payload }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        showToast(`Error: ${data.error}`);
+        return;
+      }
+      showToast(data.message);
+      // Refresh the list to reflect changes
+      await fetchMembers();
+    } catch {
+      showToast('Action failed');
+    }
+  };
+
+  // Derived: unique churches from members (for filter dropdown)
+  const memberChurches = useMemo(() => {
     const map = new Map<string, { name: string; subdomain: string | null }>();
     members.forEach((m) => {
       if (m.church_id) {
@@ -109,11 +365,13 @@ export default function NetworkDisciplesTab() {
   // Derived: unique groups for filter
   const groups = useMemo(() => {
     const map = new Map<string, string>();
-    const list = churchFilter !== 'all'
+    const list = churchFilter !== 'all' && churchFilter !== 'no_church'
       ? members.filter(m => m.church_id === churchFilter)
       : members;
     list.forEach((m) => {
-      if (m.group_id && m.group_name) map.set(m.group_id, m.group_name);
+      (m.groups_json || []).forEach((g) => {
+        if (g.id && g.name) map.set(g.id, g.name);
+      });
     });
     return Array.from(map.entries()).sort((a, b) => a[1].localeCompare(b[1]));
   }, [members, churchFilter]);
@@ -127,16 +385,18 @@ export default function NetworkDisciplesTab() {
     } else if (roleFilter !== 'all') {
       list = list.filter((m) => m.account_role === roleFilter);
     }
-    if (churchFilter !== 'all') {
+    if (churchFilter === 'no_church') {
+      list = list.filter((m) => !m.church_id);
+    } else if (churchFilter !== 'all') {
       list = list.filter((m) => m.church_id === churchFilter);
     }
     if (groupFilter === 'none') {
-      list = list.filter((m) => !m.group_id);
+      list = list.filter((m) => !m.groups_json || m.groups_json.length === 0);
     } else if (groupFilter !== 'all') {
-      list = list.filter((m) => m.group_id === groupFilter);
+      list = list.filter((m) => (m.groups_json || []).some(g => g.id === groupFilter));
     }
     if (phaseFilter !== 'all') {
-      list = list.filter((m) => m.current_phase === phaseFilter);
+      list = list.filter((m) => (m.groups_json || []).some(g => g.phase === phaseFilter));
     }
     if (search.trim()) {
       const q = search.toLowerCase();
@@ -146,8 +406,10 @@ export default function NetworkDisciplesTab() {
           m.account_email.toLowerCase().includes(q) ||
           (m.church_name && m.church_name.toLowerCase().includes(q)) ||
           (m.church_subdomain && m.church_subdomain.toLowerCase().includes(q)) ||
-          (m.leader_name && m.leader_name.toLowerCase().includes(q)) ||
-          (m.group_name && m.group_name.toLowerCase().includes(q))
+          (m.groups_json || []).some(g =>
+            g.name?.toLowerCase().includes(q) ||
+            g.leader?.toLowerCase().includes(q)
+          )
       );
     }
 
@@ -161,10 +423,10 @@ export default function NetworkDisciplesTab() {
           cmp = (a.church_name || 'zzz').localeCompare(b.church_name || 'zzz');
           break;
         case 'group':
-          cmp = (a.group_name || 'zzz').localeCompare(b.group_name || 'zzz');
+          cmp = ((a.groups_json || [])[0]?.name || 'zzz').localeCompare((b.groups_json || [])[0]?.name || 'zzz');
           break;
         case 'phase':
-          cmp = (a.current_phase || 'zzz').localeCompare(b.current_phase || 'zzz');
+          cmp = ((a.groups_json || [])[0]?.phase || 'zzz').localeCompare((b.groups_json || [])[0]?.phase || 'zzz');
           break;
         case 'streak':
           cmp = a.current_streak - b.current_streak;
@@ -189,7 +451,8 @@ export default function NetworkDisciplesTab() {
   const discipleCount = members.filter((m) => !m.account_role).length;
   const leaderCount = members.filter((m) => m.account_role === 'dna_leader').length;
   const churchLeaderCount = members.filter((m) => m.account_role === 'church_leader').length;
-  const inGroupCount = members.filter((m) => m.group_id).length;
+  const noChurchCount = members.filter((m) => !m.church_id).length;
+  const inGroupCount = members.filter((m) => m.groups_json && m.groups_json.length > 0).length;
 
   const handleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -211,29 +474,30 @@ export default function NetworkDisciplesTab() {
 
   const exportCsv = () => {
     const headers = [
-      'Name', 'Email', 'Role', 'Church', 'Subdomain', 'Group', 'Phase', 'Leader',
-      'Status', 'Streak', 'Longest Streak', 'Journals',
+      'Name', 'Email', 'Role', 'Church', 'Subdomain', 'Groups', 'Phases',
+      'Streak', 'Longest Streak', 'Journals',
       'Prayer Cards', 'Creed Cards Mastered',
       'Last Active', 'Last Login',
     ];
-    const rows = filtered.map((m) => [
-      m.display_name,
-      m.account_email,
-      m.account_role ? ROLE_LABELS[m.account_role] || m.account_role : 'Disciple',
-      m.church_name || '',
-      m.church_subdomain || '',
-      m.group_name || '',
-      m.current_phase ? (PHASE_LABELS[m.current_phase] || m.current_phase) : '',
-      m.leader_name || '',
-      m.membership_status ? (STATUS_LABELS[m.membership_status] || m.membership_status) : '',
-      String(m.current_streak),
-      String(m.longest_streak),
-      String(m.total_journal_entries),
-      String(m.total_prayer_cards),
-      String(m.cards_mastered.length),
-      m.last_activity_date || '',
-      m.last_login_at ? new Date(m.last_login_at).toLocaleDateString() : '',
-    ]);
+    const rows = filtered.map((m) => {
+      const grps = m.groups_json || [];
+      return [
+        m.display_name,
+        m.account_email,
+        m.account_role ? ROLE_LABELS[m.account_role] || m.account_role : 'Disciple',
+        m.church_name || '',
+        m.church_subdomain || '',
+        grps.map(g => `${g.name}${g.status === 'leader' ? ' (leading)' : ''}`).join('; ') || '',
+        grps.map(g => PHASE_LABELS[g.phase || ''] || g.phase || '').join('; ') || '',
+        String(m.current_streak),
+        String(m.longest_streak),
+        String(m.total_journal_entries),
+        String(m.total_prayer_cards),
+        String(m.cards_mastered.length),
+        m.last_activity_date || '',
+        m.last_login_at ? new Date(m.last_login_at).toLocaleDateString() : '',
+      ];
+    });
 
     const csv = [headers, ...rows].map((r) => r.map((c) => `"${c}"`).join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -247,6 +511,16 @@ export default function NetworkDisciplesTab() {
 
   return (
     <div>
+      {/* Toast */}
+      {toast && (
+        <div className="fixed top-4 right-4 z-[9999] bg-navy text-white px-4 py-2.5 rounded-lg shadow-lg text-sm flex items-center gap-2 animate-in fade-in slide-in-from-top-2">
+          {toast}
+          <button onClick={() => setToast(null)} className="text-white/60 hover:text-white">
+            <X className="w-3.5 h-3.5" />
+          </button>
+        </div>
+      )}
+
       {/* Summary cards */}
       <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
         <div className="card p-4 text-center">
@@ -256,7 +530,7 @@ export default function NetworkDisciplesTab() {
         </div>
         <div className="card p-4 text-center">
           <Building2 className="w-5 h-5 mx-auto mb-1 text-teal" />
-          <div className="text-2xl font-bold text-navy">{churches.length}</div>
+          <div className="text-2xl font-bold text-navy">{memberChurches.length}</div>
           <div className="text-xs text-foreground-muted">Churches</div>
         </div>
         <div className="card p-4 text-center">
@@ -313,7 +587,8 @@ export default function NetworkDisciplesTab() {
           className="px-3 py-1 rounded-lg text-sm border border-border bg-white"
         >
           <option value="all">All Churches</option>
-          {churches.map(([id, info]) => (
+          <option value="no_church">No Church ({noChurchCount})</option>
+          {memberChurches.map(([id, info]) => (
             <option key={id} value={id}>
               {info.name}{info.subdomain ? ` (${info.subdomain})` : ''}
             </option>
@@ -430,6 +705,7 @@ export default function NetworkDisciplesTab() {
                 >
                   Creed <SortIcon col="creed" />
                 </th>
+                <th className="w-10 px-2 py-2"></th>
               </tr>
             </thead>
             <tbody>
@@ -450,29 +726,43 @@ export default function NetworkDisciplesTab() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="text-foreground-muted">
-                      {m.church_name || <span className="text-xs italic">No church</span>}
+                      {m.church_name || <span className="text-xs italic text-amber-600">No church</span>}
                     </div>
                     {m.church_subdomain && (
                       <div className="text-xs text-foreground-muted/60">{m.church_subdomain}</div>
                     )}
                   </td>
                   <td className="px-4 py-3 text-foreground-muted">
-                    {m.group_name ? (
-                      <div>
-                        <div>{m.group_name}</div>
-                        {m.membership_status === 'leader' && (
-                          <span className="text-xs text-teal font-medium">Leading</span>
-                        )}
+                    {m.groups_json && m.groups_json.length > 0 ? (
+                      <div className="space-y-1">
+                        {m.groups_json.map((g) => (
+                          <div key={g.id} className="flex items-center gap-1.5">
+                            <span className="text-sm">{g.name}</span>
+                            {g.status === 'leader' && (
+                              <span className="text-[10px] px-1.5 py-0 rounded-full bg-teal/10 text-teal font-medium">Lead</span>
+                            )}
+                          </div>
+                        ))}
                       </div>
                     ) : (
                       <span className="text-xs italic">No group</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-center">
-                    {m.current_phase ? (
-                      <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${PHASE_COLORS[m.current_phase] || 'bg-gray-100 text-gray-700'}`}>
-                        {PHASE_LABELS[m.current_phase] || m.current_phase}
-                      </span>
+                    {m.groups_json && m.groups_json.length > 0 ? (
+                      <div className="space-y-1">
+                        {m.groups_json.map((g) => (
+                          <div key={g.id}>
+                            {g.phase ? (
+                              <span className={`inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium ${PHASE_COLORS[g.phase] || 'bg-gray-100 text-gray-700'}`}>
+                                {PHASE_LABELS[g.phase] || g.phase}
+                              </span>
+                            ) : (
+                              <span className="text-xs text-foreground-muted">—</span>
+                            )}
+                          </div>
+                        ))}
+                      </div>
                     ) : '—'}
                   </td>
                   <td className="px-4 py-3 text-center">
@@ -491,6 +781,13 @@ export default function NetworkDisciplesTab() {
                       <span className="text-gold font-medium">{m.cards_mastered.length}</span>
                     ) : '—'}
                   </td>
+                  <td className="px-2 py-3">
+                    <ActionMenu
+                      member={m}
+                      allChurches={allChurches}
+                      onAction={handleAction}
+                    />
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -501,7 +798,7 @@ export default function NetworkDisciplesTab() {
       {/* Footer */}
       {!loading && filtered.length > 0 && (
         <div className="flex items-center justify-between text-xs text-foreground-muted mt-2">
-          <span>Showing {filtered.length} of {members.length} people across {churches.length} churches</span>
+          <span>Showing {filtered.length} of {members.length} people across {memberChurches.length} churches</span>
           <span>{inGroupCount} in a group &middot; {members.length - inGroupCount} app-only</span>
         </div>
       )}
