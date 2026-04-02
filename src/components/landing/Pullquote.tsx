@@ -5,7 +5,7 @@ export default function Pullquote() {
     <section
       style={{
         background: 'var(--lp-green)',
-        padding: '5rem',
+        padding: 'clamp(3.5rem, 8vw, 5rem) clamp(1.5rem, 5vw, 5rem)',
         textAlign: 'center',
       }}
     >
@@ -19,13 +19,13 @@ export default function Pullquote() {
       <p
         style={{
           fontFamily: "'Playfair Display', serif",
-          fontSize: 'clamp(1.5rem, 3vw, 2.25rem)',
+          fontSize: 'clamp(1.35rem, 3.5vw, 2.25rem)',
           fontWeight: 700,
           fontStyle: 'italic',
           color: '#fff',
-          maxWidth: '720px',
+          maxWidth: '680px',
           margin: '0 auto 1.5rem',
-          lineHeight: 1.4,
+          lineHeight: 1.45,
         }}
       >
         &ldquo;DNA isn&apos;t accidental discipleship — it&apos;s loving people with a plan.&rdquo;

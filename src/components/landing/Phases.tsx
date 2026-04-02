@@ -4,7 +4,7 @@ const phases = [
     tag: 'Phase 01',
     title: 'Foundation',
     detail:
-      'The 90-day toolkit — 3D Journal, Creed Cards, Listening Prayer Circle, 4D Prayer, Life Assessment. Disciples build daily habits. Leaders model before they teach. This is where transformation happens and the DNA culture gets established.',
+      'Disciples build daily habits and spiritual disciplines over 90 days. Leaders model before they teach. This is where transformation happens and the DNA culture gets established.',
   },
   {
     time: 'Months 4–8',
@@ -27,7 +27,7 @@ export default function Phases() {
     <section
       style={{
         background: 'var(--lp-accent)',
-        padding: '7rem 5rem',
+        padding: 'clamp(4rem, 8vw, 7rem) clamp(1.5rem, 5vw, 5rem)',
         position: 'relative',
         overflow: 'hidden',
       }}
@@ -42,10 +42,13 @@ export default function Phases() {
           height: '600px',
           borderRadius: '50%',
           background: 'radial-gradient(circle, rgba(200,146,42,0.1) 0%, transparent 70%)',
+          pointerEvents: 'none',
         }}
       />
-      <div style={{ maxWidth: '1000px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
-        <div className="fade-in" style={{ textAlign: 'center', marginBottom: '5rem' }}>
+
+      <div style={{ maxWidth: '720px', margin: '0 auto', position: 'relative', zIndex: 1 }}>
+
+        <div className="fade-in" style={{ marginBottom: 'clamp(2.5rem, 6vw, 4rem)' }}>
           <div
             style={{
               fontSize: '0.72rem',
@@ -54,99 +57,96 @@ export default function Phases() {
               textTransform: 'uppercase',
               color: 'var(--lp-gold)',
               marginBottom: '1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
             }}
           >
+            <span style={{ display: 'block', width: '2rem', height: '1px', background: 'var(--lp-gold)', flexShrink: 0 }} />
             The DNA Journey
           </div>
           <h2
             style={{
               fontFamily: "'Playfair Display', serif",
-              fontSize: 'clamp(1.8rem, 3vw, 2.5rem)',
+              fontSize: 'clamp(1.9rem, 4.5vw, 2.8rem)',
               fontWeight: 900,
               color: '#fff',
+              lineHeight: 1.15,
               marginBottom: '0.75rem',
-              lineHeight: 1.3,
             }}
           >
-            Three Phases.<br />
-            <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>6 – 12 months.</em><br />
+            Three phases.{' '}
+            <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>6–12 months.</em>{' '}
             <em style={{ fontStyle: 'italic', color: 'var(--lp-green)' }}>A disciple-maker on the other side.</em>
           </h2>
-          <p
-            style={{
-              fontSize: '1rem',
-              color: 'rgba(255,255,255,0.5)',
-              maxWidth: '500px',
-              margin: '0 auto',
-              lineHeight: 1.65,
-            }}
-          >
+          <p style={{ fontSize: 'clamp(0.95rem, 2vw, 1rem)', color: 'rgba(255,255,255,0.5)', lineHeight: 1.7 }}>
             No shortcuts. No guesswork. A reproducible process leaders can run on their own after one full cycle.
           </p>
         </div>
 
         <div className="fade-in" style={{ display: 'flex', flexDirection: 'column' }}>
-          {phases.map((phase) => (
+          {phases.map((phase, i) => (
             <div
               key={phase.tag}
               style={{
-                display: 'grid',
-                gridTemplateColumns: '160px 1px 1fr',
-                gap: '0 2rem',
+                display: 'flex',
+                gap: '1.5rem',
+                paddingBottom: i < phases.length - 1 ? 'clamp(2rem, 5vw, 3rem)' : 0,
               }}
             >
-              <div
-                style={{
-                  textAlign: 'right',
-                  fontSize: '0.78rem',
-                  color: 'rgba(255,255,255,0.38)',
-                  fontWeight: 500,
-                  letterSpacing: '0.04em',
-                  paddingTop: '2.2rem',
-                  paddingBottom: '2rem',
-                }}
-              >
-                {phase.time}
-              </div>
-              <div
-                style={{
-                  width: '1px',
-                  background: 'rgba(200,146,42,0.3)',
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'center',
-                  paddingTop: '2.1rem',
-                }}
-              >
+              {/* Timeline indicator */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flexShrink: 0 }}>
                 <div
                   style={{
-                    width: '10px',
-                    height: '10px',
+                    width: '12px',
+                    height: '12px',
                     borderRadius: '50%',
                     background: 'var(--lp-gold)',
                     flexShrink: 0,
-                    position: 'relative',
-                    zIndex: 1,
+                    marginTop: '0.35rem',
                   }}
                 />
+                {i < phases.length - 1 && (
+                  <div
+                    style={{
+                      width: '1px',
+                      flex: 1,
+                      background: 'rgba(200,146,42,0.3)',
+                      marginTop: '0.5rem',
+                    }}
+                  />
+                )}
               </div>
-              <div style={{ padding: '2rem 0' }}>
-                <div
-                  style={{
-                    fontSize: '0.7rem',
-                    fontWeight: 600,
-                    letterSpacing: '0.15em',
-                    textTransform: 'uppercase',
-                    color: 'var(--lp-gold)',
-                    marginBottom: '0.4rem',
-                  }}
-                >
-                  {phase.tag}
+
+              {/* Content */}
+              <div style={{ paddingBottom: i < phases.length - 1 ? 'clamp(1rem, 3vw, 1.5rem)' : 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
+                  <span
+                    style={{
+                      fontSize: '0.68rem',
+                      fontWeight: 600,
+                      letterSpacing: '0.15em',
+                      textTransform: 'uppercase',
+                      color: 'var(--lp-gold)',
+                    }}
+                  >
+                    {phase.tag}
+                  </span>
+                  <span
+                    style={{
+                      fontSize: '0.72rem',
+                      color: 'rgba(255,255,255,0.35)',
+                      fontWeight: 500,
+                      letterSpacing: '0.03em',
+                    }}
+                  >
+                    {phase.time}
+                  </span>
                 </div>
                 <div
                   style={{
                     fontFamily: "'Playfair Display', serif",
-                    fontSize: '1.4rem',
+                    fontSize: 'clamp(1.2rem, 3vw, 1.4rem)',
                     fontWeight: 700,
                     color: '#fff',
                     marginBottom: '0.5rem',
@@ -154,13 +154,14 @@ export default function Phases() {
                 >
                   {phase.title}
                 </div>
-                <div style={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.5)', lineHeight: 1.65 }}>
+                <div style={{ fontSize: 'clamp(0.88rem, 2vw, 0.92rem)', color: 'rgba(255,255,255,0.5)', lineHeight: 1.75 }}>
                   {phase.detail}
                 </div>
               </div>
             </div>
           ))}
         </div>
+
       </div>
     </section>
   );

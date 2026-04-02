@@ -16,16 +16,20 @@ const faqs = [
     a: 'DNA was designed to scale from small churches to multi-site. Smaller churches often see faster multiplication because the relational depth is already there — they just need the system. Partnership tiers adjust to your size and budget.',
   },
   {
-    q: 'We\'re not sure we\'re ready. What\'s the first step?',
-    a: 'Get the Multiplication Manual. Read it. If it resonates, take the Church Assessment. Then book a discovery call — we\'ll tell you honestly what we think after listening to your context.',
+    q: "We're not sure we're ready. What's the first step?",
+    a: "Set up your free white-labeled app. It takes 60 seconds and costs nothing. Explore the dashboard, see what your leaders would use, and get a feel for the system before committing to anything. If it resonates, book a discovery call.",
   },
 ];
 
 export default function FAQ() {
   return (
-    <section style={{ background: 'var(--lp-warm-white)', padding: '6rem 5rem' }} className="lp-faq">
+    <section
+      style={{ background: 'var(--lp-warm-white)', padding: 'clamp(4rem, 8vw, 6rem) clamp(1.5rem, 5vw, 5rem)' }}
+      className="lp-faq"
+    >
       <div style={{ maxWidth: '720px', margin: '0 auto' }}>
-        <div className="fade-in" style={{ textAlign: 'center', marginBottom: '3rem' }}>
+
+        <div className="fade-in" style={{ marginBottom: 'clamp(2rem, 5vw, 3rem)' }}>
           <div
             style={{
               fontSize: '0.72rem',
@@ -34,16 +38,19 @@ export default function FAQ() {
               textTransform: 'uppercase',
               color: 'var(--lp-gold)',
               marginBottom: '1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
             }}
           >
+            <span style={{ display: 'block', width: '2rem', height: '1px', background: 'var(--lp-gold)', flexShrink: 0 }} />
             Common Questions
           </div>
           <h2
             style={{
               fontFamily: "'Playfair Display', serif",
-              fontSize: 'clamp(1.6rem, 2.5vw, 2rem)',
+              fontSize: 'clamp(1.6rem, 4vw, 2rem)',
               fontWeight: 900,
-              marginBottom: '0.5rem',
             }}
           >
             What pastors usually ask first
@@ -54,17 +61,18 @@ export default function FAQ() {
           {faqs.map((faq) => (
             <div
               key={faq.q}
-              style={{ borderBottom: '1px solid var(--lp-rule)', padding: '1.5rem 0' }}
+              style={{ borderBottom: '1px solid var(--lp-rule)', padding: 'clamp(1.25rem, 3vw, 1.5rem) 0' }}
             >
-              <div style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '0.6rem' }}>
+              <div style={{ fontWeight: 600, fontSize: 'clamp(0.9rem, 2vw, 0.95rem)', marginBottom: '0.5rem' }}>
                 {faq.q}
               </div>
-              <div style={{ fontSize: '0.9rem', lineHeight: 1.7, color: 'var(--lp-mid)' }}>
+              <div style={{ fontSize: 'clamp(0.88rem, 2vw, 0.92rem)', lineHeight: 1.75, color: 'var(--lp-mid)' }}>
                 {faq.a}
               </div>
             </div>
           ))}
         </div>
+
       </div>
     </section>
   );

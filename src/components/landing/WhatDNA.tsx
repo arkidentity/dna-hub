@@ -18,48 +18,43 @@ export default function WhatDNA() {
   ];
 
   return (
-    <section style={{ background: 'var(--lp-warm-white)', padding: '7rem 5rem' }} className="lp-what">
-      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-        <div
-          className="fade-in lp-what-header"
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '1fr 1fr',
-            gap: '4rem',
-            marginBottom: '5rem',
-            alignItems: 'start',
-          }}
-        >
-          <div>
-            <div
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                letterSpacing: '0.2em',
-                textTransform: 'uppercase',
-                color: 'var(--lp-gold)',
-                marginBottom: '1.25rem',
-              }}
-            >
-              What DNA Is
-            </div>
-            <h2
-              style={{
-                fontFamily: "'Playfair Display', serif",
-                fontSize: 'clamp(2rem, 3.5vw, 2.8rem)',
-                fontWeight: 900,
-                lineHeight: 1.15,
-              }}
-            >
-              Not a program you run.<br />
-              <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>A plan you live.</em>
-            </h2>
+    <section
+      style={{ background: 'var(--lp-warm-white)', padding: 'clamp(4rem, 8vw, 7rem) clamp(1.5rem, 5vw, 5rem)' }}
+      className="lp-what"
+    >
+      <div style={{ maxWidth: '720px', margin: '0 auto' }}>
+
+        <div className="fade-in" style={{ marginBottom: 'clamp(2.5rem, 6vw, 4rem)' }}>
+          <div
+            style={{
+              fontSize: '0.72rem',
+              fontWeight: 600,
+              letterSpacing: '0.2em',
+              textTransform: 'uppercase',
+              color: 'var(--lp-gold)',
+              marginBottom: '1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
+            }}
+          >
+            <span style={{ display: 'block', width: '2rem', height: '1px', background: 'var(--lp-gold)', flexShrink: 0 }} />
+            What DNA Is
           </div>
-          <div style={{ fontSize: '1rem', lineHeight: 1.8, color: 'var(--lp-mid)', paddingTop: '0.5rem' }}>
+          <h2
+            style={{
+              fontFamily: "'Playfair Display', serif",
+              fontSize: 'clamp(1.9rem, 4.5vw, 2.8rem)',
+              fontWeight: 900,
+              lineHeight: 1.15,
+              marginBottom: '1.25rem',
+            }}
+          >
+            Not a program you run.<br />
+            <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>A plan you live.</em>
+          </h2>
+          <div style={{ fontSize: 'clamp(0.95rem, 2vw, 1rem)', lineHeight: 1.8, color: 'var(--lp-mid)' }}>
             <p>
-              DNA is discipleship infrastructure. It turns your good intentions into a repeatable process your leaders can actually follow — and reproduce on their own.
-            </p>
-            <p style={{ marginTop: '1rem' }}>
               Jesus didn&apos;t accidentally make disciple-makers. He loved His twelve AND moved them intentionally through clear stages of development. DNA gives your church that same framework.
             </p>
           </div>
@@ -68,9 +63,8 @@ export default function WhatDNA() {
         <div
           className="fade-in"
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(3, 1fr)',
-            gap: 0,
+            display: 'flex',
+            flexDirection: 'column',
             border: '1px solid var(--lp-rule)',
           }}
           id="lp-pillars"
@@ -79,32 +73,32 @@ export default function WhatDNA() {
             <div
               key={pillar.num}
               style={{
-                padding: '2.5rem',
-                borderRight: i < pillars.length - 1 ? '1px solid var(--lp-rule)' : 'none',
+                padding: 'clamp(1.5rem, 4vw, 2.5rem)',
+                borderBottom: i < pillars.length - 1 ? '1px solid var(--lp-rule)' : 'none',
               }}
-              className="lp-pillar"
             >
               <div
                 style={{
                   fontFamily: "'Playfair Display', serif",
-                  fontSize: '3.5rem',
+                  fontSize: 'clamp(2.5rem, 6vw, 3.5rem)',
                   fontWeight: 900,
                   color: 'var(--lp-green)',
                   lineHeight: 1,
-                  marginBottom: '1rem',
+                  marginBottom: '0.75rem',
                 }}
               >
                 {pillar.num}
               </div>
-              <div style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '0.75rem' }}>
+              <div style={{ fontWeight: 600, fontSize: 'clamp(0.95rem, 2vw, 1rem)', marginBottom: '0.6rem' }}>
                 {pillar.title}
               </div>
-              <div style={{ fontSize: '0.88rem', lineHeight: 1.7, color: 'var(--lp-mid)' }}>
+              <div style={{ fontSize: 'clamp(0.88rem, 2vw, 0.92rem)', lineHeight: 1.75, color: 'var(--lp-mid)' }}>
                 {pillar.text}
               </div>
             </div>
           ))}
         </div>
+
       </div>
     </section>
   );

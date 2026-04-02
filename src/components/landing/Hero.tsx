@@ -1,65 +1,180 @@
 'use client';
 
+import Link from 'next/link';
+import { useState } from 'react';
+
 export default function Hero() {
+  const [showBooking, setShowBooking] = useState(false);
+
   return (
-    <section
-      style={{
-        background: 'var(--lp-paper)',
-        padding: '9rem 5rem 0',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'flex-start',
-        maxWidth: '1100px',
-        margin: '0 auto',
-        width: '100%',
-      }}
-      className="hero-section"
-    >
-      <div
+    <>
+      <section
         style={{
-          fontSize: '0.75rem',
-          fontWeight: 600,
-          letterSpacing: '0.18em',
-          textTransform: 'uppercase',
-          color: 'var(--lp-gold)',
-          marginBottom: '1.75rem',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '0.75rem',
+          background: 'var(--lp-paper)',
+          padding: 'clamp(5.5rem, 10vw, 9rem) clamp(1.5rem, 5vw, 5rem) clamp(3rem, 6vw, 5rem)',
+          maxWidth: '1100px',
+          margin: '0 auto',
+          width: '100%',
+          boxSizing: 'border-box',
         }}
       >
-        <span style={{ display: 'block', width: '2rem', height: '1px', background: 'var(--lp-gold)' }} />
-        Discipleship Naturally Activated
-      </div>
+        <div
+          style={{
+            fontSize: '0.72rem',
+            fontWeight: 600,
+            letterSpacing: '0.18em',
+            textTransform: 'uppercase',
+            color: 'var(--lp-gold)',
+            marginBottom: '1.75rem',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.75rem',
+          }}
+        >
+          <span style={{ display: 'block', width: '2rem', height: '1px', background: 'var(--lp-gold)', flexShrink: 0 }} />
+          Discipleship Naturally Activated
+        </div>
 
-      <h1
-        style={{
-          fontFamily: "'Playfair Display', serif",
-          fontSize: 'clamp(3rem, 5.5vw, 4.75rem)',
-          lineHeight: 1.05,
-          color: 'var(--lp-ink)',
-          marginBottom: '2rem',
-          fontWeight: 900,
-          maxWidth: '680px',
-        }}
-      >
-        Your church was made to multiply.<br />
-        <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>Give them a plan.</em><br />
-        <em style={{ fontStyle: 'italic', color: 'var(--lp-green)' }}>Watch it grow.</em>
-      </h1>
+        <h1
+          style={{
+            fontFamily: "'Playfair Display', serif",
+            fontSize: 'clamp(2.6rem, 7vw, 4.75rem)',
+            lineHeight: 1.05,
+            color: 'var(--lp-ink)',
+            marginBottom: '1.75rem',
+            fontWeight: 900,
+          }}
+        >
+          Your church was made to multiply.<br />
+          <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>Finally, an app built for it.</em>
+        </h1>
 
-      <p
-        style={{
-          fontSize: '1.15rem',
-          lineHeight: 1.8,
-          color: 'var(--lp-mid)',
-          maxWidth: '580px',
-          marginBottom: '2.5rem',
-        }}
-      >
-        DNA isn&apos;t accidental discipleship — it&apos;s loving people with a plan. A proven, three-phase process that takes ordinary believers from &ldquo;wanting to make disciples&rdquo; to naturally multiplying year after year.
-      </p>
+        <p
+          style={{
+            fontSize: 'clamp(1rem, 2.5vw, 1.15rem)',
+            lineHeight: 1.8,
+            color: 'var(--lp-mid)',
+            maxWidth: '560px',
+            marginBottom: '2.5rem',
+          }}
+        >
+          DNA gives your church a proven discipleship system and a white-labeled app your leaders actually use — set up in 60 seconds, free.
+        </p>
 
-    </section>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1rem' }}>
+          <Link
+            href="/signup/conference"
+            style={{
+              background: 'var(--lp-green)',
+              color: '#fff',
+              padding: 'clamp(0.85rem, 2vw, 1rem) clamp(1.75rem, 4vw, 2.5rem)',
+              fontFamily: "'DM Sans', sans-serif",
+              fontSize: 'clamp(0.9rem, 2vw, 1rem)',
+              fontWeight: 600,
+              letterSpacing: '0.04em',
+              textDecoration: 'none',
+              display: 'inline-block',
+              borderRadius: '4px',
+              transition: 'background 0.2s',
+            }}
+          >
+            Set Up Your Church App →
+          </Link>
+          <button
+            onClick={() => setShowBooking(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 0,
+              cursor: 'pointer',
+              fontSize: '0.88rem',
+              color: 'var(--lp-mid)',
+              borderBottom: '1px solid var(--lp-rule)',
+              paddingBottom: '1px',
+              fontFamily: "'DM Sans', sans-serif",
+              transition: 'color 0.2s',
+            }}
+          >
+            or book a discovery call
+          </button>
+        </div>
+      </section>
+
+      {/* Booking modal */}
+      {showBooking && (
+        <div
+          onClick={() => setShowBooking(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.65)',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+          }}
+        >
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              background: '#fff',
+              borderRadius: '8px',
+              width: '100%',
+              maxWidth: '720px',
+              maxHeight: '90vh',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+            }}
+          >
+            <div
+              style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                padding: '1rem 1.5rem',
+                borderBottom: '1px solid #eee',
+                flexShrink: 0,
+              }}
+            >
+              <span
+                style={{
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: '0.95rem',
+                  fontWeight: 600,
+                  color: 'var(--lp-ink)',
+                }}
+              >
+                Book a Discovery Call
+              </span>
+              <button
+                onClick={() => setShowBooking(false)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '1.4rem',
+                  lineHeight: 1,
+                  color: '#999',
+                  padding: '0 0.25rem',
+                  fontFamily: 'sans-serif',
+                }}
+                aria-label="Close"
+              >
+                ×
+              </button>
+            </div>
+            <iframe
+              src="https://calendar.google.com/calendar/appointments/schedules/AcZssZ1E8bA8sb4SP7QBJw45-6zKwxVNFu6x7w4YMBABJ1qdiE9ALT7hGvOlJ2RUGcfV9LwopqFiGPGe?gv=true"
+              style={{ border: 0, flex: 1, minHeight: '560px' }}
+              width="100%"
+              frameBorder={0}
+              title="Book a Discovery Call"
+            />
+          </div>
+        </div>
+      )}
+    </>
   );
 }

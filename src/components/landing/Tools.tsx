@@ -1,18 +1,20 @@
+'use client';
+
 const tools = [
   {
     icon: '📱',
     title: 'White-Labeled Daily DNA App',
-    desc: 'Your church\'s name and logo on a fully built discipleship app. 3D Journal, Listening Prayer, Creed Cards — ready for every disciple.',
+    desc: 'Your church\'s name, colors, and logo on a fully built discipleship app. 3D Journal, Listening Prayer, Creed Cards, Testimony Builder — ready for every disciple from day one.',
   },
   {
     icon: '📊',
     title: 'DNA Group Dashboard',
-    desc: 'Track every disciple, group, and assessment across your church. Know who\'s thriving, who needs attention, and who\'s ready to multiply.',
+    desc: 'Track every disciple, group, and assessment across your church. Know who\'s thriving, who needs attention, and who\'s ready to multiply — all in one place.',
   },
   {
     icon: '📖',
     title: 'Multiplication Manual',
-    desc: '6 sessions covering the biblical case, the full DNA process, and how to identify disciples who are actually ready to reproduce.',
+    desc: '6 sessions covering the biblical case for multiplication, the full DNA process, and how to identify disciples who are actually ready to reproduce.',
   },
   {
     icon: '🗺️',
@@ -21,21 +23,25 @@ const tools = [
   },
   {
     icon: '📋',
-    title: 'Flow Assessment',
-    desc: 'Diagnose what\'s blocking discipleship in your church before you try to build what you can\'t yet sustain.',
+    title: 'Church Assessment',
+    desc: 'Diagnose what\'s blocking discipleship in your church before you try to build what you can\'t yet sustain. Know where you are before you map where you\'re going.',
   },
   {
     icon: '🤝',
     title: 'Coaching & Support',
-    desc: 'Regional coaches who\'ve been through DNA themselves — a strategic partner invested in your church\'s multiplication, not a help desk.',
+    desc: 'Coaches who\'ve been through DNA themselves — a strategic partner invested in your church\'s multiplication, not a help desk.',
   },
 ];
 
 export default function Tools() {
   return (
-    <section style={{ background: 'var(--lp-paper)', padding: '7rem 5rem' }} className="lp-tools">
-      <div style={{ maxWidth: '1000px', margin: '0 auto' }}>
-        <div className="fade-in" style={{ textAlign: 'center', marginBottom: '4rem' }}>
+    <section
+      style={{ background: 'var(--lp-paper)', padding: 'clamp(4rem, 8vw, 7rem) clamp(1.5rem, 5vw, 5rem)' }}
+      className="lp-tools"
+    >
+      <div style={{ maxWidth: '720px', margin: '0 auto' }}>
+
+        <div className="fade-in" style={{ marginBottom: 'clamp(2.5rem, 6vw, 3.5rem)' }}>
           <div
             style={{
               fontSize: '0.72rem',
@@ -44,30 +50,35 @@ export default function Tools() {
               textTransform: 'uppercase',
               color: 'var(--lp-gold)',
               marginBottom: '1.25rem',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.75rem',
             }}
           >
-            What You Get
+            <span style={{ display: 'block', width: '2rem', height: '1px', background: 'var(--lp-gold)', flexShrink: 0 }} />
+            How It Works
           </div>
           <h2
             style={{
               fontFamily: "'Playfair Display', serif",
-              fontSize: 'clamp(1.8rem, 3vw, 2.5rem)',
+              fontSize: 'clamp(1.9rem, 4.5vw, 2.8rem)',
               fontWeight: 900,
+              lineHeight: 1.15,
               marginBottom: '0.75rem',
             }}
           >
-            Everything you need to make discipleship reproducible
+            Every piece connected. Nothing left to figure out.
           </h2>
-          <p style={{ fontSize: '1rem', color: 'var(--lp-mid)', maxWidth: '480px', margin: '0 auto', lineHeight: 1.6 }}>
-            Church partnership includes a full platform, white-labeled app, and ongoing coaching — not just a PDF.
+          <p style={{ fontSize: 'clamp(0.95rem, 2vw, 1rem)', color: 'var(--lp-mid)', lineHeight: 1.7 }}>
+            Most discipleship tools are isolated — an app here, a curriculum there. DNA connects your leaders&apos; daily app experience directly to what you see in your dashboard, so nothing falls through the cracks.
           </p>
         </div>
 
         <div
           className="fade-in"
           style={{
-            display: 'grid',
-            gridTemplateColumns: 'repeat(2, 1fr)',
+            display: 'flex',
+            flexDirection: 'column',
             gap: '1.5px',
             background: 'var(--lp-rule)',
             border: '1.5px solid var(--lp-rule)',
@@ -79,7 +90,7 @@ export default function Tools() {
               key={tool.title}
               style={{
                 background: 'var(--lp-warm-white)',
-                padding: '2rem 2.25rem',
+                padding: 'clamp(1.25rem, 3vw, 2rem) clamp(1.25rem, 3vw, 2.25rem)',
                 display: 'flex',
                 gap: '1.25rem',
                 alignItems: 'flex-start',
@@ -98,18 +109,22 @@ export default function Tools() {
                   justifyContent: 'center',
                   flexShrink: 0,
                   fontSize: '1rem',
-                  borderRadius: 0,
                 }}
               >
                 {tool.icon}
               </div>
               <div>
-                <div style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '0.4rem' }}>{tool.title}</div>
-                <div style={{ fontSize: '0.83rem', color: 'var(--lp-mid)', lineHeight: 1.6 }}>{tool.desc}</div>
+                <div style={{ fontWeight: 600, fontSize: 'clamp(0.9rem, 2vw, 0.95rem)', marginBottom: '0.4rem' }}>
+                  {tool.title}
+                </div>
+                <div style={{ fontSize: 'clamp(0.85rem, 2vw, 0.88rem)', color: 'var(--lp-mid)', lineHeight: 1.7 }}>
+                  {tool.desc}
+                </div>
               </div>
             </div>
           ))}
         </div>
+
       </div>
     </section>
   );

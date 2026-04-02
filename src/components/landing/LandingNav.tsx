@@ -54,8 +54,8 @@ export default function LandingNav() {
           >
             Leader Login
           </Link>
-          <a
-            href="#manual"
+          <Link
+            href="/signup/conference"
             style={{
               background: 'var(--lp-green)',
               color: '#fff',
@@ -75,8 +75,8 @@ export default function LandingNav() {
             onMouseEnter={(e) => ((e.target as HTMLElement).style.background = 'var(--lp-green-dark)')}
             onMouseLeave={(e) => ((e.target as HTMLElement).style.background = 'var(--lp-green)')}
           >
-            Get the Free Manual
-          </a>
+            Set Up Your Church App
+          </Link>
         </div>
       </div>
     </nav>
