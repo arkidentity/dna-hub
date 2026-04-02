@@ -12,10 +12,11 @@ import {
   Download,
   UserCheck,
   UserCircle,
+  Users,
   BookOpen,
   Palette,
 } from 'lucide-react';
-import { DNALeadersTab, ChurchesTab, ResourcesTab, BrandingTab, CoachesTab } from '@/components/admin';
+import { DNALeadersTab, ChurchesTab, ResourcesTab, BrandingTab, CoachesTab, NetworkDisciplesTab } from '@/components/admin';
 import AuthAuditPanel from '@/components/admin/AuthAuditPanel';
 
 interface ChurchSummary {
@@ -48,7 +49,7 @@ interface AdminStats {
 
 export default function AdminPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'churches' | 'dna-leaders' | 'coaches' | 'resources' | 'branding'>('churches');
+  const [activeTab, setActiveTab] = useState<'churches' | 'dna-leaders' | 'disciples' | 'coaches' | 'resources' | 'branding'>('churches');
   const [churches, setChurches] = useState<ChurchSummary[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [userRole, setUserRole] = useState<'admin' | 'dna_coach'>('admin');
@@ -176,6 +177,7 @@ export default function AdminPage() {
             {[
               { id: 'churches', label: 'Churches', icon: Building2, showFor: 'both' },
               { id: 'dna-leaders', label: 'DNA Leaders', icon: UserCheck, showFor: 'both' },
+              { id: 'disciples', label: 'All Disciples', icon: Users, showFor: 'admin' },
               { id: 'coaches', label: 'Coaches', icon: UserCircle, showFor: 'admin' },
               { id: 'resources', label: 'Resources', icon: BookOpen, showFor: 'admin' },
               { id: 'branding', label: 'Branding', icon: Palette, showFor: 'admin' },
@@ -200,6 +202,9 @@ export default function AdminPage() {
       <main className="max-w-6xl mx-auto px-4 sm:px-6 py-4 sm:py-8">
         {/* DNA Leaders Tab */}
         {activeTab === 'dna-leaders' && <DNALeadersTab />}
+
+        {/* Network Disciples Tab */}
+        {activeTab === 'disciples' && <NetworkDisciplesTab />}
 
         {/* Churches Tab */}
         {activeTab === 'churches' && (

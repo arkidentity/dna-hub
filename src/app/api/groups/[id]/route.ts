@@ -190,7 +190,7 @@ export async function GET(
 
     if (discipleIds.length > 0) {
       // Fetch assessments, app stats, and creed mastery in parallel
-      const [assessmentsResult, appStatsResult, creedResult] = await Promise.all([
+      const [assessmentsResult, appStatsResult, creedResult, journalCountResult] = await Promise.all([
         supabase
           .from('life_assessments')
           .select('disciple_id, assessment_week, sent_at, completed_at')
@@ -208,6 +208,14 @@ export async function GET(
               .select('account_id, mastered')
               .in('account_id', appAccountIds)
               .eq('mastered', true)
+          : Promise.resolve({ data: null }),
+        // Direct journal count — bypasses potentially stale disciple_progress aggregate
+        appAccountIds.length > 0
+          ? supabase
+              .from('disciple_journal_entries')
+              .select('account_id')
+              .in('account_id', appAccountIds)
+              .is('deleted_at', null)
           : Promise.resolve({ data: null }),
       ]);
 
@@ -241,6 +249,20 @@ export async function GET(
         creedResult.data.forEach((c: { account_id: string }) => {
           creedMasteredMap[c.account_id] = (creedMasteredMap[c.account_id] || 0) + 1;
         });
+      }
+
+      // Build live journal count map from direct query
+      if (journalCountResult.data) {
+        const liveJournalMap: Record<string, number> = {};
+        journalCountResult.data.forEach((j: { account_id: string }) => {
+          liveJournalMap[j.account_id] = (liveJournalMap[j.account_id] || 0) + 1;
+        });
+        // Override stale aggregate with live count
+        for (const [accountId, count] of Object.entries(liveJournalMap)) {
+          if (appStatsMap[accountId]) {
+            appStatsMap[accountId].total_journal_entries = count;
+          }
+        }
       }
     }
 
