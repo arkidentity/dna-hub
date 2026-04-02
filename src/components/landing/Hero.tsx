@@ -49,17 +49,36 @@ export default function Hero() {
           <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>An app built for disciple-making churches.</em>
         </h1>
 
-        <p
+        <ul
           style={{
-            fontSize: 'clamp(1rem, 2.5vw, 1.15rem)',
-            lineHeight: 1.8,
-            color: 'var(--lp-mid)',
-            maxWidth: '560px',
-            marginBottom: '2.5rem',
+            listStyle: 'none',
+            padding: 0,
+            margin: '0 0 2.5rem',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '0.6rem',
           }}
         >
-          DNA gives your church a proven discipleship system and a white-labeled app your leaders actually use — set up in 60 seconds, free.
-        </p>
+          {[
+            'A proven discipleship system.',
+            'A white-labeled app your leaders actually use — set up in 60 seconds, free.',
+          ].map((item) => (
+            <li
+              key={item}
+              style={{
+                display: 'flex',
+                gap: '0.75rem',
+                alignItems: 'flex-start',
+                fontSize: 'clamp(1rem, 2.5vw, 1.1rem)',
+                lineHeight: 1.7,
+                color: 'var(--lp-mid)',
+              }}
+            >
+              <span style={{ color: 'var(--lp-gold)', fontWeight: 700, flexShrink: 0, marginTop: '0.05em' }}>→</span>
+              {item}
+            </li>
+          ))}
+        </ul>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1rem' }}>
           <Link
