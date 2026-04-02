@@ -45,8 +45,8 @@ export default function Hero() {
             fontWeight: 900,
           }}
         >
-          Your church was made to multiply.<br />
-          <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>Finally, an app built for it.</em>
+          Finally.<br />
+          <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>An app built for disciple-making churches.</em>
         </h1>
 
         <p
