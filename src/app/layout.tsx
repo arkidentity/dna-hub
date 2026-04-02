@@ -23,10 +23,10 @@ const dmSans = DM_Sans({
 
 export const metadata: Metadata = {
   metadataBase: new URL('https://dnadiscipleship.com'),
-  title: "DNA Discipleship — Loving People With a Plan",
+  title: "DNA — Discipleship Naturally Activated",
   description: "DNA isn't accidental discipleship — it's loving people with a plan. A complete system for multiplication discipleship.",
   openGraph: {
-    title: "DNA Discipleship — Loving People With a Plan",
+    title: "DNA — Discipleship Naturally Activated",
     description: "DNA isn't accidental discipleship — it's loving people with a plan. A complete system for multiplication discipleship.",
     url: 'https://dnadiscipleship.com',
     siteName: 'DNA Discipleship',
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: "DNA Discipleship — Loving People With a Plan",
+    title: "DNA — Discipleship Naturally Activated",
     description: "DNA isn't accidental discipleship — it's loving people with a plan. A complete system for multiplication discipleship.",
     images: ['/opengraph-image'],
   },
