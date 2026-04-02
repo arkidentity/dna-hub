@@ -18,7 +18,7 @@ const tools = [
   },
   {
     icon: '🗺️',
-    title: 'Launch Guide + 90-Day Toolkit',
+    title: 'Launch Guide + DNA Toolkit',
     desc: 'Step-by-step roadmap through every phase — with complete session plans so leaders never wonder "what do we do next?"',
   },
   {

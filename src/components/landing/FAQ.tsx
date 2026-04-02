@@ -5,7 +5,7 @@ const faqs = [
   },
   {
     q: 'What if our leaders have never made a disciple before?',
-    a: 'That\'s exactly who DNA is for. Leaders go through the 90-day toolkit as disciples first — before they lead anyone else. They experience every tool themselves before facilitating it. You can\'t give away what you haven\'t received.',
+    a: 'That\'s exactly who DNA is for. Leaders go through the DNA Toolkit as disciples first — before they lead anyone else. They experience every tool themselves before facilitating it. You can\'t give away what you haven\'t received.',
   },
   {
     q: 'How long before we see multiplication?',
