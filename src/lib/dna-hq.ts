@@ -34,6 +34,7 @@ export async function getDnaHqChurchId(): Promise<string | null> {
       .from('churches')
       .select('id')
       .ilike('name', 'DNA Discipleship%')
+      .neq('subdomain', 'demo-church')
       .limit(1)
       .maybeSingle();
 

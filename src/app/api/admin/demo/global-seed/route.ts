@@ -606,7 +606,7 @@ export async function POST() {
 
     // ── 15. Create / find "DNA Discipleship" demo church ────────────────
     const DEMO_CHURCH_SUBDOMAIN = 'demo-church';
-    const DEMO_CHURCH_NAME = 'DNA Discipleship';
+    const DEMO_CHURCH_NAME = 'DNA Discipleship (Demo)';
 
     const { data: existingDemoChurch } = await supabase
       .from('churches')
