@@ -14,13 +14,22 @@ interface Disciple {
   joined_date: string;
   current_status: 'active' | 'completed' | 'dropped';
   week1_assessment_status?: 'not_sent' | 'sent' | 'completed';
+  week1_assessment_score?: number | null;
   week12_assessment_status?: 'not_sent' | 'sent' | 'completed';
+  week12_assessment_score?: number | null;
   app_connected?: boolean;
   current_streak?: number | null;
   last_activity_date?: string | null;
   total_journal_entries?: number;
   total_prayer_cards?: number;
   creed_cards_mastered?: number;
+}
+
+interface LeaderAppStats {
+  current_streak: number;
+  total_journal_entries: number;
+  total_prayer_cards: number;
+  creed_cards_mastered: number;
 }
 
 interface GroupData {
@@ -33,10 +42,12 @@ interface GroupData {
   leader: {
     id: string;
     name: string;
+    app_stats?: LeaderAppStats | null;
   };
   co_leader?: {
     id: string;
     name: string;
+    app_stats?: LeaderAppStats | null;
   } | null;
   pending_co_leader?: {
     id: string;
@@ -615,6 +626,27 @@ function GroupDetailContent() {
             </button>
           </div>
 
+          {/* Leader & Co-Leader Stats */}
+          {(group.leader?.app_stats || group.co_leader?.app_stats) && (
+            <div className="px-4 sm:px-6 py-3 border-b border-gray-200 bg-gray-50/50">
+              <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">Leadership Stats</p>
+              <div className="flex flex-wrap gap-4 sm:gap-6">
+                {[
+                  { label: group.leader?.name || 'Leader', stats: group.leader?.app_stats },
+                  ...(group.co_leader?.app_stats ? [{ label: group.co_leader.name, stats: group.co_leader.app_stats }] : []),
+                ].filter(l => l.stats).map(({ label, stats }) => (
+                  <div key={label} className="flex items-center gap-3 text-xs">
+                    <span className="font-medium text-navy">{label}</span>
+                    {stats!.current_streak > 0 && <span className="text-amber-600">🔥 {stats!.current_streak}d</span>}
+                    <span className="text-teal-700">📓 {stats!.total_journal_entries}</span>
+                    <span>🙏 {stats!.total_prayer_cards}</span>
+                    {stats!.creed_cards_mastered > 0 && <span className="text-gold">🛡️ {stats!.creed_cards_mastered}</span>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
           {group.disciples.length === 0 ? (
             <div className="px-6 py-12 text-center">
               <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -691,7 +723,9 @@ function GroupDetailContent() {
                                 ? 'bg-yellow-100 text-yellow-700'
                                 : 'bg-gray-100 text-gray-400'
                             }`}>
-                              {disciple.week1_assessment_status === 'completed' ? '✓' : disciple.week1_assessment_status === 'sent' ? '…' : '—'}
+                              {disciple.week1_assessment_status === 'completed'
+                                ? (disciple.week1_assessment_score != null ? `${Math.round(disciple.week1_assessment_score)}%` : '✓')
+                                : disciple.week1_assessment_status === 'sent' ? '…' : '—'}
                             </span>
                             <span className="text-gray-300">/</span>
                             <span className={`px-1.5 py-0.5 rounded ${
@@ -701,7 +735,9 @@ function GroupDetailContent() {
                                 ? 'bg-yellow-100 text-yellow-700'
                                 : 'bg-gray-100 text-gray-400'
                             }`}>
-                              {disciple.week12_assessment_status === 'completed' ? '✓' : disciple.week12_assessment_status === 'sent' ? '…' : '—'}
+                              {disciple.week12_assessment_status === 'completed'
+                                ? (disciple.week12_assessment_score != null ? `${Math.round(disciple.week12_assessment_score)}%` : '✓')
+                                : disciple.week12_assessment_status === 'sent' ? '…' : '—'}
                             </span>
                           </div>
                         </td>
@@ -780,11 +816,15 @@ function GroupDetailContent() {
                       {/* Assessments */}
                       <span className="flex items-center gap-1">
                         <span className={disciple.week1_assessment_status === 'completed' ? 'text-green-600' : ''}>
-                          W1{disciple.week1_assessment_status === 'completed' ? '✓' : ''}
+                          W1{disciple.week1_assessment_status === 'completed'
+                            ? (disciple.week1_assessment_score != null ? ` ${Math.round(disciple.week1_assessment_score)}%` : '✓')
+                            : ''}
                         </span>
                         <span className="text-gray-300">/</span>
                         <span className={disciple.week12_assessment_status === 'completed' ? 'text-green-600' : ''}>
-                          W12{disciple.week12_assessment_status === 'completed' ? '✓' : ''}
+                          W12{disciple.week12_assessment_status === 'completed'
+                            ? (disciple.week12_assessment_score != null ? ` ${Math.round(disciple.week12_assessment_score)}%` : '✓')
+                            : ''}
                         </span>
                       </span>
                       <span className="text-gray-200">|</span>

@@ -65,12 +65,19 @@ export async function ensureCoachAccount(
   }
 
   // ── 3. Grant dna_coach role (global — no church_id) ───────────────────────
-  await supabase
+  // Check if role already exists (no unique constraint on user_id+role)
+  const { data: existingRole } = await supabase
     .from('user_roles')
-    .upsert(
-      { user_id: userId, role: 'dna_coach', church_id: null },
-      { onConflict: 'user_id,role', ignoreDuplicates: true }
-    )
+    .select('id')
+    .eq('user_id', userId)
+    .eq('role', 'dna_coach')
+    .maybeSingle()
+
+  if (!existingRole) {
+    await supabase
+      .from('user_roles')
+      .insert({ user_id: userId, role: 'dna_coach', church_id: null })
+  }
 
   // ── 4. Link user_id back to the dna_coaches record ────────────────────────
   await supabase

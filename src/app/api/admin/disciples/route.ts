@@ -33,7 +33,53 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error;
 
-    return NextResponse.json({ disciples: data || [] });
+    const disciples = data || [];
+
+    // Override stale aggregate counts with live queries
+    const accountIds = disciples
+      .map((d: { app_account_id: string }) => d.app_account_id)
+      .filter(Boolean);
+
+    if (accountIds.length > 0) {
+      const [journalResult, prayerResult] = await Promise.all([
+        supabase
+          .from('disciple_journal_entries')
+          .select('account_id')
+          .in('account_id', accountIds)
+          .is('deleted_at', null),
+        supabase
+          .from('disciple_prayer_cards')
+          .select('account_id')
+          .in('account_id', accountIds)
+          .is('deleted_at', null),
+      ]);
+
+      if (journalResult.data) {
+        const journalMap: Record<string, number> = {};
+        journalResult.data.forEach((j: { account_id: string }) => {
+          journalMap[j.account_id] = (journalMap[j.account_id] || 0) + 1;
+        });
+        disciples.forEach((d: { app_account_id: string; total_journal_entries: number }) => {
+          if (d.app_account_id && journalMap[d.app_account_id] !== undefined) {
+            d.total_journal_entries = journalMap[d.app_account_id];
+          }
+        });
+      }
+
+      if (prayerResult.data) {
+        const prayerMap: Record<string, number> = {};
+        prayerResult.data.forEach((p: { account_id: string }) => {
+          prayerMap[p.account_id] = (prayerMap[p.account_id] || 0) + 1;
+        });
+        disciples.forEach((d: { app_account_id: string; total_prayer_cards: number }) => {
+          if (d.app_account_id && prayerMap[d.app_account_id] !== undefined) {
+            d.total_prayer_cards = prayerMap[d.app_account_id];
+          }
+        });
+      }
+    }
+
+    return NextResponse.json({ disciples });
   } catch (error) {
     console.error('Error fetching church disciples:', error);
     return NextResponse.json({ error: 'Failed to fetch disciples' }, { status: 500 });

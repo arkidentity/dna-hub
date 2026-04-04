@@ -79,16 +79,16 @@ export async function GET(
     // Get leader info
     const { data: leader } = await supabase
       .from('dna_leaders')
-      .select('id, name')
+      .select('id, name, email')
       .eq('id', group.leader_id)
       .single();
 
     // Get co-leader info if exists
-    let coLeader = null;
+    let coLeader: { id: string; name: string; email: string } | null = null;
     if (group.co_leader_id) {
       const { data: coLeaderData } = await supabase
         .from('dna_leaders')
-        .select('id, name')
+        .select('id, name, email')
         .eq('id', group.co_leader_id)
         .single();
       coLeader = coLeaderData;
@@ -185,12 +185,13 @@ export async function GET(
     }
 
     let assessmentsMap: Record<string, { week1?: string; week12?: string }> = {};
+    let assessmentScoresMap: Record<string, { week1_score?: number | null; week12_score?: number | null }> = {};
     let appStatsMap: Record<string, { current_streak: number; last_activity_date: string | null; total_journal_entries: number; total_prayer_sessions: number; total_prayer_cards: number }> = {};
     let creedMasteredMap: Record<string, number> = {};
 
     if (discipleIds.length > 0) {
       // Fetch assessments, app stats, and creed mastery in parallel
-      const [assessmentsResult, appStatsResult, creedResult, journalCountResult] = await Promise.all([
+      const [assessmentsResult, appStatsResult, creedResult, journalCountResult, prayerCardCountResult, assessmentScoresResult] = await Promise.all([
         supabase
           .from('life_assessments')
           .select('disciple_id, assessment_week, sent_at, completed_at')
@@ -205,9 +206,8 @@ export async function GET(
         appAccountIds.length > 0
           ? supabase
               .from('disciple_creed_progress')
-              .select('account_id, mastered')
+              .select('account_id, cards_mastered')
               .in('account_id', appAccountIds)
-              .eq('mastered', true)
           : Promise.resolve({ data: null }),
         // Direct journal count — bypasses potentially stale disciple_progress aggregate
         appAccountIds.length > 0
@@ -216,6 +216,22 @@ export async function GET(
               .select('account_id')
               .in('account_id', appAccountIds)
               .is('deleted_at', null)
+          : Promise.resolve({ data: null }),
+        // Direct prayer card count — bypasses potentially stale disciple_progress aggregate
+        appAccountIds.length > 0
+          ? supabase
+              .from('disciple_prayer_cards')
+              .select('account_id')
+              .in('account_id', appAccountIds)
+              .is('deleted_at', null)
+          : Promise.resolve({ data: null }),
+        // Life assessment scores (synced from Daily DNA app)
+        appAccountIds.length > 0
+          ? supabase
+              .from('life_assessment_responses')
+              .select('account_id, assessment_type, overall_score')
+              .in('account_id', appAccountIds)
+              .eq('status', 'submitted')
           : Promise.resolve({ data: null }),
       ]);
 
@@ -246,8 +262,8 @@ export async function GET(
       }
 
       if (creedResult.data) {
-        creedResult.data.forEach((c: { account_id: string }) => {
-          creedMasteredMap[c.account_id] = (creedMasteredMap[c.account_id] || 0) + 1;
+        creedResult.data.forEach((c: { account_id: string; cards_mastered: number[] | null }) => {
+          creedMasteredMap[c.account_id] = (c.cards_mastered || []).length;
         });
       }
 
@@ -261,8 +277,44 @@ export async function GET(
         for (const [accountId, count] of Object.entries(liveJournalMap)) {
           if (appStatsMap[accountId]) {
             appStatsMap[accountId].total_journal_entries = count;
+          } else {
+            // Create entry even if disciple_progress row doesn't exist yet
+            appStatsMap[accountId] = { current_streak: 0, last_activity_date: null, total_journal_entries: count, total_prayer_sessions: 0, total_prayer_cards: 0 };
           }
         }
+      }
+
+      // Build live prayer card count map from direct query
+      if (prayerCardCountResult.data) {
+        const livePrayerMap: Record<string, number> = {};
+        (prayerCardCountResult.data as Array<{ account_id: string }>).forEach(p => {
+          livePrayerMap[p.account_id] = (livePrayerMap[p.account_id] || 0) + 1;
+        });
+        for (const [accountId, count] of Object.entries(livePrayerMap)) {
+          if (appStatsMap[accountId]) {
+            appStatsMap[accountId].total_prayer_cards = count;
+          } else {
+            appStatsMap[accountId] = { current_streak: 0, last_activity_date: null, total_journal_entries: 0, total_prayer_sessions: 0, total_prayer_cards: count };
+          }
+        }
+      }
+
+      // Map assessment scores by account_id → disciple_id
+      if (assessmentScoresResult.data) {
+        // Build account→disciple lookup
+        const accountToDisciple: Record<string, string> = {};
+        filteredDisciples.forEach(gd => {
+          const d = gd.disciple as unknown as { id: string; email: string; app_account_id: string | null };
+          const effectiveId = d.app_account_id ?? emailToAccountId[d.email?.toLowerCase() ?? ''] ?? null;
+          if (effectiveId) accountToDisciple[effectiveId] = d.id;
+        });
+        (assessmentScoresResult.data as Array<{ account_id: string; assessment_type: string; overall_score: number | null }>).forEach(r => {
+          const discipleId = accountToDisciple[r.account_id];
+          if (!discipleId) return;
+          if (!assessmentScoresMap[discipleId]) assessmentScoresMap[discipleId] = {};
+          if (r.assessment_type === 'week_1') assessmentScoresMap[discipleId].week1_score = r.overall_score;
+          if (r.assessment_type === 'week_12') assessmentScoresMap[discipleId].week12_score = r.overall_score;
+        });
       }
     }
 
@@ -281,7 +333,9 @@ export async function GET(
         joined_date: gd.joined_date,
         current_status: gd.current_status,
         week1_assessment_status: assessmentsMap[disciple.id]?.week1 || 'not_sent',
+        week1_assessment_score: assessmentScoresMap[disciple.id]?.week1_score ?? null,
         week12_assessment_status: assessmentsMap[disciple.id]?.week12 || 'not_sent',
+        week12_assessment_score: assessmentScoresMap[disciple.id]?.week12_score ?? null,
         app_connected: !!effectiveAccountId,
         current_streak: appStats?.current_streak ?? null,
         last_activity_date: appStats?.last_activity_date ?? null,
@@ -291,6 +345,64 @@ export async function GET(
       };
     });
 
+    // Fetch leader & co-leader app stats for transparency
+    const leaderEmails = [leader?.email, coLeader?.email].filter((e): e is string => !!e);
+    let leaderStatsMap: Record<string, { current_streak: number; total_journal_entries: number; total_prayer_cards: number; creed_cards_mastered: number }> = {};
+    if (leaderEmails.length > 0) {
+      // Look up their app accounts by email
+      const leaderAccountResults = await Promise.all(
+        leaderEmails.map(async email => {
+          const { data } = await supabase
+            .from('disciple_app_accounts')
+            .select('id, email')
+            .ilike('email', email)
+            .maybeSingle();
+          return data as { id: string; email: string } | null;
+        })
+      );
+      const leaderAccountIds = leaderAccountResults.filter((a): a is { id: string; email: string } => a !== null);
+      if (leaderAccountIds.length > 0) {
+        const ids = leaderAccountIds.map(a => a.id);
+        const [lProgress, lCreed, lJournals, lPrayer] = await Promise.all([
+          supabase.from('disciple_progress').select('account_id, current_streak').in('account_id', ids),
+          supabase.from('disciple_creed_progress').select('account_id, cards_mastered').in('account_id', ids),
+          supabase.from('disciple_journal_entries').select('account_id').in('account_id', ids).is('deleted_at', null),
+          supabase.from('disciple_prayer_cards').select('account_id').in('account_id', ids).is('deleted_at', null),
+        ]);
+        // Build per-email stats
+        const emailToId: Record<string, string> = {};
+        leaderAccountIds.forEach(a => { emailToId[a.email.toLowerCase()] = a.id; });
+        const streakMap: Record<string, number> = {};
+        (lProgress.data || []).forEach((p: { account_id: string; current_streak: number }) => { streakMap[p.account_id] = p.current_streak; });
+        const creedMap: Record<string, number> = {};
+        (lCreed.data || []).forEach((c: { account_id: string; cards_mastered: number[] | null }) => { creedMap[c.account_id] = (c.cards_mastered || []).length; });
+        const journalMap: Record<string, number> = {};
+        (lJournals.data || []).forEach((j: { account_id: string }) => { journalMap[j.account_id] = (journalMap[j.account_id] || 0) + 1; });
+        const prayerMap: Record<string, number> = {};
+        (lPrayer.data || []).forEach((p: { account_id: string }) => { prayerMap[p.account_id] = (prayerMap[p.account_id] || 0) + 1; });
+        for (const email of leaderEmails) {
+          const accId = emailToId[email.toLowerCase()];
+          if (accId) {
+            leaderStatsMap[email.toLowerCase()] = {
+              current_streak: streakMap[accId] ?? 0,
+              total_journal_entries: journalMap[accId] ?? 0,
+              total_prayer_cards: prayerMap[accId] ?? 0,
+              creed_cards_mastered: creedMap[accId] ?? 0,
+            };
+          }
+        }
+      }
+    }
+
+    const leaderWithStats = leader ? {
+      ...leader,
+      app_stats: leaderStatsMap[leader.email?.toLowerCase()] ?? null,
+    } : null;
+    const coLeaderWithStats = coLeader ? {
+      ...coLeader,
+      app_stats: leaderStatsMap[coLeader.email?.toLowerCase()] ?? null,
+    } : null;
+
     return NextResponse.json({
       group: {
         id: group.id,
@@ -299,8 +411,8 @@ export async function GET(
         start_date: group.start_date,
         multiplication_target_date: group.multiplication_target_date,
         is_active: group.is_active,
-        leader,
-        co_leader: coLeader,
+        leader: leaderWithStats,
+        co_leader: coLeaderWithStats,
         pending_co_leader: pendingCoLeader,
         co_leader_invited_at: group.co_leader_invited_at || null,
         disciples,
