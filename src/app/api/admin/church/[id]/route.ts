@@ -39,7 +39,7 @@ export async function GET(
       const { data: coachProfile } = await supabase
         .from('dna_coaches')
         .select('id')
-        .eq('email', session.email.toLowerCase())
+        .eq('user_id', session.userId)
         .single();
       if (!coachProfile || church.coach_id !== coachProfile.id) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
