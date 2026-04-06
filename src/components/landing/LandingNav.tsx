@@ -2,8 +2,23 @@
 
 import Image from 'next/image';
 import Link from 'next/link';
+import { useState, useEffect } from 'react';
 
 export default function LandingNav() {
+  const [showCTA, setShowCTA] = useState(false);
+
+  useEffect(() => {
+    const sentinel = document.getElementById('hero-cta');
+    if (!sentinel) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setShowCTA(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    observer.observe(sentinel);
+    return () => observer.disconnect();
+  }, []);
+
   return (
     <nav
       style={{
@@ -48,35 +63,40 @@ export default function LandingNav() {
               textDecoration: 'none',
               letterSpacing: '0.02em',
               transition: 'color 0.2s',
+              whiteSpace: 'nowrap',
             }}
             onMouseEnter={(e) => ((e.target as HTMLElement).style.color = '#fff')}
             onMouseLeave={(e) => ((e.target as HTMLElement).style.color = 'rgba(255,255,255,0.65)')}
           >
             Leader Login
           </Link>
-          <Link
-            href="/signup/conference"
-            style={{
-              background: 'var(--lp-green)',
-              color: '#fff',
-              border: 'none',
-              padding: '0.6rem 1.4rem',
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: '0.85rem',
-              fontWeight: 500,
-              letterSpacing: '0.05em',
-              textTransform: 'uppercase',
-              cursor: 'pointer',
-              transition: 'background 0.2s',
-              textDecoration: 'none',
-              display: 'inline-block',
-              borderRadius: '4px',
-            }}
-            onMouseEnter={(e) => ((e.target as HTMLElement).style.background = 'var(--lp-green-dark)')}
-            onMouseLeave={(e) => ((e.target as HTMLElement).style.background = 'var(--lp-green)')}
-          >
-            Set Up Your Church App
-          </Link>
+          {showCTA && (
+            <Link
+              href="/signup/conference"
+              style={{
+                background: 'var(--lp-green)',
+                color: '#fff',
+                border: 'none',
+                padding: '0.6rem 1.4rem',
+                fontFamily: "'DM Sans', sans-serif",
+                fontSize: '0.85rem',
+                fontWeight: 500,
+                letterSpacing: '0.05em',
+                textTransform: 'uppercase',
+                cursor: 'pointer',
+                transition: 'background 0.2s',
+                textDecoration: 'none',
+                display: 'inline-block',
+                borderRadius: '4px',
+                whiteSpace: 'nowrap',
+              }}
+              onMouseEnter={(e) => ((e.target as HTMLElement).style.background = 'var(--lp-green-dark)')}
+              onMouseLeave={(e) => ((e.target as HTMLElement).style.background = 'var(--lp-green)')}
+            >
+              <span className="nav-cta-full">Set Up Your Church App</span>
+              <span className="nav-cta-short">Get Started</span>
+            </Link>
+          )}
         </div>
       </div>
     </nav>

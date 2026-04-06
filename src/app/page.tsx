@@ -47,6 +47,13 @@ export default function Home() {
         @media (min-width: 600px) {
           .lp-site-footer { flex-direction: row !important; }
         }
+        /* Nav CTA label switching */
+        .nav-cta-short { display: none; }
+        .nav-cta-full { display: inline; }
+        @media (max-width: 480px) {
+          .nav-cta-short { display: inline; }
+          .nav-cta-full { display: none; }
+        }
       `}</style>
     </div>
   );

@@ -82,6 +82,7 @@ export default function Hero() {
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1rem' }}>
           <Link
+            id="hero-cta"
             href="/signup/conference"
             style={{
               background: 'var(--lp-green)',
