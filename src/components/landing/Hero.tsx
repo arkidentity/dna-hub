@@ -61,7 +61,7 @@ export default function Hero() {
         >
           {[
             'A proven discipleship system.',
-            'A white-labeled app your leaders actually use — set up in 60 seconds, free.',
+            'Your white-labeled church app — set up in 60 seconds, free.',
           ].map((item) => (
             <li
               key={item}
