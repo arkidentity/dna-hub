@@ -1,6 +1,5 @@
 'use client';
 
-import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -22,15 +21,6 @@ export default function Hero() {
         <div className="hero-layout">
           {/* Text column */}
           <div className="hero-text">
-            <div style={{ marginBottom: '1.75rem' }}>
-              <Image
-                src="/dna-emblem-wordmark.png"
-                alt="DNA Discipleship"
-                width={220}
-                height={60}
-                style={{ height: '52px', width: 'auto', display: 'block' }}
-              />
-            </div>
 
             <h1
               style={{

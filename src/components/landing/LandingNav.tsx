@@ -44,10 +44,10 @@ export default function LandingNav() {
       >
         <Link href="/" style={{ display: 'block' }}>
           <Image
-            src="/dna-logo-gold.png"
+            src="/dna-emblem-wordmark.png"
             alt="DNA Discipleship"
-            width={120}
-            height={40}
+            width={220}
+            height={60}
             style={{ height: '40px', width: 'auto', display: 'block' }}
             priority
           />
