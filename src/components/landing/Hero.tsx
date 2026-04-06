@@ -12,7 +12,7 @@ export default function Hero() {
       <section
         style={{
           background: 'var(--lp-paper)',
-          padding: 'clamp(5.5rem, 10vw, 9rem) clamp(1.5rem, 5vw, 5rem) 0',
+          padding: 'clamp(3.5rem, 7vw, 5.5rem) clamp(1.5rem, 5vw, 5rem) 0',
           maxWidth: '1100px',
           margin: '0 auto',
           width: '100%',
@@ -22,27 +22,20 @@ export default function Hero() {
         <div className="hero-layout">
           {/* Text column */}
           <div className="hero-text">
-            <div
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: 600,
-                letterSpacing: '0.18em',
-                textTransform: 'uppercase',
-                color: 'var(--lp-gold)',
-                marginBottom: '1.75rem',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '0.75rem',
-              }}
-            >
-              <span style={{ display: 'block', width: '2rem', height: '1px', background: 'var(--lp-gold)', flexShrink: 0 }} />
-              Discipleship Naturally Activated
+            <div style={{ marginBottom: '1.75rem' }}>
+              <Image
+                src="/dna-emblem-wordmark.png"
+                alt="DNA Discipleship"
+                width={220}
+                height={60}
+                style={{ height: '52px', width: 'auto', display: 'block' }}
+              />
             </div>
 
             <h1
               style={{
                 fontFamily: "'Playfair Display', serif",
-                fontSize: 'clamp(2.6rem, 7vw, 4.75rem)',
+                fontSize: 'clamp(2.6rem, 5vw, 3.75rem)',
                 lineHeight: 1.05,
                 color: 'var(--lp-ink)',
                 marginBottom: '1.75rem',
@@ -155,17 +148,16 @@ export default function Hero() {
         @media (min-width: 768px) {
           .hero-layout {
             flex-direction: row;
-            align-items: flex-end;
+            align-items: center;
             gap: 2rem;
           }
           .hero-text {
-            flex: 1 1 55%;
+            flex: 1 1 50%;
           }
           .hero-image {
-            flex: 1 1 45%;
+            flex: 1 1 50%;
             max-width: 460px;
             margin: 0;
-            align-self: flex-end;
           }
         }
       `}</style>
