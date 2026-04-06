@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 
@@ -11,114 +12,163 @@ export default function Hero() {
       <section
         style={{
           background: 'var(--lp-paper)',
-          padding: 'clamp(5.5rem, 10vw, 9rem) clamp(1.5rem, 5vw, 5rem) clamp(3rem, 6vw, 5rem)',
+          padding: 'clamp(5.5rem, 10vw, 9rem) clamp(1.5rem, 5vw, 5rem) 0',
           maxWidth: '1100px',
           margin: '0 auto',
           width: '100%',
           boxSizing: 'border-box',
         }}
       >
-        <div
-          style={{
-            fontSize: '0.72rem',
-            fontWeight: 600,
-            letterSpacing: '0.18em',
-            textTransform: 'uppercase',
-            color: 'var(--lp-gold)',
-            marginBottom: '1.75rem',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.75rem',
-          }}
-        >
-          <span style={{ display: 'block', width: '2rem', height: '1px', background: 'var(--lp-gold)', flexShrink: 0 }} />
-          Discipleship Naturally Activated
-        </div>
-
-        <h1
-          style={{
-            fontFamily: "'Playfair Display', serif",
-            fontSize: 'clamp(2.6rem, 7vw, 4.75rem)',
-            lineHeight: 1.05,
-            color: 'var(--lp-ink)',
-            marginBottom: '1.75rem',
-            fontWeight: 900,
-          }}
-        >
-          Finally.<br />
-          <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>An app built for disciple-making churches.</em>
-        </h1>
-
-        <ul
-          style={{
-            listStyle: 'none',
-            padding: 0,
-            margin: '0 0 2.5rem',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: '0.6rem',
-          }}
-        >
-          {[
-            'A proven discipleship system.',
-            'Your white-labeled church app — set up in 60 seconds, free.',
-          ].map((item) => (
-            <li
-              key={item}
+        <div className="hero-layout">
+          {/* Text column */}
+          <div className="hero-text">
+            <div
               style={{
+                fontSize: '0.72rem',
+                fontWeight: 600,
+                letterSpacing: '0.18em',
+                textTransform: 'uppercase',
+                color: 'var(--lp-gold)',
+                marginBottom: '1.75rem',
                 display: 'flex',
+                alignItems: 'center',
                 gap: '0.75rem',
-                alignItems: 'flex-start',
-                fontSize: 'clamp(1rem, 2.5vw, 1.1rem)',
-                lineHeight: 1.7,
-                color: 'var(--lp-mid)',
               }}
             >
-              <span style={{ color: 'var(--lp-gold)', fontWeight: 700, flexShrink: 0, marginTop: '0.05em' }}>→</span>
-              {item}
-            </li>
-          ))}
-        </ul>
+              <span style={{ display: 'block', width: '2rem', height: '1px', background: 'var(--lp-gold)', flexShrink: 0 }} />
+              Discipleship Naturally Activated
+            </div>
 
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1rem' }}>
-          <Link
-            id="hero-cta"
-            href="/signup/conference"
-            style={{
-              background: 'var(--lp-green)',
-              color: '#fff',
-              padding: 'clamp(0.85rem, 2vw, 1rem) clamp(1.75rem, 4vw, 2.5rem)',
-              fontFamily: "'DM Sans', sans-serif",
-              fontSize: 'clamp(0.9rem, 2vw, 1rem)',
-              fontWeight: 600,
-              letterSpacing: '0.04em',
-              textDecoration: 'none',
-              display: 'inline-block',
-              borderRadius: '4px',
-              transition: 'background 0.2s',
-            }}
-          >
-            Set Up Your Church App →
-          </Link>
-          <button
-            onClick={() => setShowBooking(true)}
-            style={{
-              background: 'none',
-              border: 'none',
-              padding: 0,
-              cursor: 'pointer',
-              fontSize: '0.88rem',
-              color: 'var(--lp-mid)',
-              borderBottom: '1px solid var(--lp-rule)',
-              paddingBottom: '1px',
-              fontFamily: "'DM Sans', sans-serif",
-              transition: 'color 0.2s',
-            }}
-          >
-            or book a discovery call
-          </button>
+            <h1
+              style={{
+                fontFamily: "'Playfair Display', serif",
+                fontSize: 'clamp(2.6rem, 7vw, 4.75rem)',
+                lineHeight: 1.05,
+                color: 'var(--lp-ink)',
+                marginBottom: '1.75rem',
+                fontWeight: 900,
+              }}
+            >
+              Finally.<br />
+              <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>An app built for disciple-making churches.</em>
+            </h1>
+
+            <ul
+              style={{
+                listStyle: 'none',
+                padding: 0,
+                margin: '0 0 2.5rem',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.6rem',
+              }}
+            >
+              {[
+                'A proven discipleship system.',
+                'Your white-labeled church app — set up in 60 seconds, free.',
+              ].map((item) => (
+                <li
+                  key={item}
+                  style={{
+                    display: 'flex',
+                    gap: '0.75rem',
+                    alignItems: 'flex-start',
+                    fontSize: 'clamp(1rem, 2.5vw, 1.1rem)',
+                    lineHeight: 1.7,
+                    color: 'var(--lp-mid)',
+                  }}
+                >
+                  <span style={{ color: 'var(--lp-gold)', fontWeight: 700, flexShrink: 0, marginTop: '0.05em' }}>→</span>
+                  {item}
+                </li>
+              ))}
+            </ul>
+
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '1rem', paddingBottom: 'clamp(3rem, 6vw, 5rem)' }}>
+              <Link
+                id="hero-cta"
+                href="/signup/conference"
+                style={{
+                  background: 'var(--lp-green)',
+                  color: '#fff',
+                  padding: 'clamp(0.85rem, 2vw, 1rem) clamp(1.75rem, 4vw, 2.5rem)',
+                  fontFamily: "'DM Sans', sans-serif",
+                  fontSize: 'clamp(0.9rem, 2vw, 1rem)',
+                  fontWeight: 600,
+                  letterSpacing: '0.04em',
+                  textDecoration: 'none',
+                  display: 'inline-block',
+                  borderRadius: '4px',
+                  transition: 'background 0.2s',
+                }}
+              >
+                Set Up Your Church App →
+              </Link>
+              <button
+                onClick={() => setShowBooking(true)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  padding: 0,
+                  cursor: 'pointer',
+                  fontSize: '0.88rem',
+                  color: 'var(--lp-mid)',
+                  borderBottom: '1px solid var(--lp-rule)',
+                  paddingBottom: '1px',
+                  fontFamily: "'DM Sans', sans-serif",
+                  transition: 'color 0.2s',
+                }}
+              >
+                or book a discovery call
+              </button>
+            </div>
+          </div>
+
+          {/* Phone mockup */}
+          <div className="hero-image">
+            <Image
+              src="/church-app-hand.png"
+              alt="Daily DNA church app shown in hand"
+              width={640}
+              height={760}
+              style={{ width: '100%', height: 'auto', display: 'block' }}
+              priority
+            />
+          </div>
         </div>
       </section>
+
+      <style>{`
+        .hero-layout {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+        }
+        .hero-text {
+          width: 100%;
+        }
+        .hero-image {
+          width: 100%;
+          max-width: 320px;
+          margin: 0 auto;
+        }
+        @media (min-width: 768px) {
+          .hero-layout {
+            flex-direction: row;
+            align-items: flex-end;
+            gap: 2rem;
+          }
+          .hero-text {
+            flex: 1 1 55%;
+          }
+          .hero-image {
+            flex: 1 1 45%;
+            max-width: 460px;
+            margin: 0;
+            align-self: flex-end;
+          }
+        }
+      `}</style>
 
       {/* Booking modal */}
       {showBooking && (
