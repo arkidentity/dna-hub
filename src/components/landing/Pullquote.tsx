@@ -28,7 +28,7 @@ export default function Pullquote() {
           lineHeight: 1.45,
         }}
       >
-        &ldquo;DNA isn&apos;t accidental discipleship — it&apos;s loving people with a plan.&rdquo;
+        &ldquo;Discipleship is not accidental — it&apos;s loving people with a plan.&rdquo;
       </p>
       <div
         style={{
