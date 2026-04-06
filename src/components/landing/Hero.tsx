@@ -34,7 +34,7 @@ export default function Hero() {
               }}
             >
               Finally.<br />
-              <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>An app built for disciple-making churches.</em>
+              <em style={{ fontStyle: 'italic', color: 'var(--lp-gold)' }}>An app built for<br />disciple-making<br />churches.</em>
             </h1>
 
             <ul
