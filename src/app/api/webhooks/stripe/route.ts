@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
 }
 
 async function resolveChurchId(event: Stripe.Event): Promise<string | null> {
-  const obj = event.data.object as Record<string, unknown>
+  const obj = event.data.object as unknown as Record<string, unknown>
 
   // Try metadata.church_id first (set at checkout)
   const metadata = obj.metadata as Record<string, string> | undefined
