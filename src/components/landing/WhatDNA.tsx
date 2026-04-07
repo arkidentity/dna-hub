@@ -35,7 +35,7 @@ export default function WhatDNA() {
         <div style={{
           position: 'absolute',
           inset: 0,
-          background: 'linear-gradient(to bottom, rgba(255,251,245,0) 30%, var(--lp-warm-white) 100%)',
+          background: 'linear-gradient(to bottom, rgba(255,251,245,0) 50%, var(--lp-warm-white) 100%)',
         }} />
       </div>
 
