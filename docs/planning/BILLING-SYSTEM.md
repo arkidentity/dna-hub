@@ -644,29 +644,34 @@ Each email should:
 
 ### Pre-Build (Stripe Dashboard — before writing any code)
 
-0. Create DNA Discipleship Stripe account (separate from ARK Identity)
-0. Create 4 Products + Prices (Seed/Growth/Thrive/Multiply) with tier metadata
-0. Configure Customer Portal (invoice download on, cancellation off, plan-switch off)
-0. Set statement descriptor: `DNA DISCIPLESHIP`
-0. Set invoice footer: `DNA Discipleship is a ministry of ARK Identity`
-0. **Enable Stripe Tax** — set origin address, assign SaaS tax code (`txcd_10103001`) to all products, enable exemption certificate collection
-0. Set up Webhook endpoint, capture signing secret
+0. ✅ Create DNA Discipleship Stripe account (separate from ARK Identity)
+0. ✅ Create 4 Products + Prices (Seed/Growth/Thrive/Multiply) with tier metadata
+0. ✅ Configure Customer Portal (invoice download on, cancellation off, plan-switch off)
+0. ✅ Set statement descriptor: `DNA DISCIPLESHIP`
+0. ✅ Set invoice footer: `DNA Discipleship is a ministry of ARK Identity`
+0. ✅ **Enable Stripe Tax** — set origin address, assign SaaS tax code (`txcd_10103001`) to all products, enable exemption certificate collection
+0. ✅ Set up Webhook endpoint, capture signing secret
 
-### Phase 1 — Core Infrastructure
+### Phase 1 — Core Infrastructure ✅ COMPLETE
 
-1. `NNN_billing_system.sql` — database schema (billing status, events, session tracking, Sunday peaks)
-2. `POST /api/webhooks/stripe` — webhook handler (all events, signature verification, idempotency)
-3. `GET /api/billing/status` — fetch billing status for church
-4. `POST /api/billing/checkout` — create Stripe Checkout session (with `automatic_tax: { enabled: true }`)
-5. `GET /api/billing/portal-session` — create Stripe Customer Portal session
+1. ✅ `128_billing_system.sql` — database schema (billing status, events, session tracking, Sunday peaks)
+2. ✅ `POST /api/webhooks/stripe` — webhook handler (all events, signature verification, idempotency)
+3. ✅ `GET /api/billing/status` — fetch billing status for church
+4. ✅ `POST /api/billing/checkout` — create Stripe Checkout session (with `automatic_tax: { enabled: true }`)
+5. ✅ `GET /api/billing/portal-session` — create Stripe Customer Portal session
+
+**Notes:**
+- ARK Identity LLC (Colorado) is the legal entity. DBA "DNA Discipleship" needed for Stripe statement descriptor — file with Colorado SOS.
+- Stripe SDK v17: `current_period_start/end` not in TypeScript types, cast to `any` to access at runtime.
+- Billing tab lives on `/dashboard` (church leader admin view), not a separate admin page.
 
 ### Phase 2 — Church Admin UI
 
-6. Billing tab in Hub church admin section
-   - Free state (upgrade CTA)
-   - Active state (plan info, manage billing button)
-   - Past due / suspended states (banners)
-   - Invoice history list
+6. Billing tab on `/dashboard` (church leader view)
+   - Free state (upgrade CTA with tier selector)
+   - Active state (plan info, next billing date, manage billing button)
+   - Past due / suspended states (warning banners)
+   - Invoice history list (from Stripe via portal)
 7. Resend email templates (payment failed, card expiring, restored, upgrade success)
 8. Grace period cron (Day 3, Day 7, Day 8 jobs)
 

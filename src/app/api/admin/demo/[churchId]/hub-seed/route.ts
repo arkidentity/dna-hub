@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin, isDNACoach } from '@/lib/unified-auth';
 
 /**
  * POST /api/admin/demo/[churchId]/hub-seed
@@ -113,7 +113,9 @@ export async function POST(
   try {
     const session = await getUnifiedSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (!isAdmin(session)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const adminUser = isAdmin(session);
+    const coachUser = isDNACoach(session);
+    if (!adminUser && !coachUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const { churchId } = await params;
     const supabase = getSupabaseAdmin();
@@ -121,12 +123,24 @@ export async function POST(
     // ── 0. Verify church + get subdomain ───────────────────────────────────
     const { data: church } = await supabase
       .from('churches')
-      .select('id, name, subdomain')
+      .select('id, name, subdomain, coach_id')
       .eq('id', churchId)
       .single();
 
     if (!church) {
       return NextResponse.json({ error: 'Church not found' }, { status: 404 });
+    }
+
+    // Coach scope check
+    if (coachUser && !adminUser) {
+      const { data: coachProfile } = await supabase
+        .from('dna_coaches')
+        .select('id')
+        .eq('user_id', session.userId)
+        .single();
+      if (!coachProfile || church.coach_id !== coachProfile.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
     }
 
     const subdomain = church.subdomain as string;

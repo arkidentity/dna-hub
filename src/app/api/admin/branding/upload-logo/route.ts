@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin, isDNACoach } from '@/lib/unified-auth';
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
 const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp'];
@@ -19,7 +19,9 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getUnifiedSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (!isAdmin(session)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const adminUser = isAdmin(session);
+    const coachUser = isDNACoach(session);
+    if (!adminUser && !coachUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const supabase = getSupabaseAdmin();
     const formData = await request.formData();
@@ -30,6 +32,23 @@ export async function POST(request: NextRequest) {
 
     if (!file) return NextResponse.json({ error: 'No file provided' }, { status: 400 });
     if (!churchId) return NextResponse.json({ error: 'church_id is required' }, { status: 400 });
+
+    // Coach scope check — verify this church is assigned to the requesting coach
+    if (coachUser && !adminUser) {
+      const { data: coachProfile } = await supabase
+        .from('dna_coaches')
+        .select('id')
+        .eq('user_id', session.userId)
+        .single();
+      const { data: churchCheck } = await supabase
+        .from('churches')
+        .select('coach_id')
+        .eq('id', churchId)
+        .single();
+      if (!coachProfile || !churchCheck || churchCheck.coach_id !== coachProfile.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
 
     const logoType: LogoType = (logoTypeRaw in LOGO_TYPE_MAP)
       ? (logoTypeRaw as LogoType)

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, hasRole, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession, hasRole, isAdmin, isDNACoach } from '@/lib/unified-auth';
 
 // PATCH /api/cohort/discussion/[id] — edit a discussion post
 // Allowed: post author, any trainer in the cohort, or admin
@@ -11,7 +11,7 @@ export async function PATCH(
   try {
     const session = await getUnifiedSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (!hasRole(session, 'dna_leader') && !hasRole(session, 'church_leader') && !isAdmin(session)) {
+    if (!hasRole(session, 'dna_leader') && !hasRole(session, 'church_leader') && !isAdmin(session) && !isDNACoach(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -34,7 +34,7 @@ export async function PATCH(
     if (!post) return NextResponse.json({ error: 'Post not found' }, { status: 404 });
 
     // Check permission
-    if (!isAdmin(session)) {
+    if (!isAdmin(session) && !isDNACoach(session)) {
       const { data: leader } = await supabase
         .from('dna_leaders')
         .select('id')
@@ -98,7 +98,7 @@ export async function DELETE(
   try {
     const session = await getUnifiedSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (!hasRole(session, 'dna_leader') && !hasRole(session, 'church_leader') && !isAdmin(session)) {
+    if (!hasRole(session, 'dna_leader') && !hasRole(session, 'church_leader') && !isAdmin(session) && !isDNACoach(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -115,7 +115,7 @@ export async function DELETE(
     if (!post) return NextResponse.json({ error: 'Post not found' }, { status: 404 });
 
     // Check permission
-    if (!isAdmin(session)) {
+    if (!isAdmin(session) && !isDNACoach(session)) {
       const { data: leader } = await supabase
         .from('dna_leaders')
         .select('id')

@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, hasRole, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession, hasRole, isAdmin, isDNACoach } from '@/lib/unified-auth';
 
 // Mock data used when no real cohort exists (demo mode)
 function getMockCohortData(leaderName: string, churchName: string) {
@@ -158,7 +158,7 @@ export async function GET(req: Request) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!hasRole(session, 'dna_leader') && !hasRole(session, 'church_leader') && !isAdmin(session)) {
+    if (!hasRole(session, 'dna_leader') && !hasRole(session, 'church_leader') && !isAdmin(session) && !isDNACoach(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -167,11 +167,29 @@ export async function GET(req: Request) {
     const adminChurchId = searchParams.get('churchId');
 
     // ── Admin/Coach bypass ──────────────────────────────────────────
-    // If ?churchId= is provided, only admins may use it.
+    // If ?churchId= is provided, admins and scoped coaches may use it.
     // Look up the cohort directly by church_id — no membership required.
     if (adminChurchId) {
-      if (!isAdmin(session)) {
+      const adminUser = isAdmin(session);
+      const coachUser = isDNACoach(session);
+      if (!adminUser && !coachUser) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+      // Coach scope check
+      if (coachUser && !adminUser) {
+        const { data: coachProfile } = await supabase
+          .from('dna_coaches')
+          .select('id')
+          .eq('user_id', session.userId)
+          .single();
+        const { data: churchCheck } = await supabase
+          .from('churches')
+          .select('coach_id')
+          .eq('id', adminChurchId)
+          .single();
+        if (!coachProfile || !churchCheck || churchCheck.coach_id !== coachProfile.id) {
+          return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+        }
       }
 
       // Find the active cohort for this church

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, hasRole, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession, hasRole, isAdmin, isDNACoach } from '@/lib/unified-auth';
 
 // POST /api/cohort/posts
 // Trainer (or admin) creates a feed post in a cohort.
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (!hasRole(session, 'dna_leader') && !hasRole(session, 'church_leader') && !isAdmin(session)) {
+    if (!hasRole(session, 'dna_leader') && !hasRole(session, 'church_leader') && !isAdmin(session) && !isDNACoach(session)) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -27,12 +27,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Title and body are required' }, { status: 400 });
     }
 
-    // ── Admin bypass ──────────────────────────────────────────────────
-    // Admin posts to a specific cohort by cohort_id, attributed to "DNA Coach".
+    // ── Admin / Coach bypass ──────────────────────────────────────────
+    // Admin or scoped coach posts to a specific cohort by cohort_id, attributed to "DNA Coach".
     // Uses the first trainer in the cohort as the DB author_id (FK requirement).
-    if (isAdmin(session)) {
+    if (isAdmin(session) || isDNACoach(session)) {
       if (!adminCohortId) {
         return NextResponse.json({ error: 'cohort_id required for admin posts' }, { status: 400 });
+      }
+
+      // Coach scope check — verify this cohort belongs to a church assigned to this coach
+      if (isDNACoach(session) && !isAdmin(session)) {
+        const { data: cohortRow } = await supabase
+          .from('dna_cohorts')
+          .select('church_id')
+          .eq('id', adminCohortId)
+          .single();
+        if (cohortRow?.church_id) {
+          const [{ data: coachProfile }, { data: churchCheck }] = await Promise.all([
+            supabase.from('dna_coaches').select('id').eq('user_id', session.userId).single(),
+            supabase.from('churches').select('coach_id').eq('id', cohortRow.church_id).single(),
+          ]);
+          if (!coachProfile || !churchCheck || churchCheck.coach_id !== coachProfile.id) {
+            return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+          }
+        }
       }
 
       // Find any trainer to satisfy the FK on author_id

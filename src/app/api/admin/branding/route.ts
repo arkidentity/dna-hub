@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin, isDNACoach } from '@/lib/unified-auth';
 
 // ============================================
 // GET — Fetch branding settings for a church
@@ -10,7 +10,9 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getUnifiedSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (!isAdmin(session)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const adminUser = isAdmin(session);
+    const coachUser = isDNACoach(session);
+    if (!adminUser && !coachUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const { searchParams } = new URL(request.url);
     const churchId = searchParams.get('church_id');
@@ -20,6 +22,23 @@ export async function GET(request: NextRequest) {
     }
 
     const supabase = getSupabaseAdmin();
+
+    // Coach scope check — verify this church is assigned to the requesting coach
+    if (coachUser && !adminUser) {
+      const { data: coachProfile } = await supabase
+        .from('dna_coaches')
+        .select('id')
+        .eq('user_id', session.userId)
+        .single();
+      const { data: churchCheck } = await supabase
+        .from('churches')
+        .select('coach_id')
+        .eq('id', churchId)
+        .single();
+      if (!coachProfile || !churchCheck || churchCheck.coach_id !== coachProfile.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
 
     // Fetch church branding fields + extended settings
     const { data: church, error: churchError } = await supabase
@@ -83,7 +102,9 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getUnifiedSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (!isAdmin(session)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const adminUser = isAdmin(session);
+    const coachUser = isDNACoach(session);
+    if (!adminUser && !coachUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const supabase = getSupabaseAdmin();
     const body = await request.json();
@@ -126,6 +147,23 @@ export async function POST(request: NextRequest) {
 
     if (!church_id) {
       return NextResponse.json({ error: 'church_id is required' }, { status: 400 });
+    }
+
+    // Coach scope check — verify this church is assigned to the requesting coach
+    if (coachUser && !adminUser) {
+      const { data: coachProfile } = await supabase
+        .from('dna_coaches')
+        .select('id')
+        .eq('user_id', session.userId)
+        .single();
+      const { data: churchCheck } = await supabase
+        .from('churches')
+        .select('coach_id')
+        .eq('id', church_id)
+        .single();
+      if (!coachProfile || !churchCheck || churchCheck.coach_id !== coachProfile.id) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
     }
 
     // Validate subdomain format (lowercase letters, numbers, hyphens only)

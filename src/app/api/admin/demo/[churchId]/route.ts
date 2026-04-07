@@ -1,6 +1,19 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin, isDNACoach } from '@/lib/unified-auth';
+
+// Helper: verify a coach owns the given church
+async function assertCoachOwnsChurch(
+  supabase: ReturnType<typeof getSupabaseAdmin>,
+  userId: string,
+  churchId: string
+): Promise<boolean> {
+  const [{ data: coachProfile }, { data: churchCheck }] = await Promise.all([
+    supabase.from('dna_coaches').select('id').eq('user_id', userId).single(),
+    supabase.from('churches').select('coach_id').eq('id', churchId).single(),
+  ]);
+  return !!(coachProfile && churchCheck && churchCheck.coach_id === coachProfile.id);
+}
 
 // ============================================
 // GET — Fetch demo settings for a church
@@ -13,10 +26,18 @@ export async function GET(
   try {
     const session = await getUnifiedSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (!isAdmin(session)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const adminUser = isAdmin(session);
+    const coachUser = isDNACoach(session);
+    if (!adminUser && !coachUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const { churchId } = await params;
     const supabase = getSupabaseAdmin();
+
+    if (coachUser && !adminUser) {
+      if (!(await assertCoachOwnsChurch(supabase, session.userId, churchId))) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
 
     const { data, error } = await supabase
       .from('church_demo_settings')
@@ -47,9 +68,18 @@ export async function POST(
   try {
     const session = await getUnifiedSession();
     if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    if (!isAdmin(session)) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    const adminUser = isAdmin(session);
+    const coachUser = isDNACoach(session);
+    if (!adminUser && !coachUser) return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
 
     const { churchId } = await params;
+    const supabase = getSupabaseAdmin();
+
+    if (coachUser && !adminUser) {
+      if (!(await assertCoachOwnsChurch(supabase, session.userId, churchId))) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    }
     const body = await request.json();
     const { video_url, demo_enabled, default_temp, coach_name, booking_url, coach_id } = body;
 
@@ -64,8 +94,6 @@ export async function POST(
       normalizedVideoUrl = normalizedVideoUrl.trim();
       // Store as-is — we extract the video ID on the demo page for maximum flexibility
     }
-
-    const supabase = getSupabaseAdmin();
 
     const { error } = await supabase
       .from('church_demo_settings')
