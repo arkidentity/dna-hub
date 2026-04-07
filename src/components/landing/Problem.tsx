@@ -52,7 +52,7 @@ export default function Problem() {
             marginBottom: '1.75rem',
           }}
         >
-          But wanting to multiply and actually multiplying are two different things.
+          Wanting to multiply and actually doing it are two different things.
         </h2>
 
         <div
