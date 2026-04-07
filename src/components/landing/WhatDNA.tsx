@@ -1,3 +1,5 @@
+import Image from 'next/image';
+
 export default function WhatDNA() {
   const pillars = [
     {
@@ -19,9 +21,25 @@ export default function WhatDNA() {
 
   return (
     <section
-      style={{ background: 'var(--lp-warm-white)', padding: 'clamp(4rem, 8vw, 7rem) clamp(1.5rem, 5vw, 5rem)' }}
+      style={{ background: 'var(--lp-warm-white)', paddingBottom: 'clamp(4rem, 8vw, 7rem)' }}
       className="lp-what"
     >
+      {/* People photo fading into cream */}
+      <div style={{ position: 'relative', width: '100%', height: 'clamp(220px, 40vw, 420px)', marginBottom: 'clamp(3rem, 6vw, 5rem)' }}>
+        <Image
+          src="/dna-group-web.jpg"
+          alt="DNA discipleship group around a table"
+          fill
+          style={{ objectFit: 'cover', objectPosition: 'center 30%' }}
+        />
+        <div style={{
+          position: 'absolute',
+          inset: 0,
+          background: 'linear-gradient(to bottom, rgba(255,251,245,0) 30%, var(--lp-warm-white) 100%)',
+        }} />
+      </div>
+
+      <div style={{ padding: '0 clamp(1.5rem, 5vw, 5rem)' }}>
       <div style={{ maxWidth: '720px', margin: '0 auto' }}>
 
         <div className="fade-in" style={{ marginBottom: 'clamp(2.5rem, 6vw, 4rem)' }}>
@@ -99,6 +117,7 @@ export default function WhatDNA() {
           ))}
         </div>
 
+      </div>
       </div>
     </section>
   );

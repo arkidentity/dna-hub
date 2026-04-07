@@ -40,7 +40,7 @@ export default function Manual() {
       }}
       className="lp-manual"
     >
-      <div style={{ maxWidth: '1100px', margin: '0 auto' }}>
+      <div style={{ maxWidth: '720px', margin: '0 auto' }}>
 
         <div
           style={{
@@ -105,6 +105,25 @@ export default function Manual() {
                 gap: '1.5rem',
               }}
             >
+              {/* Cover image */}
+              {item.image && (
+                <div style={{ flexShrink: 0 }}>
+                  <Image
+                    src={item.image}
+                    alt={item.label}
+                    width={130}
+                    height={170}
+                    style={{
+                      width: 'clamp(70px, 12vw, 100px)',
+                      height: 'auto',
+                      borderRadius: '4px',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+                      display: 'block',
+                    }}
+                  />
+                </div>
+              )}
+
               {/* Text */}
               <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
@@ -146,25 +165,6 @@ export default function Manual() {
                   {item.description}
                 </p>
               </div>
-
-              {/* Cover image */}
-              {item.image && (
-                <div style={{ flexShrink: 0 }}>
-                  <Image
-                    src={item.image}
-                    alt={item.label}
-                    width={130}
-                    height={170}
-                    style={{
-                      width: 'clamp(80px, 15vw, 130px)',
-                      height: 'auto',
-                      borderRadius: '4px',
-                      boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
-                      display: 'block',
-                    }}
-                  />
-                </div>
-              )}
             </div>
           ))}
         </div>

@@ -1,32 +1,16 @@
-import Image from 'next/image';
-
 export default function Problem() {
   return (
     <section
       style={{
         background: 'var(--lp-ink)',
         color: 'var(--lp-paper)',
+        padding: 'clamp(4rem, 8vw, 6rem) clamp(1.5rem, 5vw, 5rem)',
         position: 'relative',
         overflow: 'hidden',
       }}
       className="lp-problem"
     >
-      {/* Full-bleed photo with fade into dark section */}
-      <div style={{ position: 'relative', width: '100%', height: 'clamp(220px, 40vw, 420px)' }}>
-        <Image
-          src="/dna-group-web.jpg"
-          alt="DNA discipleship group around a table"
-          fill
-          style={{ objectFit: 'cover', objectPosition: 'center 30%' }}
-        />
-        <div style={{
-          position: 'absolute',
-          inset: 0,
-          background: 'linear-gradient(to bottom, rgba(26,35,50,0) 30%, var(--lp-ink) 100%)',
-        }} />
-      </div>
-
-      <div style={{ padding: 'clamp(2rem, 5vw, 4rem) clamp(1.5rem, 5vw, 5rem) clamp(4rem, 8vw, 6rem)', position: 'relative' }}>
+      <div style={{ position: 'relative' }}>
       <div
         style={{
           position: 'absolute',

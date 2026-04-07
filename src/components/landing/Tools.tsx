@@ -4,7 +4,7 @@ const tools = [
   {
     icon: '📱',
     title: 'White-Labeled Daily DNA App',
-    desc: 'Your church\'s name, colors, and logo on a fully built discipleship app. 3D Journal, Listening Prayer, Creed Cards, Testimony Builder — ready for every disciple from day one.',
+    desc: 'Your church\'s name, colors, and logo on a fully built discipleship app. 3D Journal, 4D Prayer, Creed Cards, Testimony Builder — ready for every disciple from day one.',
   },
   {
     icon: '📊',
@@ -67,7 +67,7 @@ export default function Tools() {
               marginBottom: '0.75rem',
             }}
           >
-            Every piece connected. Nothing left to figure out.
+            Every piece connected. One simple system.
           </h2>
           <p style={{ fontSize: 'clamp(0.95rem, 2vw, 1rem)', color: 'var(--lp-mid)', lineHeight: 1.7 }}>
             Most discipleship tools are isolated — an app here, a curriculum there. DNA connects your leaders&apos; daily app experience directly to what you see in your dashboard, so nothing falls through the cracks.
