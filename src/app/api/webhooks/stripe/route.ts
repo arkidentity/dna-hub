@@ -144,7 +144,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   if (session.subscription) {
     const subscription = await stripe.subscriptions.retrieve(session.subscription as string, {
       expand: ['items.data.price.product'],
-    })
+    }) as unknown as Stripe.Subscription
 
     subscriptionId = subscription.id
     periodStart = new Date(subscription.current_period_start * 1000).toISOString()
