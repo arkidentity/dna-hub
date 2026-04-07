@@ -146,9 +146,11 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
       expand: ['items.data.price.product'],
     }) as unknown as Stripe.Subscription
 
-    subscriptionId = subscription.id
-    periodStart = new Date(subscription.current_period_start * 1000).toISOString()
-    periodEnd = new Date(subscription.current_period_end * 1000).toISOString()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const sub = subscription as any
+    subscriptionId = sub.id
+    periodStart = sub.current_period_start ? new Date(sub.current_period_start * 1000).toISOString() : null
+    periodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null
 
     const price = subscription.items.data[0]?.price
     const product = price?.product as Stripe.Product
@@ -183,7 +185,9 @@ async function handleSubscriptionUpsert(
 ) {
   if (!churchId) return
 
-  const price = subscription.items.data[0]?.price
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const sub = subscription as any
+  const price = sub.items?.data[0]?.price
   let tier = 'seed'
   let monthlyAmountCents = price?.unit_amount || 0
 
@@ -192,20 +196,20 @@ async function handleSubscriptionUpsert(
     tier = product.metadata?.tier || 'seed'
   }
 
-  const status = stripeStatusToLocal(subscription.status)
+  const status = stripeStatusToLocal(sub.status)
 
   await supabaseAdmin
     .from('church_billing_status')
     .upsert({
       church_id: churchId,
-      stripe_customer_id: subscription.customer as string,
-      stripe_subscription_id: subscription.id,
+      stripe_customer_id: sub.customer as string,
+      stripe_subscription_id: sub.id,
       plan_tier: tier,
       status,
       monthly_amount_cents: monthlyAmountCents,
-      current_period_start: new Date(subscription.current_period_start * 1000).toISOString(),
-      current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
-      cancel_at_period_end: subscription.cancel_at_period_end,
+      current_period_start: sub.current_period_start ? new Date(sub.current_period_start * 1000).toISOString() : null,
+      current_period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
+      cancel_at_period_end: sub.cancel_at_period_end ?? false,
     }, { onConflict: 'church_id' })
 }
 
