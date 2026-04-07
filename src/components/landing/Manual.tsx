@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 
 const included = [
@@ -7,21 +8,25 @@ const included = [
     label: 'Your Church App',
     description: 'White-labeled and ready in 60 seconds. Your name, your colors, your logo — on a fully built discipleship app your leaders will actually use.',
     badge: null,
+    image: '/app-screen.jpg',
   },
   {
     label: 'DNA Group Dashboard',
     description: 'Track every disciple, group, and assessment across your church. Know who\'s thriving, who needs support, and who\'s ready to multiply.',
     badge: null,
+    image: '/dash-screen.jpg',
   },
   {
     label: 'DNA Multiplication Manual',
     description: '6 sessions covering the biblical case for multiplication, the full DNA process, and how to identify disciples who are ready to reproduce.',
     badge: null,
+    image: '/multiplication-manual-web.jpg',
   },
   {
     label: 'Table Up or Temple Down',
     description: 'A pastoral leadership guide for building a culture of multiplication — includes the Strategic Church Audit and Culture Shift Checklist.',
     badge: 'Coming Soon',
+    image: '/tableup-web.jpg',
   },
 ];
 
@@ -95,48 +100,71 @@ export default function Manual() {
                 padding: 'clamp(1.25rem, 3vw, 1.75rem) 0',
                 borderBottom: '1px solid rgba(247,244,239,0.1)',
                 display: 'flex',
-                flexDirection: 'column',
-                gap: '0.4rem',
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: '1.5rem',
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
-                <span
-                  style={{
-                    color: 'var(--lp-gold)',
-                    fontWeight: 700,
-                    fontSize: '0.95rem',
-                    fontFamily: "'DM Sans', sans-serif",
-                  }}
-                >
-                  {item.label}
-                </span>
-                {item.badge && (
+              {/* Text */}
+              <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flexWrap: 'wrap' }}>
                   <span
                     style={{
-                      fontSize: '0.65rem',
-                      fontWeight: 700,
-                      letterSpacing: '0.12em',
-                      textTransform: 'uppercase',
                       color: 'var(--lp-gold)',
-                      border: '1px solid rgba(200,146,42,0.5)',
-                      padding: '0.2rem 0.55rem',
-                      borderRadius: '20px',
+                      fontWeight: 700,
+                      fontSize: '0.95rem',
+                      fontFamily: "'DM Sans', sans-serif",
                     }}
                   >
-                    {item.badge}
+                    {item.label}
                   </span>
-                )}
+                  {item.badge && (
+                    <span
+                      style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 700,
+                        letterSpacing: '0.12em',
+                        textTransform: 'uppercase',
+                        color: 'var(--lp-gold)',
+                        border: '1px solid rgba(200,146,42,0.5)',
+                        padding: '0.2rem 0.55rem',
+                        borderRadius: '20px',
+                      }}
+                    >
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                <p
+                  style={{
+                    fontSize: 'clamp(0.88rem, 2vw, 0.95rem)',
+                    lineHeight: 1.7,
+                    color: 'rgba(247,244,239,0.6)',
+                    margin: 0,
+                  }}
+                >
+                  {item.description}
+                </p>
               </div>
-              <p
-                style={{
-                  fontSize: 'clamp(0.88rem, 2vw, 0.95rem)',
-                  lineHeight: 1.7,
-                  color: 'rgba(247,244,239,0.6)',
-                  margin: 0,
-                }}
-              >
-                {item.description}
-              </p>
+
+              {/* Cover image */}
+              {item.image && (
+                <div style={{ flexShrink: 0 }}>
+                  <Image
+                    src={item.image}
+                    alt={item.label}
+                    width={130}
+                    height={170}
+                    style={{
+                      width: 'clamp(80px, 15vw, 130px)',
+                      height: 'auto',
+                      borderRadius: '4px',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.4)',
+                      display: 'block',
+                    }}
+                  />
+                </div>
+              )}
             </div>
           ))}
         </div>
