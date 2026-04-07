@@ -38,7 +38,7 @@ export async function POST(req: NextRequest) {
     const { data: leader } = await supabaseAdmin
       .from('church_leaders')
       .select('id')
-      .eq('user_id', session.user.id)
+      .eq('user_id', session.userId)
       .eq('church_id', church_id)
       .single()
 
@@ -65,7 +65,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     const customer = await stripe.customers.create({
-      email: billing?.billing_email || session.user.email,
+      email: billing?.billing_email || session.email,
       name: church?.name || 'DNA Church',
       metadata: { church_id },
     })

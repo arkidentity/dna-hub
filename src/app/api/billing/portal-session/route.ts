@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
     const { data: leader } = await supabaseAdmin
       .from('church_leaders')
       .select('id')
-      .eq('user_id', session.user.id)
+      .eq('user_id', session.userId)
       .eq('church_id', churchId)
       .single()
 
