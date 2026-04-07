@@ -119,7 +119,6 @@ async function handleEvent(event: Stripe.Event, churchId: string | null) {
       break
 
     case 'invoice.upcoming':
-    case 'payment_method.expiring':
       // Email handled by dunning cron — log only
       break
 
