@@ -1,15 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Loader2 } from 'lucide-react';
+import { Loader2, Lock, Zap } from 'lucide-react';
 import PathwayEditor from './pathway/PathwayEditor';
 import type { PathwayToolRecord } from './pathway/toolConfig';
 
 interface PathwayTabProps {
   churchId: string;
+  isPaid?: boolean;
 }
 
-export default function PathwayTab({ churchId }: PathwayTabProps) {
+export default function PathwayTab({ churchId, isPaid = false }: PathwayTabProps) {
   const [activePhase, setActivePhase] = useState<1 | 2>(1);
   const [allTools, setAllTools] = useState<PathwayToolRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -47,6 +48,27 @@ export default function PathwayTab({ churchId }: PathwayTabProps) {
     return (
       <div className="px-3 py-2 bg-red-50 border border-red-200 rounded-lg text-sm text-red-800">
         {error}
+      </div>
+    );
+  }
+
+  if (!isPaid) {
+    return (
+      <div className="flex flex-col items-center justify-center py-20 text-center max-w-sm mx-auto">
+        <div className="w-14 h-14 rounded-full bg-gold/10 flex items-center justify-center mb-4">
+          <Lock className="w-7 h-7 text-gold" />
+        </div>
+        <h2 className="text-lg font-semibold text-navy mb-2">Pathway customization is a paid feature</h2>
+        <p className="text-sm text-foreground-muted mb-6">
+          Upgrade your plan to customize the order and tools in your DNA pathway for this church.
+        </p>
+        <button
+          onClick={() => { window.location.href = '/dashboard?tab=billing'; }}
+          className="btn-primary flex items-center gap-2"
+        >
+          <Zap className="w-4 h-4" />
+          Upgrade your plan
+        </button>
       </div>
     );
   }

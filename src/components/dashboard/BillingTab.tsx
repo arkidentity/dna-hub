@@ -210,9 +210,10 @@ export default function BillingTab({ churchId }: BillingTabProps) {
         <div className="flex items-start gap-3 bg-green-50 border border-green-200 rounded-lg p-4">
           <CheckCircle className="w-5 h-5 text-green-600 flex-shrink-0 mt-0.5" />
           <div>
-            <p className="font-medium text-green-800">You're live!</p>
+            <p className="font-medium text-green-800">Welcome to DNA — full access unlocked!</p>
             <p className="text-sm text-green-700 mt-0.5">
-              Your subscription is active. Live Service Mode is now enabled for your congregation.
+              Your subscription is active. Unlimited leaders, groups, cohort, pathway customization,
+              and Live Service Mode are all available now.
             </p>
           </div>
         </div>
@@ -239,7 +240,7 @@ export default function BillingTab({ churchId }: BillingTabProps) {
           <div>
             <p className="font-medium text-red-800">Account suspended</p>
             <p className="text-sm text-red-700 mt-0.5">
-              Your Live Service Mode has been paused. Update your payment method to restore full access immediately.
+              Your account has been suspended. Update your payment method to restore full access immediately.
             </p>
           </div>
         </div>
@@ -268,14 +269,20 @@ export default function BillingTab({ churchId }: BillingTabProps) {
               </div>
               <div>
                 <h2 className="text-lg font-semibold text-navy">
-                  {status === 'canceled' ? 'Reactivate your subscription' : 'Activate Live Service Mode'}
+                  {status === 'canceled' ? 'Reactivate your subscription' : 'Unlock the full DNA system for your church'}
                 </h2>
                 <p className="text-sm text-foreground-muted mt-1">
-                  Upgrade to run interactive live services with real-time polls, testimonies, creed pushes,
-                  and a full congregation experience — all through Daily DNA.
+                  Your free account includes limited seats to get started. A paid plan removes all limits and
+                  gives your church access to the complete DNA Discipleship system.
                 </p>
                 <ul className="mt-3 space-y-1">
-                  {['Live interactive services with real-time engagement', 'Prayer wall, testimony sharing, creed pushes', 'Guest QR entry — no app required', 'Display mode for projection screens'].map((f) => (
+                  {[
+                    'Unlimited church leaders and DNA leaders',
+                    'Unlimited discipleship groups per leader',
+                    'Cohort: peer learning communities for DNA leaders',
+                    'Pathway customization: tailor the DNA journey for your church',
+                    'Live Service Mode: real-time congregation engagement during services',
+                  ].map((f) => (
                     <li key={f} className="flex items-center gap-2 text-sm text-foreground-muted">
                       <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0" />
                       {f}

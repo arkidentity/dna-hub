@@ -3,6 +3,7 @@
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
+import UpgradeNudgeModal from '@/components/billing/UpgradeNudgeModal';
 
 interface DNAGroup {
   id: string;
@@ -33,6 +34,7 @@ interface DashboardData {
     total_disciples: number;
     active_groups: number;
   };
+  isPaid: boolean;
 }
 
 const RESOURCES = [
@@ -77,6 +79,7 @@ function DNALeaderDashboardContent() {
   const [error, setError] = useState<string | null>(null);
   const [data, setData] = useState<DashboardData | null>(null);
   const [showWelcome, setShowWelcome] = useState(isWelcome);
+  const [showNudgeModal, setShowNudgeModal] = useState(false);
   const [pendingInvitations, setPendingInvitations] = useState<Array<{
     id: string;
     token: string;
@@ -199,12 +202,21 @@ function DNALeaderDashboardContent() {
                 </a>
               )}
             </div>
-            <Link
-              href="/groups/new"
-              className="bg-gold hover:bg-gold/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
-            >
-              + New Group
-            </Link>
+            {(!data.isPaid && data.groups.length >= 2) ? (
+              <button
+                onClick={() => setShowNudgeModal(true)}
+                className="bg-gold hover:bg-gold/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+              >
+                + New Group
+              </button>
+            ) : (
+              <Link
+                href="/groups/new"
+                className="bg-gold hover:bg-gold/90 text-white font-semibold py-2 px-4 rounded-lg transition-colors"
+              >
+                + New Group
+              </Link>
+            )}
           </div>
 
           {/* Inline stats bar */}
@@ -383,6 +395,14 @@ function DNALeaderDashboardContent() {
           </div>
         </div>
       </main>
+
+      <UpgradeNudgeModal
+        open={showNudgeModal}
+        onClose={() => setShowNudgeModal(false)}
+        variant="dna-leader"
+        limitLabel="groups"
+        limit={2}
+      />
     </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Users, MessageSquare, Rss, Calendar, Loader2, Plus, X, Pin, Globe, ExternalLink, Edit2, Trash2, MoreVertical } from 'lucide-react';
+import { Users, MessageSquare, Rss, Calendar, Loader2, Plus, X, Pin, Globe, ExternalLink, Edit2, Trash2, MoreVertical, GraduationCap, ChevronDown, ChevronUp } from 'lucide-react';
 import ChurchAppQRCard from '@/components/shared/ChurchAppQRCard';
 
 // ── Types ─────────────────────────────────────────────────────────
@@ -1005,9 +1005,390 @@ function EmptyState({ icon, title, subtitle }: { icon: React.ReactNode; title: s
   );
 }
 
+// ── Training Groups ───────────────────────────────────────────────
+
+interface TrainingGroupMember {
+  group_id: string;
+  leader_id: string;
+  role: string;
+  leader_name: string;
+}
+
+interface TrainingGroup {
+  id: string;
+  groupName: string;
+  currentPhase: string;
+  startDate: string;
+  members: TrainingGroupMember[];
+}
+
+interface CohortMemberOption {
+  leaderId: string;
+  name: string;
+  email: string;
+  cohortRole: string;
+}
+
+interface CreateGroupModalProps {
+  cohortId: string;
+  cohortMembers: CohortMemberOption[];
+  onClose: () => void;
+  onCreated: (group: TrainingGroup) => void;
+}
+
+function CreateTrainingGroupModal({ cohortId, cohortMembers, onClose, onCreated }: CreateGroupModalProps) {
+  const [groupName, setGroupName] = useState('');
+  const [leaderId, setLeaderId] = useState('');
+  const [coLeaderId, setCoLeaderId] = useState('');
+  const [discipleIds, setDiscipleIds] = useState<string[]>([]);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState('');
+
+  function toggleDisciple(id: string) {
+    setDiscipleIds(prev => {
+      if (prev.includes(id)) return prev.filter(d => d !== id);
+      if (prev.length >= 4) return prev;
+      return [...prev, id];
+    });
+  }
+
+  const assignedIds = new Set([leaderId, coLeaderId, ...discipleIds].filter(Boolean));
+  const leaderOptions = cohortMembers;
+  const coLeaderOptions = cohortMembers.filter(m => m.leaderId !== leaderId);
+  const discipleOptions = cohortMembers.filter(
+    m => m.leaderId !== leaderId && m.leaderId !== coLeaderId
+  );
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!groupName.trim()) { setError('Group name is required.'); return; }
+    if (!leaderId) { setError('A leader is required.'); return; }
+    setSubmitting(true);
+    setError('');
+    try {
+      const res = await fetch('/api/cohort/training-groups', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          cohortId,
+          groupName: groupName.trim(),
+          leaderId,
+          coLeaderId: coLeaderId || undefined,
+          discipleIds,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error || 'Failed to create group.'); return; }
+
+      // Build the returned group for optimistic update
+      const buildMember = (id: string, role: string): TrainingGroupMember => {
+        const m = cohortMembers.find(c => c.leaderId === id);
+        return { group_id: data.id, leader_id: id, role, leader_name: m?.name || 'Unknown' };
+      };
+      const newGroup: TrainingGroup = {
+        id: data.id,
+        groupName: groupName.trim(),
+        currentPhase: 'foundation',
+        startDate: new Date().toISOString().split('T')[0],
+        members: [
+          buildMember(leaderId, 'leader'),
+          ...(coLeaderId ? [buildMember(coLeaderId, 'co_leader')] : []),
+          ...discipleIds.map(d => buildMember(d, 'disciple')),
+        ],
+      };
+      onCreated(newGroup);
+      onClose();
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  }
+
+  return (
+    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50 p-4">
+      <div className="bg-white rounded-xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 sticky top-0 bg-white">
+          <h2 className="font-semibold text-navy">Create Training Group</h2>
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+        </div>
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          {error && <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded px-3 py-2">{error}</p>}
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Group Name</label>
+            <input
+              type="text"
+              value={groupName}
+              onChange={e => setGroupName(e.target.value)}
+              placeholder="e.g. Training Group 1"
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/40 focus:border-gold"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Leader <span className="text-red-500">*</span></label>
+            <select
+              value={leaderId}
+              onChange={e => { setLeaderId(e.target.value); setCoLeaderId(''); setDiscipleIds([]); }}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/40 focus:border-gold"
+            >
+              <option value="">Select a leader...</option>
+              {leaderOptions.map(m => (
+                <option key={m.leaderId} value={m.leaderId}>{m.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">Co-leader <span className="text-gray-400 font-normal">(optional)</span></label>
+            <select
+              value={coLeaderId}
+              onChange={e => { setCoLeaderId(e.target.value); setDiscipleIds([]); }}
+              disabled={!leaderId}
+              className="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gold/40 focus:border-gold disabled:opacity-50"
+            >
+              <option value="">None</option>
+              {coLeaderOptions.map(m => (
+                <option key={m.leaderId} value={m.leaderId}>{m.name}</option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              Disciples <span className="text-gray-400 font-normal">(up to 4)</span>
+              {discipleIds.length > 0 && (
+                <span className="ml-2 text-xs bg-gold/10 text-gold-700 font-medium px-2 py-0.5 rounded-full">{discipleIds.length} selected</span>
+              )}
+            </label>
+            {!leaderId ? (
+              <p className="text-sm text-gray-400 italic">Select a leader first</p>
+            ) : discipleOptions.length === 0 ? (
+              <p className="text-sm text-gray-400 italic">No remaining cohort members available</p>
+            ) : (
+              <div className="space-y-1.5 max-h-48 overflow-y-auto border border-gray-200 rounded-lg p-2">
+                {discipleOptions.map(m => {
+                  const checked = discipleIds.includes(m.leaderId);
+                  const disabled = !checked && discipleIds.length >= 4;
+                  return (
+                    <label
+                      key={m.leaderId}
+                      className={`flex items-center gap-3 px-2 py-1.5 rounded cursor-pointer transition-colors ${
+                        checked ? 'bg-gold/10' : disabled ? 'opacity-40 cursor-not-allowed' : 'hover:bg-gray-50'
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={checked}
+                        disabled={disabled}
+                        onChange={() => !disabled && toggleDisciple(m.leaderId)}
+                        className="rounded border-gray-300"
+                      />
+                      <span className="text-sm text-gray-800">{m.name}</span>
+                      <span className="text-xs text-gray-400 ml-auto">{m.cohortRole}</span>
+                    </label>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          <div className="flex gap-3 pt-2">
+            <button
+              type="button"
+              onClick={onClose}
+              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={submitting}
+              className="flex-1 px-4 py-2 bg-gold text-white rounded-lg text-sm font-medium hover:bg-gold/90 disabled:opacity-50 transition-colors"
+            >
+              {submitting ? 'Creating...' : 'Create Group'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  );
+}
+
+interface TrainingGroupsViewProps {
+  cohortId: string;
+}
+
+function TrainingGroupsView({ cohortId }: TrainingGroupsViewProps) {
+  const [groups, setGroups] = useState<TrainingGroup[]>([]);
+  const [cohortMembers, setCohortMembers] = useState<CohortMemberOption[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [showCreate, setShowCreate] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
+
+  useEffect(() => {
+    fetch(`/api/cohort/training-groups?cohortId=${cohortId}`)
+      .then(r => r.json())
+      .then(d => {
+        setGroups(d.trainingGroups || []);
+        setCohortMembers(d.cohortMembers || []);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
+  }, [cohortId]);
+
+  async function handleDelete(groupId: string) {
+    setDeletingId(groupId);
+    try {
+      const res = await fetch(`/api/cohort/training-groups/${groupId}`, { method: 'DELETE' });
+      if (res.ok) setGroups(prev => prev.filter(g => g.id !== groupId));
+    } finally {
+      setDeletingId(null);
+    }
+  }
+
+  const roleLabel: Record<string, string> = { leader: 'Leader', co_leader: 'Co-Leader', disciple: 'Disciple' };
+  const roleBadge: Record<string, string> = {
+    leader: 'bg-navy/10 text-navy',
+    co_leader: 'bg-teal/10 text-teal',
+    disciple: 'bg-gray-100 text-gray-600',
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 className="w-6 h-6 animate-spin text-gray-400" />
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <p className="text-sm text-gray-500">
+            {groups.length === 0
+              ? 'No training groups yet.'
+              : `${groups.length} training ${groups.length === 1 ? 'group' : 'groups'}`}
+          </p>
+        </div>
+        <button
+          onClick={() => setShowCreate(true)}
+          className="flex items-center gap-1.5 px-3 py-1.5 bg-gold text-white text-sm font-medium rounded-lg hover:bg-gold/90 transition-colors"
+        >
+          <Plus className="w-4 h-4" />
+          Create Group
+        </button>
+      </div>
+
+      {groups.length === 0 ? (
+        <EmptyState
+          icon={<GraduationCap className="w-7 h-7 text-gray-400" />}
+          title="No training groups yet"
+          subtitle="Create training groups to assign cohort members as leaders-in-training."
+        />
+      ) : (
+        <div className="space-y-3">
+          {groups.map(group => {
+            const leader = group.members.find(m => m.role === 'leader');
+            const coLeader = group.members.find(m => m.role === 'co_leader');
+            const disciples = group.members.filter(m => m.role === 'disciple');
+            const isExpanded = expandedId === group.id;
+
+            return (
+              <div key={group.id} className="bg-white rounded-lg border border-gray-200 shadow-sm overflow-hidden">
+                <div className="px-4 py-3 flex items-center gap-3">
+                  <div className="w-9 h-9 bg-gold/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                    <GraduationCap className="w-5 h-5 text-gold" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-medium text-navy text-sm">{group.groupName}</h3>
+                      <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full font-medium">Training</span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      {group.members.length} {group.members.length === 1 ? 'member' : 'members'}
+                      {leader && ` · Led by ${leader.leader_name}`}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button
+                      onClick={() => setExpandedId(isExpanded ? null : group.id)}
+                      className="p-1.5 text-gray-400 hover:text-gray-600 rounded transition-colors"
+                    >
+                      {isExpanded ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(group.id)}
+                      disabled={deletingId === group.id}
+                      className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors disabled:opacity-40"
+                      title="Archive group"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
+                </div>
+
+                {isExpanded && (
+                  <div className="border-t border-gray-100 px-4 py-3 bg-gray-50">
+                    <div className="space-y-2">
+                      {leader && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-800">{leader.leader_name}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleBadge.leader}`}>{roleLabel.leader}</span>
+                        </div>
+                      )}
+                      {coLeader && (
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm text-gray-800">{coLeader.leader_name}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleBadge.co_leader}`}>{roleLabel.co_leader}</span>
+                        </div>
+                      )}
+                      {disciples.map(d => (
+                        <div key={d.leader_id} className="flex items-center justify-between">
+                          <span className="text-sm text-gray-800">{d.leader_name}</span>
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${roleBadge.disciple}`}>{roleLabel.disciple}</span>
+                        </div>
+                      ))}
+                      {/* Empty slots */}
+                      {!coLeader && (
+                        <div className="flex items-center justify-between opacity-40">
+                          <span className="text-sm text-gray-400 italic">No co-leader assigned</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">Co-Leader</span>
+                        </div>
+                      )}
+                      {Array.from({ length: Math.max(0, 4 - disciples.length) }).map((_, i) => (
+                        <div key={`empty-${i}`} className="flex items-center justify-between opacity-30">
+                          <span className="text-sm text-gray-400 italic">Open disciple slot</span>
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-gray-100 text-gray-400">Disciple</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {showCreate && (
+        <CreateTrainingGroupModal
+          cohortId={cohortId}
+          cohortMembers={cohortMembers}
+          onClose={() => setShowCreate(false)}
+          onCreated={(g) => setGroups(prev => [...prev, g])}
+        />
+      )}
+    </div>
+  );
+}
+
 // ── Main Component ────────────────────────────────────────────────
 
-type SubTab = 'feed' | 'discussion' | 'members' | 'events';
+type SubTab = 'feed' | 'discussion' | 'members' | 'events' | 'training_groups';
 
 export default function AdminCohortTab({ churchId }: { churchId: string }) {
   const [data, setData] = useState<CohortData | null>(null);
@@ -1121,6 +1502,7 @@ export default function AdminCohortTab({ churchId }: { churchId: string }) {
     { id: 'discussion', label: 'Discussion', icon: <MessageSquare className="w-4 h-4" />, count: data.discussion.length },
     { id: 'members', label: 'Members', icon: <Users className="w-4 h-4" />, count: data.members.length },
     { id: 'events', label: 'Events', icon: <Calendar className="w-4 h-4" />, count: data.events.length },
+    { id: 'training_groups', label: 'Training Groups', icon: <GraduationCap className="w-4 h-4" /> },
   ];
 
   return (
@@ -1212,6 +1594,9 @@ export default function AdminCohortTab({ churchId }: { churchId: string }) {
         {subTab === 'members' && <MembersView members={data.members} />}
         {subTab === 'events' && (
           <EventsView events={data.events} cohortId={cohortId} onEventCreated={handleEventCreated} onRefresh={refreshData} />
+        )}
+        {subTab === 'training_groups' && data.cohort && (
+          <TrainingGroupsView cohortId={data.cohort.id} />
         )}
       </div>
     </div>

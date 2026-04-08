@@ -115,6 +115,7 @@ export async function GET(
           .from('dna_groups')
           .select('*')
           .in('leader_id', leaderIds)
+          .neq('group_type', 'training_cohort')
           .order('created_at', { ascending: false }),
         supabase
           .from('leader_health_checkins')

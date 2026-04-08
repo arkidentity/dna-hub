@@ -19,6 +19,7 @@ import {
   Bell,
 } from 'lucide-react';
 import { DNALeader, DNAGroup, DNAGroupPhase } from '@/lib/types';
+import UpgradeNudgeModal from '@/components/billing/UpgradeNudgeModal';
 
 interface HealthSummary {
   leader_id: string;
@@ -51,6 +52,7 @@ interface GroupsTabProps {
   churchId: string;
   churchName: string;
   isAdmin: boolean;
+  isPaid?: boolean;
 }
 
 const PHASE_LABELS: Record<DNAGroupPhase, { label: string; color: string }> = {
@@ -67,7 +69,7 @@ const HEALTH_STATUS: Record<string, { label: string; color: string; icon: typeof
   needs_attention: { label: 'Needs Attention', color: 'text-red-600', icon: AlertTriangle },
 };
 
-export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabProps) {
+export default function GroupsTab({ churchId, churchName, isAdmin, isPaid = false }: GroupsTabProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [leaders, setLeaders] = useState<DNALeaderWithLogin[]>([]);
@@ -82,6 +84,9 @@ export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabPr
     healthyLeaders: 0,
     needsAttentionLeaders: 0,
   });
+
+  // Upgrade nudge modal state
+  const [showNudgeModal, setShowNudgeModal] = useState(false);
 
   // Invite modal state
   const [showInviteModal, setShowInviteModal] = useState(false);
@@ -365,7 +370,13 @@ export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabPr
           <option value="pending">Pending</option>
         </select>
         <button
-          onClick={() => setShowInviteModal(true)}
+          onClick={() => {
+            if (!isPaid && leaders.length >= 2) {
+              setShowNudgeModal(true);
+            } else {
+              setShowInviteModal(true);
+            }
+          }}
           className="btn-primary inline-flex items-center gap-2 whitespace-nowrap"
         >
           <UserPlus className="w-4 h-4" />
@@ -389,7 +400,13 @@ export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabPr
             Invite leaders to start discipleship groups at {churchName}
           </p>
           <button
-            onClick={() => setShowInviteModal(true)}
+            onClick={() => {
+              if (!isPaid && leaders.length >= 2) {
+                setShowNudgeModal(true);
+              } else {
+                setShowInviteModal(true);
+              }
+            }}
             className="btn-primary inline-flex items-center gap-2"
           >
             <UserPlus className="w-4 h-4" />
@@ -766,6 +783,14 @@ export default function GroupsTab({ churchId, churchName, isAdmin }: GroupsTabPr
           </div>
         </div>
       )}
+
+      <UpgradeNudgeModal
+        open={showNudgeModal}
+        onClose={() => setShowNudgeModal(false)}
+        variant="church-leader"
+        limitLabel="DNA leaders"
+        limit={2}
+      />
     </div>
   );
 }

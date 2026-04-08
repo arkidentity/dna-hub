@@ -42,6 +42,18 @@ export async function GET() {
     }
 
     const leaderId = dnaLeader.id;
+    const churchId = dnaLeader.church?.id || null;
+
+    // Check billing status for this church
+    let isPaid = false;
+    if (churchId) {
+      const { data: billing } = await supabase
+        .from('church_billing_status')
+        .select('status')
+        .eq('church_id', churchId)
+        .maybeSingle();
+      isPaid = billing?.status === 'active' || billing?.status === 'past_due';
+    }
 
     // Get all groups where this person is leader or co-leader
     const { data: groups, error: groupsError } = await supabase
@@ -117,6 +129,7 @@ export async function GET() {
         active_groups: activeGroups,
         total_disciples: totalDisciples,
       },
+      isPaid,
     });
 
   } catch (error) {

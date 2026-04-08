@@ -39,6 +39,7 @@ interface DashboardData {
   calls: ScheduledCall[];
   globalResources: GlobalResource[];
   isAdmin: boolean;
+  isPaid: boolean;
 }
 
 export default function DashboardPage() {
@@ -461,7 +462,7 @@ export default function DashboardPage() {
     );
   }
 
-  const { church, leader, phases, documents, calls, globalResources, isAdmin } = data;
+  const { church, leader, phases, documents, calls, globalResources, isAdmin, isPaid } = data;
 
   return (
     <div className="min-h-screen bg-background">
@@ -567,6 +568,7 @@ export default function DashboardPage() {
           <TeamTab
             churchId={church.id}
             churchName={church.name}
+            isPaid={isPaid || isAdmin}
           />
         )}
 
@@ -575,6 +577,7 @@ export default function DashboardPage() {
             churchId={church.id}
             churchName={church.name}
             isAdmin={isAdmin}
+            isPaid={isPaid || isAdmin}
           />
         )}
 
@@ -587,7 +590,7 @@ export default function DashboardPage() {
         )}
 
         {activeTab === 'pathway' && (
-          <PathwayTab churchId={church.id} />
+          <PathwayTab churchId={church.id} isPaid={isPaid || isAdmin} />
         )}
 
         {activeTab === 'services' && (

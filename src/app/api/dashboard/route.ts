@@ -126,6 +126,7 @@ export async function GET() {
       callsResult,
       globalResourcesResult,
       brandingResult,
+    billingResult,
     ] = await Promise.all([
       supabase
         .from('phases')
@@ -179,6 +180,11 @@ export async function GET() {
         .select('icon_url, splash_logo_url')
         .eq('church_id', church.id)
         .maybeSingle(),
+      supabase
+        .from('church_billing_status')
+        .select('status')
+        .eq('church_id', church.id)
+        .maybeSingle(),
     ]);
 
     const { data: phases, error: phasesError } = phasesResult;
@@ -190,6 +196,8 @@ export async function GET() {
     const { data: calls } = callsResult;
     const { data: globalResources } = globalResourcesResult;
     const { data: branding } = brandingResult;
+    const { data: billingStatus } = billingResult;
+    const isPaid = billingStatus?.status === 'active' || billingStatus?.status === 'past_due';
 
     if (phasesError) {
       console.error('Phases fetch error:', phasesError);
@@ -280,6 +288,7 @@ export async function GET() {
       calls: calls || [],
       globalResources: globalResources || [],
       isAdmin: adminUser,
+      isPaid,
     });
   } catch (error) {
     console.error('Dashboard fetch error:', error);

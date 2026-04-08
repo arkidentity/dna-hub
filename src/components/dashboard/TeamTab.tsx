@@ -14,6 +14,7 @@ import {
   Shield,
   GraduationCap,
 } from 'lucide-react';
+import UpgradeNudgeModal from '@/components/billing/UpgradeNudgeModal';
 
 interface ChurchLeader {
   id: string;
@@ -27,9 +28,10 @@ interface ChurchLeader {
 interface TeamTabProps {
   churchId: string;
   churchName: string;
+  isPaid?: boolean;
 }
 
-export default function TeamTab({ churchId, churchName }: TeamTabProps) {
+export default function TeamTab({ churchId, churchName, isPaid = false }: TeamTabProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [leaders, setLeaders] = useState<ChurchLeader[]>([]);
@@ -44,6 +46,9 @@ export default function TeamTab({ churchId, churchName }: TeamTabProps) {
   const [inviting, setInviting] = useState(false);
   const [inviteError, setInviteError] = useState<string | null>(null);
   const [inviteSuccess, setInviteSuccess] = useState(false);
+
+  // Upgrade nudge modal state
+  const [showNudgeModal, setShowNudgeModal] = useState(false);
 
   // Resend magic link state
   const [sendingLink, setSendingLink] = useState<string | null>(null);
@@ -178,7 +183,13 @@ export default function TeamTab({ churchId, churchName }: TeamTabProps) {
           </p>
         </div>
         <button
-          onClick={() => setShowInviteModal(true)}
+          onClick={() => {
+            if (!isPaid && leaders.length >= 2) {
+              setShowNudgeModal(true);
+            } else {
+              setShowInviteModal(true);
+            }
+          }}
           className="btn-primary flex items-center gap-2 flex-shrink-0 whitespace-nowrap"
         >
           <UserPlus className="w-4 h-4" />
@@ -387,6 +398,14 @@ export default function TeamTab({ churchId, churchName }: TeamTabProps) {
           </div>
         </div>
       )}
+
+      <UpgradeNudgeModal
+        open={showNudgeModal}
+        onClose={() => setShowNudgeModal(false)}
+        variant="church-leader"
+        limitLabel="church leaders"
+        limit={2}
+      />
     </div>
   );
 }
