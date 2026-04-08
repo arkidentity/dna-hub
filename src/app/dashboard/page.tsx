@@ -16,6 +16,7 @@ import {
   Radio,
   Route,
   Heart,
+  CreditCard,
 } from 'lucide-react';
 import { PhaseWithMilestones, MilestoneWithProgress, Church, ChurchLeader, FunnelDocument, ScheduledCall, GlobalResource } from '@/lib/types';
 import {
@@ -28,6 +29,7 @@ import DailyDNATab from '@/components/dashboard/DailyDNATab';
 import ServicesTab from '@/components/dashboard/services/ServicesTab';
 import DisciplesTab from '@/components/dashboard/disciples/DisciplesTab';
 import PathwayTab from '@/components/admin/PathwayTab';
+import BillingTab from '@/components/dashboard/BillingTab';
 
 interface DashboardData {
   church: Church;
@@ -45,7 +47,7 @@ export default function DashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [redirecting, setRedirecting] = useState(false);
-  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'team' | 'groups' | 'disciples' | 'daily-dna' | 'services' | 'pathway'>('overview');
+  const [activeTab, setActiveTab] = useState<'overview' | 'journey' | 'team' | 'groups' | 'disciples' | 'daily-dna' | 'services' | 'pathway' | 'billing'>('overview');
   const [expandedPhases, setExpandedPhases] = useState<Set<string>>(new Set());
   const [compactPhases, setCompactPhases] = useState<Set<string>>(new Set());
   const [updatingMilestone, setUpdatingMilestone] = useState<string | null>(null);
@@ -63,6 +65,11 @@ export default function DashboardPage() {
 
   useEffect(() => {
     fetchDashboard();
+    // Handle ?tab=billing and ?billing=success redirects from Stripe
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('tab') === 'billing' || params.get('billing')) {
+      setActiveTab('billing');
+    }
   }, []);
 
   // Prefetch tab data in the background after initial dashboard loads
@@ -488,6 +495,7 @@ export default function DashboardPage() {
               { id: 'daily-dna', label: 'Daily DNA', icon: Smartphone },
               { id: 'pathway', label: 'Pathway', icon: Route },
               { id: 'services', label: 'Church React', icon: Radio },
+              { id: 'billing', label: 'Billing', icon: CreditCard },
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -584,6 +592,10 @@ export default function DashboardPage() {
 
         {activeTab === 'services' && (
           <ServicesTab churchId={church.id} subdomain={church.subdomain || undefined} isAdmin={isAdmin} />
+        )}
+
+        {activeTab === 'billing' && (
+          <BillingTab churchId={church.id} />
         )}
 
         {/* Help Section */}

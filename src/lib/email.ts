@@ -1874,3 +1874,221 @@ export async function sendDemoInviteEmail(
     notificationType: 'demo_invite'
   });
 }
+
+// ─── Billing Emails ───────────────────────────────────────────────────────────
+
+const HUB_BILLING_URL = process.env.NEXT_PUBLIC_APP_URL
+  ? `${process.env.NEXT_PUBLIC_APP_URL}/dashboard?tab=billing`
+  : 'https://hub.dnachurch.app/dashboard?tab=billing';
+
+function billingEmailWrapper(body: string): string {
+  return `
+    <div style="font-family: system-ui, sans-serif; max-width: 600px; margin: 0 auto; background: #fdfbf7;">
+      <div style="background: #1A2332; padding: 20px 32px;">
+        <span style="font-size: 11px; font-weight: 600; letter-spacing: 0.18em; text-transform: uppercase; color: #D4A853;">DNA Discipleship</span>
+      </div>
+      <div style="padding: 40px 32px;">
+        ${body}
+        <p style="margin-top: 40px; padding-top: 24px; border-top: 1px solid #E8DDD0; font-size: 13px; color: #5A6577;">
+          Questions? Reply to this email or reach us at
+          <a href="mailto:info@dnadiscipleship.com" style="color: #2D6A6A;">info@dnadiscipleship.com</a>.
+        </p>
+      </div>
+    </div>
+  `;
+}
+
+function manageBillingButton(label = 'Update Payment Method'): string {
+  return `
+    <div style="text-align: left; margin: 28px 0;">
+      <a href="${HUB_BILLING_URL}"
+         style="background: #D4A853; color: #fff; padding: 14px 28px; border-radius: 8px;
+                text-decoration: none; font-weight: 600; font-size: 15px; display: inline-block;">
+        ${label}
+      </a>
+    </div>
+  `;
+}
+
+// Day 0 — invoice.payment_failed
+export async function sendBillingPaymentFailedEmail(
+  to: string,
+  churchName: string,
+  churchId: string
+) {
+  const subject = `Action needed: payment failed for ${churchName}`;
+  const html = billingEmailWrapper(`
+    <p style="font-size: 16px; color: #1A2332; margin: 0 0 16px 0;">Hey there,</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #3a3530; margin: 0 0 16px 0;">
+      We weren't able to process your most recent payment for <strong>${churchName}</strong>'s DNA Discipleship subscription.
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; color: #3a3530; margin: 0 0 16px 0;">
+      Your access is still fully active while we sort this out — nothing is turned off yet.
+      But to keep things running smoothly, please update your payment method when you get a chance.
+    </p>
+    ${manageBillingButton('Update Payment Method')}
+    <p style="font-size: 14px; color: #5A6577; margin: 0;">
+      If this was a temporary issue and your card works now, Stripe will retry automatically.
+      Otherwise, adding a new card in the billing portal is the quickest fix.
+    </p>
+  `);
+
+  return sendEmail({ to, subject, html, churchId, notificationType: 'billing_payment_failed' });
+}
+
+// Day 3 — dunning reminder
+export async function sendBillingDunningDay3Email(
+  to: string,
+  churchName: string,
+  churchId: string
+) {
+  const subject = `Reminder: update your payment method for ${churchName}`;
+  const html = billingEmailWrapper(`
+    <p style="font-size: 16px; color: #1A2332; margin: 0 0 16px 0;">Hey,</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #3a3530; margin: 0 0 16px 0;">
+      Just a quick follow-up — the payment for <strong>${churchName}</strong>'s DNA Discipleship account
+      still hasn't gone through.
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; color: #3a3530; margin: 0 0 16px 0;">
+      Your account is still active and everything is working. We just need a valid payment method on file
+      to keep it that way. You have about four more days before we have to pause access.
+    </p>
+    ${manageBillingButton('Update Payment Method')}
+    <p style="font-size: 14px; color: #5A6577; margin: 0;">
+      Takes less than two minutes in the billing portal.
+    </p>
+  `);
+
+  return sendEmail({ to, subject, html, churchId, notificationType: 'billing_dunning_day3' });
+}
+
+// Day 7 — final warning
+export async function sendBillingSuspendingSoonEmail(
+  to: string,
+  churchName: string,
+  churchId: string
+) {
+  const subject = `Last chance: ${churchName} suspends tomorrow`;
+  const html = billingEmailWrapper(`
+    <p style="font-size: 16px; color: #1A2332; margin: 0 0 16px 0;">Hey,</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #3a3530; margin: 0 0 16px 0;">
+      We've been trying to reach you about the payment for <strong>${churchName}</strong>'s DNA Discipleship subscription.
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; color: #3a3530; margin: 0 0 16px 0;">
+      <strong>Tomorrow, your Live Service Mode access will be paused</strong> until a successful payment goes through.
+      Your Hub, groups, disciples, and all your data are safe — we're just pausing the congregation-facing features.
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; color: #3a3530; margin: 0 0 4px 0;">
+      Update your payment method now to avoid any interruption:
+    </p>
+    ${manageBillingButton('Resolve Now — Update Payment')}
+    <p style="font-size: 14px; color: #5A6577; margin: 0;">
+      If you're having trouble or want to talk through options, reply to this email — we're here.
+    </p>
+  `);
+
+  return sendEmail({ to, subject, html, churchId, notificationType: 'billing_suspending_soon' });
+}
+
+// Day 8 — account suspended
+export async function sendBillingSuspendedEmail(
+  to: string,
+  churchName: string,
+  churchId: string
+) {
+  const subject = `${churchName}'s Live Service Mode has been paused`;
+  const html = billingEmailWrapper(`
+    <p style="font-size: 16px; color: #1A2332; margin: 0 0 16px 0;">Hey,</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #3a3530; margin: 0 0 16px 0;">
+      We've paused Live Service Mode for <strong>${churchName}</strong> because we haven't been able to process a payment.
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; color: #3a3530; margin: 0 0 16px 0;">
+      Your Hub, groups, disciples, and all your data are completely intact.
+      The moment a payment goes through, everything turns back on automatically — no setup needed.
+    </p>
+    ${manageBillingButton('Restore Access Now')}
+    <p style="font-size: 14px; color: #5A6577; margin: 0;">
+      If there's a reason we should know about — financial hardship, a billing issue on our end,
+      anything — please just reply and we'll work it out together.
+    </p>
+  `);
+
+  return sendEmail({ to, subject, html, churchId, notificationType: 'billing_suspended' });
+}
+
+// Payment restored after failure
+export async function sendBillingRestoredEmail(
+  to: string,
+  churchName: string,
+  churchId: string
+) {
+  const subject = `You're all set — ${churchName} is back up`;
+  const html = billingEmailWrapper(`
+    <p style="font-size: 16px; color: #1A2332; margin: 0 0 16px 0;">Great news —</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #3a3530; margin: 0 0 16px 0;">
+      Your payment went through and <strong>${churchName}</strong>'s DNA Discipleship subscription is fully active again.
+      Live Service Mode is restored and your congregation is ready to go.
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; color: #3a3530; margin: 0 0 16px 0;">
+      Thanks for getting that sorted. We're glad to have you back in full swing.
+    </p>
+    ${manageBillingButton('Go to Dashboard')}
+  `);
+
+  return sendEmail({ to, subject, html, churchId, notificationType: 'billing_restored' });
+}
+
+// Card expiring warning
+export async function sendBillingCardExpiringEmail(
+  to: string,
+  churchName: string,
+  churchId: string,
+  expiryMonth: number,
+  expiryYear: number
+) {
+  const expiry = `${String(expiryMonth).padStart(2, '0')}/${expiryYear}`;
+  const subject = `Your card on file expires soon (${expiry})`;
+  const html = billingEmailWrapper(`
+    <p style="font-size: 16px; color: #1A2332; margin: 0 0 16px 0;">Hey,</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #3a3530; margin: 0 0 16px 0;">
+      The card on file for <strong>${churchName}</strong>'s DNA Discipleship account expires <strong>${expiry}</strong>.
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; color: #3a3530; margin: 0 0 16px 0;">
+      To avoid any interruption to your service, update your payment method before it expires.
+    </p>
+    ${manageBillingButton('Update Card Before It Expires')}
+    <p style="font-size: 14px; color: #5A6577; margin: 0;">
+      Takes less than two minutes in the billing portal.
+    </p>
+  `);
+
+  return sendEmail({ to, subject, html, churchId, notificationType: 'billing_card_expiring' });
+}
+
+// Upgrade success — sent on checkout.session.completed
+export async function sendBillingUpgradeSuccessEmail(
+  to: string,
+  churchName: string,
+  churchId: string,
+  tierName: string,
+  amountCents: number
+) {
+  const amount = `$${(amountCents / 100).toLocaleString('en-US', { minimumFractionDigits: 0 })}`;
+  const subject = `Welcome to DNA ${tierName} — you're live, ${churchName}!`;
+  const html = billingEmailWrapper(`
+    <p style="font-size: 16px; color: #1A2332; margin: 0 0 16px 0;">Congratulations!</p>
+    <p style="font-size: 15px; line-height: 1.6; color: #3a3530; margin: 0 0 16px 0;">
+      <strong>${churchName}</strong> is now on the <strong>DNA ${tierName}</strong> plan at <strong>${amount}/month</strong>.
+      Live Service Mode is active — your congregation can join live services right now.
+    </p>
+    <p style="font-size: 15px; line-height: 1.6; color: #3a3530; margin: 0 0 16px 0;">
+      This is a big moment. You've built the foundation — now you get to bring your whole church into it.
+    </p>
+    ${manageBillingButton('Go to Dashboard')}
+    <p style="font-size: 14px; color: #5A6577; margin: 0;">
+      Need help running your first live service? Reply and we'll walk you through it.
+    </p>
+  `);
+
+  return sendEmail({ to, subject, html, churchId, notificationType: 'billing_upgrade_success' });
+}

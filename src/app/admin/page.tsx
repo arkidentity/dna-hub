@@ -15,9 +15,11 @@ import {
   Users,
   BookOpen,
   Palette,
+  CreditCard,
 } from 'lucide-react';
 import { DNALeadersTab, ChurchesTab, ResourcesTab, BrandingTab, CoachesTab, NetworkDisciplesTab } from '@/components/admin';
 import AuthAuditPanel from '@/components/admin/AuthAuditPanel';
+import AdminBillingTab from '@/components/admin/AdminBillingTab';
 
 interface ChurchSummary {
   id: string;
@@ -49,7 +51,7 @@ interface AdminStats {
 
 export default function AdminPage() {
   const router = useRouter();
-  const [activeTab, setActiveTab] = useState<'churches' | 'dna-leaders' | 'disciples' | 'coaches' | 'resources' | 'branding'>('churches');
+  const [activeTab, setActiveTab] = useState<'churches' | 'dna-leaders' | 'disciples' | 'coaches' | 'resources' | 'branding' | 'billing'>('churches');
   const [churches, setChurches] = useState<ChurchSummary[]>([]);
   const [stats, setStats] = useState<AdminStats | null>(null);
   const [userRole, setUserRole] = useState<'admin' | 'dna_coach'>('admin');
@@ -181,6 +183,7 @@ export default function AdminPage() {
               { id: 'coaches', label: 'Coaches', icon: UserCircle, showFor: 'admin' },
               { id: 'resources', label: 'Resources', icon: BookOpen, showFor: 'admin' },
               { id: 'branding', label: 'Branding', icon: Palette, showFor: 'admin' },
+              { id: 'billing', label: 'Billing', icon: CreditCard, showFor: 'admin' },
             ].filter(tab => tab.showFor === 'both' || userRole === 'admin').map((tab) => (
               <button
                 key={tab.id}
@@ -223,6 +226,9 @@ export default function AdminPage() {
 
         {/* Branding Tab */}
         {activeTab === 'branding' && <BrandingTab />}
+
+        {/* Billing Tab */}
+        {activeTab === 'billing' && <AdminBillingTab />}
       </main>
     </div>
   );

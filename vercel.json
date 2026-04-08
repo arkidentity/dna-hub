@@ -11,6 +11,10 @@
     {
       "path": "/api/cron/end-dormant-sessions",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/billing-grace",
+      "schedule": "0 10 * * *"
     }
   ]
 }
