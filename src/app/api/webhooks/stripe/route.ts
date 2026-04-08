@@ -198,6 +198,10 @@ async function handleSubscriptionUpsert(
 
   const status = stripeStatusToLocal(sub.status)
 
+  // Only include period dates if present — never overwrite valid data with null
+  const periodStart = sub.current_period_start ? new Date(sub.current_period_start * 1000).toISOString() : undefined
+  const periodEnd = sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : undefined
+
   await supabaseAdmin
     .from('church_billing_status')
     .upsert({
@@ -207,8 +211,8 @@ async function handleSubscriptionUpsert(
       plan_tier: tier,
       status,
       monthly_amount_cents: monthlyAmountCents,
-      current_period_start: sub.current_period_start ? new Date(sub.current_period_start * 1000).toISOString() : null,
-      current_period_end: sub.current_period_end ? new Date(sub.current_period_end * 1000).toISOString() : null,
+      ...(periodStart && { current_period_start: periodStart }),
+      ...(periodEnd && { current_period_end: periodEnd }),
       cancel_at_period_end: sub.cancel_at_period_end ?? false,
     }, { onConflict: 'church_id' })
 }
