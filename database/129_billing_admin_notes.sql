@@ -5,8 +5,10 @@
 ALTER TABLE church_billing_status
   ADD COLUMN IF NOT EXISTS admin_notes TEXT;
 
--- Re-create get_church_billing_status RPC to include the new column
-CREATE OR REPLACE FUNCTION get_church_billing_status(p_church_id UUID)
+-- Must drop first — cannot change return type with CREATE OR REPLACE
+DROP FUNCTION IF EXISTS get_church_billing_status(UUID);
+
+CREATE FUNCTION get_church_billing_status(p_church_id UUID)
 RETURNS TABLE (
   id                      UUID,
   church_id               UUID,

@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+function getStripe() { return new Stripe(process.env.STRIPE_SECRET_KEY!) }
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -20,7 +20,7 @@ export async function POST(req: NextRequest) {
   let event: Stripe.Event
 
   try {
-    event = stripe.webhooks.constructEvent(
+    event = getStripe().webhooks.constructEvent(
       body,
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
@@ -142,7 +142,7 @@ async function handleCheckoutCompleted(session: Stripe.Checkout.Session) {
   let periodEnd = null
 
   if (session.subscription) {
-    const subscription = await stripe.subscriptions.retrieve(session.subscription as string, {
+    const subscription = await getStripe().subscriptions.retrieve(session.subscription as string, {
       expand: ['items.data.price.product'],
     }) as unknown as Stripe.Subscription
 
@@ -192,7 +192,7 @@ async function handleSubscriptionUpsert(
   let monthlyAmountCents = price?.unit_amount || 0
 
   if (price?.product) {
-    const product = await stripe.products.retrieve(price.product as string)
+    const product = await getStripe().products.retrieve(price.product as string)
     tier = product.metadata?.tier || 'seed'
   }
 

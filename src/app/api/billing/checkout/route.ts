@@ -3,7 +3,7 @@ import Stripe from 'stripe'
 import { getUnifiedSession, isAdmin } from '@/lib/unified-auth'
 import { createClient } from '@supabase/supabase-js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+function getStripe() { return new Stripe(process.env.STRIPE_SECRET_KEY!) }
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       .eq('id', church_id)
       .single()
 
-    const customer = await stripe.customers.create({
+    const customer = await getStripe().customers.create({
       email: billing?.billing_email || session.email,
       name: church?.name || 'DNA Church',
       metadata: { church_id },
@@ -80,7 +80,7 @@ export async function POST(req: NextRequest) {
 
   const origin = req.headers.get('origin') || 'https://hub.dnachurch.app'
 
-  const checkoutSession = await stripe.checkout.sessions.create({
+  const checkoutSession = await getStripe().checkout.sessions.create({
     customer: customerId,
     mode: 'subscription',
     line_items: [{ price: PRICE_IDS[tier], quantity: 1 }],

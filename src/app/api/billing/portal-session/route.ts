@@ -3,7 +3,7 @@ import Stripe from 'stripe'
 import { getUnifiedSession, isAdmin } from '@/lib/unified-auth'
 import { createClient } from '@supabase/supabase-js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
+function getStripe() { return new Stripe(process.env.STRIPE_SECRET_KEY!) }
 
 const supabaseAdmin = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -49,7 +49,7 @@ export async function GET(req: NextRequest) {
 
   const origin = req.headers.get('origin') || 'https://hub.dnachurch.app'
 
-  const portalSession = await stripe.billingPortal.sessions.create({
+  const portalSession = await getStripe().billingPortal.sessions.create({
     customer: billing.stripe_customer_id,
     return_url: `${origin}/dashboard?tab=billing`,
   })
