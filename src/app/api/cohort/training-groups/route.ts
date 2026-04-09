@@ -109,6 +109,15 @@ export async function POST(request: NextRequest) {
 
   const supabase = getSupabaseAdmin();
 
+  // Look up church_id from the cohort (needed for dna_groups FK)
+  const { data: cohortRow } = await supabase
+    .from('dna_cohorts')
+    .select('church_id')
+    .eq('id', cohortId)
+    .single();
+
+  const churchId = cohortRow?.church_id || null;
+
   // Create the dna_groups record
   const { data: group, error: groupError } = await supabase
     .from('dna_groups')
@@ -116,9 +125,11 @@ export async function POST(request: NextRequest) {
       group_name: groupName.trim(),
       leader_id: leaderId,
       co_leader_id: coLeaderId || null,
+      church_id: churchId,
       cohort_id: cohortId,
       group_type: 'training_cohort',
       current_phase: 'foundation',
+      start_date: new Date().toISOString().split('T')[0],
       is_active: true,
     })
     .select('id')
