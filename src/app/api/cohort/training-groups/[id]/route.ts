@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, isAdmin, isChurchLeader } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin, hasRole } from '@/lib/unified-auth';
 
 // DELETE /api/cohort/training-groups/[id]
 // Soft-deletes (deactivates) a training group.
@@ -10,7 +10,7 @@ export async function DELETE(
 ) {
   const session = await getUnifiedSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isAdmin(session) && !isChurchLeader(session)) {
+  if (!isAdmin(session) && !hasRole(session, 'church_leader')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -39,7 +39,7 @@ export async function PUT(
 ) {
   const session = await getUnifiedSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isAdmin(session) && !isChurchLeader(session)) {
+  if (!isAdmin(session) && !hasRole(session, 'church_leader')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 

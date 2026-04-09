@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, isAdmin, isChurchLeader } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin, hasRole } from '@/lib/unified-auth';
 
 // GET /api/cohort/training-groups?cohortId=xxx
 // Returns training groups for a cohort + cohort members for dropdowns.
 export async function GET(request: NextRequest) {
   const session = await getUnifiedSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isAdmin(session) && !isChurchLeader(session)) {
+  if (!isAdmin(session) && !hasRole(session, 'church_leader')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   const session = await getUnifiedSession();
   if (!session) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  if (!isAdmin(session) && !isChurchLeader(session)) {
+  if (!isAdmin(session) && !hasRole(session, 'church_leader')) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
