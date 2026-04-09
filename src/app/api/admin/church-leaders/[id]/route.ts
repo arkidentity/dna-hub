@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { getUnifiedSession, isAdmin, hasRole, getPrimaryChurch } from '@/lib/unified-auth';
+import { getDnaHqChurchId } from '@/lib/dna-hq';
 
 // DELETE /api/admin/church-leaders/[id]
 // Removes a church leader from their church, cleaning up all related tables atomically.
@@ -51,6 +52,8 @@ export async function DELETE(
     await supabase.from('church_leaders').delete().eq('id', id);
 
     if (userId) {
+      const dnaHqId = await getDnaHqChurchId();
+
       // 2. Remove church_leader role scoped to this church
       await supabase
         .from('user_roles')
@@ -67,14 +70,60 @@ export async function DELETE(
         .eq('role', 'dna_leader')
         .eq('church_id', churchId);
 
-      // 4. Soft-deactivate their dna_leaders record and clear the church association
-      //    so they no longer appear under this church's groups view.
-      //    Their existing groups are preserved (they become independent / DNA HQ-scoped).
+      // 4. Reassign dna_leaders record to DNA HQ (keeps them active as a leader,
+      //    just no longer under this specific church). Groups are preserved.
+      const dnaLeaderUpdate: Record<string, unknown> = {
+        church_id: dnaHqId,
+        updated_at: new Date().toISOString(),
+      };
+      // Only reactivate if they were active before — don't resurrect intentionally deactivated leaders
+      dnaLeaderUpdate.is_active = true;
+
       await supabase
         .from('dna_leaders')
-        .update({ church_id: null, is_active: false })
+        .update(dnaLeaderUpdate)
         .eq('user_id', userId)
         .eq('church_id', churchId);
+
+      // 5. Remove from this church's cohort(s)
+      const { data: leaderRecord } = await supabase
+        .from('dna_leaders')
+        .select('id')
+        .eq('user_id', userId)
+        .maybeSingle();
+
+      if (leaderRecord) {
+        const { data: churchCohorts } = await supabase
+          .from('dna_cohorts')
+          .select('id')
+          .eq('church_id', churchId);
+
+        if (churchCohorts && churchCohorts.length > 0) {
+          const cohortIds = churchCohorts.map((c) => c.id);
+          await supabase
+            .from('dna_cohort_members')
+            .delete()
+            .eq('leader_id', leaderRecord.id)
+            .in('cohort_id', cohortIds);
+        }
+      }
+
+      // 6. Add dna_leader role scoped to DNA HQ so Groups/Cohort nav reappears
+      if (dnaHqId) {
+        const { data: existingHqRole } = await supabase
+          .from('user_roles')
+          .select('id')
+          .eq('user_id', userId)
+          .eq('role', 'dna_leader')
+          .eq('church_id', dnaHqId)
+          .maybeSingle();
+
+        if (!existingHqRole) {
+          await supabase
+            .from('user_roles')
+            .insert({ user_id: userId, role: 'dna_leader', church_id: dnaHqId });
+        }
+      }
     }
 
     return NextResponse.json({ success: true });

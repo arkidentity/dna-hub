@@ -35,13 +35,22 @@ BEGIN
     AND role = 'dna_leader'
     AND church_id = p_church_id;
 
-  -- 4. Soft-deactivate dna_leaders record if it still points to this church
+  -- 4. Reassign dna_leaders record to DNA HQ (keeps them active)
   UPDATE dna_leaders
   SET church_id  = NULL,
       is_active  = FALSE,
       updated_at = NOW()
   WHERE user_id  = p_user_id
     AND church_id = p_church_id;
+
+  -- 5. Remove from this church's cohort(s)
+  DELETE FROM dna_cohort_members
+  WHERE leader_id IN (
+    SELECT id FROM dna_leaders WHERE user_id = p_user_id
+  )
+  AND cohort_id IN (
+    SELECT id FROM dna_cohorts WHERE church_id = p_church_id
+  );
 END;
 $$;
 

@@ -48,12 +48,66 @@ export async function PATCH(
         return NextResponse.json({ error: 'Church not found' }, { status: 404 });
       }
 
+      const oldChurchId = account.church_id;
+
+      // 1. Update disciple_app_accounts
       const { error: updateError } = await supabase
         .from('disciple_app_accounts')
         .update({ church_id })
         .eq('id', accountId);
 
       if (updateError) throw updateError;
+
+      // 2. Sync dna_leaders if this account has a leader record
+      const email = account.email.toLowerCase();
+      const { data: leaderRecord } = await supabase
+        .from('dna_leaders')
+        .select('id, user_id, church_id')
+        .ilike('email', email)
+        .maybeSingle();
+
+      if (leaderRecord) {
+        await supabase
+          .from('dna_leaders')
+          .update({ church_id, updated_at: new Date().toISOString() })
+          .eq('id', leaderRecord.id);
+
+        // 3. Sync user_roles if they have a linked user record
+        const userId = leaderRecord.user_id;
+        if (userId) {
+          // Remove dna_leader role for old church
+          if (oldChurchId) {
+            await supabase
+              .from('user_roles')
+              .delete()
+              .eq('user_id', userId)
+              .eq('role', 'dna_leader')
+              .eq('church_id', oldChurchId);
+
+            await supabase
+              .from('user_roles')
+              .delete()
+              .eq('user_id', userId)
+              .eq('role', 'church_leader')
+              .eq('church_id', oldChurchId);
+          }
+
+          // Add dna_leader role for new church (if not already present)
+          const { data: existingRole } = await supabase
+            .from('user_roles')
+            .select('id')
+            .eq('user_id', userId)
+            .eq('role', 'dna_leader')
+            .eq('church_id', church_id)
+            .maybeSingle();
+
+          if (!existingRole) {
+            await supabase
+              .from('user_roles')
+              .insert({ user_id: userId, role: 'dna_leader', church_id });
+          }
+        }
+      }
 
       return NextResponse.json({
         success: true,
