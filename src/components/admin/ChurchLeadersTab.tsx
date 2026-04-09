@@ -12,6 +12,7 @@ import {
   CheckCircle,
   Send,
   Pencil,
+  Trash2,
 } from 'lucide-react';
 
 interface ChurchLeader {
@@ -48,6 +49,10 @@ export default function ChurchLeadersTab({ churchId, churchName }: ChurchLeaders
   const [editForm, setEditForm] = useState({ name: '', email: '' });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+
+  // Remove confirmation state
+  const [removingLeader, setRemovingLeader] = useState<ChurchLeader | null>(null);
+  const [removing, setRemoving] = useState(false);
 
   useEffect(() => {
     fetchLeaders();
@@ -123,6 +128,26 @@ export default function ChurchLeadersTab({ churchId, churchName }: ChurchLeaders
       alert('Failed to send login link');
     } finally {
       setSendingLink(null);
+    }
+  };
+
+  const handleRemove = async () => {
+    if (!removingLeader) return;
+    setRemoving(true);
+    try {
+      const response = await fetch(`/api/admin/church-leaders/${removingLeader.id}`, {
+        method: 'DELETE',
+      });
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.error || 'Failed to remove leader');
+      }
+      setRemovingLeader(null);
+      fetchLeaders();
+    } catch (err) {
+      alert(err instanceof Error ? err.message : 'Failed to remove leader');
+    } finally {
+      setRemoving(false);
     }
   };
 
@@ -265,6 +290,13 @@ export default function ChurchLeadersTab({ churchId, churchName }: ChurchLeaders
                   >
                     <Pencil className="w-3.5 h-3.5" />
                   </button>
+                  <button
+                    onClick={() => setRemovingLeader(leader)}
+                    className="p-1.5 text-foreground-muted hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+                    title="Remove from church"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                  </button>
                 </div>
               </div>
             ))}
@@ -389,6 +421,64 @@ export default function ChurchLeadersTab({ churchId, churchName }: ChurchLeaders
                 </div>
               </form>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* Remove Confirmation Modal */}
+      {removingLeader && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl max-w-md w-full mx-4">
+            <div className="flex items-center justify-between p-4 border-b border-card-border">
+              <h3 className="font-semibold text-navy">Remove Church Leader</h3>
+              <button
+                onClick={() => setRemovingLeader(null)}
+                className="p-1 text-foreground-muted hover:text-navy rounded"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="p-4 space-y-4">
+              <p className="text-foreground-muted">
+                Are you sure you want to remove{' '}
+                <span className="font-medium text-navy">
+                  {removingLeader.name || removingLeader.email}
+                </span>{' '}
+                from <span className="font-medium text-navy">{churchName}</span>?
+              </p>
+              <div className="p-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
+                This will revoke their church leader and DNA leader access for this church.
+                Their existing DNA groups are preserved but will become unaffiliated.
+              </div>
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setRemovingLeader(null)}
+                  disabled={removing}
+                  className="flex-1 px-4 py-2 border border-card-border text-foreground-muted rounded-lg hover:bg-background-secondary transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleRemove}
+                  disabled={removing}
+                  className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+                >
+                  {removing ? (
+                    <>
+                      <Loader2 className="w-4 h-4 animate-spin" />
+                      Removing...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="w-4 h-4" />
+                      Remove Leader
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}

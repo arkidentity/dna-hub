@@ -28,7 +28,7 @@ export async function PATCH(
     // Get current leader data
     const { data: leader, error: fetchError } = await supabase
       .from('dna_leaders')
-      .select('id, email, name, church_id')
+      .select('id, email, name, church_id, user_id')
       .eq('id', id)
       .single();
 
@@ -52,7 +52,8 @@ export async function PATCH(
     if (name !== undefined) updates.name = name;
     if (phone !== undefined) updates.phone = phone || null;
     // church_id: empty string means "make independent"
-    if ('church_id' in body) updates.church_id = church_id || null;
+    const churchIdChanging = 'church_id' in body;
+    if (churchIdChanging) updates.church_id = church_id || null;
 
     // Handle email change
     if (email && email.toLowerCase().trim() !== leader.email.toLowerCase()) {
@@ -112,6 +113,57 @@ export async function PATCH(
       .single();
 
     if (updateError) throw updateError;
+
+    // When church_id changes, sync user_roles so RLS and dashboard access
+    // reflect the new affiliation. Without this, the leader retains access to
+    // the old church's dashboard.
+    if (churchIdChanging && leader.user_id) {
+      const oldChurchId = leader.church_id;
+      const newChurchId = (church_id as string) || null;
+
+      // Remove dna_leader role for old church (if any)
+      if (oldChurchId) {
+        await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', leader.user_id)
+          .eq('role', 'dna_leader')
+          .eq('church_id', oldChurchId);
+
+        // Also remove church_leader role for old church — if someone was a full
+        // church leader and is being reassigned, revoke that access too.
+        await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', leader.user_id)
+          .eq('role', 'church_leader')
+          .eq('church_id', oldChurchId);
+
+        // Remove from church_leaders table for old church
+        await supabase
+          .from('church_leaders')
+          .delete()
+          .eq('user_id', leader.user_id)
+          .eq('church_id', oldChurchId);
+      }
+
+      // Add dna_leader role for new church (if any)
+      if (newChurchId) {
+        const { data: existingRole } = await supabase
+          .from('user_roles')
+          .select('id')
+          .eq('user_id', leader.user_id)
+          .eq('role', 'dna_leader')
+          .eq('church_id', newChurchId)
+          .maybeSingle();
+
+        if (!existingRole) {
+          await supabase
+            .from('user_roles')
+            .insert({ user_id: leader.user_id, role: 'dna_leader', church_id: newChurchId });
+        }
+      }
+    }
 
     return NextResponse.json({ leader: updatedLeader });
   } catch (error) {
