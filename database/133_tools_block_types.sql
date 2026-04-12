@@ -3,7 +3,7 @@
 -- Created: 2026-04-12
 -- Purpose: Add four new "Tools" block types for live services.
 --
---   three_d_journal     — iframe to /journal/new?embed=true
+--   three_d_journal     — iframe to /journal?embed=true
 --   who_else            — iframe to /who-else?embed=true
 --   prayer_cards_warmup — iframe to /prayer?embed=true (my cards)
 --   corporate_4d_prayer — conductor-driven prayer session
@@ -15,11 +15,13 @@
 --   - New RPC: advance_prayer_card
 --   - New RPC: approve_prayer_card_to_queue
 --   - New RPC: remove_prayer_card_from_queue
---   - Updated RPC: get_live_service_feed (passes live_state)
+--   - Updated RPC: get_live_service_feed (adds live_state to output)
 --   - Updated RPC: retract_service_block (clears live_state)
---   - Updated RPC: reset_live_service (clears live_state)
+--   - Updated RPC: reset_live_service (clears live_state on all blocks)
 --
 -- GOTCHA: DROP + CREATE on RPCs loses GRANT — re-added below.
+-- GOTCHA: 'is' is a SQL reserved word — use 'isvc' as alias for
+--         interactive_services throughout.
 -- ============================================================
 
 
@@ -33,7 +35,8 @@
 ALTER TABLE service_blocks
   ADD COLUMN IF NOT EXISTS live_state JSONB;
 
--- 1.2 Update block_type CHECK — drop all existing constraints, re-add with new types
+-- 1.2 Update block_type CHECK — drop all existing CHECK constraints,
+--     then re-add with new types included.
 DO $$
 DECLARE r RECORD;
 BEGIN
@@ -64,11 +67,13 @@ ALTER TABLE service_blocks ADD CONSTRAINT service_blocks_block_type_check
 -- SECTION 2: CORPORATE 4D PRAYER RPCs
 -- ============================================
 
--- live_state shape for corporate_4d_prayer:
+-- live_state JSONB shape for corporate_4d_prayer:
 -- {
 --   "phase": "REVERE" | "REFLECT" | "REQUEST" | "REST",
 --   "card_index": 0,
---   "request_queue": ["prayer_wall_post_id", ...],
+--   "request_queue": [
+--     { "id": "uuid", "prayer_text": "...", "display_name": "...", "is_anonymous": false }
+--   ],
 --   "request_queue_index": 0
 -- }
 
@@ -76,6 +81,7 @@ ALTER TABLE service_blocks ADD CONSTRAINT service_blocks_block_type_check
 -- 2.1 SET PRAYER PHASE
 -- Conductor taps a phase tab to jump to that phase.
 -- Resets card_index and request_queue_index to 0.
+-- Preserves existing request_queue so approved cards survive a phase switch.
 -- ============================================
 CREATE OR REPLACE FUNCTION set_prayer_phase(
   p_block_id  UUID,
@@ -87,20 +93,17 @@ SECURITY DEFINER
 AS $$
 DECLARE
   v_church_id UUID;
-  v_leader_id UUID;
 BEGIN
   -- Verify caller is a church_leader for this block's church
-  SELECT is.church_id INTO v_church_id
+  SELECT isvc.church_id INTO v_church_id
   FROM service_blocks sb
-  JOIN interactive_services is ON is.id = sb.service_id
+  JOIN interactive_services isvc ON isvc.id = sb.service_id
   WHERE sb.id = p_block_id;
 
-  SELECT u.church_id INTO v_leader_id
-  FROM users u
-  WHERE u.id = auth.uid()
-    AND u.church_id = v_church_id;
-
-  IF v_leader_id IS NULL THEN
+  IF NOT EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid() AND u.church_id = v_church_id
+  ) THEN
     RAISE EXCEPTION 'Not authorized';
   END IF;
 
@@ -110,10 +113,10 @@ BEGIN
 
   UPDATE service_blocks
   SET live_state = jsonb_build_object(
-    'phase',                p_phase,
-    'card_index',           0,
-    'request_queue',        COALESCE((live_state->>'request_queue')::jsonb, '[]'::jsonb),
-    'request_queue_index',  0
+    'phase',               p_phase,
+    'card_index',          0,
+    'request_queue',       COALESCE(live_state->'request_queue', '[]'::jsonb),
+    'request_queue_index', 0
   )
   WHERE id = p_block_id;
 END;
@@ -124,8 +127,8 @@ GRANT EXECUTE ON FUNCTION set_prayer_phase(UUID, TEXT) TO authenticated;
 -- ============================================
 -- 2.2 ADVANCE PRAYER CARD
 -- Conductor taps next/prev within the current phase.
--- For REQUEST phase: advances request_queue_index.
--- For other phases:  advances card_index.
+-- REQUEST phase: advances request_queue_index (clamped to queue length).
+-- Other phases:  advances card_index (wraps or clamps per client logic).
 -- ============================================
 CREATE OR REPLACE FUNCTION advance_prayer_card(
   p_block_id   UUID,
@@ -137,30 +140,27 @@ SECURITY DEFINER
 AS $$
 DECLARE
   v_church_id  UUID;
-  v_leader_id  UUID;
   v_state      JSONB;
   v_phase      TEXT;
   v_idx        INTEGER;
   v_queue_len  INTEGER;
 BEGIN
-  SELECT is.church_id INTO v_church_id
+  SELECT isvc.church_id INTO v_church_id
   FROM service_blocks sb
-  JOIN interactive_services is ON is.id = sb.service_id
+  JOIN interactive_services isvc ON isvc.id = sb.service_id
   WHERE sb.id = p_block_id;
 
-  SELECT u.church_id INTO v_leader_id
-  FROM users u
-  WHERE u.id = auth.uid()
-    AND u.church_id = v_church_id;
-
-  IF v_leader_id IS NULL THEN
+  IF NOT EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid() AND u.church_id = v_church_id
+  ) THEN
     RAISE EXCEPTION 'Not authorized';
   END IF;
 
   SELECT live_state INTO v_state FROM service_blocks WHERE id = p_block_id;
 
   IF v_state IS NULL THEN
-    RAISE EXCEPTION 'Block has no live_state';
+    RAISE EXCEPTION 'Block has no live_state — call set_prayer_phase first';
   END IF;
 
   v_phase := v_state->>'phase';
@@ -198,10 +198,9 @@ GRANT EXECUTE ON FUNCTION advance_prayer_card(UUID, TEXT) TO authenticated;
 
 -- ============================================
 -- 2.3 APPROVE PRAYER CARD TO QUEUE
--- Conductor approves a prayer_wall_post for the
--- REQUEST queue. Stores inline card content so
--- congregation can render without a secondary fetch.
--- Idempotent — won't add duplicates.
+-- Conductor approves a prayer_wall_post for the REQUEST queue.
+-- Stores inline card content so congregation renders without a secondary fetch.
+-- Idempotent — silently skips duplicates.
 --
 -- Queue item shape:
 -- { "id": "uuid", "prayer_text": "...", "display_name": "...", "is_anonymous": false }
@@ -216,7 +215,6 @@ SECURITY DEFINER
 AS $$
 DECLARE
   v_church_id    UUID;
-  v_leader_id    UUID;
   v_state        JSONB;
   v_queue        JSONB;
   v_prayer_text  TEXT;
@@ -224,25 +222,23 @@ DECLARE
   v_is_anonymous BOOLEAN;
   v_card_item    JSONB;
 BEGIN
-  SELECT is2.church_id INTO v_church_id
+  SELECT isvc.church_id INTO v_church_id
   FROM service_blocks sb
-  JOIN interactive_services is2 ON is2.id = sb.service_id
+  JOIN interactive_services isvc ON isvc.id = sb.service_id
   WHERE sb.id = p_block_id;
 
-  SELECT u.church_id INTO v_leader_id
-  FROM users u
-  WHERE u.id = auth.uid()
-    AND u.church_id = v_church_id;
-
-  IF v_leader_id IS NULL THEN
+  IF NOT EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid() AND u.church_id = v_church_id
+  ) THEN
     RAISE EXCEPTION 'Not authorized';
   END IF;
 
-  -- Fetch prayer card content
-  SELECT prayer_text, display_name, is_anonymous
+  -- Fetch prayer card content inline
+  SELECT pwp.prayer_text, pwp.display_name, pwp.is_anonymous
   INTO v_prayer_text, v_display_name, v_is_anonymous
-  FROM prayer_wall_posts
-  WHERE id = p_prayer_post_id;
+  FROM prayer_wall_posts pwp
+  WHERE pwp.id = p_prayer_post_id;
 
   IF v_prayer_text IS NULL THEN
     RAISE EXCEPTION 'Prayer post not found: %', p_prayer_post_id;
@@ -257,7 +253,7 @@ BEGIN
 
   SELECT live_state INTO v_state FROM service_blocks WHERE id = p_block_id;
 
-  -- Init live_state if not set
+  -- Init live_state if block hasn't been initialized yet
   IF v_state IS NULL THEN
     v_state := jsonb_build_object(
       'phase',               'REVERE',
@@ -269,7 +265,7 @@ BEGIN
 
   v_queue := COALESCE(v_state->'request_queue', '[]'::jsonb);
 
-  -- Idempotent: only append if id not already present
+  -- Idempotent: only append if id not already in queue
   IF NOT EXISTS (
     SELECT 1 FROM jsonb_array_elements(v_queue) elem
     WHERE elem->>'id' = p_prayer_post_id::text
@@ -287,8 +283,8 @@ GRANT EXECUTE ON FUNCTION approve_prayer_card_to_queue(UUID, UUID) TO authentica
 
 -- ============================================
 -- 2.4 REMOVE PRAYER CARD FROM QUEUE
--- Removes a post from the REQUEST queue.
--- Adjusts request_queue_index if needed.
+-- Removes a post from the REQUEST queue by matching elem->>'id'.
+-- Clamps request_queue_index if it would go out of bounds.
 -- ============================================
 CREATE OR REPLACE FUNCTION remove_prayer_card_from_queue(
   p_block_id       UUID,
@@ -300,34 +296,30 @@ SECURITY DEFINER
 AS $$
 DECLARE
   v_church_id  UUID;
-  v_leader_id  UUID;
   v_state      JSONB;
   v_queue      JSONB;
-  v_new_queue  JSONB;
+  v_new_queue  JSONB := '[]'::jsonb;
   v_idx        INTEGER;
   v_item       JSONB;
 BEGIN
-  SELECT is.church_id INTO v_church_id
+  SELECT isvc.church_id INTO v_church_id
   FROM service_blocks sb
-  JOIN interactive_services is ON is.id = sb.service_id
+  JOIN interactive_services isvc ON isvc.id = sb.service_id
   WHERE sb.id = p_block_id;
 
-  SELECT u.church_id INTO v_leader_id
-  FROM users u
-  WHERE u.id = auth.uid()
-    AND u.church_id = v_church_id;
-
-  IF v_leader_id IS NULL THEN
+  IF NOT EXISTS (
+    SELECT 1 FROM users u
+    WHERE u.id = auth.uid() AND u.church_id = v_church_id
+  ) THEN
     RAISE EXCEPTION 'Not authorized';
   END IF;
 
   SELECT live_state INTO v_state FROM service_blocks WHERE id = p_block_id;
-
   IF v_state IS NULL THEN RETURN; END IF;
 
-  v_queue     := COALESCE(v_state->'request_queue', '[]'::jsonb);
-  v_new_queue := '[]'::jsonb;
+  v_queue := COALESCE(v_state->'request_queue', '[]'::jsonb);
 
+  -- Rebuild queue excluding the removed item
   FOR v_item IN SELECT * FROM jsonb_array_elements(v_queue)
   LOOP
     IF (v_item->>'id') IS DISTINCT FROM p_prayer_post_id::text THEN
@@ -335,7 +327,7 @@ BEGIN
     END IF;
   END LOOP;
 
-  -- Clamp index if it's now out of bounds
+  -- Clamp index to valid range
   v_idx := LEAST(
     COALESCE((v_state->>'request_queue_index')::INTEGER, 0),
     GREATEST(jsonb_array_length(v_new_queue) - 1, 0)
@@ -343,7 +335,7 @@ BEGIN
 
   UPDATE service_blocks
   SET live_state = v_state
-    || jsonb_build_object('request_queue', v_new_queue)
+    || jsonb_build_object('request_queue',       v_new_queue)
     || jsonb_build_object('request_queue_index', v_idx)
   WHERE id = p_block_id;
 END;
@@ -356,44 +348,43 @@ GRANT EXECUTE ON FUNCTION remove_prayer_card_from_queue(UUID, UUID) TO authentic
 -- SECTION 3: UPDATE EXISTING RPCs
 -- ============================================
 
--- 3.1 get_live_service_feed — add live_state to output
--- Existing RPC returns service blocks to congregation.
--- We add live_state so congregation can render corporate prayer.
 -- ============================================
-DROP FUNCTION IF EXISTS get_live_service_feed(TEXT);
+-- 3.1 get_live_service_feed — add live_state to output
+-- Original: migration 098. Takes p_church_id UUID.
+-- Client (liveFeedData.ts + displayData.ts) passes p_church_id.
+-- Output shape must match what the client expects.
+-- ============================================
+DROP FUNCTION IF EXISTS get_live_service_feed(UUID);
 
-CREATE OR REPLACE FUNCTION get_live_service_feed(p_subdomain TEXT)
+CREATE OR REPLACE FUNCTION get_live_service_feed(p_church_id UUID)
 RETURNS TABLE (
   session_id        UUID,
-  session_status    TEXT,
-  session_ended_at  TIMESTAMPTZ,
+  service_id        UUID,
+  service_title     TEXT,
+  is_live           BOOLEAN,
+  current_block_id  UUID,
+  started_at        TIMESTAMPTZ,
   block_id          UUID,
   block_type        TEXT,
   config            JSONB,
   is_active         BOOLEAN,
   activated_at      TIMESTAMPTZ,
-  deactivated_at    TIMESTAMPTZ,
   results_shown_at  TIMESTAMPTZ,
   live_state        JSONB,
+  show_on_display   BOOLEAN,
   sort_order        INTEGER
 )
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_church_id UUID;
   v_session_id UUID;
 BEGIN
-  SELECT c.id INTO v_church_id
-  FROM churches c
-  WHERE c.subdomain = p_subdomain;
-
-  IF v_church_id IS NULL THEN RETURN; END IF;
-
+  -- Find the most recent live or recently-ended session for this church
   SELECT ls.id INTO v_session_id
   FROM live_sessions ls
-  WHERE ls.church_id = v_church_id
-    AND ls.status IN ('active', 'ended')
+  WHERE ls.church_id = p_church_id
+    AND (ls.is_live = true OR ls.ended_at IS NOT NULL)
   ORDER BY ls.started_at DESC
   LIMIT 1;
 
@@ -401,35 +392,43 @@ BEGIN
 
   RETURN QUERY
   SELECT
-    ls.id,
-    ls.status,
-    ls.ended_at,
-    sb.id,
-    sb.block_type,
-    sb.config,
-    sb.is_active,
-    sb.activated_at,
-    sb.deactivated_at,
-    sb.results_shown_at,
-    sb.live_state,
-    sb.sort_order
+    ls.id                  AS session_id,
+    ls.service_id          AS service_id,
+    isvc.title             AS service_title,
+    ls.is_live             AS is_live,
+    ls.current_block_id    AS current_block_id,
+    ls.started_at          AS started_at,
+    sb.id                  AS block_id,
+    sb.block_type          AS block_type,
+    sb.config              AS config,
+    sb.is_active           AS is_active,
+    sb.activated_at        AS activated_at,
+    sb.results_shown_at    AS results_shown_at,
+    sb.live_state          AS live_state,
+    sb.show_on_display     AS show_on_display,
+    sb.sort_order          AS sort_order
   FROM live_sessions ls
   JOIN interactive_services isvc ON isvc.id = ls.service_id
-  JOIN service_blocks sb ON sb.service_id = isvc.id
+  JOIN service_blocks sb ON sb.service_id = ls.service_id
   WHERE ls.id = v_session_id
     AND sb.is_active = true
   ORDER BY sb.sort_order;
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION get_live_service_feed(TEXT) TO anon, authenticated;
+GRANT EXECUTE ON FUNCTION get_live_service_feed(UUID) TO anon, authenticated;
 
 -- ============================================
 -- 3.2 retract_service_block — clear live_state on retract
+-- Original signature: retract_service_block(p_session_id UUID, p_block_id UUID)
+-- Returns the now-active previous block ID (or NULL if nothing remains).
 -- ============================================
-DROP FUNCTION IF EXISTS retract_service_block(UUID);
+DROP FUNCTION IF EXISTS retract_service_block(UUID, UUID);
 
-CREATE OR REPLACE FUNCTION retract_service_block(p_block_id UUID)
+CREATE OR REPLACE FUNCTION retract_service_block(
+  p_session_id  UUID,
+  p_block_id    UUID
+)
 RETURNS UUID
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -440,13 +439,13 @@ DECLARE
   v_sort_order  INTEGER;
   v_prev_id     UUID;
 BEGIN
-  SELECT sb.service_id, sb.sort_order, is2.church_id
-  INTO v_service_id, v_sort_order, v_church_id
+  -- Get the service + church for authorization
+  SELECT isvc.id, isvc.church_id
+  INTO v_service_id, v_church_id
   FROM service_blocks sb
-  JOIN interactive_services is2 ON is2.id = sb.service_id
+  JOIN interactive_services isvc ON isvc.id = sb.service_id
   WHERE sb.id = p_block_id;
 
-  -- Verify caller is authorized
   IF NOT EXISTS (
     SELECT 1 FROM users u
     WHERE u.id = auth.uid() AND u.church_id = v_church_id
@@ -454,13 +453,18 @@ BEGIN
     RAISE EXCEPTION 'Not authorized';
   END IF;
 
-  -- Deactivate current block, clear live_state
+  -- Get sort_order for finding previous block
+  SELECT sb.sort_order INTO v_sort_order
+  FROM service_blocks sb
+  WHERE sb.id = p_block_id;
+
+  -- Deactivate current block and clear live_state
   UPDATE service_blocks
-  SET is_active      = false,
-      deactivated_at = now(),
-      activated_at   = NULL,
+  SET is_active        = false,
+      deactivated_at   = now(),
+      activated_at     = NULL,
       results_shown_at = NULL,
-      live_state     = NULL
+      live_state       = NULL
   WHERE id = p_block_id;
 
   -- Re-activate the previous block (by sort_order)
@@ -474,20 +478,30 @@ BEGIN
 
   IF v_prev_id IS NOT NULL THEN
     UPDATE service_blocks
-    SET is_active    = true,
-        activated_at = now(),
+    SET is_active      = true,
+        activated_at   = now(),
         deactivated_at = NULL
     WHERE id = v_prev_id;
+
+    -- Update session's current block pointer
+    UPDATE live_sessions
+    SET current_block_id = v_prev_id
+    WHERE id = p_session_id;
+  ELSE
+    UPDATE live_sessions
+    SET current_block_id = NULL
+    WHERE id = p_session_id;
   END IF;
 
   RETURN v_prev_id;
 END;
 $$;
 
-GRANT EXECUTE ON FUNCTION retract_service_block(UUID) TO authenticated;
+GRANT EXECUTE ON FUNCTION retract_service_block(UUID, UUID) TO authenticated;
 
 -- ============================================
 -- 3.3 reset_live_service — clear live_state on all blocks
+-- Original signature: reset_live_service(p_session_id UUID)
 -- ============================================
 DROP FUNCTION IF EXISTS reset_live_service(UUID);
 
@@ -497,9 +511,11 @@ LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_church_id UUID;
+  v_church_id  UUID;
+  v_service_id UUID;
 BEGIN
-  SELECT ls.church_id INTO v_church_id
+  SELECT ls.church_id, ls.service_id
+  INTO v_church_id, v_service_id
   FROM live_sessions ls
   WHERE ls.id = p_session_id;
 
@@ -510,15 +526,19 @@ BEGIN
     RAISE EXCEPTION 'Not authorized';
   END IF;
 
+  -- Clear all block activations and live state
   UPDATE service_blocks
   SET is_active        = false,
       activated_at     = NULL,
       deactivated_at   = NULL,
       results_shown_at = NULL,
       live_state       = NULL
-  WHERE service_id = (
-    SELECT ls.service_id FROM live_sessions ls WHERE ls.id = p_session_id
-  );
+  WHERE service_id = v_service_id;
+
+  -- Clear session's current block pointer
+  UPDATE live_sessions
+  SET current_block_id = NULL
+  WHERE id = p_session_id;
 END;
 $$;
 
