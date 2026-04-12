@@ -12,11 +12,15 @@ import {
   TextCursorInput,
   HandHeart,
   Megaphone,
+  PenLine,
+  UserPlus,
+  Layers,
+  Mic,
   type LucideIcon,
 } from 'lucide-react';
 import type { BlockType } from '@/lib/types';
 
-export type BlockCategory = 'content' | 'engagement' | 'action';
+export type BlockCategory = 'content' | 'engagement' | 'action' | 'tools';
 
 export interface BlockTypeInfo {
   type: BlockType;
@@ -178,6 +182,47 @@ const BLOCK_TYPES: BlockTypeInfo[] = [
     defaultConfig: { title: '', description: '', image_url: '', cta_text: 'Sign Up', cta_type: 'sign_up' },
     defaultShowOnDisplay: true,
   },
+  // Tools blocks
+  {
+    type: 'three_d_journal',
+    label: '3D Journal',
+    icon: PenLine,
+    category: 'tools',
+    categoryLabel: 'Tools',
+    description: 'Open the 3D Journal inline for personal reflection',
+    defaultConfig: { use_daily_passage: true, passage_ref: '', passage_usfm: '', passage_text: '', translation: 'NIV', head_prompt: '' },
+    defaultShowOnDisplay: false,
+  },
+  {
+    type: 'who_else',
+    label: 'Who Else?',
+    icon: UserPlus,
+    category: 'tools',
+    categoryLabel: 'Tools',
+    description: 'Open the Who Else? outreach tracking tool',
+    defaultConfig: { prompt: '' },
+    defaultShowOnDisplay: true,
+  },
+  {
+    type: 'prayer_cards_warmup',
+    label: 'Prayer Cards',
+    icon: Layers,
+    category: 'tools',
+    categoryLabel: 'Tools',
+    description: 'Prompt congregation to create and share prayer cards',
+    defaultConfig: { prompt: '' },
+    defaultShowOnDisplay: true,
+  },
+  {
+    type: 'corporate_4d_prayer',
+    label: '4D Prayer LIVE',
+    icon: Mic,
+    category: 'tools',
+    categoryLabel: 'Tools',
+    description: 'Conductor-led 4D prayer session with church wall cards for Requests',
+    defaultConfig: { categories: [], instructions: '' },
+    defaultShowOnDisplay: true,
+  },
 ];
 
 export function getBlockTypeInfo(type: BlockType): BlockTypeInfo {
@@ -185,7 +230,7 @@ export function getBlockTypeInfo(type: BlockType): BlockTypeInfo {
 }
 
 export function getBlockTypesByCategory(): { category: BlockCategory; label: string; types: BlockTypeInfo[] }[] {
-  const categories: BlockCategory[] = ['content', 'engagement', 'action'];
+  const categories: BlockCategory[] = ['content', 'engagement', 'action', 'tools'];
   return categories.map((cat) => {
     const types = BLOCK_TYPES.filter((bt) => bt.category === cat);
     return { category: cat, label: types[0]?.categoryLabel || cat, types };
@@ -235,6 +280,16 @@ export function getBlockConfigSummary(type: BlockType, config: Record<string, un
     }
     case 'announcement':
       return (config.title as string)?.slice(0, 50) || 'Untitled announcement';
+    case 'three_d_journal':
+      return config.use_daily_passage ? 'Passage of the Day' : ((config.passage_ref as string) || 'No passage set');
+    case 'who_else':
+      return (config.prompt as string)?.slice(0, 50) || 'Who else needs this?';
+    case 'prayer_cards_warmup':
+      return (config.prompt as string)?.slice(0, 50) || 'Create & share prayer cards';
+    case 'corporate_4d_prayer': {
+      const cats = config.categories as string[] | undefined;
+      return cats?.length ? `Filtered: ${cats.join(', ')}` : 'All prayer categories';
+    }
     default:
       return '';
   }

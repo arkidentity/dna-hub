@@ -84,6 +84,18 @@ export default function BlockConfigModal({ block, onSave, onClose }: BlockConfig
           {block.block_type === 'announcement' && (
             <AnnouncementForm config={config} onChange={updateField} />
           )}
+          {block.block_type === 'three_d_journal' && (
+            <ThreeDJournalForm config={config} onChange={updateField} />
+          )}
+          {block.block_type === 'who_else' && (
+            <WhoElseForm config={config} onChange={updateField} />
+          )}
+          {block.block_type === 'prayer_cards_warmup' && (
+            <PrayerCardsWarmupForm config={config} onChange={updateField} />
+          )}
+          {block.block_type === 'corporate_4d_prayer' && (
+            <CorporatePrayerForm config={config} onChange={updateField} />
+          )}
 
           {/* Display visibility toggle (all blocks) */}
           <div className="pt-3 border-t border-card-border">
@@ -989,6 +1001,191 @@ function AnnouncementForm({ config, onChange }: FormProps) {
           }`}
         />
         <p className="text-xs text-foreground-muted mt-1">Receives sign-up list with responder contact info after the service.</p>
+      </div>
+    </>
+  );
+}
+
+// ============================================
+// Tools form components
+// ============================================
+
+const PRAYER_CARD_TAGS = [
+  'Personal', 'Family', 'Church/Ministry', 'Work/Business',
+  'Health', 'Relationships', 'Spiritual Growth', 'Community/Local', 'World/Global',
+] as const;
+
+const BIBLE_TRANSLATIONS = [
+  { value: 'NIV', label: 'NIV' },
+  { value: 'ESV', label: 'ESV' },
+  { value: 'NLT', label: 'NLT' },
+  { value: 'NKJV', label: 'NKJV' },
+  { value: 'KJV', label: 'KJV' },
+  { value: 'CSB', label: 'CSB' },
+  { value: 'MSG', label: 'The Message' },
+];
+
+function ThreeDJournalForm({ config, onChange }: FormProps) {
+  const useDaily = config.use_daily_passage !== false;
+  return (
+    <>
+      <div className="p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+        Opens the 3D Journal inline so congregation can journal during the service. Their entries are saved to their personal account.
+      </div>
+      <ToggleField
+        label="Use Passage of the Day"
+        checked={useDaily}
+        onChange={(v) => onChange('use_daily_passage', v)}
+      />
+      {!useDaily && (
+        <>
+          <div>
+            <label className="block text-sm text-foreground-muted mb-1">Passage Reference</label>
+            <input
+              type="text"
+              value={(config.passage_ref as string) || ''}
+              onChange={(e) => onChange('passage_ref', e.target.value)}
+              placeholder="John 3:16-17"
+              className="w-full border border-card-border rounded px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-foreground-muted mb-1">Passage Text</label>
+            <textarea
+              value={(config.passage_text as string) || ''}
+              onChange={(e) => onChange('passage_text', e.target.value)}
+              placeholder="For God so loved the world..."
+              rows={4}
+              className="w-full border border-card-border rounded px-3 py-2 text-sm"
+            />
+          </div>
+          <div>
+            <label className="block text-sm text-foreground-muted mb-1">Translation</label>
+            <select
+              value={(config.translation as string) || 'NIV'}
+              onChange={(e) => onChange('translation', e.target.value)}
+              className="w-full border border-card-border rounded px-3 py-2 text-sm"
+            >
+              {BIBLE_TRANSLATIONS.map((t) => (
+                <option key={t.value} value={t.value}>{t.label}</option>
+              ))}
+            </select>
+          </div>
+        </>
+      )}
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">
+          HEAD Prompt <span className="font-normal">(optional)</span>
+        </label>
+        <textarea
+          value={(config.head_prompt as string) || ''}
+          onChange={(e) => onChange('head_prompt', e.target.value)}
+          placeholder="What does this passage reveal about God's character?"
+          rows={2}
+          className="w-full border border-card-border rounded px-3 py-2 text-sm"
+        />
+        <p className="text-xs text-foreground-muted mt-1">Pre-fills the HEAD observation prompt in the journal form.</p>
+      </div>
+    </>
+  );
+}
+
+function WhoElseForm({ config, onChange }: FormProps) {
+  return (
+    <>
+      <div className="p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+        Opens the Who Else? outreach tool so congregation can add and manage their lists of people to reach with the gospel.
+      </div>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">
+          Leader Message <span className="font-normal">(optional)</span>
+        </label>
+        <textarea
+          value={(config.prompt as string) || ''}
+          onChange={(e) => onChange('prompt', e.target.value)}
+          placeholder="Take a moment to add the people on your heart to your Who Else? list..."
+          rows={3}
+          className="w-full border border-card-border rounded px-3 py-2 text-sm"
+        />
+        <p className="text-xs text-foreground-muted mt-1">Shown above the tool on phones. Leave blank to skip.</p>
+      </div>
+    </>
+  );
+}
+
+function PrayerCardsWarmupForm({ config, onChange }: FormProps) {
+  return (
+    <>
+      <div className="p-3 bg-blue-50 border border-blue-200 rounded text-sm text-blue-800">
+        Opens the 4D Prayer tool so congregation can create prayer cards and share them to the church wall — use this before a 4D Prayer LIVE block to build the Requests queue.
+      </div>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">
+          Leader Message <span className="font-normal">(optional)</span>
+        </label>
+        <textarea
+          value={(config.prompt as string) || ''}
+          onChange={(e) => onChange('prompt', e.target.value)}
+          placeholder="Create a prayer card for something on your heart and share it to the church wall..."
+          rows={3}
+          className="w-full border border-card-border rounded px-3 py-2 text-sm"
+        />
+        <p className="text-xs text-foreground-muted mt-1">Shown above the tool on phones. Leave blank to skip.</p>
+      </div>
+    </>
+  );
+}
+
+function CorporatePrayerForm({ config, onChange }: FormProps) {
+  const categories = (config.categories as string[]) || [];
+
+  function toggleCategory(cat: string) {
+    if (categories.includes(cat)) {
+      onChange('categories', categories.filter((c) => c !== cat));
+    } else {
+      onChange('categories', [...categories, cat]);
+    }
+  }
+
+  return (
+    <>
+      <div className="p-3 bg-purple-50 border border-purple-200 rounded text-sm text-purple-800">
+        A conductor-led REVERE → REFLECT → REQUEST → REST session. Built-in prompts for each phase. REQUEST draws from church wall cards that you approve live from conductor view.
+      </div>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-2">
+          Pre-filter Request Queue by Category <span className="font-normal">(optional)</span>
+        </label>
+        <p className="text-xs text-foreground-muted mb-2">Only church wall cards with these tags will appear in your REQUEST queue. Leave all unchecked to see every card.</p>
+        <div className="flex flex-wrap gap-2">
+          {PRAYER_CARD_TAGS.map((cat) => (
+            <button
+              key={cat}
+              type="button"
+              onClick={() => toggleCategory(cat)}
+              className={`px-3 py-1 rounded-full text-xs border transition-colors ${
+                categories.includes(cat)
+                  ? 'bg-navy text-white border-navy'
+                  : 'bg-white text-navy border-card-border hover:border-navy'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+      </div>
+      <div>
+        <label className="block text-sm text-foreground-muted mb-1">
+          Session Instructions <span className="font-normal">(optional)</span>
+        </label>
+        <textarea
+          value={(config.instructions as string) || ''}
+          onChange={(e) => onChange('instructions', e.target.value)}
+          placeholder="Notes for yourself about how to run this session..."
+          rows={2}
+          className="w-full border border-card-border rounded px-3 py-2 text-sm"
+        />
+        <p className="text-xs text-foreground-muted mt-1">Only visible to you in conductor view. Not shown to congregation.</p>
       </div>
     </>
   );

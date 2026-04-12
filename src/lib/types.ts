@@ -924,7 +924,11 @@ export type BlockType =
   | 'connect_card'
   | 'fill_in_blank'
   | 'prayer_wall'
-  | 'announcement';
+  | 'announcement'
+  | 'three_d_journal'
+  | 'who_else'
+  | 'prayer_cards_warmup'
+  | 'corporate_4d_prayer';
 
 export interface InteractiveService {
   id: string;
@@ -953,6 +957,7 @@ export interface ServiceBlock {
   activated_at: string | null;
   deactivated_at: string | null;
   results_shown_at: string | null;
+  live_state: Record<string, unknown> | null;
   show_on_display: boolean;
   created_at: string;
 }
