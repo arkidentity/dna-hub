@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
 
 const MAX_SIZE = 5 * 1024 * 1024; // 5MB
-const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/svg+xml', 'image/webp'];
+const ALLOWED_TYPES = ['image/png', 'image/jpeg', 'image/jpg', 'image/webp'];
 const BUCKET = 'church-logos';
 
 export async function POST(request: NextRequest) {
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest) {
     // Validate file type
     if (!ALLOWED_TYPES.includes(file.type)) {
       return NextResponse.json(
-        { error: 'Only PNG, JPG, SVG, and WebP images are allowed' },
+        { error: 'Only PNG, JPG, and WebP images are allowed' },
         { status: 400 }
       );
     }
@@ -49,8 +49,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'File size must be less than 5MB' }, { status: 400 });
     }
 
-    const ext = file.type === 'image/svg+xml' ? 'svg'
-      : file.type === 'image/webp' ? 'webp'
+    const ext = file.type === 'image/webp' ? 'webp'
       : file.type === 'image/png' ? 'png'
       : 'jpg';
 

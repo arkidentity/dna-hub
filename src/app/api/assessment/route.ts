@@ -1,8 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
 import { sendAssessmentNotification, send3StepsEmail } from '@/lib/email';
+import { rateLimit } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, { maxRequests: 5, windowMs: 60_000 });
+  if (limited) return limited;
+
   try {
     const data = await request.json();
     const supabaseAdmin = getSupabaseAdmin();

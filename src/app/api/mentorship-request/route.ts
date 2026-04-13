@@ -1,7 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { sendEmail } from '@/lib/email';
+import { rateLimit } from '@/lib/rateLimit';
 
 export async function POST(request: NextRequest) {
+  const limited = rateLimit(request, { maxRequests: 3, windowMs: 60_000 });
+  if (limited) return limited;
+
   const { to, churchName, name, email, phone } = await request.json();
 
   if (!to || !name || !email) {
