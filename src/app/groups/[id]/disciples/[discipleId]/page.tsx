@@ -394,6 +394,7 @@ function DiscipleProfileContent() {
   const creed = disciple?.app_activity?.creed_progress;
   const testimonies = disciple?.app_activity?.testimonies;
   const checkpointCompletions = disciple?.app_activity?.checkpoint_completions || [];
+  const lifeline = disciple?.app_activity?.lifeline;
 
   const currentStreak = progress?.current_streak ?? 0;
   const longestStreak = progress?.longest_streak ?? 0;
@@ -1165,6 +1166,77 @@ function DiscipleProfileContent() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* LIFELINE                                                      */}
+        {/* ============================================================ */}
+        {lifeline && (lifeline.events.length > 0 || lifeline.today || lifeline.hope) && (
+          <div className="bg-white rounded-xl shadow-sm border border-card-border p-5">
+            <h3 className="text-sm font-bold text-navy mb-4 flex items-center gap-2">
+              <svg className="w-4 h-4 text-[#D4A853]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2" />
+              </svg>
+              Lifeline
+            </h3>
+
+            {lifeline.events.length > 0 && (() => {
+              const decadesUsed = [...new Set(lifeline.events.map(e => e.decade_start))].sort((a, b) => a - b);
+              return (
+                <div className="space-y-4 mb-4">
+                  {decadesUsed.map(decade => {
+                    const decadeEvents = lifeline.events
+                      .filter(e => e.decade_start === decade)
+                      .sort((a, b) => a.sort_order - b.sort_order);
+                    return (
+                      <div key={decade}>
+                        <p className="text-xs font-semibold text-[#D4A853] uppercase tracking-wide mb-2">{decade}s</p>
+                        <div className="space-y-2 pl-3 border-l-2 border-[#D4A853]/20">
+                          {decadeEvents.map(event => (
+                            <div key={event.id} className="rounded-lg bg-gray-50 border border-gray-100 p-3">
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className={`text-xs font-semibold px-2 py-0.5 rounded-full ${
+                                  event.position === 'high'
+                                    ? 'bg-[#D4A853]/15 text-[#9a7230]'
+                                    : 'bg-slate-100 text-slate-500'
+                                }`}>
+                                  {event.position === 'high' ? '▲ High' : '▼ Low'}
+                                </span>
+                                <span className="text-sm font-medium text-navy">{event.label}</span>
+                              </div>
+                              {event.god_part && (
+                                <p className="text-xs text-gray-500 italic mt-1 leading-relaxed">
+                                  <span className="not-italic font-medium text-gray-400">God part: </span>
+                                  {event.god_part}
+                                </p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+
+            {(lifeline.today || lifeline.hope) && (
+              <div className="space-y-3 pt-3 border-t border-gray-100">
+                {lifeline.today && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">Where I am today</p>
+                    <p className="text-sm text-navy leading-relaxed">{lifeline.today}</p>
+                  </div>
+                )}
+                {lifeline.hope && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-1">What I hope for in this group</p>
+                    <p className="text-sm text-navy leading-relaxed">{lifeline.hope}</p>
+                  </div>
+                )}
               </div>
             )}
           </div>

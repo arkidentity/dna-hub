@@ -824,6 +824,20 @@ export interface AppActivity {
     week1: LifeAssessmentResult | null;
     week12: LifeAssessmentResult | null;
   } | null;
+  lifeline?: {
+    events: LifelineEventSummary[];
+    today: string | null;
+    hope: string | null;
+  };
+}
+
+export interface LifelineEventSummary {
+  id: string;
+  decade_start: number;
+  label: string;
+  god_part: string;
+  position: 'high' | 'low';
+  sort_order: number;
 }
 
 // Disciple Profile (extended with journey data for profile page)

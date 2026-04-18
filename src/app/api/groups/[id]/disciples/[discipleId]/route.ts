@@ -134,6 +134,8 @@ export async function GET(
       testimonyResult,
       creedResult,
       lifeAssessmentsResult,
+      lifelineEventsResult,
+      lifelineSummaryResult,
     ] = await Promise.all([
       supabase
         .from('life_assessments')
@@ -223,6 +225,23 @@ export async function GET(
             .eq('status', 'submitted')
             .order('submitted_at', { ascending: true })
         : Promise.resolve({ data: null, error: null }),
+      // Lifeline events
+      appAccountId
+        ? supabase
+            .from('lifeline_events')
+            .select('id, decade_start, label, god_part, position, sort_order')
+            .eq('account_id', appAccountId)
+            .order('decade_start', { ascending: true })
+            .order('sort_order', { ascending: true })
+        : Promise.resolve({ data: null, error: null }),
+      // Lifeline summary fields
+      appAccountId
+        ? supabase
+            .from('disciple_app_accounts')
+            .select('lifeline_today, lifeline_hope')
+            .eq('id', appAccountId)
+            .single()
+        : Promise.resolve({ data: null, error: null }),
     ]);
 
     let week1Status = 'not_sent';
@@ -291,6 +310,12 @@ export async function GET(
           week1: (lifeAssessmentsResult.data as Array<{ assessment_type: string; category_scores: Record<string, number> | null; overall_score: number | null; responses: Record<string, unknown>; follow_ups: Record<string, string> | null; submitted_at: string | null }>).find(r => r.assessment_type === 'week_1') || null,
           week12: (lifeAssessmentsResult.data as Array<{ assessment_type: string; category_scores: Record<string, number> | null; overall_score: number | null; responses: Record<string, unknown>; follow_ups: Record<string, string> | null; submitted_at: string | null }>).find(r => r.assessment_type === 'week_12') || null,
         } : null,
+        // Lifeline
+        lifeline: {
+          events: lifelineEventsResult.data || [],
+          today: (lifelineSummaryResult.data as { lifeline_today?: string | null; lifeline_hope?: string | null } | null)?.lifeline_today ?? null,
+          hope: (lifelineSummaryResult.data as { lifeline_today?: string | null; lifeline_hope?: string | null } | null)?.lifeline_hope ?? null,
+        },
       };
     }
 
