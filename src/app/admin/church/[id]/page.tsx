@@ -686,6 +686,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
             churchId={churchId}
             churchName={church.name}
             isAdmin={true}
+            isPaid={featuresUnlocked}
           />
         )}
 
@@ -706,7 +707,7 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
 
         {/* Pathway Tab */}
         {activeTab === 'pathway' && (
-          <PathwayTab churchId={churchId} />
+          <PathwayTab churchId={churchId} isPaid={featuresUnlocked} />
         )}
 
         {/* Services Tab */}
