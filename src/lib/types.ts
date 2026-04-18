@@ -813,6 +813,11 @@ export interface AppActivity {
     completed_at: string;
     marked_by: string;
   }>;
+  pathway_completions?: Array<{
+    phase: number;
+    week_number: number;
+    completed_at: string;
+  }>;
   testimonies?: AppTestimonySummary[];
   creed_progress?: AppCreedProgress | null;
   life_assessments?: {

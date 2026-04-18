@@ -182,7 +182,7 @@ export async function GET() {
         .maybeSingle(),
       supabase
         .from('church_billing_status')
-        .select('status')
+        .select('status, features_unlocked')
         .eq('church_id', church.id)
         .maybeSingle(),
     ]);
@@ -197,7 +197,10 @@ export async function GET() {
     const { data: globalResources } = globalResourcesResult;
     const { data: branding } = brandingResult;
     const { data: billingStatus } = billingResult;
-    const isPaid = billingStatus?.status === 'active' || billingStatus?.status === 'past_due';
+    const isPaid =
+      billingStatus?.status === 'active' ||
+      billingStatus?.status === 'past_due' ||
+      billingStatus?.features_unlocked === true;
 
     if (phasesError) {
       console.error('Phases fetch error:', phasesError);

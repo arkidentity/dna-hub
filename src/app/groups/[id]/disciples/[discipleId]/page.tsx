@@ -403,11 +403,39 @@ function DiscipleProfileContent() {
   const creedMastered = creed?.total_cards_mastered ?? 0;
   const totalTestimonies = testimonies?.length ?? 0;
 
-  // Toolkit/Pathway data
+  // Legacy toolkit/pathway data
   const currentWeek = toolkit?.current_week ?? 0;
   const currentMonth = toolkit?.current_month ?? 1;
   const toolkitStarted = toolkit?.started_at != null;
   const pathwayPercent = toolkitStarted ? Math.round((currentWeek / 12) * 100) : 0;
+
+  // Dynamic pathway completions (migration 116)
+  const pathwayCompletions = disciple?.app_activity?.pathway_completions || [];
+  const phase1Completed = new Set(
+    pathwayCompletions.filter(c => c.phase === 1).map(c => c.week_number)
+  );
+  const phase2Completed = new Set(
+    pathwayCompletions.filter(c => c.phase === 2).map(c => c.week_number)
+  );
+  const hasDynamicPathway = pathwayCompletions.length > 0;
+  const dynamicPhase = phase2Completed.size > 0 ? 2 : 1;
+  const dynamicCompletedSet = dynamicPhase === 2 ? phase2Completed : phase1Completed;
+
+  // Effective values for display — dynamic pathway takes precedence when present
+  const effectiveStarted = toolkitStarted || hasDynamicPathway;
+  const effectiveCurrentWeek = hasDynamicPathway ? dynamicCompletedSet.size : currentWeek;
+  const effectivePercent = hasDynamicPathway
+    ? Math.round((dynamicCompletedSet.size / 12) * 100)
+    : pathwayPercent;
+
+  function isDynamicWeekComplete(weekNum: number): boolean {
+    return dynamicCompletedSet.has(weekNum);
+  }
+
+  function isDynamicMonthComplete(month: number): boolean {
+    const weeks = [1, 2, 3, 4].map(w => w + (month - 1) * 4);
+    return weeks.every(w => dynamicCompletedSet.has(w));
+  }
 
   // Loading state
   if (loading) {
@@ -715,12 +743,14 @@ function DiscipleProfileContent() {
               <div>
                 <h2 className="text-lg font-bold text-navy">Pathway</h2>
                 <p className="text-sm text-gray-400 mt-0.5">
-                  Phase 1 &middot; 90-Day Toolkit
+                  {hasDynamicPathway
+                    ? `Phase ${dynamicPhase} · DNA Pathway`
+                    : 'Phase 1 · 90-Day Toolkit'}
                 </p>
               </div>
-              {toolkitStarted && (
+              {effectiveStarted && (
                 <div className="text-right">
-                  <p className="text-2xl font-bold text-gold-dark">{pathwayPercent}%</p>
+                  <p className="text-2xl font-bold text-gold-dark">{effectivePercent}%</p>
                   <p className="text-xs text-gray-400">Complete</p>
                 </div>
               )}
@@ -730,14 +760,14 @@ function DiscipleProfileContent() {
           {/* Overall progress bar */}
           <div className="px-6 pb-4">
             <div className="flex items-center justify-between text-xs text-gray-500 mb-1.5">
-              <span>Week {currentWeek} of 12</span>
-              <span>Month {currentMonth} of 3</span>
+              <span>Week {effectiveCurrentWeek} of 12</span>
+              <span>{hasDynamicPathway ? `Phase ${dynamicPhase}` : `Month ${currentMonth} of 3`}</span>
             </div>
             <div className="h-2.5 bg-gray-100 rounded-full overflow-hidden">
               <div
                 className="h-full rounded-full transition-all duration-500"
                 style={{
-                  width: `${pathwayPercent}%`,
+                  width: `${effectivePercent}%`,
                   background: 'linear-gradient(90deg, var(--gold) 0%, var(--gold-dark) 100%)',
                 }}
               ></div>
@@ -747,14 +777,20 @@ function DiscipleProfileContent() {
           {/* Month-by-month breakdown */}
           <div className="px-6 pb-5 space-y-3">
             {[1, 2, 3].map((month) => {
-              const monthCompleted = month === 1
+              const monthCompleted = hasDynamicPathway
+                ? isDynamicMonthComplete(month)
+                : month === 1
                 ? toolkit?.month_1_completed_at != null
                 : month === 2
                 ? toolkit?.month_2_completed_at != null
                 : toolkit?.month_3_completed_at != null;
-              const monthActive = currentMonth === month && toolkitStarted;
+              const monthActive = hasDynamicPathway
+                ? !monthCompleted && effectiveCurrentWeek >= (month - 1) * 4
+                : currentMonth === month && toolkitStarted;
               const weeksInMonth = [1, 2, 3, 4].map(w => w + (month - 1) * 4);
-              const weeksBelowCurrent = weeksInMonth.filter(w => w <= currentWeek).length;
+              const weeksBelowCurrent = hasDynamicPathway
+                ? weeksInMonth.filter(w => dynamicCompletedSet.has(w)).length
+                : weeksInMonth.filter(w => w <= currentWeek).length;
 
               return (
                 <div
@@ -801,8 +837,12 @@ function DiscipleProfileContent() {
                     <div className="flex gap-1.5 ml-7">
                       {weeksInMonth.map((weekNum) => {
                         const weekIdx = weekNum - 1;
-                        const isComplete = weekNum < currentWeek || monthCompleted;
-                        const isCurrent = weekNum === currentWeek && !monthCompleted;
+                        const isComplete = hasDynamicPathway
+                          ? isDynamicWeekComplete(weekNum)
+                          : weekNum < currentWeek || monthCompleted;
+                        const isCurrent = hasDynamicPathway
+                          ? false
+                          : weekNum === currentWeek && !monthCompleted;
                         // Check checkpoint completions for this week
                         const hasCheckpoints = checkpointCompletions.some(c => {
                           const cpId = c.checkpoint_id;
@@ -842,9 +882,12 @@ function DiscipleProfileContent() {
             })}
           </div>
 
-          {/* Checkpoint count footer */}
+          {/* Footer */}
           <div className="px-6 pb-4 flex items-center justify-between text-xs text-gray-400 border-t border-gray-100 pt-3">
-            <span>{checkpointCompletions.length} checkpoints completed</span>
+            {hasDynamicPathway
+              ? <span>{dynamicCompletedSet.size} weeks completed</span>
+              : <span>{checkpointCompletions.length} checkpoints completed</span>
+            }
             {toolkit?.started_at && (
               <span>Started {new Date(toolkit.started_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
             )}

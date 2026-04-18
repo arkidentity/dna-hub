@@ -23,6 +23,8 @@ import {
   Heart,
   Radio,
   Route,
+  Unlock,
+  Lock,
 } from 'lucide-react';
 import { GroupsTab } from '@/components/dashboard';
 import { AdminChurchOverviewTab, AdminChurchJourneyTab, ChurchLeadersTab, BrandingTab, AdminCohortTab, DemoTab } from '@/components/admin';
@@ -152,12 +154,40 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
   const [coachOptions, setCoachOptions] = useState<{ id: string; name: string }[]>([]);
   const [savingCoach, setSavingCoach] = useState(false);
 
+  // Feature unlock override
+  const [featuresUnlocked, setFeaturesUnlocked] = useState(false);
+  const [togglingFeatures, setTogglingFeatures] = useState(false);
+
   useEffect(() => {
     fetch('/api/admin/coaches')
       .then(r => r.ok ? r.json() : { coaches: [] })
       .then(d => setCoachOptions((d.coaches ?? []).map((c: { id: string; name: string }) => ({ id: c.id, name: c.name }))))
       .catch(() => {});
   }, []);
+
+  useEffect(() => {
+    fetch(`/api/admin/billing/${churchId}/unlock`)
+      .then(r => r.ok ? r.json() : null)
+      .then(d => { if (d) setFeaturesUnlocked(d.features_unlocked ?? false); })
+      .catch(() => {});
+  }, [churchId]);
+
+  const handleToggleFeaturesUnlocked = async () => {
+    setTogglingFeatures(true);
+    try {
+      const res = await fetch(`/api/admin/billing/${churchId}/unlock`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ features_unlocked: !featuresUnlocked }),
+      });
+      if (res.ok) {
+        const d = await res.json();
+        setFeaturesUnlocked(d.features_unlocked);
+      }
+    } finally {
+      setTogglingFeatures(false);
+    }
+  };
 
   useEffect(() => {
     fetchChurchData();
@@ -533,6 +563,24 @@ export default function AdminChurchPage({ params }: { params: Promise<{ id: stri
               )}
             </div>
             <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+              <button
+                onClick={handleToggleFeaturesUnlocked}
+                disabled={togglingFeatures}
+                title={featuresUnlocked ? 'Features unlocked (click to re-lock)' : 'Unlock all features for this church'}
+                className={`flex items-center gap-1.5 px-2 py-1.5 rounded transition-colors text-xs font-medium ${
+                  featuresUnlocked
+                    ? 'bg-green-600/80 text-white hover:bg-green-700/80'
+                    : 'text-gray-300 hover:text-white hover:bg-white/10'
+                }`}
+              >
+                {togglingFeatures
+                  ? <Loader2 className="w-3 h-3 animate-spin" />
+                  : featuresUnlocked
+                    ? <Unlock className="w-3 h-3" />
+                    : <Lock className="w-3 h-3" />
+                }
+                <span className="hidden sm:inline">{featuresUnlocked ? 'Unlocked' : 'Unlock'}</span>
+              </button>
               <button
                 onClick={handleSendLoginLink}
                 className="flex items-center gap-1.5 px-2 py-1.5 text-gray-300 hover:text-white hover:bg-white/10 rounded transition-colors text-xs"

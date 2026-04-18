@@ -126,6 +126,7 @@ export async function GET(
       progressResult,
       toolkitResult,
       completionsResult,
+      pathwayCompletionsResult,
       // Time-filtered counts
       journalCountResult,
       prayerSessionCountResult,
@@ -174,6 +175,15 @@ export async function GET(
             .from('disciple_checkpoint_completions')
             .select('checkpoint_id, completed_at, marked_by')
             .eq('account_id', appAccountId)
+        : Promise.resolve({ data: null, error: null }),
+      // Dynamic pathway completions (migration 116 — disciple_pathway_completions)
+      appAccountId
+        ? supabase
+            .from('disciple_pathway_completions')
+            .select('phase, week_number, completed_at')
+            .eq('account_id', appAccountId)
+            .order('phase', { ascending: true })
+            .order('week_number', { ascending: true })
         : Promise.resolve({ data: null, error: null }),
       // Time-filtered journal count
       appAccountId
@@ -259,6 +269,8 @@ export async function GET(
         } : null,
         // Checkpoint completions
         checkpoint_completions: completionsResult.data || [],
+        // Dynamic pathway completions (new system)
+        pathway_completions: pathwayCompletionsResult.data || [],
         // Testimonies (metadata only, no content)
         testimonies: (testimonyResult.data || []).map((t: { id: string; title: string; status: string; testimony_type: string | null; created_at: string }) => ({
           id: t.id,
