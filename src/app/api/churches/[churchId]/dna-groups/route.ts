@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUnifiedSession, isAdmin, isChurchLeader } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin, isDNACoach, isChurchLeader } from '@/lib/unified-auth';
+import { getSupabaseAdmin } from '@/lib/auth';
 
 // GET: Fetch DNA leaders and groups for a church
 export async function GET(
@@ -14,10 +15,35 @@ export async function GET(
 
   const { churchId } = await params;
   const admin = isAdmin(session);
+  const coach = isDNACoach(session);
 
-  // Non-admins can only view their own church
-  if (!admin && !isChurchLeader(session, churchId)) {
+  if (!admin && !coach && !isChurchLeader(session, churchId)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+  }
+
+  // Coaches can only view churches assigned to them
+  if (coach && !admin) {
+    const adminClient = getSupabaseAdmin();
+    const { data: coachProfile } = await adminClient
+      .from('dna_coaches')
+      .select('id')
+      .eq('user_id', session.userId)
+      .single();
+
+    if (coachProfile) {
+      const { data: church } = await adminClient
+        .from('churches')
+        .select('id')
+        .eq('id', churchId)
+        .eq('coach_id', coachProfile.id)
+        .single();
+
+      if (!church) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } else {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
   }
 
   const supabase = createClient(
