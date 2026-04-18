@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, isAdmin as checkIsAdmin, hasRole, getPrimaryChurch } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin as checkIsAdmin, isDNACoach, hasRole, getPrimaryChurch } from '@/lib/unified-auth';
 import { sendChurchLeaderInviteEmail } from '@/lib/email';
 
 // POST /api/admin/church-leaders/invite
-// Invite a new church leader (admin or existing church leader only)
+// Invite a new church leader (admin, DNA coach, or existing church leader)
 export async function POST(request: NextRequest) {
   try {
     const session = await getUnifiedSession();
@@ -13,10 +13,10 @@ export async function POST(request: NextRequest) {
     }
 
     const isSuperAdmin = checkIsAdmin(session);
+    const isCoach = isDNACoach(session);
     const isChurchLeader = hasRole(session, 'church_leader');
 
-    // Must be admin or church leader to invite
-    if (!isSuperAdmin && !isChurchLeader) {
+    if (!isSuperAdmin && !isCoach && !isChurchLeader) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -69,6 +69,40 @@ export async function POST(request: NextRequest) {
         return NextResponse.json(
           { error: 'Church not found' },
           { status: 400 }
+        );
+      }
+      finalChurchId = church.id;
+      churchName = church.name;
+    } else if (isCoach) {
+      // Coach must specify a church and it must be one they manage
+      if (!church_id) {
+        return NextResponse.json(
+          { error: 'Church ID is required' },
+          { status: 400 }
+        );
+      }
+
+      const { data: coachProfile } = await supabase
+        .from('dna_coaches')
+        .select('id')
+        .eq('user_id', session.userId)
+        .single();
+
+      if (!coachProfile) {
+        return NextResponse.json({ error: 'Coach profile not found' }, { status: 400 });
+      }
+
+      const { data: church } = await supabase
+        .from('churches')
+        .select('id, name')
+        .eq('id', church_id)
+        .eq('coach_id', coachProfile.id)
+        .single();
+
+      if (!church) {
+        return NextResponse.json(
+          { error: 'Church not found or not assigned to you' },
+          { status: 403 }
         );
       }
       finalChurchId = church.id;
@@ -341,9 +375,10 @@ export async function GET(request: NextRequest) {
     }
 
     const isSuperAdmin = checkIsAdmin(session);
+    const isCoach = isDNACoach(session);
     const isChurchLeader = hasRole(session, 'church_leader');
 
-    if (!isSuperAdmin && !isChurchLeader) {
+    if (!isSuperAdmin && !isCoach && !isChurchLeader) {
       return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
@@ -357,15 +392,37 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Non-admin church leaders can only see their own church
-    if (!isSuperAdmin) {
+    const supabase = getSupabaseAdmin();
+
+    // Coaches can only see churches they manage
+    if (isCoach && !isSuperAdmin) {
+      const { data: coachProfile } = await supabase
+        .from('dna_coaches')
+        .select('id')
+        .eq('user_id', session.userId)
+        .single();
+
+      if (!coachProfile) {
+        return NextResponse.json({ error: 'Coach profile not found' }, { status: 403 });
+      }
+
+      const { data: church } = await supabase
+        .from('churches')
+        .select('id')
+        .eq('id', churchId)
+        .eq('coach_id', coachProfile.id)
+        .single();
+
+      if (!church) {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+      }
+    } else if (!isSuperAdmin && isChurchLeader) {
+      // Church leaders can only see their own church
       const sessionChurchId = getPrimaryChurch(session);
       if (sessionChurchId !== churchId) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
       }
     }
-
-    const supabase = getSupabaseAdmin();
 
     const { data: leaders, error } = await supabase
       .from('church_leaders')
