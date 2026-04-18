@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { Eye, EyeOff, CheckCircle, Copy, ExternalLink } from 'lucide-react';
+import { Eye, EyeOff, CheckCircle, Copy, ExternalLink, Trash2 } from 'lucide-react';
 
 interface PrayerWallPost {
   id: string;
@@ -40,6 +40,7 @@ export default function PrayerWallTab({ churchId, subdomain }: PrayerWallTabProp
   const [savingSettings, setSavingSettings] = useState(false);
   const [actioningId, setActioningId] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
   const displayUrl = subdomain
     ? `https://${subdomain}.dailydna.app/prayer-wall/display/${churchId}`
@@ -80,7 +81,7 @@ export default function PrayerWallTab({ churchId, subdomain }: PrayerWallTabProp
     setSavingSettings(false);
   };
 
-  const handleAction = async (postId: string, action: 'approve' | 'hide' | 'unhide') => {
+  const handleAction = async (postId: string, action: 'approve' | 'hide' | 'unhide' | 'delete') => {
     setActioningId(postId);
     try {
       const res = await fetch('/api/admin/prayer-wall', {
@@ -89,7 +90,12 @@ export default function PrayerWallTab({ churchId, subdomain }: PrayerWallTabProp
         body: JSON.stringify({ postId, action, churchId }),
       });
       if (res.ok) {
-        fetchData();
+        if (action === 'delete') {
+          setPosts((prev) => prev.filter((p) => p.id !== postId));
+          setStats((prev) => ({ ...prev, total: prev.total - 1 }));
+        } else {
+          fetchData();
+        }
       }
     } catch (err) {
       console.error('Failed to action post:', err);
@@ -281,6 +287,32 @@ export default function PrayerWallTab({ churchId, subdomain }: PrayerWallTabProp
                         title="Unhide post"
                       >
                         <Eye className="w-4 h-4 text-foreground-muted" />
+                      </button>
+                    )}
+                    {confirmDeleteId === post.id ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          onClick={() => { handleAction(post.id, 'delete'); setConfirmDeleteId(null); }}
+                          disabled={actioningId === post.id}
+                          className="px-2 py-1.5 text-xs rounded border border-red-400 bg-red-50 text-red-700 hover:bg-red-100 transition-colors"
+                        >
+                          Confirm
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(null)}
+                          className="px-2 py-1.5 text-xs rounded border border-card-border hover:bg-gray-50 transition-colors text-foreground-muted"
+                        >
+                          Cancel
+                        </button>
+                      </div>
+                    ) : (
+                      <button
+                        onClick={() => setConfirmDeleteId(post.id)}
+                        disabled={actioningId === post.id}
+                        className="p-1.5 rounded border border-card-border hover:bg-red-50 hover:border-red-300 transition-colors"
+                        title="Remove post"
+                      >
+                        <Trash2 className="w-4 h-4 text-foreground-muted hover:text-red-600" />
                       </button>
                     )}
                   </div>

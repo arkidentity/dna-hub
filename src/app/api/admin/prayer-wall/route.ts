@@ -83,8 +83,8 @@ export async function GET(request: NextRequest) {
 }
 
 // ============================================
-// PATCH — Update a post (approve, hide, unhide)
-// Body: { postId, action: 'approve'|'hide'|'unhide', churchId }
+// PATCH — Update a post (approve, hide, unhide, delete)
+// Body: { postId, action: 'approve'|'hide'|'unhide'|'delete', churchId }
 // ============================================
 export async function PATCH(request: NextRequest) {
   try {
@@ -101,6 +101,20 @@ export async function PATCH(request: NextRequest) {
     }
 
     const supabase = getSupabaseAdmin();
+
+    if (action === 'delete') {
+      const { error } = await supabase
+        .from('prayer_wall_posts')
+        .delete()
+        .eq('id', postId)
+        .eq('church_id', churchId);
+
+      if (error) {
+        console.error('[ADMIN] Prayer wall delete error:', error);
+        return NextResponse.json({ error: 'Failed to delete post' }, { status: 500 });
+      }
+      return NextResponse.json({ success: true });
+    }
 
     let update: Record<string, unknown> = {};
 
