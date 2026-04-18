@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getSupabaseAdmin } from '@/lib/auth';
-import { getUnifiedSession, isAdmin as checkIsAdmin, getPrimaryChurch } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin as checkIsAdmin, isDNACoach, getPrimaryChurch } from '@/lib/unified-auth';
 import { sendDNALeaderDirectInviteEmail } from '@/lib/email';
 import { getDnaHqChurchId } from '@/lib/dna-hq';
 
 // POST /api/dna-leaders/invite
-// Invite a new DNA leader (church admin or super admin only)
+// Invite a new DNA leader (super admin, DNA coach, or church admin)
 export async function POST(request: NextRequest) {
   try {
     const session = await getUnifiedSession();
@@ -14,10 +14,13 @@ export async function POST(request: NextRequest) {
     }
 
     const isSuperAdmin = checkIsAdmin(session);
-    const isChurchAdmin = !isSuperAdmin; // Regular church leader
+    const isCoach = isDNACoach(session);
+    const isChurchAdmin = !isSuperAdmin && !isCoach; // Regular church leader only
 
     const body = await request.json();
-    const { name, email, church_id, message } = body;
+    const { name, email, church_id: church_id_snake, churchId, message, personalMessage } = body;
+    const church_id = church_id_snake || churchId || null;
+    const resolvedMessage = message || personalMessage;
 
     // Validate required fields
     if (!name || !email) {
@@ -94,6 +97,57 @@ export async function POST(request: NextRequest) {
           churchName = hqChurch?.name || 'DNA Discipleship';
         }
         // If DNA HQ church isn't found (misconfigured), finalChurchId stays null as fallback
+      }
+    } else if (isCoach) {
+      // DNA coach can invite leaders to any church they are assigned to
+      const { data: coachProfile } = await supabase
+        .from('dna_coaches')
+        .select('id')
+        .eq('user_id', session.userId)
+        .single();
+
+      if (!coachProfile) {
+        return NextResponse.json(
+          { error: 'Coach profile not found' },
+          { status: 400 }
+        );
+      }
+
+      if (church_id) {
+        // Validate the specified church belongs to this coach
+        const { data: church } = await supabase
+          .from('churches')
+          .select('id, name')
+          .eq('id', church_id)
+          .eq('coach_id', coachProfile.id)
+          .single();
+
+        if (!church) {
+          return NextResponse.json(
+            { error: 'Church not found or not assigned to you' },
+            { status: 403 }
+          );
+        }
+        finalChurchId = church.id;
+        churchName = church.name;
+      } else {
+        // No church specified — use the coach's first assigned church
+        const { data: firstChurch } = await supabase
+          .from('churches')
+          .select('id, name')
+          .eq('coach_id', coachProfile.id)
+          .order('created_at', { ascending: true })
+          .limit(1)
+          .single();
+
+        if (!firstChurch) {
+          return NextResponse.json(
+            { error: 'No churches assigned to this coach' },
+            { status: 400 }
+          );
+        }
+        finalChurchId = firstChurch.id;
+        churchName = firstChurch.name;
       }
     } else {
       // Church admin can only invite to their own church
@@ -222,7 +276,7 @@ export async function POST(request: NextRequest) {
         name: name.trim(),
         church_id: finalChurchId,
         invited_by: inviterId,
-        invited_by_type: isSuperAdmin ? 'super_admin' : 'church_admin',
+        invited_by_type: isSuperAdmin ? 'super_admin' : isCoach ? 'dna_coach' : 'church_admin',
         user_id: userId, // Link to unified user
         activated_at: new Date().toISOString(), // Pre-activate since admin invited them
       })
@@ -264,7 +318,7 @@ export async function POST(request: NextRequest) {
       setupUrl,
       churchName,
       inviterName,
-      message
+      resolvedMessage
     );
 
     if (!emailResult.success) {

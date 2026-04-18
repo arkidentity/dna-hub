@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useCallback, useEffect } from 'react';
-import { RotateCcw, Save, Loader2, Info } from 'lucide-react';
+import { RotateCcw, Save, Loader2, Info, Lock, Zap } from 'lucide-react';
 import ToolLibrary from './ToolLibrary';
 import PathwayTimeline, { type TimelineItem } from './PathwayTimeline';
 import type { PathwayToolRecord, PathwayItemRecord } from './toolConfig';
@@ -10,9 +10,10 @@ interface PathwayEditorProps {
   churchId: string;
   phase: number;
   allTools: PathwayToolRecord[];
+  isPaid?: boolean;
 }
 
-export default function PathwayEditor({ churchId, phase, allTools }: PathwayEditorProps) {
+export default function PathwayEditor({ churchId, phase, allTools, isPaid = false }: PathwayEditorProps) {
   const [items, setItems] = useState<TimelineItem[]>([]);
   const [weekCount, setWeekCount] = useState(12);
   const [isDefault, setIsDefault] = useState(true);
@@ -22,6 +23,7 @@ export default function PathwayEditor({ churchId, phase, allTools }: PathwayEdit
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
   const [showResetConfirm, setShowResetConfirm] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
 
   // Load pathway data
   const loadPathway = useCallback(async () => {
@@ -64,8 +66,18 @@ export default function PathwayEditor({ churchId, phase, allTools }: PathwayEdit
     loadPathway();
   }, [loadPathway]);
 
+  // Gate helper — show upgrade modal for unpaid churches
+  const requirePaid = () => {
+    if (!isPaid) {
+      setShowUpgradeModal(true);
+      return true;
+    }
+    return false;
+  };
+
   // Add tool from library
   const handleAddTool = (tool: PathwayToolRecord) => {
+    if (requirePaid()) return;
     const nextWeek = items.length + 1;
     const maxWeeks = phase === 1 ? 16 : 26;
     if (nextWeek > maxWeeks) {
@@ -84,6 +96,7 @@ export default function PathwayEditor({ churchId, phase, allTools }: PathwayEdit
 
   // Remove tool from timeline
   const handleRemoveTool = (weekNumber: number) => {
+    if (requirePaid()) return;
     setItems((prev) => {
       const filtered = prev.filter((i) => i.weekNumber !== weekNumber);
       // Re-number sequentially
@@ -94,12 +107,14 @@ export default function PathwayEditor({ churchId, phase, allTools }: PathwayEdit
 
   // Reorder (from drag-and-drop)
   const handleReorder = (reordered: TimelineItem[]) => {
+    if (requirePaid()) return;
     setItems(reordered);
     setDirty(true);
   };
 
   // Save pathway
   const handleSave = async () => {
+    if (requirePaid()) return;
     setSaving(true);
     setError(null);
     setSuccess(false);
@@ -173,6 +188,46 @@ export default function PathwayEditor({ churchId, phase, allTools }: PathwayEdit
 
   return (
     <div className="space-y-4">
+      {/* Upgrade modal */}
+      {showUpgradeModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-xl p-8 max-w-sm w-full mx-4 text-center">
+            <div className="w-14 h-14 rounded-full bg-gold/10 flex items-center justify-center mx-auto mb-4">
+              <Lock className="w-7 h-7 text-gold" />
+            </div>
+            <h2 className="text-lg font-semibold text-navy mb-2">Pathway customization is a paid feature</h2>
+            <p className="text-sm text-foreground-muted mb-6">
+              Upgrade your plan to reorder tools, add new ones, and create a custom pathway for this church.
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => { window.location.href = '/dashboard?tab=billing'; }}
+                className="btn-primary flex items-center justify-center gap-2"
+              >
+                <Zap className="w-4 h-4" />
+                Upgrade your plan
+              </button>
+              <button
+                onClick={() => setShowUpgradeModal(false)}
+                className="text-sm text-foreground-muted hover:text-navy transition-colors"
+              >
+                Maybe later
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Read-only banner for unpaid */}
+      {!isPaid && (
+        <div className="flex items-center gap-2 px-3 py-2 bg-gold/8 border border-gold/25 rounded-lg">
+          <Lock className="w-4 h-4 text-gold flex-shrink-0" />
+          <span className="text-sm text-navy/80">
+            View-only — <button onClick={() => setShowUpgradeModal(true)} className="underline font-medium text-navy hover:text-gold transition-colors">upgrade your plan</button> to customize this pathway.
+          </span>
+        </div>
+      )}
+
       {/* Default banner */}
       {isDefault && (
         <div className="flex items-center gap-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg">
@@ -222,8 +277,8 @@ export default function PathwayEditor({ churchId, phase, allTools }: PathwayEdit
             onRemove={handleRemoveTool}
           />
 
-          {/* Action bar — directly under timeline */}
-          <div className="flex items-center justify-between pt-4 mt-4 border-t border-card-border">
+          {/* Action bar — only shown for paid accounts */}
+          <div className={`flex items-center justify-between pt-4 mt-4 border-t border-card-border ${!isPaid ? 'hidden' : ''}`}>
             <div className="flex items-center gap-2">
               {!isDefault && (
                 <>

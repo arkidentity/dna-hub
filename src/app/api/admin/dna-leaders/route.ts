@@ -1,15 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
-import { getUnifiedSession, isAdmin } from '@/lib/unified-auth';
+import { getUnifiedSession, isAdmin, isDNACoach, isAdminOrCoach } from '@/lib/unified-auth';
 
-// GET: List all DNA leaders (admin only)
+// GET: List DNA leaders (admin sees all; coach sees only their coached churches)
 export async function GET(request: NextRequest) {
   const session = await getUnifiedSession();
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
-  if (!isAdmin(session)) {
+  if (!isAdminOrCoach(session)) {
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
   }
 
@@ -19,8 +19,28 @@ export async function GET(request: NextRequest) {
   );
 
   try {
-    // Fetch all DNA leaders with church info
-    const { data: leaders, error: leadersError } = await supabase
+    // For coaches (not admins), scope to their assigned churches
+    let scopedChurchIds: string[] | null = null;
+    if (isDNACoach(session) && !isAdmin(session)) {
+      const { data: coachProfile } = await supabase
+        .from('dna_coaches')
+        .select('id')
+        .eq('user_id', session.userId)
+        .single();
+
+      if (coachProfile) {
+        const { data: coachedChurches } = await supabase
+          .from('churches')
+          .select('id')
+          .eq('coach_id', coachProfile.id);
+        scopedChurchIds = (coachedChurches || []).map(c => c.id);
+      } else {
+        scopedChurchIds = []; // Coach profile not found — return empty list
+      }
+    }
+
+    // Fetch DNA leaders with church info (scoped for coaches)
+    let leadersQuery = supabase
       .from('dna_leaders')
       .select(`
         *,
@@ -30,6 +50,16 @@ export async function GET(request: NextRequest) {
         )
       `)
       .order('created_at', { ascending: false });
+
+    if (scopedChurchIds !== null) {
+      if (scopedChurchIds.length === 0) {
+        return NextResponse.json({ leaders: [], stats: { total: 0, active: 0, pending: 0, independent: 0, churchAffiliated: 0, totalGroups: 0, totalDisciples: 0 } });
+      }
+      leadersQuery = leadersQuery.in('church_id', scopedChurchIds);
+    }
+
+    // Fetch all DNA leaders with church info
+    const { data: leaders, error: leadersError } = await leadersQuery;
 
     if (leadersError) throw leadersError;
 
