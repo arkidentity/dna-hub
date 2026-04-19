@@ -15,6 +15,7 @@ import {
   LayoutTemplate,
   Radio,
   BookOpen,
+  Calendar,
 } from 'lucide-react';
 import { ChurchBranding } from '@/lib/types';
 import ChurchAppQRCard from '@/components/shared/ChurchAppQRCard';
@@ -122,6 +123,7 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
     custom_link_5_mode: 'browser' as 'iframe' | 'browser',
     live_service_enabled: false,
     ark_courses_enabled: false,
+    custom_passage_plan_enabled: false,
   });
 
   // ============================================
@@ -200,6 +202,7 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
         custom_link_5_mode: (b.custom_link_5_mode ?? 'browser') as 'iframe' | 'browser',
         live_service_enabled: (b as any).live_service_enabled ?? false,
         ark_courses_enabled: (b as any).ark_courses_enabled ?? false,
+        custom_passage_plan_enabled: (b as any).custom_passage_plan_enabled ?? false,
       });
     } catch {
       setError('Failed to load branding settings');
@@ -893,6 +896,37 @@ export default function BrandingTab({ churchId: fixedChurchId }: BrandingTabProp
               {form.ark_courses_enabled && (
                 <p className="text-xs text-green-600 font-medium">
                   ARK Courses are available on this church&apos;s subdomain.
+                </p>
+              )}
+            </div>
+
+            {/* Custom Passage Plans Feature Flag */}
+            <div className="bg-card rounded-xl border border-card-border p-5 space-y-3">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="font-medium text-navy flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-gold" />
+                    Custom Passage Plans
+                  </h3>
+                  <p className="text-xs text-foreground-muted mt-0.5">
+                    Let this church override the global Passage of the Day with their own curated series
+                    (sermon series, Easter week, etc). Upload a series under the Daily DNA → Passage Plan tab.
+                    Days without a custom passage fall back to the global curated passage.
+                  </p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setForm(prev => ({ ...prev, custom_passage_plan_enabled: !prev.custom_passage_plan_enabled }))}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors shrink-0 ${form.custom_passage_plan_enabled ? 'bg-green-500' : 'bg-gray-300'}`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${form.custom_passage_plan_enabled ? 'translate-x-6' : 'translate-x-1'}`}
+                  />
+                </button>
+              </div>
+              {form.custom_passage_plan_enabled && (
+                <p className="text-xs text-green-600 font-medium">
+                  Custom passage plans will show on this church&apos;s subdomain whenever a series row covers today&apos;s date.
                 </p>
               )}
             </div>

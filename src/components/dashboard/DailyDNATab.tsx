@@ -1,19 +1,21 @@
 'use client';
 
 import { useState } from 'react';
-import { Heart, BookOpen, Shield, Sparkles } from 'lucide-react';
+import { Heart, BookOpen, Shield, Sparkles, Calendar } from 'lucide-react';
 import PrayerWallTab from '@/components/admin/PrayerWallTab';
 import TestimonySubmissionsTab from '@/components/admin/TestimonySubmissionsTab';
 import CreedCardPushTab from '@/components/admin/CreedCardPushTab';
 import TeamGiftsTab from '@/components/spiritual-gifts/TeamGiftsTab';
+import PassagePlanTab from '@/components/admin/PassagePlanTab';
 
-type SubTab = 'prayer-wall' | 'testimonies' | 'creed-cards' | 'ministry-gifts';
+type SubTab = 'prayer-wall' | 'testimonies' | 'creed-cards' | 'ministry-gifts' | 'passage-plan';
 
 const SUB_TABS: { id: SubTab; label: string; icon: typeof Heart }[] = [
   { id: 'prayer-wall', label: 'Prayer Wall', icon: Heart },
   { id: 'testimonies', label: 'Testimonies', icon: BookOpen },
   { id: 'creed-cards', label: 'Creed Cards', icon: Shield },
   { id: 'ministry-gifts', label: 'Ministry Gifts', icon: Sparkles },
+  { id: 'passage-plan', label: 'Passage Plan', icon: Calendar },
 ];
 
 interface DailyDNATabProps {
@@ -60,6 +62,9 @@ export default function DailyDNATab({ churchId, subdomain }: DailyDNATabProps) {
       )}
       {activeSubTab === 'ministry-gifts' && (
         <TeamGiftsTab churchId={churchId} subdomain={subdomain} />
+      )}
+      {activeSubTab === 'passage-plan' && (
+        <PassagePlanTab churchId={churchId} />
       )}
     </div>
   );
