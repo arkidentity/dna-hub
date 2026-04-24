@@ -803,6 +803,24 @@ export interface LifeAssessmentResult {
   submitted_at: string | null;
 }
 
+export type WayOfLifeCategoryKey =
+  | 'devotion'
+  | 'family'
+  | 'community'
+  | 'mission'
+  | 'stewardship'
+  | 'health'
+  | 'serving';
+
+export interface WayOfLifeSummary {
+  status: 'draft' | 'completed';
+  categories: Partial<Record<WayOfLifeCategoryKey, string[]>>;
+  story: string | null;
+  completed_at: string | null;
+  last_reviewed_at: string | null;
+  updated_at: string;
+}
+
 export interface AppActivity {
   connected: boolean;
   progress: AppActivityProgress | null;
@@ -829,6 +847,7 @@ export interface AppActivity {
     today: string | null;
     hope: string | null;
   };
+  way_of_life?: WayOfLifeSummary | null;
 }
 
 export interface LifelineEventSummary {

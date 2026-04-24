@@ -395,6 +395,7 @@ function DiscipleProfileContent() {
   const testimonies = disciple?.app_activity?.testimonies;
   const checkpointCompletions = disciple?.app_activity?.checkpoint_completions || [];
   const lifeline = disciple?.app_activity?.lifeline;
+  const wayOfLife = disciple?.app_activity?.way_of_life;
 
   const currentStreak = progress?.current_streak ?? 0;
   const longestStreak = progress?.longest_streak ?? 0;
@@ -1166,6 +1167,72 @@ function DiscipleProfileContent() {
                     </div>
                   ))}
                 </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* ============================================================ */}
+        {/* WAY OF LIFE                                                   */}
+        {/* ============================================================ */}
+        {wayOfLife && (
+          <div className="bg-white rounded-xl shadow-sm border border-card-border p-5">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-sm font-bold text-navy flex items-center gap-2">
+                <svg className="w-4 h-4 text-[#D4A853]" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z" /><path d="M2 17l10 5 10-5" /><path d="M2 12l10 5 10-5" />
+                </svg>
+                Way of Life
+              </h3>
+              <div className="flex items-center gap-2">
+                {wayOfLife.status === 'completed' ? (
+                  <span className="text-xs font-semibold text-green-700 bg-green-50 border border-green-200 px-2 py-0.5 rounded-full">Completed</span>
+                ) : (
+                  <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 px-2 py-0.5 rounded-full">Draft</span>
+                )}
+                {wayOfLife.completed_at && (
+                  <span className="text-xs text-gray-400">
+                    {new Date(wayOfLife.last_reviewed_at ?? wayOfLife.completed_at).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            {/* Render each category that has statements */}
+            {(
+              [
+                { key: 'devotion', label: 'Devotion', icon: '✝️' },
+                { key: 'family', label: 'Family', icon: '🏠' },
+                { key: 'community', label: 'Community & Fellowship', icon: '🤝' },
+                { key: 'mission', label: 'Mission & Evangelism', icon: '🌍' },
+                { key: 'stewardship', label: 'Stewardship', icon: '💼' },
+                { key: 'health', label: 'Health', icon: '💪' },
+                { key: 'serving', label: 'Serving', icon: '🙌' },
+              ] as const
+            ).map(({ key, label, icon }) => {
+              const statements = wayOfLife.categories[key]?.filter((s: string) => s.trim()) ?? [];
+              if (statements.length === 0) return null;
+              return (
+                <div key={key} className="mb-4 last:mb-0">
+                  <p className="text-xs font-bold text-[#D4A853] uppercase tracking-wide mb-1.5 flex items-center gap-1">
+                    <span>{icon}</span> {label}
+                  </p>
+                  <div className="space-y-1 pl-1">
+                    {statements.map((stmt: string, i: number) => (
+                      <p key={i} className="text-sm text-navy leading-relaxed border-l-2 border-[#D4A853]/30 pl-3">
+                        {stmt}
+                      </p>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+
+            {/* Optional story */}
+            {wayOfLife.story && (
+              <div className="mt-4 pt-4 border-t border-gray-100">
+                <p className="text-xs font-bold text-gray-400 uppercase tracking-wide mb-1.5">My Story</p>
+                <p className="text-sm text-navy leading-relaxed italic">{wayOfLife.story}</p>
               </div>
             )}
           </div>

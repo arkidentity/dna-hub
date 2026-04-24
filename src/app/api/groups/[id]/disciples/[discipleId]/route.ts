@@ -136,6 +136,7 @@ export async function GET(
       lifeAssessmentsResult,
       lifelineEventsResult,
       lifelineSummaryResult,
+      wayOfLifeResult,
     ] = await Promise.all([
       supabase
         .from('life_assessments')
@@ -242,6 +243,14 @@ export async function GET(
             .eq('id', appAccountId)
             .single()
         : Promise.resolve({ data: null, error: null }),
+      // Way of Life document
+      appAccountId
+        ? supabase
+            .from('disciple_way_of_life')
+            .select('status, categories, story, completed_at, last_reviewed_at, updated_at')
+            .eq('account_id', appAccountId)
+            .single()
+        : Promise.resolve({ data: null, error: null }),
     ]);
 
     let week1Status = 'not_sent';
@@ -316,6 +325,15 @@ export async function GET(
           today: (lifelineSummaryResult.data as { lifeline_today?: string | null; lifeline_hope?: string | null } | null)?.lifeline_today ?? null,
           hope: (lifelineSummaryResult.data as { lifeline_today?: string | null; lifeline_hope?: string | null } | null)?.lifeline_hope ?? null,
         },
+        // Way of Life document
+        way_of_life: wayOfLifeResult.data ? {
+          status: (wayOfLifeResult.data as { status: string; categories: Record<string, string[]>; story: string | null; completed_at: string | null; last_reviewed_at: string | null; updated_at: string }).status,
+          categories: (wayOfLifeResult.data as { status: string; categories: Record<string, string[]>; story: string | null; completed_at: string | null; last_reviewed_at: string | null; updated_at: string }).categories,
+          story: (wayOfLifeResult.data as { status: string; categories: Record<string, string[]>; story: string | null; completed_at: string | null; last_reviewed_at: string | null; updated_at: string }).story,
+          completed_at: (wayOfLifeResult.data as { status: string; categories: Record<string, string[]>; story: string | null; completed_at: string | null; last_reviewed_at: string | null; updated_at: string }).completed_at,
+          last_reviewed_at: (wayOfLifeResult.data as { status: string; categories: Record<string, string[]>; story: string | null; completed_at: string | null; last_reviewed_at: string | null; updated_at: string }).last_reviewed_at,
+          updated_at: (wayOfLifeResult.data as { status: string; categories: Record<string, string[]>; story: string | null; completed_at: string | null; last_reviewed_at: string | null; updated_at: string }).updated_at,
+        } : null,
       };
     }
 

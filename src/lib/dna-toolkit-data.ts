@@ -117,6 +117,12 @@ export const DNA_TOOLKIT_GUIDES: DNAToolGuide[] = [
     pdfFilename: 'Identity Shift Leader Guide.pdf',
   },
   {
+    id: 'way-of-life',
+    name: 'Way of Life',
+    description: 'Disciples name their personal culture with Jesus across 7 life categories',
+    pdfFilename: 'Way of Life Leader Guide.pdf',
+  },
+  {
     id: 'life-assessment-revisited',
     name: 'Life Assessment Revisited',
     description: 'Retaking the assessment to measure growth at the end of Phase 1',
