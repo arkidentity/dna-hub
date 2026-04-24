@@ -190,40 +190,16 @@ export async function GET(
     let creedMasteredMap: Record<string, number> = {};
 
     if (discipleIds.length > 0) {
-      // Fetch assessments, app stats, and creed mastery in parallel
-      const [assessmentsResult, appStatsResult, creedResult, journalCountResult, prayerCardCountResult, assessmentScoresResult] = await Promise.all([
+      // Unified stats via get_user_stats RPC — replaces disciple_progress +
+      // disciple_creed_progress + live journal/prayer count queries.
+      const [assessmentsResult, userStatsResult, assessmentScoresResult] = await Promise.all([
         supabase
           .from('life_assessments')
           .select('disciple_id, assessment_week, sent_at, completed_at')
           .eq('group_id', groupId)
           .in('disciple_id', discipleIds),
         appAccountIds.length > 0
-          ? supabase
-              .from('disciple_progress')
-              .select('account_id, current_streak, last_activity_date, total_journal_entries, total_prayer_sessions, total_prayer_cards')
-              .in('account_id', appAccountIds)
-          : Promise.resolve({ data: null }),
-        appAccountIds.length > 0
-          ? supabase
-              .from('disciple_creed_progress')
-              .select('account_id, cards_mastered')
-              .in('account_id', appAccountIds)
-          : Promise.resolve({ data: null }),
-        // Direct journal count — bypasses potentially stale disciple_progress aggregate
-        appAccountIds.length > 0
-          ? supabase
-              .from('disciple_journal_entries')
-              .select('account_id')
-              .in('account_id', appAccountIds)
-              .is('deleted_at', null)
-          : Promise.resolve({ data: null }),
-        // Direct prayer card count — bypasses potentially stale disciple_progress aggregate
-        appAccountIds.length > 0
-          ? supabase
-              .from('disciple_prayer_cards')
-              .select('account_id')
-              .in('account_id', appAccountIds)
-              .is('deleted_at', null)
+          ? supabase.rpc('get_user_stats', { p_account_ids: appAccountIds })
           : Promise.resolve({ data: null }),
         // Life assessment scores (synced from Daily DNA app)
         appAccountIds.length > 0
@@ -249,54 +225,25 @@ export async function GET(
         });
       }
 
-      if (appStatsResult.data) {
-        appStatsResult.data.forEach(s => {
+      if (userStatsResult.data) {
+        (userStatsResult.data as Array<{
+          account_id: string;
+          current_streak: number | null;
+          last_activity_date: string | null;
+          journal_count: number | string;
+          prayer_count: number | string;
+          prayer_sessions_count: number | null;
+          cards_mastered_count: number | null;
+        }>).forEach(s => {
           appStatsMap[s.account_id] = {
-            current_streak: s.current_streak,
+            current_streak: s.current_streak ?? 0,
             last_activity_date: s.last_activity_date,
-            total_journal_entries: s.total_journal_entries ?? 0,
-            total_prayer_sessions: s.total_prayer_sessions ?? 0,
-            total_prayer_cards: s.total_prayer_cards ?? 0,
+            total_journal_entries: Number(s.journal_count) || 0,
+            total_prayer_sessions: s.prayer_sessions_count ?? 0,
+            total_prayer_cards: Number(s.prayer_count) || 0,
           };
+          creedMasteredMap[s.account_id] = s.cards_mastered_count ?? 0;
         });
-      }
-
-      if (creedResult.data) {
-        creedResult.data.forEach((c: { account_id: string; cards_mastered: number[] | null }) => {
-          creedMasteredMap[c.account_id] = (c.cards_mastered || []).length;
-        });
-      }
-
-      // Build live journal count map from direct query
-      if (journalCountResult.data) {
-        const liveJournalMap: Record<string, number> = {};
-        journalCountResult.data.forEach((j: { account_id: string }) => {
-          liveJournalMap[j.account_id] = (liveJournalMap[j.account_id] || 0) + 1;
-        });
-        // Override stale aggregate with live count
-        for (const [accountId, count] of Object.entries(liveJournalMap)) {
-          if (appStatsMap[accountId]) {
-            appStatsMap[accountId].total_journal_entries = count;
-          } else {
-            // Create entry even if disciple_progress row doesn't exist yet
-            appStatsMap[accountId] = { current_streak: 0, last_activity_date: null, total_journal_entries: count, total_prayer_sessions: 0, total_prayer_cards: 0 };
-          }
-        }
-      }
-
-      // Build live prayer card count map from direct query
-      if (prayerCardCountResult.data) {
-        const livePrayerMap: Record<string, number> = {};
-        (prayerCardCountResult.data as Array<{ account_id: string }>).forEach(p => {
-          livePrayerMap[p.account_id] = (livePrayerMap[p.account_id] || 0) + 1;
-        });
-        for (const [accountId, count] of Object.entries(livePrayerMap)) {
-          if (appStatsMap[accountId]) {
-            appStatsMap[accountId].total_prayer_cards = count;
-          } else {
-            appStatsMap[accountId] = { current_streak: 0, last_activity_date: null, total_journal_entries: 0, total_prayer_sessions: 0, total_prayer_cards: count };
-          }
-        }
       }
 
       // Map assessment scores by account_id → disciple_id

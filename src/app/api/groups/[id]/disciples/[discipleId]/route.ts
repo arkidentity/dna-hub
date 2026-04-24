@@ -156,13 +156,33 @@ export async function GET(
         .eq('group_id', groupId)
         .eq('disciple_id', discipleId)
         .order('phase', { ascending: true }),
-      // Aggregate progress (all-time)
+      // Aggregate progress (all-time) — unified via get_user_stats RPC.
+      // Also pull badges/total_time_minutes from disciple_progress (not in unified RPC).
       appAccountId
-        ? supabase
-            .from('disciple_progress')
-            .select('current_streak, longest_streak, last_activity_date, total_journal_entries, total_prayer_sessions, total_prayer_cards, total_time_minutes, badges')
-            .eq('account_id', appAccountId)
-            .single()
+        ? Promise.all([
+            supabase.rpc('get_user_stats', { p_account_ids: [appAccountId] }),
+            supabase
+              .from('disciple_progress')
+              .select('total_time_minutes, badges')
+              .eq('account_id', appAccountId)
+              .single(),
+          ]).then(([statsRes, extraRes]) => {
+            const row = statsRes.data?.[0];
+            if (!row) return { data: null, error: statsRes.error };
+            return {
+              data: {
+                current_streak: row.current_streak ?? 0,
+                longest_streak: row.longest_streak ?? 0,
+                last_activity_date: row.last_activity_date,
+                total_journal_entries: Number(row.journal_count) || 0,
+                total_prayer_sessions: row.prayer_sessions_count ?? 0,
+                total_prayer_cards: Number(row.prayer_count) || 0,
+                total_time_minutes: extraRes.data?.total_time_minutes ?? 0,
+                badges: extraRes.data?.badges ?? [],
+              },
+              error: null,
+            };
+          })
         : Promise.resolve({ data: null, error: null }),
       // Toolkit progress
       appAccountId

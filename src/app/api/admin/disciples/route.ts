@@ -35,45 +35,59 @@ export async function GET(request: NextRequest) {
 
     const disciples = data || [];
 
-    // Override stale aggregate counts with live queries
+    // Overlay canonical stats from get_user_stats RPC (replaces per-stat live queries)
     const accountIds = disciples
       .map((d: { app_account_id: string }) => d.app_account_id)
       .filter(Boolean);
 
     if (accountIds.length > 0) {
-      const [journalResult, prayerResult] = await Promise.all([
-        supabase
-          .from('disciple_journal_entries')
-          .select('account_id')
-          .in('account_id', accountIds)
-          .is('deleted_at', null),
-        supabase
-          .from('disciple_prayer_cards')
-          .select('account_id')
-          .in('account_id', accountIds)
-          .is('deleted_at', null),
-      ]);
+      const { data: statsRows } = await supabase.rpc('get_user_stats', {
+        p_account_ids: accountIds,
+      });
 
-      if (journalResult.data) {
-        const journalMap: Record<string, number> = {};
-        journalResult.data.forEach((j: { account_id: string }) => {
-          journalMap[j.account_id] = (journalMap[j.account_id] || 0) + 1;
+      if (statsRows) {
+        const statsMap: Record<string, {
+          current_streak: number;
+          longest_streak: number;
+          last_activity_date: string | null;
+          total_journal_entries: number;
+          total_prayer_cards: number;
+          total_prayer_sessions: number;
+          cards_mastered_count: number;
+        }> = {};
+        (statsRows as Array<{
+          account_id: string;
+          current_streak: number | null;
+          longest_streak: number | null;
+          last_activity_date: string | null;
+          journal_count: number | string;
+          prayer_count: number | string;
+          prayer_sessions_count: number | null;
+          cards_mastered_count: number | null;
+        }>).forEach(r => {
+          statsMap[r.account_id] = {
+            current_streak: r.current_streak ?? 0,
+            longest_streak: r.longest_streak ?? 0,
+            last_activity_date: r.last_activity_date,
+            total_journal_entries: Number(r.journal_count) || 0,
+            total_prayer_cards: Number(r.prayer_count) || 0,
+            total_prayer_sessions: r.prayer_sessions_count ?? 0,
+            cards_mastered_count: r.cards_mastered_count ?? 0,
+          };
         });
-        disciples.forEach((d: { app_account_id: string; total_journal_entries: number }) => {
-          if (d.app_account_id && journalMap[d.app_account_id] !== undefined) {
-            d.total_journal_entries = journalMap[d.app_account_id];
-          }
-        });
-      }
 
-      if (prayerResult.data) {
-        const prayerMap: Record<string, number> = {};
-        prayerResult.data.forEach((p: { account_id: string }) => {
-          prayerMap[p.account_id] = (prayerMap[p.account_id] || 0) + 1;
-        });
-        disciples.forEach((d: { app_account_id: string; total_prayer_cards: number }) => {
-          if (d.app_account_id && prayerMap[d.app_account_id] !== undefined) {
-            d.total_prayer_cards = prayerMap[d.app_account_id];
+        disciples.forEach((d: Record<string, unknown> & { app_account_id: string }) => {
+          const s = statsMap[d.app_account_id];
+          if (!s) return;
+          d.current_streak = s.current_streak;
+          d.longest_streak = s.longest_streak;
+          d.last_activity_date = s.last_activity_date;
+          d.total_journal_entries = s.total_journal_entries;
+          d.total_prayer_cards = s.total_prayer_cards;
+          d.total_prayer_sessions = s.total_prayer_sessions;
+          if (Array.isArray(d.cards_mastered)) {
+            // keep array if consumers need it; also expose count
+            (d as Record<string, unknown>).cards_mastered_count = s.cards_mastered_count;
           }
         });
       }
